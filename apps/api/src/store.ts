@@ -138,4 +138,12 @@ export const store = {
     save(state);
     return true;
   },
+
+  getTicketsForDate(date: string) {
+    return state.tickets.filter(t => t.when.startsWith(date));
+  },
+
+  getAlertsForDate(date: string) {
+    return state.alerts.filter(a => a.ts.startsWith(date));
+  },
 };
