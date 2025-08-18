@@ -7,6 +7,7 @@ import { reportRoutes } from './routes/report';
 import { ingestRoutes } from './routes/ingest';
 import { alertsRoutes } from './routes/alerts';
 import { exportRoutes } from './routes/export';
+import { notifyRoutes } from './routes/notify';
 
 export function buildServer() {
   const app = Fastify({ logger: true });
@@ -22,6 +23,7 @@ export function buildServer() {
   app.register(ingestRoutes);
   app.register(alertsRoutes);
   app.register(exportRoutes);
+  app.register(notifyRoutes);
 
   return app;
 }
