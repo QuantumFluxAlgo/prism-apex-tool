@@ -12,6 +12,8 @@ import { checkConsistency30 } from '../../../../packages/rules-apex/src/checkCon
 import { checkEODCutoff } from '../../../../packages/rules-apex/src/checkEODCutoff.ts';
 import { store } from '../store';
 import { TradovateClient } from '../../../../packages/clients-tradovate/src/rest.ts';
+import { dispatch, type NotifyMessage } from '../../../../packages/notify/src';
+import { loadNotifyConfig } from './notify';
 
 const previewSchema = z.object({
   strategy: z.enum(['OPEN_SESSION','VWAP']),
@@ -103,6 +105,17 @@ export async function signalRoutes(app: FastifyInstance) {
       now
     });
 
+    if (evalRes.block) {
+      const cfg = loadNotifyConfig();
+      const nmsg: NotifyMessage = {
+        subject: `RULE_BREACH ${strategy} ${symbol}`,
+        text: `Blocked reasons: ${evalRes.reasons.join('; ')}`,
+        level: 'WARN',
+        tags: ['RULE_BREACH', strategy, symbol],
+      };
+      await dispatch(cfg, 'RULE_BREACH', nmsg);
+    }
+
     return reply.send({ ticket, ...evalRes });
   });
 
@@ -128,7 +141,17 @@ export async function signalRoutes(app: FastifyInstance) {
       now
     });
 
-    if (evalRes.block) return reply.code(400).send({ error: 'Guardrail block', reasons: evalRes.reasons });
+    if (evalRes.block) {
+      const cfg = loadNotifyConfig();
+      const nmsg: NotifyMessage = {
+        subject: `RULE_BREACH ${ticket.symbol}`,
+        text: `Blocked reasons: ${evalRes.reasons.join('; ')}`,
+        level: 'WARN',
+        tags: ['RULE_BREACH', ticket.symbol],
+      };
+      await dispatch(cfg, 'RULE_BREACH', nmsg);
+      return reply.code(400).send({ error: 'Guardrail block', reasons: evalRes.reasons });
+    }
 
     // Persist snapshot (append-only)
     store.appendTicket({ when: now.toISOString(), ticket, reasons: evalRes.reasons });
