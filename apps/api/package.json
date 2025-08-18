@@ -11,6 +11,8 @@
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {
+    "@fastify/cors": "8.5.0",
+    "@typescript-eslint/parser": "6.19.1",
     "fastify": "^4.26.2"
   },
   "devDependencies": {
