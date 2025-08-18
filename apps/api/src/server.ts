@@ -8,6 +8,13 @@ import { ingestRoutes } from './routes/ingest';
 import { alertsRoutes } from './routes/alerts';
 import { exportRoutes } from './routes/export';
 import { notifyRoutes } from './routes/notify';
+import { jobsRoutes } from './routes/jobs';
+
+import { registerJob, startJobs } from './jobs/scheduler';
+import { jobEodFlat } from './jobs/eodFlat';
+import { jobMissingBrackets } from './jobs/missingBrackets';
+import { jobDailyLoss } from './jobs/dailyLoss';
+import { jobConsistency } from './jobs/consistency';
 
 export function buildServer() {
   const app = Fastify({ logger: true });
@@ -24,6 +31,16 @@ export function buildServer() {
   app.register(alertsRoutes);
   app.register(exportRoutes);
   app.register(notifyRoutes);
+  app.register(jobsRoutes);
+
+  // ---- Jobs ----
+  registerJob('EOD_FLAT', 60_000, jobEodFlat);          // check every 60s (phased logic within)
+  registerJob('MISSING_BRACKETS', 15_000, jobMissingBrackets);
+  registerJob('DAILY_LOSS', 60_000, jobDailyLoss);
+  registerJob('CONSISTENCY', 300_000, jobConsistency);
+
+  // Defer start to next event loop tick to ensure server initialized
+  setTimeout(startJobs, 10);
 
   return app;
 }
