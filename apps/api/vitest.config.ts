@@ -1,10 +1,18 @@
-/* eslint-disable import/no-default-export */
-/* eslint-disable import/no-unresolved */
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { defineConfig } from 'vitest/config';
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 export default defineConfig({
   test: {
     environment: 'node',
     globals: true,
+    coverage: { reporter: ['text', 'json-summary', 'lcov'] },
+  },
+  server: {
+    fs: {
+      allow: [path.resolve(__dirname, '../..')],
+    },
   },
 });
