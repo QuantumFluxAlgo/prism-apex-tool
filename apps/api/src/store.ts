@@ -22,9 +22,18 @@ type AlertEntry = {
   hash: string; // for dedup window
 };
 
+type Recipients = {
+  email: string[];
+  telegram: string[];
+  slack: string[];
+  sms: string[];
+  tags?: string[];
+};
+
 type DataShape = {
   tickets: TicketEntry[];
   alerts: AlertEntry[];
+  recipients: Recipients;
   riskContext: {
     netLiqHigh: number;
     ddAmount: number;
@@ -43,6 +52,7 @@ function load(): DataShape {
     const init: DataShape = {
       tickets: [],
       alerts: [],
+      recipients: { email: [], telegram: [], slack: [], sms: [] },
       riskContext: {
         netLiqHigh: 52000,
         ddAmount: 3000,
@@ -145,5 +155,21 @@ export const store = {
 
   getAlertsForDate(date: string) {
     return state.alerts.filter(a => a.ts.startsWith(date));
+  },
+
+  getRecipients(): Recipients {
+    return state.recipients;
+  },
+
+  addRecipients(update: Partial<Recipients> & { tags?: string[] }) {
+    const r = state.recipients;
+    if (update.email?.length) r.email = Array.from(new Set([...(r.email || []), ...update.email]));
+    if (update.telegram?.length) r.telegram = Array.from(new Set([...(r.telegram || []), ...update.telegram]));
+    if (update.slack?.length) r.slack = Array.from(new Set([...(r.slack || []), ...update.slack]));
+    if (update.sms?.length) r.sms = Array.from(new Set([...(r.sms || []), ...update.sms]));
+    if (update.tags?.length) r.tags = Array.from(new Set([...(r.tags || []), ...update.tags]));
+    state.recipients = r;
+    save(state);
+    return r;
   },
 };
