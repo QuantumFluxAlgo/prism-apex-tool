@@ -1,28 +1,26 @@
 {
-  "name": "@prism-apex-tool/dashboard",
-  "version": "0.1.0",
+  "name": "prism-apex-dashboard",
   "private": true,
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc -p tsconfig.json && vite build",
-    "lint": "eslint . --ext .ts,.tsx --max-warnings=0 --no-error-on-unmatched-pattern",
-    "test": "vitest",
-    "typecheck": "tsc -p tsconfig.json --noEmit"
+    "build": "tsc -b && vite build",
+    "preview": "vite preview --port 5173",
+    "test": "vitest run",
+    "test:ui": "vitest",
+    "e2e": "playwright test"
   },
   "dependencies": {
-    "react": "^18.2.0",
-    "react-dom": "^18.2.0"
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
   },
   "devDependencies": {
-    "@testing-library/jest-dom": "^6.1.5",
-    "@testing-library/react": "^14.1.2",
-    "@types/react": "^18.2.37",
-    "@types/react-dom": "^18.2.15",
-    "@vitejs/plugin-react": "^4.2.1",
-    "autoprefixer": "^10.4.16",
-    "postcss": "^8.4.31",
-    "tailwindcss": "^3.3.5",
-    "vite": "^5.0.8"
+    "@playwright/test": "1.54.2",
+    "@types/react": "^18.3.3",
+    "@types/react-dom": "^18.3.0",
+    "@typescript-eslint/eslint-plugin": "6.19.1",
+    "@typescript-eslint/parser": "6.19.1",
+    "typescript": "^5.5.4",
+    "vite": "^5.3.5"
   }
 }
