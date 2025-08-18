@@ -7,8 +7,8 @@ import { describe, expect, it } from 'vitest';
 import App from '../App.js';
 
 describe('App', () => {
-  it('renders title', () => {
+  it('renders dashboard title', () => {
     render(<App />);
-    expect(screen.getByText('Prism Apex Tool — Operator Console')).toBeInTheDocument();
+    expect(screen.getByText(/Prism Apex Operator Dashboard/)).toBeInTheDocument();
   });
 });
