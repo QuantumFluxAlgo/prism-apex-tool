@@ -13,5 +13,6 @@
     "postcss.config.cjs",
     "vitest.config.ts",
     "index.html"
-  ]
+  ],
+  "exclude": ["src/__tests__"]
 }
