@@ -1,0 +1,14 @@
+node_modules
+dist
+build
+coverage
+.vscode
+.idea
+.git
+**/.DS_Store
+**/*.log
+**/tmp
+**/.cache
+**/.vite
+**/playwright-report
+**/test-results
