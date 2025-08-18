@@ -1,17 +1,17 @@
-// eslint-disable-next-line import/no-unresolved
-import { buildServer } from './server.js';
+import { buildServer } from './server';
 
-const port = Number(process.env.PORT) || 8080;
-const app = buildServer();
+const PORT = Number(process.env.PORT || 8080);
+const HOST = process.env.HOST || '0.0.0.0';
 
-app
-  .listen({ port, host: '0.0.0.0' })
-  .then(() => {
-    // eslint-disable-next-line no-console
-    console.log(`API running on http://localhost:${port}`);
-  })
-  .catch((err) => {
-    // eslint-disable-next-line no-console
-    console.error(err);
+async function main() {
+  const app = buildServer();
+  try {
+    await app.listen({ port: PORT, host: HOST });
+    app.log.info(`API listening on ${HOST}:${PORT}`);
+  } catch (err) {
+    app.log.error(err);
     process.exit(1);
-  });
+  }
+}
+
+main();
