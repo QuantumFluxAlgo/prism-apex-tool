@@ -42,6 +42,9 @@ type DataShape = {
     todayProfit: number;
     periodProfit: number;
   };
+  flags?: {
+    ocoMissing?: boolean;
+  };
 };
 
 function ensureDir() { try { fs.mkdirSync(DATA_DIR, { recursive: true }); } catch {} }
@@ -61,12 +64,15 @@ function load(): DataShape {
         todayProfit: 0,
         periodProfit: 0,
       },
+      flags: { ocoMissing: false },
     };
     fs.writeFileSync(DATA_FILE, JSON.stringify(init, null, 2));
     return init;
   }
   const raw = fs.readFileSync(DATA_FILE, 'utf8');
-  return JSON.parse(raw) as DataShape;
+  const parsed = JSON.parse(raw) as DataShape;
+  parsed.flags = parsed.flags || { ocoMissing: false };
+  return parsed;
 }
 
 function save(d: DataShape) {
@@ -172,4 +178,10 @@ export const store = {
     save(state);
     return r;
   },
+
+  setOcoMissing(v: boolean) { state.flags = { ...(state.flags || {}), ocoMissing: v }; save(state); },
+  getOcoMissing(): boolean { return Boolean(state.flags?.ocoMissing); },
+
+  setTodayProfit(p: number) { state.riskContext.todayProfit = p; save(state); },
+  setPeriodProfit(p: number) { state.riskContext.periodProfit = p; save(state); },
 };
