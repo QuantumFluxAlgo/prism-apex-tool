@@ -41,3 +41,16 @@ docker compose down -v
 
 logs:
 docker compose logs -f
+
+.PHONY: release deploy
+
+# Create a signed tag and push (CI will build & deploy)
+release:
+	@if [ -z "$$TAG" ]; then echo "Usage: make release TAG=v0.1.0"; exit 2; fi
+	git tag -a $$TAG -m "Release $$TAG"
+	git push origin $$TAG
+
+# Convenience local wrapper to call remote deploy script (requires same secrets exported)
+deploy:
+	@if [ -z "$$PROD_SSH_HOST" ] || [ -z "$$PROD_SSH_USER" ] || [ -z "$$PROD_STACK_DIR" ] || [ -z "$$STACK_NAME" ]; then echo "Set PROD_SSH_HOST, PROD_SSH_USER, PROD_STACK_DIR, STACK_NAME, TAG, GHCR_OWNER"; exit 2; fi
+	ssh $$PROD_SSH_USER@$$PROD_SSH_HOST "STACK_NAME=$$STACK_NAME TAG=$$TAG GHCR_OWNER=$$GHCR_OWNER STACK_DIR=$$PROD_STACK_DIR bash $$PROD_STACK_DIR/scripts/deploy.sh"
