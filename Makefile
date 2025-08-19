@@ -69,3 +69,13 @@ release:
 deploy:
 	@if [ -z "$$PROD_SSH_HOST" ] || [ -z "$$PROD_SSH_USER" ] || [ -z "$$PROD_STACK_DIR" ] || [ -z "$$STACK_NAME" ]; then echo "Set PROD_SSH_HOST, PROD_SSH_USER, PROD_STACK_DIR, STACK_NAME, TAG, GHCR_OWNER"; exit 2; fi
 	ssh $$PROD_SSH_USER@$$PROD_SSH_HOST "STACK_NAME=$$STACK_NAME TAG=$$TAG GHCR_OWNER=$$GHCR_OWNER STACK_DIR=$$PROD_STACK_DIR bash $$PROD_STACK_DIR/scripts/deploy.sh"
+
+.PHONY: readiness uat
+
+# Print path to go-live checklist (for convenience)
+readiness:
+	@echo "Open docs/release/go-live-checklist.md"
+
+# Print path to UAT scripts
+uat:
+	@echo "Open docs/release/uat-scenarios.md"
