@@ -94,3 +94,9 @@ cards:
 calibrate:
 	python -m calibration.run_sweeps
 	@echo "Results in reports/calibration/results.csv and results.json"
+
+.PHONY: payouts
+
+payouts:
+	python payouts/tracker.py
+	@echo "See reports/payouts/summary.json and docs/payouts/calendar.md"
