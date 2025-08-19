@@ -1,0 +1,17 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: prism-api
+spec:
+  replicas: 1
+  selector: { matchLabels: { app: prism-api } }
+  template:
+    metadata: { labels: { app: prism-api } }
+    spec:
+      containers:
+        - name: api
+          image: ghcr.io/YOURORG/prism-apex-api:latest
+          envFrom: [{ configMapRef: { name: prism-env } }]
+          ports: [{ containerPort: 8080 }]
+          readinessProbe: { httpGet: { path: /health, port: 8080 }, initialDelaySeconds: 5, periodSeconds: 5 }
+          livenessProbe: { httpGet: { path: /health, port: 8080 }, initialDelaySeconds: 10, periodSeconds: 10 }
