@@ -79,3 +79,12 @@ readiness:
 # Print path to UAT scripts
 uat:
 	@echo "Open docs/release/uat-scenarios.md"
+
+.PHONY: deck cards
+
+deck:
+	@echo "Open docs/operator/training-deck.md"
+
+cards:
+	@echo "Quick cards:"
+	@ls -1 docs/operator/quick-cards/*.md
