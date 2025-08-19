@@ -1,85 +1,43 @@
-name: ci
+name: CI
 
 on:
-  push:
-    branches: [ main ]
   pull_request:
-    branches: [ main ]
+  push:
+    branches: [develop]
 
 jobs:
   build-test:
-    runs-on: ubuntu-22.04
-
-    permissions:
-      contents: read
-
-    env:
-      # Provide dummy env so API/clients init doesn't crash in tests
-      TRADOVATE_BASE_URL: "https://example.test/v1"
-      TRADOVATE_USERNAME: "user"
-      TRADOVATE_PASSWORD: "pass"
-      TRADOVATE_CLIENT_ID: "cid"
-      TRADOVATE_CLIENT_SECRET: "sec"
-
+    runs-on: ubuntu-latest
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v3
 
-      - name: Setup Node
-        uses: actions/setup-node@v4
+      - name: Set up Python
+        uses: actions/setup-python@v4
         with:
-          node-version: 20
-          cache: 'npm'
+          python-version: '3.11'
 
-      - name: Install
-        run: npm ci
+      - name: Install dependencies
+        run: pip install -r requirements.txt
 
-      - name: Lint
-        run: |
-          npm run lint -w packages/shared || true
-          npm run lint -w packages/rules-apex || true
-          npm run lint -w packages/signals || true
-          npm run lint -w packages/clients-tradovate || true
-          npm run lint -w apps/api || true
-          npm run lint -w apps/dashboard || true
+      - name: Run calibration sweeps
+        run: make calibrate
 
-      - name: Unit tests (packages)
-        run: |
-          npm test -w packages/shared --silent
-          npm test -w packages/rules-apex --silent
-          npm test -w packages/signals --silent
-          npm test -w packages/clients-tradovate --silent
+      - name: Lint Python
+        run: flake8 .
 
-      - name: API tests
-        run: npm test -w apps/api --silent
+      - name: Set up Node
+        uses: actions/setup-node@v3
+        with:
+          node-version: '20'
 
-      - name: Build Dashboard
-        run: npm run build -w apps/dashboard
+      - name: Lint frontend
+        run: cd frontend && npm install && npm run lint
 
-      - name: Install Playwright Browsers
-        run: npx playwright install --with-deps chromium
-
-      - name: Dashboard e2e
-        run: npm run e2e -w apps/dashboard
-
-  docker-build:
-    runs-on: ubuntu-22.04
-    needs: build-test
-    if: github.ref == 'refs/heads/main'
-    steps:
-      - uses: actions/checkout@v4
-      - uses: docker/setup-buildx-action@v3
       - name: Build API image
-        uses: docker/build-push-action@v6
-        with:
-          context: .
-          file: apps/api/Dockerfile
-          push: false
-          tags: prism-apex-api:ci
-      - name: Build Dashboard image
-        uses: docker/build-push-action@v6
-        with:
-          context: .
-          file: apps/dashboard/Dockerfile
-          push: false
-          tags: prism-apex-dashboard:ci
+        run: docker build -f Dockerfile.api -t prism-apex-api:ci .
+
+      - name: Build frontend image
+        run: docker build -f Dockerfile.frontend -t prism-apex-frontend:ci .
+
+      - name: Run Python tests
+        run: pytest
