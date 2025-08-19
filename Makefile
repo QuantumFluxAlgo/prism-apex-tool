@@ -1,46 +1,61 @@
 SHELL := /bin/bash
 
-.PHONY: help
+.PHONY: help up down seed backtest demo
 help:
-@echo "Targets:"
-@echo "  deps           Install deps"
-@echo "  build          Build all workspaces"
-@echo "  test           Run all unit tests"
-@echo "  e2e            Run dashboard Playwright e2e"
-@echo "  up             docker compose up --build"
-@echo "  down           docker compose down -v"
-@echo "  logs           docker compose logs -f"
+	@echo "Targets:"
+	@echo "  deps           Install deps"
+	@echo "  build          Build all workspaces"
+	@echo "  test           Run all unit tests"
+	@echo "  e2e            Run dashboard Playwright e2e"
+	@echo "  up             docker compose up -d"
+	@echo "  down           docker compose down"
+	@echo "  logs           docker compose logs -f"
+	@echo "  seed           Seed API store with demo data"
+	@echo "  backtest       Run ORB backtest on sample data"
+	@echo "  demo           Build CLI and run sample backtest"
 
 deps:
-npm ci
+	npm ci
 
 build:
-npm run build -w packages/shared || true
-npm run build -w packages/rules-apex || true
-npm run build -w packages/signals || true
-npm run build -w packages/clients-tradovate || true
-npm run build -w apps/api
-npm run build -w apps/dashboard
+	npm run build -w packages/shared || true
+	npm run build -w packages/rules-apex || true
+	npm run build -w packages/signals || true
+	npm run build -w packages/clients-tradovate || true
+	npm run build -w apps/api
+	npm run build -w apps/dashboard
 
 test:
-npm test -w packages/shared --silent
-npm test -w packages/rules-apex --silent
-npm test -w packages/signals --silent
-npm test -w packages/clients-tradovate --silent
-npm test -w apps/api --silent
+	npm test -w packages/shared --silent
+	npm test -w packages/rules-apex --silent
+	npm test -w packages/signals --silent
+	npm test -w packages/clients-tradovate --silent
+	npm test -w apps/api --silent
 
 e2e:
-npx playwright install --with-deps chromium
-npm run e2e -w apps/dashboard
+	npx playwright install --with-deps chromium
+	npm run e2e -w apps/dashboard
 
 up:
-docker compose up --build -d
+	docker compose up -d
 
 down:
-docker compose down -v
+	docker compose down
 
 logs:
-docker compose logs -f
+		docker compose logs -f
+	
+seed:
+	@echo "Seeding API store..."
+	@DATA_DIR=.data node --loader ts-node/esm apps/api/scripts/seed.ts
+
+backtest:
+	@echo "Running sample backtest (ORB, ES 1m)..."
+	@mkdir -p out
+	@./node_modules/.bin/tsx apps/cli/src/backtest.ts --strategy=ORB --data=data/ES_1m.sample.csv --mode=evaluation --open=14:30 --close=21:59 --tickValue=50 --seed=42 --out=out/es_orb_sample
+
+demo:
+	@bash apps/cli/scripts/demo.sh
 
 .PHONY: release deploy
 
