@@ -1,23 +1,23 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { buildServer } from '../server';
-import { store } from '../store';
+import fs from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
+let buildServer: any;
+let store: typeof import('../store').store;
 
 // Mock env for Tradovate client
-beforeEach(() => {
+beforeEach(async () => {
+  vi.resetModules();
   process.env.TRADOVATE_BASE_URL = 'https://example.test/v1';
   process.env.TRADOVATE_USERNAME = 'u';
   process.env.TRADOVATE_PASSWORD = 'p';
   process.env.TRADOVATE_CLIENT_ID = 'cid';
   process.env.TRADOVATE_CLIENT_SECRET = 'sec';
+  process.env.DATA_DIR = fs.mkdtempSync(path.join(os.tmpdir(), 'report-'));
+  const mod = await import('../server');
+  buildServer = mod.buildServer;
+  store = (await import('../store')).store;
   vi.useRealTimers();
-
-  // Seed store with synthetic data for 2025-08-17
-  const date = '2030-01-01';
-  // @ts-ignore internal access to mutate for tests
-  const d = (store as any);
-  // Reset state by reloading file? Instead patch via public API:
-  // We'll append ticket entries with specific date stamps
-  // (In a real test, we might isolate store; keeping MVP-simple here)
 });
 
 function mockFetchSequence(responses: { status: number; json: any }[]) {

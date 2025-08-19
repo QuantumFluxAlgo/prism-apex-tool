@@ -9,6 +9,7 @@ import { alertsRoutes } from './routes/alerts';
 import { exportRoutes } from './routes/export';
 import { notifyRoutes } from './routes/notify';
 import { jobsRoutes } from './routes/jobs';
+import { openapiRoute } from './routes/openapi';
 
 import { registerJob, startJobs } from './jobs/scheduler';
 import { jobEodFlat } from './jobs/eodFlat';
@@ -32,6 +33,7 @@ export function buildServer() {
   app.register(exportRoutes);
   app.register(notifyRoutes);
   app.register(jobsRoutes);
+  app.register(openapiRoute);
 
   // ---- Jobs ----
   registerJob('EOD_FLAT', 60_000, jobEodFlat);          // check every 60s (phased logic within)
