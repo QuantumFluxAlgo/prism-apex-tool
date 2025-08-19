@@ -1,0 +1,8 @@
+{
+  "name": "@prism-apex-tool/tests-backtest",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "vitest"
+  }
+}
