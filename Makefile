@@ -1,5 +1,5 @@
 SHELL := /bin/bash
-
+	
 .PHONY: help up down seed backtest demo
 help:
 	@echo "Targets:"
@@ -88,3 +88,9 @@ deck:
 cards:
 	@echo "Quick cards:"
 	@ls -1 docs/operator/quick-cards/*.md
+
+.PHONY: calibrate
+
+calibrate:
+	python -m calibration.run_sweeps
+	@echo "Results in reports/calibration/results.csv and results.json"
