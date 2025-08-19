@@ -1,0 +1,101 @@
+name: deploy
+
+on:
+  push:
+    tags:
+      - 'v*'      # release on version tags
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - name: Install deps
+        run: npm ci
+
+      - name: Run unit tests
+        run: npm test --workspaces --if-present
+
+      - name: Build dashboard
+        run: npm run build -w apps/dashboard
+
+      - name: Login to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ secrets.GHCR_USERNAME }}
+          password: ${{ secrets.GHCR_TOKEN }}
+
+      - name: Extract tag/sha
+        id: meta
+        run: |
+          echo "TAG=${GITHUB_REF_NAME}" >> $GITHUB_OUTPUT
+          echo "SHA=${GITHUB_SHA::12}" >> $GITHUB_OUTPUT
+
+      - name: Build & push API image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: apps/api/Dockerfile
+          push: true
+          tags: |
+            ghcr.io/${{ github.repository_owner }}/prism-apex-api:${{ steps.meta.outputs.TAG }}
+            ghcr.io/${{ github.repository_owner }}/prism-apex-api:latest
+          labels: |
+            org.opencontainers.image.source=${{ github.repository }}
+            org.opencontainers.image.revision=${{ github.sha }}
+
+      - name: Build & push Dashboard image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: apps/dashboard/Dockerfile
+          push: true
+          tags: |
+            ghcr.io/${{ github.repository_owner }}/prism-apex-dashboard:${{ steps.meta.outputs.TAG }}
+            ghcr.io/${{ github.repository_owner }}/prism-apex-dashboard:latest
+          labels: |
+            org.opencontainers.image.source=${{ github.repository }}
+            org.opencontainers.image.revision=${{ github.sha }}
+
+  deploy:
+    runs-on: ubuntu-22.04
+    needs: build-and-push
+    steps:
+      - name: Checkout infra
+        uses: actions/checkout@v4
+
+      - name: Write SSH key
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.PROD_SSH_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+
+      - name: Bootstrap server (one-time safe)
+        run: |
+          ssh -o StrictHostKeyChecking=no ${{ secrets.PROD_SSH_USER }}@${{ secrets.PROD_SSH_HOST }} 'bash -s' < infra/scripts/bootstrap.sh
+
+      - name: Push infra files to server
+        run: |
+          rsync -avz -e "ssh -o StrictHostKeyChecking=no" infra/ ${{ secrets.PROD_SSH_USER }}@${{ secrets.PROD_SSH_HOST }}:${{ secrets.PROD_STACK_DIR }}/
+
+      - name: Deploy stack (health-gated)
+        env:
+          STACK_NAME: ${{ secrets.STACK_NAME }}
+          TAG: ${{ github.ref_name }}
+          GHCR_OWNER: ${{ github.repository_owner }}
+        run: |
+          ssh -o StrictHostKeyChecking=no ${{ secrets.PROD_SSH_USER }}@${{ secrets.PROD_SSH_HOST }} \
+            "STACK_NAME=$STACK_NAME TAG=$TAG GHCR_OWNER=$GHCR_OWNER bash ${{ secrets.PROD_STACK_DIR }}/scripts/deploy.sh"

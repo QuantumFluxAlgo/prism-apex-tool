@@ -1,0 +1,49 @@
+version: "3.9"
+
+services:
+  api:
+    image: ghcr.io/${GHCR_OWNER:-yourorg}/prism-apex-api:${TAG:-latest}
+    container_name: ${STACK_NAME:-prism}-api
+    env_file: .env
+    environment:
+      NODE_ENV: production
+      PORT: 8080
+      DATA_DIR: /var/lib/prism-apex-tool
+    volumes:
+      - prism_data:/var/lib/prism-apex-tool
+    networks:
+      - prism
+    ports:
+      - "8080:8080"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:8080/health"]
+      interval: 15s
+      timeout: 3s
+      retries: 5
+
+  dashboard:
+    image: ghcr.io/${GHCR_OWNER:-yourorg}/prism-apex-dashboard:${TAG:-latest}
+    container_name: ${STACK_NAME:-prism}-dashboard
+    depends_on:
+      api:
+        condition: service_healthy
+    environment:
+      NODE_ENV: production
+    networks:
+      - prism
+    ports:
+      - "80:80"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1/"]
+      interval: 15s
+      timeout: 3s
+      retries: 5
+
+volumes:
+  prism_data:
+
+networks:
+  prism:
+    driver: bridge
