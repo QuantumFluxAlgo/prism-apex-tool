@@ -1,0 +1,134 @@
+{
+  "evaluation": [
+    {
+      "id": "eval-profit-target",
+      "name": "Profit Target",
+      "description": "Account must reach profit target without breaching trailing drawdown.",
+      "ruleType": "threshold",
+      "parameters": { "targetUsd": 3000 },
+      "severity": "critical",
+      "appliesTo": "evaluation"
+    },
+    {
+      "id": "eval-trailing-dd",
+      "name": "Trailing Drawdown",
+      "description": "Balance must not fall below trailing drawdown buffer.",
+      "ruleType": "drawdown",
+      "parameters": { "bufferUsd": 2500 },
+      "severity": "critical",
+      "appliesTo": "evaluation"
+    },
+    {
+      "id": "eval-min-days",
+      "name": "Minimum Trading Days",
+      "description": "At least 7 distinct trading days are required before evaluation completion.",
+      "ruleType": "min-days",
+      "parameters": { "minDays": 7 },
+      "severity": "major",
+      "appliesTo": "evaluation"
+    },
+    {
+      "id": "eval-eod-flat",
+      "name": "End of Day Flat",
+      "description": "All positions must be closed by end of trading day.",
+      "ruleType": "flat",
+      "parameters": {},
+      "severity": "major",
+      "appliesTo": "evaluation"
+    },
+    {
+      "id": "eval-resets",
+      "name": "Account Resets",
+      "description": "Number of evaluation resets must not exceed allowance.",
+      "ruleType": "resets",
+      "parameters": { "maxResets": 1 },
+      "severity": "minor",
+      "appliesTo": "evaluation"
+    }
+  ],
+  "funded": [
+    {
+      "id": "funded-stoploss",
+      "name": "Stop-Loss Required",
+      "description": "Every trade must have a stop-loss order attached.",
+      "ruleType": "order-check",
+      "parameters": { "maxRiskReward": 5 },
+      "severity": "critical",
+      "appliesTo": "funded"
+    },
+    {
+      "id": "funded-consistency",
+      "name": "Consistency Rule",
+      "description": "≤30% of total profit in any single day (first phase).",
+      "ruleType": "distribution",
+      "parameters": { "maxPct": 0.3 },
+      "severity": "major",
+      "appliesTo": "funded"
+    },
+    {
+      "id": "funded-scaling",
+      "name": "Half-Contract Scaling",
+      "description": "Position size may only scale by half the previous step.",
+      "ruleType": "scaling",
+      "parameters": { "maxContracts": 5, "scalePct": 0.5 },
+      "severity": "major",
+      "appliesTo": "funded"
+    },
+    {
+      "id": "funded-windfall",
+      "name": "No All-In / Windfall",
+      "description": "Single-day profits may not exceed 50% of total.",
+      "ruleType": "windfall",
+      "parameters": { "maxDayPct": 0.5 },
+      "severity": "major",
+      "appliesTo": "funded"
+    },
+    {
+      "id": "funded-dd-lock",
+      "name": "Trailing Drawdown Lock",
+      "description": "Trailing drawdown locks once profit target achieved.",
+      "ruleType": "dd-lock",
+      "parameters": { "lockUsd": 5000 },
+      "severity": "critical",
+      "appliesTo": "funded"
+    },
+    {
+      "id": "funded-news",
+      "name": "News Trading Ban",
+      "description": "Trading during restricted news events is not allowed.",
+      "ruleType": "news",
+      "parameters": { "allowed": false },
+      "severity": "major",
+      "appliesTo": "funded"
+    }
+  ],
+  "payout": [
+    {
+      "id": "payout-safety-net",
+      "name": "Safety Net",
+      "description": "Balance must remain above safety net after payout.",
+      "ruleType": "safety-net",
+      "parameters": { "minBalance": 1000 },
+      "severity": "major",
+      "appliesTo": "payout"
+    },
+    {
+      "id": "payout-cadence",
+      "name": "Payout Cadence",
+      "description": "Payout requests must be at least 8 days apart.",
+      "ruleType": "cadence",
+      "parameters": { "minDays": 8 },
+      "severity": "minor",
+      "appliesTo": "payout"
+    },
+    {
+      "id": "payout-profit-split",
+      "name": "Profit Split",
+      "description": "Payout percentage must not exceed agreed split.",
+      "ruleType": "profit-split",
+      "parameters": { "payoutPct": 0.9 },
+      "severity": "minor",
+      "appliesTo": "payout"
+    }
+  ]
+}
