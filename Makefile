@@ -100,3 +100,11 @@ calibrate:
 payouts:
 	python payouts/tracker.py
 	@echo "See reports/payouts/summary.json and docs/payouts/calendar.md"
+
+
+
+.PHONY: dashboard
+
+dashboard:
+	npm --prefix frontend install
+	(uvicorn api.dashboard:app --reload &) && npm --prefix frontend run dev
