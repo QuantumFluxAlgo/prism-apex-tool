@@ -24,6 +24,16 @@ const previewSchema = z.object({
   alreadyTouched: z.boolean().optional()
 });
 
+const simplePreviewSchema = z.object({
+  symbol: z.string(),
+  side: z.enum(['BUY','SELL']),
+  entry: z.number(),
+  stop: z.number(),
+  target: z.number(),
+  size: z.number(),
+  mode: z.enum(['evaluation','funded'])
+});
+
 const commitSchema = z.object({ ticket: z.any() });
 
 function evaluate(ticket: Ticket, acct: AccountState, ctx: {
@@ -70,9 +80,31 @@ function evaluate(ticket: Ticket, acct: AccountState, ctx: {
 export async function signalRoutes(app: FastifyInstance) {
   const client = new TradovateClient();
 
+  app.get('/tickets', async () => {
+    const today = new Date().toISOString().slice(0,10);
+    return store.getTicketsForDate(today).map(t => ({
+      id: t.ticket.id,
+      symbol: t.ticket.symbol,
+      side: t.ticket.side,
+      entry: t.ticket.order.entry,
+      stop: t.ticket.order.stop,
+      target: t.ticket.order.targets[0],
+      size: t.ticket.qty,
+      time: t.when,
+    }));
+  });
+
   app.post('/signals/preview', async (req, reply) => {
     const parsed = previewSchema.safeParse(req.body);
-    if (!parsed.success) return reply.code(400).send({ error: 'Invalid payload' });
+    if (!parsed.success) {
+      const simple = simplePreviewSchema.safeParse(req.body);
+      if (!simple.success) return reply.code(400).send({ error: 'Invalid payload' });
+      const { entry, stop, target, size } = simple.data;
+      const rr = Math.abs((target - entry) / (entry - stop));
+      const block = rr > 5;
+      const reasons = block ? ['R:R > 5'] : [];
+      return reply.send({ block, reasons, normalized: { entry, stop, target, size } });
+    }
 
     const { strategy, symbol, contract, cfg, bias, alreadyTouched } = parsed.data;
     const now = new Date();
