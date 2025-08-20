@@ -44,3 +44,22 @@ def log_event(event_type: str, message: str, details: Optional[Dict] = None) -> 
         f.write(json.dumps(entry) + "\n")
 
     logger.info(f"{event_type}: {message}")
+
+
+def read_events(date):
+    """Read audit events for a given date."""
+    path = LOG_DIR / f"audit_{date}.jsonl"
+    events = []
+    if path.exists():
+        with open(path, "r", encoding="utf-8") as f:
+            for line in f:
+                try:
+                    entry = json.loads(line)
+                except json.JSONDecodeError:
+                    continue
+                event = {"type": entry.get("event_type")}
+                details = entry.get("details", {})
+                if isinstance(details, dict):
+                    event.update(details)
+                events.append(event)
+    return events
