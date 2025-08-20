@@ -9,6 +9,8 @@ import csv
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
+from notifications.notify import notify
+
 REPORT_DIR = Path("reports/payouts/")
 REPORT_DIR.mkdir(parents=True, exist_ok=True)
 
@@ -52,6 +54,12 @@ def run_tracker():
     profit_history = [200, -50, 300, 150, -100, 500, 250, 100, 400, 150, -75, 225]
 
     result = calculate_payouts(trading_days, profit_history)
+
+    if result.get("eligible"):
+        notify(
+            "💰 Payout Ready",
+            f"Next payout window opens {result.get('next_payout_date')}",
+        )
 
     # Save JSON
     with open(REPORT_DIR / "summary.json", "w") as f:
