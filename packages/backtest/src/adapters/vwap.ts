@@ -1,5 +1,6 @@
 import type { StrategyAdapter } from '../engine';
 import type { Bar, Signal } from '../types';
+import { withNoopOnTick } from './common';
 
 /**
  * VWAP Pullback – naive MVP: if price is below a rolling VWAP => consider BUY on pullback to VWAP; reverse for SELL.
@@ -8,7 +9,7 @@ import type { Bar, Signal } from '../types';
 export function vwapAdapter(window = 60, riskTicks = 4, targetTicks = 8): StrategyAdapter {
   const state = { pv: 0, vol: 0, ema: 0, alpha: 2 / (window + 1) };
 
-  return {
+  return withNoopOnTick({
     onBar(bar: Bar, hist: Bar[]): Signal[] {
       const px = bar.close;
       let vwap = state.ema;
@@ -33,5 +34,5 @@ export function vwapAdapter(window = 60, riskTicks = 4, targetTicks = 8): Strate
       }
       return signals;
     }
-  };
+  });
 }
