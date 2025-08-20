@@ -19,3 +19,17 @@ jobs:
             git pull origin main
             docker-compose build
             docker-compose up -d
+
+      - name: Notify Slack on Deployment Success
+        if: success()
+        run: |
+          curl -X POST -H 'Content-type: application/json' \
+            --data '{"text":"✅ Prism Apex Tool deployed successfully"}' \
+            ${{ secrets.SLACK_WEBHOOK }}
+
+      - name: Notify Slack on Deployment Failure
+        if: failure()
+        run: |
+          curl -X POST -H 'Content-type: application/json' \
+            --data '{"text":"❌ Prism Apex Tool deployment failed"}' \
+            ${{ secrets.SLACK_WEBHOOK }}

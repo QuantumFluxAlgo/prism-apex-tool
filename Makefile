@@ -101,6 +101,11 @@ payouts:
 	python payouts/tracker.py
 	@echo "See reports/payouts/summary.json and docs/payouts/calendar.md"
 
+.PHONY: notify-test
+
+notify-test:
+	python -c "from notifications.notify import notify; notify('Test Alert','This is a test')"
+
 
 
 .PHONY: dashboard

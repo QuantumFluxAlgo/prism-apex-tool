@@ -41,3 +41,17 @@ jobs:
 
       - name: Run Python tests
         run: pytest
+
+      - name: Notify Slack on CI Success
+        if: success()
+        run: |
+          curl -X POST -H 'Content-type: application/json' \
+            --data '{"text":"✅ CI pipeline passed"}' \
+            ${{ secrets.SLACK_WEBHOOK }}
+
+      - name: Notify Slack on CI Failure
+        if: failure()
+        run: |
+          curl -X POST -H 'Content-type: application/json' \
+            --data '{"text":"❌ CI pipeline failed"}' \
+            ${{ secrets.SLACK_WEBHOOK }}
