@@ -4,17 +4,32 @@ services:
   api:
     build:
       context: .
-      dockerfile: Dockerfile.api
+      dockerfile: apps/api/Dockerfile
+    environment:
+      PORT: 8000
+      # Provide safe dev defaults; override as needed
+      DATA_DIR: /var/lib/prism-apex-tool
+      TRADOVATE_BASE_URL: http://localhost/disabled
+      TRADOVATE_USERNAME: dev
+      TRADOVATE_PASSWORD: dev
+      TRADOVATE_CLIENT_ID: dev
+      TRADOVATE_CLIENT_SECRET: dev
+    volumes:
+      - api-data:/var/lib/prism-apex-tool
     ports:
       - "8000:8000"
-    volumes:
-      - ./reports:/app/reports
 
-  frontend:
+  dashboard:
     build:
       context: .
-      dockerfile: Dockerfile.frontend
-    ports:
-      - "3000:3000"
+      dockerfile: apps/dashboard/Dockerfile
+    environment:
+      # Nginx will reverse-proxy to the API via the hostname "api"
+      API_ORIGIN: "http://api:8000"
     depends_on:
       - api
+    ports:
+      - "8080:80"
+
+volumes:
+  api-data:
