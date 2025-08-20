@@ -1,31 +1,31 @@
-# ---------- Build stage ----------
-FROM node:20-alpine AS builder
-WORKDIR /usr/src/app
+# ---- Build static site ----
+FROM node:20-alpine AS build
+WORKDIR /app
 
-COPY package*.json ./
-COPY apps/dashboard/package*.json apps/dashboard/
-COPY packages/shared/package*.json packages/shared/
+COPY pnpm-workspace.yaml package.json pnpm-lock.yaml* ./
+COPY apps/dashboard/package.json apps/dashboard/
+RUN corepack enable && corepack prepare pnpm@latest --activate
+RUN pnpm install --filter prism-apex-dashboard... --unsafe-perm
 
-RUN npm ci
+# Copy sources needed for dashboard build
+COPY apps/dashboard ./apps/dashboard
+# If UI imports shared packages in the monorepo, include them here too
+COPY packages ./packages
+COPY tsconfig.base.json ./
 
-# Copy sources
-COPY . .
+WORKDIR /app/apps/dashboard
+# Build with base path at /
+RUN pnpm run build
 
-# Build shared first (in case Dashboard imports shared types for typegen)
-RUN npm run build -w packages/shared || true
-
-# Build dashboard static assets
-RUN npm run build -w apps/dashboard
-
-# ---------- Nginx stage ----------
+# ---- Nginx runtime ----
 FROM nginx:1.27-alpine
 WORKDIR /usr/share/nginx/html
 
-# Copy static dist
-COPY --from=builder /usr/src/app/apps/dashboard/dist/ ./
+# Static assets
+COPY --from=build /app/apps/dashboard/dist /usr/share/nginx/html
 
-# Replace default conf
+# Nginx config (expects an existing nginx.conf in the app)
 COPY apps/dashboard/nginx.conf /etc/nginx/conf.d/default.conf
 
 EXPOSE 80
-HEALTHCHECK --interval=15s --timeout=3s --retries=5 CMD wget -qO- http://127.0.0.1/ >/dev/null 2>&1 || exit 1
+CMD ["nginx", "-g", "daemon off;"]
