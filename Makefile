@@ -1,5 +1,5 @@
 SHELL := /bin/bash
-	
+
 .PHONY: help up down seed backtest backtest-tick demo
 help:
 	@echo "Targets:"
@@ -44,7 +44,7 @@ down:
 
 logs:
 		docker compose logs -f
-	
+
 seed:
 	@echo "Seeding API store..."
 	@DATA_DIR=.data node --loader ts-node/esm apps/api/scripts/seed.ts
@@ -121,5 +121,15 @@ dashboard:
 .PHONY: audit-test
 
 audit-test:
-	python -c "from audit.logger import log_event; log_event('SYSTEM_EVENT','Audit system test')"
-	@echo "Check logs/audit/ for new entries"
+        python -c "from audit.logger import log_event; log_event('SYSTEM_EVENT','Audit system test')"
+        @echo "Check logs/audit/ for new entries"
+
+.PHONY: multi-check copy-sim
+
+multi-check:
+	@curl -s http://localhost:8000/api/rules/cross/check | jq .
+
+copy-sim:
+	@curl -s -X POST http://localhost:8000/api/copytrader/preview \
+ -H 'content-type: application/json' \
+ -d '{"traderGroupId":"tg-sean-01","baseAccountId":"Apex-ES-50k-1","symbol":"ES","side":"BUY","entry":5000,"stop":4990,"target":5010,"baseSize":1,"mode":"evaluation"}' | jq .
