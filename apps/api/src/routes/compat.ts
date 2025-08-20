@@ -1,3 +1,4 @@
+// Compat routes for dashboard integration
 import type { FastifyInstance } from 'fastify';
 import { store } from '../store';
 
