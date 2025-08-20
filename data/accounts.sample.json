@@ -1,0 +1,50 @@
+{
+  "traderGroups": [
+    {
+      "id": "tg-sean-01",
+      "name": "Sean — Evaluation",
+      "accounts": [
+        {
+          "id": "Apex-ES-50k-1",
+          "mode": "evaluation",
+          "maxContracts": 2,
+          "symbols": ["ES", "NQ"],
+          "balance": 50500,
+          "trailingDD": 2500,
+          "openPositions": [
+            {"symbol": "ES", "side": "FLAT", "size": 0, "avgPx": 0}
+          ]
+        },
+        {
+          "id": "Apex-ES-50k-2",
+          "mode": "evaluation",
+          "maxContracts": 2,
+          "symbols": ["ES", "NQ"],
+          "balance": 49800,
+          "trailingDD": 2500,
+          "openPositions": [
+            {"symbol": "ES", "side": "FLAT", "size": 0, "avgPx": 0}
+          ]
+        }
+      ]
+    },
+    {
+      "id": "tg-sean-02",
+      "name": "Sean — Funded",
+      "accounts": [
+        {
+          "id": "PA-ES-50k-1",
+          "mode": "funded",
+          "maxContracts": 2,
+          "symbols": ["ES"],
+          "balance": 52000,
+          "trailingDD": 2500,
+          "bufferAchieved": false,
+          "openPositions": [
+            {"symbol": "ES", "side": "FLAT", "size": 0, "avgPx": 0}
+          ]
+        }
+      ]
+    }
+  ]
+}
