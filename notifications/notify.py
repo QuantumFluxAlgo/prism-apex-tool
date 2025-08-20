@@ -2,6 +2,7 @@
 
 from .slack import send_slack
 from .email import send_email
+from audit.logger import log_event
 
 
 def notify(subject: str, body: str):
@@ -15,3 +16,5 @@ def notify(subject: str, body: str):
         send_email(subject, body)
     except Exception as e:
         print("Email error:", e)
+
+    log_event("SYSTEM_EVENT", f"Alert sent: {subject}", {"body": body})
