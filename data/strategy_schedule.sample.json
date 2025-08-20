@@ -1,0 +1,27 @@
+{
+  "default": "OFF",
+  "windows": [
+    {
+      "strategy": "ORB",
+      "startGMT": "14:30",
+      "endGMT": "15:00"
+    },
+    {
+      "strategy": "VWAP",
+      "startGMT": "15:00",
+      "endGMT": "20:50"
+    }
+  ],
+  "restrictions": [
+    {
+      "reason": "EOD flat",
+      "startGMT": "20:50",
+      "endGMT": "21:15"
+    },
+    {
+      "reason": "CPI report",
+      "startGMT": "13:25",
+      "endGMT": "13:45"
+    }
+  ]
+}
