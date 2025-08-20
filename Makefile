@@ -144,4 +144,9 @@ strat-sim:
 
 .PHONY: simulate
 simulate:
-	python simulator/run_simulation.py --input data/ES_1m.sample.csv --strategy ALL
+        python simulator/run_simulation.py --input data/ES_1m.sample.csv --strategy ALL
+
+.PHONY: panic
+
+panic:
+	curl -X POST http://localhost:8000/api/panic?operator=cli
