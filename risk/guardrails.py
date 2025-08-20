@@ -1,9 +1,9 @@
 """Risk Guardrails for Apex Compliance
 
-Checks whether strategy results adhere to Apex Trader Funding rules.
-"""
+Checks whether strategy results adhere to Apex Trader Funding rules."""
 
 from notifications.notify import notify
+from audit.logger import log_event
 
 
 def check_apex_rules(perf: dict) -> dict:
@@ -19,6 +19,9 @@ def check_apex_rules(perf: dict) -> dict:
 
     if breaches:
         notify("🚨 Guardrail Breach", f"Breaches detected: {', '.join(breaches)}")
+        log_event("RULE_CHECK", "Breaches detected", {"breaches": breaches})
+    else:
+        log_event("RULE_CHECK", "All guardrails passed")
 
     return {
         "rule_breaches": breaches,
