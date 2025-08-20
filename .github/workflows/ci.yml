@@ -1,57 +1,113 @@
 name: CI
 
 on:
-  pull_request:
   push:
-    branches: [develop]
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+
+permissions:
+  contents: read
 
 jobs:
   build-test:
+    name: Install • Typecheck • Test • Build • API smoke
     runs-on: ubuntu-latest
+
+    env:
+      NODE_ENV: test
+      # Safe dummy env so API can boot
+      PORT: 8000
+      DATA_DIR: /home/runner/work/prism-apex-tool/prism-apex-tool/.ci-data
+      TRADOVATE_BASE_URL: http://localhost/disabled
+      TRADOVATE_USERNAME: dev
+      TRADOVATE_PASSWORD: dev
+      TRADOVATE_CLIENT_ID: dev
+      TRADOVATE_CLIENT_SECRET: dev
+
     steps:
-      - uses: actions/checkout@v3
+      - name: Checkout
+        uses: actions/checkout@v4
 
-      - name: Set up Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: '3.11'
-
-      - name: Install dependencies
-        run: pip install -r requirements.txt
-
-      - name: Run calibration sweeps
-        run: make calibrate
-
-      - name: Lint Python
-        run: flake8 .
-
-      - name: Set up Node
-        uses: actions/setup-node@v3
+      - name: Setup Node with Corepack
+        uses: actions/setup-node@v4
         with:
           node-version: '20'
+          cache: 'pnpm'
 
-      - name: Lint frontend
-        run: cd frontend && npm install && npm run lint
+      - name: Enable Corepack
+        run: corepack enable
 
-      - name: Build API image
-        run: docker build -f Dockerfile.api -t prism-apex-api:ci .
-
-      - name: Build frontend image
-        run: docker build -f Dockerfile.frontend -t prism-apex-frontend:ci .
-
-      - name: Run Python tests
-        run: pytest
-
-      - name: Notify Slack on CI Success
-        if: success()
+      - name: Use pnpm version from lockfile (if present)
         run: |
-          curl -X POST -H 'Content-type: application/json' \
-            --data '{"text":"✅ CI pipeline passed"}' \
-            ${{ secrets.SLACK_WEBHOOK }}
+          if [ -f pnpm-lock.yaml ]; then
+            corepack use pnpm
+          fi
 
-      - name: Notify Slack on CI Failure
-        if: failure()
+      - name: Install dependencies (pnpm)
+        run: pnpm install --frozen-lockfile=false
+
+      - name: Typecheck (workspaces)
+        run: pnpm -w run typecheck
+
+      - name: Unit tests (workspaces)
+        run: pnpm -w run test
+
+      - name: Build all (workspaces)
+        run: pnpm -w run build
+
+      - name: Prepare API data dir
+        run: mkdir -p "$DATA_DIR"
+
+      - name: Start API (prod bundle)
+        working-directory: apps/api
         run: |
-          curl -X POST -H 'Content-type: application/json' \
-            --data '{"text":"❌ CI pipeline failed"}' \
-            ${{ secrets.SLACK_WEBHOOK }}
+          nohup node --enable-source-maps dist/index.js > ../../.api.log 2>&1 &
+          echo $! > ../../.api.pid
+          # Wait for health
+          for i in $(seq 1 30); do
+            sleep 1
+            STATUS=$(curl -s -o /dev/null -w "%{http_code}" http://127.0.0.1:8000/health || true)
+            if [ "$STATUS" = "200" ]; then
+              echo "API is healthy"
+              exit 0
+            fi
+          done
+          echo "API failed to become healthy" >&2
+          echo "---- API LOG ----"
+          tail -n +1 ../../.api.log || true
+          exit 1
+
+      - name: Smoke: GET /health
+        run: |
+          curl -sv http://127.0.0.1:8000/health
+
+      - name: Stop API
+        if: always()
+        run: |
+          if [ -f .api.pid ]; then
+            kill $(cat .api.pid) || true
+          fi
+
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node with Corepack
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+
+      - name: Enable Corepack
+        run: corepack enable
+
+      - name: Install deps
+        run: pnpm install --frozen-lockfile=false
+
+      - name: Lint (root)
+        run: pnpm -w run lint
