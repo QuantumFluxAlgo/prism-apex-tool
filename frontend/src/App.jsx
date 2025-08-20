@@ -9,6 +9,7 @@ import {
   Tooltip,
   Legend
 } from "recharts";
+import MultiAccounts from "./components/MultiAccounts";
 
 function App() {
   const [performance, setPerformance] = useState({});
@@ -89,6 +90,12 @@ function App() {
               </LineChart>
             </ResponsiveContainer>
           </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardContent>
+          <MultiAccounts />
         </CardContent>
       </Card>
     </div>
