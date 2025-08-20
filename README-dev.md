@@ -1,79 +1,67 @@
-# Local Development (API + Dashboard)
+# Local Development & Production Parity
 
-This guide gets both services running locally in two terminals with proxy wiring, health checks, **and demo data seeding**.
-
-## Prereqs
-- Node 20+ and `pnpm` (Corepack):
+## Dev (two terminals)
+- **API** (Terminal A):
   ```bash
-  corepack enable
-  corepack prepare pnpm@latest --activate
+  ./dev_api.sh
+  # http://localhost:8000/health -> {"ok":true}
+  ```
 
-From repo root, install deps once:
+Dashboard (Terminal B):
 
-pnpm install --no-frozen-lockfile
-
-1) Prepare API env
-
-Create a local env file (or use defaults):
-
-cp apps/api/.env.local.example apps/api/.env.local
-# edit values if you have real credentials; otherwise leave as-is for dev
-
-2) Start the API
-
-In Terminal A (repo root):
-
-./dev_api.sh
-
-
-Health check:
-
-curl -s http://localhost:8000/health
-# -> {"ok":true}
-
-3) Start the Dashboard
-
-In Terminal B (repo root):
-
+```bash
 ./dev_dashboard.sh
+# http://localhost:3000
+```
 
+Seed demo data (optional):
 
-Open http://localhost:3000
-
-The Vite proxy is configured so the dashboard calls /api/* which is rewritten to the API.
-
-4) (Optional) Seed demo data
-
-Populate Alerts, Tickets, and Risk with one command (API must be running):
-
+```bash
 ./seed_demo.sh
+```
 
+Production-like (Docker)
 
-Sanity:
+Build and run both services locally like prod:
 
-# Through Vite proxy
-curl -s http://localhost:3000/api/alerts | jq .
-# Direct API
-curl -s "http://localhost:8000/alerts/queue?limit=50" | jq .
+```bash
+docker compose build
+docker compose up
+```
 
-Troubleshooting
+Dashboard: http://localhost:8080
 
-Port 3000 or 8000 already in use
+API: http://localhost:8000
 
-Change the port in apps/dashboard/vite.config.* (server.port) or in apps/api/.env.local (PORT), then restart the corresponding script.
+Data persists in api-data volume at /var/lib/prism-apex-tool inside the API container.
 
-CORS/Proxy issues
+Rebuild only one service
+```bash
+docker compose build api && docker compose up -d api
+docker compose build dashboard && docker compose up -d dashboard
+```
 
-In dev, use /api/* from the web app (Vite will proxy to the API). Calling the API directly from the browser can hit CORS.
+Logs
+```bash
+docker compose logs -f api
+docker compose logs -f dashboard
+```
 
-Empty UI
+Tear down
+```bash
+docker compose down -v
+```
 
-Run ./seed_demo.sh to load demo Alerts/Tickets/Risk.
+Notes / Gotchas
 
-ESBuild “loader must be a string”
+API build uses tsup (CJS output). Dev continues to use tsx.
 
-Ensure apps/dashboard/vite.config.ts includes JSX loader lines and restart pnpm run dev.
+Dashboard is static and served by nginx. nginx.conf should proxy /api/* to http://api:8000 (container hostname).
 
-Clear Vite cache if needed:
+If you change ports, also update:
 
-rm -rf apps/dashboard/node_modules/.vite
+Vite proxy (dev): apps/dashboard/vite.config.ts
+
+Compose port mappings (prod-like): docker-compose.yml
+
+If your UI references monorepo packages, ensure they’re copied in Docker build context (we already copy packages/).
