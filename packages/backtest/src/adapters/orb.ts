@@ -1,5 +1,6 @@
 import type { StrategyAdapter } from '../engine';
 import type { Bar, Signal } from '../types';
+import { withNoopOnTick } from './common';
 
 /**
  * Opening Range Breakout (ORB) – define first N minutes range; breakout generates a signal.
@@ -10,7 +11,7 @@ export function openingRangeAdapter(rangeMinutes = 15, riskR = 1, targetR = 2): 
   let refHigh = Number.NEGATIVE_INFINITY;
   let refLow = Number.POSITIVE_INFINITY;
 
-  return {
+  return withNoopOnTick({
     onBar(bar: Bar, hist: Bar[]): Signal[] {
       const date = bar.ts.slice(0, 10);
       const minute = new Date(bar.ts).getUTCMinutes();
@@ -52,5 +53,5 @@ export function openingRangeAdapter(rangeMinutes = 15, riskR = 1, targetR = 2): 
       }
       return signals;
     }
-  };
+  });
 }
