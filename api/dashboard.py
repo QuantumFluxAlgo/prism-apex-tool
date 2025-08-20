@@ -12,12 +12,16 @@ from api.copytrader import router as copy_router
 from api.jobs_multi import start_multi_job
 from api.strategy_switch import router as strategy_router
 from api.jobs_scheduler import start_scheduler_job
+from api.health import router as health_router
+from api.panic import router as panic_router
 
 app = FastAPI()
 app.include_router(accounts_router)
 app.include_router(rules_cross_router)
 app.include_router(copy_router)
 app.include_router(strategy_router)
+app.include_router(health_router)
+app.include_router(panic_router)
 start_multi_job(app, every_sec=30)
 start_scheduler_job(every_sec=30)
 
