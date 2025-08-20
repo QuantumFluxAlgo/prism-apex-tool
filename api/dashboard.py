@@ -6,8 +6,16 @@ Serves performance, guardrail, payout, and calibration summaries.
 from fastapi import FastAPI
 import json
 from pathlib import Path
+from api.accounts import router as accounts_router
+from api.rules_cross import router as rules_cross_router
+from api.copytrader import router as copy_router
+from api.jobs_multi import start_multi_job
 
 app = FastAPI()
+app.include_router(accounts_router)
+app.include_router(rules_cross_router)
+app.include_router(copy_router)
+start_multi_job(app, every_sec=30)
 
 REPORTS = Path("reports/")
 
