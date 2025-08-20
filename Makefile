@@ -63,11 +63,9 @@ demo:
 
 .PHONY: release deploy
 
-# Create a signed tag and push (CI will build & deploy)
 release:
-	@if [ -z "$$TAG" ]; then echo "Usage: make release TAG=v0.1.0"; exit 2; fi
-	git tag -a $$TAG -m "Release $$TAG"
-	git push origin $$TAG
+	@if [ -z "$(VERSION)" ]; then echo "Usage: make release VERSION=vX.Y.Z"; exit 1; fi
+	bash scripts/release_tag.sh $(VERSION)
 
 # Convenience local wrapper to call remote deploy script (requires same secrets exported)
 deploy:
@@ -144,7 +142,7 @@ strat-sim:
 
 .PHONY: simulate
 simulate:
-        python simulator/run_simulation.py --input data/ES_1m.sample.csv --strategy ALL
+	python simulator/run_simulation.py --input data/ES_1m.sample.csv --strategy ALL
 
 .PHONY: panic
 
