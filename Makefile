@@ -113,3 +113,9 @@ notify-test:
 dashboard:
 	npm --prefix frontend install
 	(uvicorn api.dashboard:app --reload &) && npm --prefix frontend run dev
+
+.PHONY: audit-test
+
+audit-test:
+	python -c "from audit.logger import log_event; log_event('SYSTEM_EVENT','Audit system test')"
+	@echo "Check logs/audit/ for new entries"
