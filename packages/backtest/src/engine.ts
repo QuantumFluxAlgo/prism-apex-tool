@@ -1,6 +1,6 @@
 import type { Bar, BacktestConfig, Signal, BacktestResult, Fill } from './types';
 import { withinSession, rng } from './util';
-import { simulateTrade } from './fills';
+import { DefaultBarFill } from './fills';
 import { checkCompliance } from '../../api-compat/rulesEngineCompat'; // shim to Prompt 24
 
 export type StrategyAdapter = {
@@ -25,7 +25,7 @@ export function runBacktest(data: Bar[], strat: StrategyAdapter, cfg: BacktestCo
     for (const s of signals) {
       // EOD flat enforced later; here we simulate fills on subsequent bars
       const rest = data.slice(i); // from this bar forward
-      const f = simulateTrade(rest, s, cfg, rngf);
+      const f = DefaultBarFill.run(rest, s, cfg, rngf);
       if (f) {
         fills.push(f);
         const d = bar.ts.slice(0, 10);

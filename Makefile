@@ -1,6 +1,6 @@
 SHELL := /bin/bash
 	
-.PHONY: help up down seed backtest demo
+.PHONY: help up down seed backtest backtest-tick demo
 help:
 	@echo "Targets:"
 	@echo "  deps           Install deps"
@@ -50,9 +50,13 @@ seed:
 	@DATA_DIR=.data node --loader ts-node/esm apps/api/scripts/seed.ts
 
 backtest:
-	@echo "Running sample backtest (ORB, ES 1m)..."
-	@mkdir -p out
-	@./node_modules/.bin/tsx apps/cli/src/backtest.ts --strategy=ORB --data=data/ES_1m.sample.csv --mode=evaluation --open=14:30 --close=21:59 --tickValue=50 --seed=42 --out=out/es_orb_sample
+        @echo "Running sample backtest (ORB, ES 1m)..."
+        @mkdir -p out
+        @./node_modules/.bin/tsx apps/cli/src/backtest.ts --strategy=ORB --data=data/ES_1m.sample.csv --mode=evaluation --open=14:30 --close=21:59 --tickValue=50 --seed=42 --out=out/es_orb_sample
+
+.PHONY: backtest-tick
+backtest-tick:
+        @node apps/cli/dist/backtest.js --strategy=ORB --modeReplay=tick --tickData=data/ES_ticks.sample.csv --mode=evaluation --open=14:30 --close=21:59 --tickValue=50 --seed=42 --out=out/es_orb_tick
 
 demo:
 	@bash apps/cli/scripts/demo.sh

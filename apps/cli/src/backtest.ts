@@ -1,6 +1,8 @@
 #!/usr/bin/env node
 import { loadCSV, saveJSON, saveCSV } from '../../../packages/backtest/src/io';
 import { runBacktest } from '../../../packages/backtest/src/engine';
+import { loadTickCSV } from '../../../packages/backtest/src/tick/io';
+import { runTickReplay } from '../../../packages/backtest/src/tick/engine';
 import { openingRangeAdapter } from '../../../packages/backtest/src/adapters/orb';
 import { vwapAdapter } from '../../../packages/backtest/src/adapters/vwap';
 import type { BacktestConfig } from '../../../packages/backtest/src/types';
@@ -9,9 +11,11 @@ function parseArgs() {
   const args = Object.fromEntries(process.argv.slice(2).map(s => s.split('=')));
   return {
     strategy: (args['--strategy'] || 'ORB') as 'ORB'|'VWAP',
-    data: String(args['--data']),
+    data: String(args['--data'] || ''),
+    tickData: args['--tickData'] ? String(args['--tickData']) : '',
     out: String(args['--out'] || 'backtest'),
     mode: (args['--mode'] || 'evaluation') as 'evaluation'|'funded',
+    replay: (args['--modeReplay'] || 'bar') as 'bar'|'tick',
     tickValue: Number(args['--tickValue'] || 50),
     rngSeed: args['--seed'] ? Number(args['--seed']) : 1,
     sessionOpen: args['--open'] || '14:30',
@@ -22,7 +26,6 @@ function parseArgs() {
 
 (async () => {
   const a = parseArgs();
-  const data = loadCSV(a.data);
   const cfg: BacktestConfig = {
     symbol: 'ES',
     barInterval: '1m',
@@ -37,6 +40,18 @@ function parseArgs() {
   };
 
   const strat = a.strategy === 'ORB' ? openingRangeAdapter(15, 1, 2) : vwapAdapter(60, 4, 8);
+
+  if (a.replay === 'tick') {
+    const ticks = loadTickCSV(a.tickData);
+    const res = runTickReplay(ticks as any, strat as any, cfg);
+    saveJSON(`${a.out}.json`, res);
+    saveCSV(`${a.out}-fills.csv`, res.fills as any);
+    saveCSV(`${a.out}-daily.csv`, res.daily as any);
+    console.log(JSON.stringify(res.summary, null, 2));
+    return;
+  }
+
+  const data = loadCSV(a.data);
   const res = runBacktest(data, strat, cfg);
 
   saveJSON(`${a.out}.json`, res);
