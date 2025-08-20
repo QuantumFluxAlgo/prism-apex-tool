@@ -14,6 +14,7 @@ from api.strategy_switch import router as strategy_router
 from api.jobs_scheduler import start_scheduler_job
 from api.health import router as health_router
 from api.panic import router as panic_router
+from api.analytics import router as analytics_router
 
 app = FastAPI()
 app.include_router(accounts_router)
@@ -22,6 +23,7 @@ app.include_router(copy_router)
 app.include_router(strategy_router)
 app.include_router(health_router)
 app.include_router(panic_router)
+app.include_router(analytics_router)
 start_multi_job(app, every_sec=30)
 start_scheduler_job(every_sec=30)
 
