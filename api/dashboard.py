@@ -10,12 +10,16 @@ from api.accounts import router as accounts_router
 from api.rules_cross import router as rules_cross_router
 from api.copytrader import router as copy_router
 from api.jobs_multi import start_multi_job
+from api.strategy_switch import router as strategy_router
+from api.jobs_scheduler import start_scheduler_job
 
 app = FastAPI()
 app.include_router(accounts_router)
 app.include_router(rules_cross_router)
 app.include_router(copy_router)
+app.include_router(strategy_router)
 start_multi_job(app, every_sec=30)
+start_scheduler_job(every_sec=30)
 
 REPORTS = Path("reports/")
 

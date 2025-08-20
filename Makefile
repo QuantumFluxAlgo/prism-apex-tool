@@ -133,3 +133,11 @@ copy-sim:
 	@curl -s -X POST http://localhost:8000/api/copytrader/preview \
  -H 'content-type: application/json' \
  -d '{"traderGroupId":"tg-sean-01","baseAccountId":"Apex-ES-50k-1","symbol":"ES","side":"BUY","entry":5000,"stop":4990,"target":5010,"baseSize":1,"mode":"evaluation"}' | jq .
+
+.PHONY: strat-now strat-sim
+
+strat-now:
+	@curl -s http://localhost:8000/api/strategy/active | jq .
+
+strat-sim:
+	@python scripts/simulate_strategy_day.py
