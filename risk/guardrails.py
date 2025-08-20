@@ -1,8 +1,10 @@
-"""
-Risk Guardrails for Apex Compliance
+"""Risk Guardrails for Apex Compliance
 
 Checks whether strategy results adhere to Apex Trader Funding rules.
 """
+
+from notifications.notify import notify
+
 
 def check_apex_rules(perf: dict) -> dict:
     breaches = []
@@ -15,8 +17,11 @@ def check_apex_rules(perf: dict) -> dict:
     if perf.get("consistency_pct", 0) > 30:
         breaches.append("consistency")
 
+    if breaches:
+        notify("🚨 Guardrail Breach", f"Breaches detected: {', '.join(breaches)}")
+
     return {
         "rule_breaches": breaches,
         "breach_count": len(breaches),
-        "pass": len(breaches) == 0
+        "pass": len(breaches) == 0,
     }
