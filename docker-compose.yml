@@ -5,31 +5,38 @@ services:
     build:
       context: .
       dockerfile: apps/api/Dockerfile
+    container_name: prism-api
     environment:
+      NODE_ENV: production
       PORT: 8000
-      # Provide safe dev defaults; override as needed
       DATA_DIR: /var/lib/prism-apex-tool
-      TRADOVATE_BASE_URL: http://localhost/disabled
-      TRADOVATE_USERNAME: dev
-      TRADOVATE_PASSWORD: dev
-      TRADOVATE_CLIENT_ID: dev
-      TRADOVATE_CLIENT_SECRET: dev
+      # Safe placeholders; override via .env
+      TRADOVATE_BASE_URL: ${TRADOVATE_BASE_URL:-http://localhost/disabled}
+      TRADOVATE_USERNAME: ${TRADOVATE_USERNAME:-dev}
+      TRADOVATE_PASSWORD: ${TRADOVATE_PASSWORD:-dev}
+      TRADOVATE_CLIENT_ID: ${TRADOVATE_CLIENT_ID:-dev}
+      TRADOVATE_CLIENT_SECRET: ${TRADOVATE_CLIENT_SECRET:-dev}
     volumes:
-      - api-data:/var/lib/prism-apex-tool
+      - ./data:/var/lib/prism-apex-tool
     ports:
       - "8000:8000"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 5s
+      timeout: 3s
+      retries: 15
 
   dashboard:
     build:
       context: .
       dockerfile: apps/dashboard/Dockerfile
-    environment:
-      # Nginx will reverse-proxy to the API via the hostname "api"
-      API_ORIGIN: "http://api:8000"
+    container_name: prism-dashboard
     depends_on:
-      - api
+      api:
+        condition: service_healthy
     ports:
-      - "8080:80"
-
-volumes:
-  api-data:
+      - "3000:80"   # Nginx serves built dashboard on port 80
+    environment:
+      # Nginx uses service DNS name "api" on port 8000; no env needed here.
+      # This is present to allow future templating if required.
+      API_BASE_URL: http://api:8000
