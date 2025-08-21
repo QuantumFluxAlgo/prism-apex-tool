@@ -2,9 +2,9 @@ name: CI
 
 on:
   push:
-    branches: [ main, master ]
+    branches: [main, master]
   pull_request:
-    branches: [ main, master ]
+    branches: [main, master]
 
 permissions:
   contents: read
@@ -78,9 +78,9 @@ jobs:
           tail -n +1 ../../.api.log || true
           exit 1
 
-      - name: Smoke: GET /health
+      - name: 'Smoke: GET /health'
         run: |
-          curl -sv http://127.0.0.1:8000/health
+          curl -sSf http://127.0.0.1:8000/health | jq -e '.ok == true'
 
       - name: Stop API
         if: always()
