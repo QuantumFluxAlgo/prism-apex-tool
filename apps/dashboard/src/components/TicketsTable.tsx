@@ -14,7 +14,20 @@ export function TicketsTable() {
   const [tickets, setTickets] = useState<Ticket[]>([]);
 
   useEffect(() => {
-    api.get('/tickets').then(setTickets).catch(() => {});
+    api
+      .get('/tickets')
+      .then((rows: any[]) => {
+        const mapped = rows.map((r: any) => ({
+          symbol: r.ticket.symbol,
+          side: r.ticket.side,
+          entry: r.ticket.entry,
+          stop: r.ticket.stop,
+          target: r.ticket.targets?.[0],
+          time: new Date(r.when).toLocaleTimeString(),
+        }));
+        setTickets(mapped);
+      })
+      .catch(() => {});
   }, []);
 
   return (

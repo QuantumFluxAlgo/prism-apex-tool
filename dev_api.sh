@@ -12,6 +12,11 @@ err() { printf "\033[1;31m[dev:api]\033[0m %s\n" "$*" >&2; }
 export PORT="${PORT:-8000}"
 export HOST="${HOST:-0.0.0.0}"
 export DATA_DIR="${DATA_DIR:-/var/lib/prism-apex-tool}"
+export TRADOVATE_BASE_URL="${TRADOVATE_BASE_URL:-http://localhost/disabled}"
+export TRADOVATE_USERNAME="${TRADOVATE_USERNAME:-dev}"
+export TRADOVATE_PASSWORD="${TRADOVATE_PASSWORD:-dev}"
+export TRADOVATE_CLIENT_ID="${TRADOVATE_CLIENT_ID:-dev}"
+export TRADOVATE_CLIENT_SECRET="${TRADOVATE_CLIENT_SECRET:-dev}"
 
 # Load local env (if present)
 ENV_FILE="apps/api/.env.local"

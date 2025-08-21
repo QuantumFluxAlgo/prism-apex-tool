@@ -10,6 +10,7 @@
     "start:prod": "node --enable-source-maps dist/index.js"
   },
   "dependencies": {
+    "@fastify/cors": "^8.4.2",
     "fastify": "^4.29.1",
     "zod": "^4.0.17"
   },
