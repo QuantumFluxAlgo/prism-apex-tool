@@ -10,8 +10,8 @@ export default defineConfig({
       '/api': {
         target: 'http://localhost:8000',
         changeOrigin: true,
-        // "/api/x" -> "/compat/x"
-        rewrite: (p) => p.replace(/^\/api(?=\/|$)/, '/compat'),
+        // remove leading /api, then forward to API server
+        rewrite: (p) => p.replace(/^\/api/, ''),
       },
     },
   },
@@ -19,4 +19,3 @@ export default defineConfig({
   optimizeDeps: { esbuildOptions: { loader: { '.js': 'jsx' } } },
   esbuild: { jsx: 'automatic', loader: { '.js': 'jsx' } },
 });
-

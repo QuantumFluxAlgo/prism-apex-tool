@@ -10,6 +10,7 @@ import { exportRoutes } from './routes/export';
 import { notifyRoutes } from './routes/notify';
 import { jobsRoutes } from './routes/jobs';
 import { openapiRoute } from './routes/openapi';
+import { compatRoutes } from './routes/compat';
 
 import { registerJob, startJobs } from './jobs/scheduler';
 import { jobEodFlat } from './jobs/eodFlat';
@@ -34,9 +35,10 @@ export function buildServer() {
   app.register(notifyRoutes);
   app.register(jobsRoutes);
   app.register(openapiRoute);
+  app.register(compatRoutes, { prefix: '/compat' });
 
   // ---- Jobs ----
-  registerJob('EOD_FLAT', 60_000, jobEodFlat);          // check every 60s (phased logic within)
+  registerJob('EOD_FLAT', 60_000, jobEodFlat); // check every 60s (phased logic within)
   registerJob('MISSING_BRACKETS', 15_000, jobMissingBrackets);
   registerJob('DAILY_LOSS', 60_000, jobDailyLoss);
   registerJob('CONSISTENCY', 300_000, jobConsistency);
