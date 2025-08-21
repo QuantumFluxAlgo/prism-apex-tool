@@ -1,41 +1,46 @@
-# ---- Build (install dev deps to run tsup) ----
+# ---- Build stage ----
 FROM node:20-alpine AS build
+
 WORKDIR /app
+# Enable corepack to use pnpm reliably
+RUN corepack enable
 
-# Workspaces-friendly installs: copy root files first
-COPY pnpm-workspace.yaml package.json pnpm-lock.yaml* ./
-# Copy API package manifest to ensure correct hoisting
-COPY apps/api/package.json apps/api/
-# Install only needed dependencies for building
-RUN corepack enable && corepack prepare pnpm@latest --activate
-RUN pnpm install --filter @prism-apex-tool/api... --unsafe-perm
+# Copy only manifests first for better layer caching
+COPY package.json pnpm-lock.yaml ./
+# Include workspace manifests for linking
+COPY apps/api/package.json apps/api/package.json
+COPY packages packages
+COPY apps apps
+COPY sdks sdks
+COPY tests tests
+COPY tsconfig.base.json tsconfig.base.json
 
-# Copy source
-COPY tsconfig.base.json ./
-COPY apps/api ./apps/api
-COPY packages ./packages
+# Install deps for entire workspace (no postinstall scripts)
+RUN pnpm install --frozen-lockfile=false
 
-# Build API
-WORKDIR /app/apps/api
-RUN pnpm run build
+# Build the workspace (types + bundles)
+RUN pnpm -w run build
 
-# ---- Runtime (lean) ----
+# ---- Runtime stage ----
 FROM node:20-alpine AS runtime
-WORKDIR /srv/api
 
+WORKDIR /app
 ENV NODE_ENV=production
 ENV PORT=8000
-EXPOSE 8000
-
-# A writable data dir for local state
 ENV DATA_DIR=/var/lib/prism-apex-tool
-RUN mkdir -p ${DATA_DIR}
 
-# Copy built artifacts and prod deps
-COPY --from=build /app/apps/api/dist ./dist
-COPY --from=build /app/apps/api/package.json ./package.json
-# Install production-only deps for runtime
-RUN corepack enable && corepack prepare pnpm@latest --activate \
- && pnpm install --prod --ignore-scripts
+# Minimal runtime deps
+RUN apk add --no-cache curl
 
-CMD ["node", "--enable-source-maps", "dist/index.js"]
+# Copy built dist for API only
+COPY --from=build /app/apps/api/dist ./apps/api/dist
+# Copy package.json to allow "node dist/index.js" and any runtime resolves
+COPY --from=build /app/apps/api/package.json ./apps/api/package.json
+
+# Non-root user (optional hardening)
+RUN addgroup -S app && adduser -S app -G app
+USER app
+
+EXPOSE 8000
+WORKDIR /app/apps/api
+CMD ["node", "dist/index.js"]
