@@ -1,30 +1,32 @@
-# ---- Build static site ----
+# ---- Build stage ----
 FROM node:20-alpine AS build
+
 WORKDIR /app
+RUN corepack enable
 
-COPY pnpm-workspace.yaml package.json pnpm-lock.yaml* ./
-COPY apps/dashboard/package.json apps/dashboard/
-RUN corepack enable && corepack prepare pnpm@latest --activate
-RUN pnpm install --filter prism-apex-dashboard... --unsafe-perm
+# Copy manifests for cache
+COPY package.json pnpm-lock.yaml ./
+COPY apps/dashboard/package.json apps/dashboard/package.json
+COPY apps apps
+COPY packages packages
+COPY sdks sdks
+COPY tests tests
+COPY tsconfig.base.json tsconfig.base.json
 
-# Copy sources needed for dashboard build
-COPY apps/dashboard ./apps/dashboard
-# If UI imports shared packages in the monorepo, include them here too
-COPY packages ./packages
-COPY tsconfig.base.json ./
+# Install deps
+RUN pnpm install --frozen-lockfile=false
 
+# Build dashboard only (avoid building all if desired)
 WORKDIR /app/apps/dashboard
-# Build with base path at /
 RUN pnpm run build
 
-# ---- Nginx runtime ----
-FROM nginx:1.27-alpine
-WORKDIR /usr/share/nginx/html
+# ---- Nginx stage ----
+FROM nginx:1.27-alpine AS runtime
 
-# Static assets
+# Copy static build
 COPY --from=build /app/apps/dashboard/dist /usr/share/nginx/html
 
-# Nginx config (expects an existing nginx.conf in the app)
+# Nginx config to proxy /api -> http://api:8000
 COPY apps/dashboard/nginx.conf /etc/nginx/conf.d/default.conf
 
 EXPOSE 80
