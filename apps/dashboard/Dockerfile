@@ -28,9 +28,10 @@ ENV NODE_ENV=production
 # Copy static build
 COPY --from=build /app/apps/dashboard/dist /usr/share/nginx/html
 
-# Nginx config to proxy /api -> http://api:8000
+# Use our nginx config
 COPY apps/dashboard/nginx.conf /etc/nginx/conf.d/default.conf
 
+# Expose HTTP
 EXPOSE 80
-USER nginx
+
 CMD ["nginx", "-g", "daemon off;"]
