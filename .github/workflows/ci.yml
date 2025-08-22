@@ -2,112 +2,101 @@ name: CI
 
 on:
   push:
-    branches: [main, master]
+    branches: ["**"]
   pull_request:
-    branches: [main, master]
+    branches: ["**"]
 
-permissions:
-  contents: read
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   build-test:
-    name: Install • Typecheck • Test • Build • API smoke
     runs-on: ubuntu-latest
-
-    env:
-      NODE_ENV: test
-      # Safe dummy env so API can boot
-      PORT: 8000
-      DATA_DIR: /home/runner/work/prism-apex-tool/prism-apex-tool/.ci-data
-      TRADOVATE_BASE_URL: http://localhost/disabled
-      TRADOVATE_USERNAME: dev
-      TRADOVATE_PASSWORD: dev
-      TRADOVATE_CLIENT_ID: dev
-      TRADOVATE_CLIENT_SECRET: dev
+    timeout-minutes: 30
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Setup Node with Corepack
+      - name: Setup Node
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
-          cache: 'pnpm'
+          node-version: "20"
+          cache: "pnpm"
 
-      - name: Enable Corepack
-        run: corepack enable
-
-      - name: Use pnpm version from lockfile (if present)
+      - name: Enable corepack / pnpm
         run: |
-          if [ -f pnpm-lock.yaml ]; then
-            corepack use pnpm
-          fi
-
-      - name: Install dependencies (pnpm)
-        run: pnpm install --frozen-lockfile=false
-
-      - name: Typecheck (workspaces)
-        run: pnpm -w run typecheck
-
-      - name: Unit tests (workspaces)
-        run: pnpm -w run test
-
-      - name: Build all (workspaces)
-        run: pnpm -w run build
-
-      - name: Prepare API data dir
-        run: mkdir -p "$DATA_DIR"
-
-      - name: Start API (prod bundle)
-        working-directory: apps/api
-        run: |
-          nohup node --enable-source-maps dist/index.js > ../../.api.log 2>&1 &
-          echo $! > ../../.api.pid
-          # Wait for health
-          for i in $(seq 1 30); do
-            sleep 1
-            STATUS=$(curl -s -o /dev/null -w "%{http_code}" http://127.0.0.1:8000/health || true)
-            if [ "$STATUS" = "200" ]; then
-              echo "API is healthy"
-              exit 0
-            fi
-          done
-          echo "API failed to become healthy" >&2
-          echo "---- API LOG ----"
-          tail -n +1 ../../.api.log || true
-          exit 1
-
-      - name: 'Smoke: GET /health'
-        run: |
-          curl -sSf http://127.0.0.1:8000/health | jq -e '.ok == true'
-
-      - name: Stop API
-        if: always()
-        run: |
-          if [ -f .api.pid ]; then
-            kill $(cat .api.pid) || true
-          fi
-
-  lint:
-    name: Lint
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Setup Node with Corepack
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-          cache: 'pnpm'
-
-      - name: Enable Corepack
-        run: corepack enable
+          corepack enable
+          corepack prepare pnpm@latest --activate
+          pnpm -v
 
       - name: Install deps
         run: pnpm install --frozen-lockfile=false
 
-      - name: Lint (root)
-        run: pnpm -w run lint
+      - name: Typecheck
+        run: pnpm -w run typecheck
+
+      - name: Build
+        run: pnpm -w run build
+
+      - name: Unit tests
+        run: pnpm -w run test
+
+  compose-e2e:
+    runs-on: ubuntu-latest
+    needs: build-test
+    timeout-minutes: 40
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "pnpm"
+
+      - name: Enable corepack / pnpm
+        run: |
+          corepack enable
+          corepack prepare pnpm@latest --activate
+
+      - name: Install e2e deps & browsers
+        run: |
+          pnpm install --filter @prism-apex/e2e...
+          pnpm --filter @prism-apex/e2e exec playwright install --with-deps
+
+      - name: Compose up (build & start)
+        run: docker compose up -d --build
+
+      - name: Wait for services to be healthy
+        run: |
+          echo "Waiting for API (8000) and Dashboard (3000)..."
+          for i in {1..60}; do
+            API_OK=0; DASH_OK=0
+            curl -fsS http://localhost:8000/ >/dev/null 2>&1 && API_OK=1 || true
+            curl -fsS http://localhost:3000/ >/dev/null 2>&1 && DASH_OK=1 || true
+            if [ "$API_OK" = "1" ] && [ "$DASH_OK" = "1" ]; then
+              echo "Services are up"; break
+            fi
+            sleep 3
+          done
+
+      - name: Run Playwright smoke
+        env:
+          BASE_DASHBOARD_URL: http://localhost:3000
+          BASE_API_URL: http://localhost:8000
+        run: pnpm --filter @prism-apex/e2e test
+
+      - name: Docker diagnostics (on failure)
+        if: failure()
+        run: |
+          docker compose ps
+          docker compose logs --no-color api || true
+          docker compose logs --no-color dashboard || true
+
+      - name: Compose down
+        if: always()
+        run: docker compose down -v
