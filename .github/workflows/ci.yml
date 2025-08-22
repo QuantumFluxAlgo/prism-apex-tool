@@ -44,6 +44,8 @@ jobs:
         run: pnpm -w run test
 
   compose-e2e:
+    # Run on pushes and same-repo PRs; skip forked PRs where docker may be unavailable
+    if: github.event_name == 'push' || (github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == false)
     runs-on: ubuntu-latest
     needs: build-test
     timeout-minutes: 40
@@ -63,6 +65,19 @@ jobs:
           corepack enable
           corepack prepare pnpm@latest --activate
 
+      - name: Ensure Docker & Compose
+        id: dockercheck
+        shell: bash
+        run: |
+          if command -v docker >/dev/null 2>&1 && docker compose version >/dev/null 2>&1; then
+            echo "has_docker=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          echo "Installing docker & compose plugin..."
+          sudo apt-get update
+          sudo apt-get install -y docker.io docker-compose-plugin
+          echo "has_docker=false" >> "$GITHUB_OUTPUT"
+
       - name: Cache Playwright browsers
         uses: actions/cache@v4
         with:
@@ -77,11 +92,15 @@ jobs:
           pnpm --filter @prism-apex/e2e exec playwright install --with-deps
 
       - name: Compose up (build & start)
-        run: docker compose up -d --build
+        run: |
+          if [ "${{ steps.dockercheck.outputs.has_docker }}" = "true" ]; then
+            docker compose up -d --build
+          else
+            sudo docker compose up -d --build
+          fi
 
       - name: Wait for services to be healthy
         run: |
-          echo "Waiting for API (8000) and Dashboard (3000)..."
           for i in {1..60}; do
             API_OK=0; DASH_OK=0
             curl -fsS http://localhost:8000/health >/dev/null 2>&1 && API_OK=1 || true
@@ -102,9 +121,15 @@ jobs:
         if: failure()
         run: |
           mkdir -p artifacts/docker
-          docker compose ps > artifacts/docker/ps.txt
-          docker compose logs --no-color api > artifacts/docker/api.log || true
-          docker compose logs --no-color dashboard > artifacts/docker/dashboard.log || true
+          if [ "${{ steps.dockercheck.outputs.has_docker }}" = "true" ]; then
+            docker compose ps > artifacts/docker/ps.txt
+            docker compose logs --no-color api > artifacts/docker/api.log || true
+            docker compose logs --no-color dashboard > artifacts/docker/dashboard.log || true
+          else
+            sudo docker compose ps > artifacts/docker/ps.txt
+            sudo docker compose logs --no-color api > artifacts/docker/api.log || true
+            sudo docker compose logs --no-color dashboard > artifacts/docker/dashboard.log || true
+          fi
 
       - name: Upload Playwright artifacts (on failure)
         if: failure()
@@ -122,5 +147,10 @@ jobs:
 
       - name: Compose down
         if: always()
-        run: docker compose down -v
+        run: |
+          if [ "${{ steps.dockercheck.outputs.has_docker }}" = "true" ]; then
+            docker compose down -v
+          else
+            sudo docker compose down -v
+          fi
 
