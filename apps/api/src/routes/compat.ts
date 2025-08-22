@@ -36,6 +36,7 @@ const sampleSeed = {
 
 export async function compatRoutes(app: FastifyInstance) {
   // NOTE: Do NOT redefine /health here. Core server already exposes it.
+  app.get('/tradovate/ping', async () => ({ ok: true }));
 
   // Dashboard expects: { balance, drawdown, openPositions }
   app.get('/account', async () => {
