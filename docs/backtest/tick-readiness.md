@@ -9,7 +9,7 @@
 - Queue/latency modeling.
 - Partial fills & order book depth.
 - Realistic slippage tied to spreads & volume.
-- Parquet reader (TODO stub).
+- Parquet reader for high-volume tick data (planned).
 
 ## Usage
 ```bash
