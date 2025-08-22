@@ -11,6 +11,7 @@ import { notifyRoutes } from './routes/notify';
 import { jobsRoutes } from './routes/jobs';
 import { openapiRoute } from './routes/openapi';
 import { compatRoutes } from './routes/compat';
+import { getConfig } from './config/env';
 
 import { registerJob, startJobs } from './jobs/scheduler';
 import { jobEodFlat } from './jobs/eodFlat';
@@ -19,7 +20,17 @@ import { jobDailyLoss } from './jobs/dailyLoss';
 import { jobConsistency } from './jobs/consistency';
 
 export function buildServer() {
-  const app = Fastify({ logger: true });
+  const cfg = getConfig();
+  const app = Fastify({
+    logger: {
+      level: process.env.LOG_LEVEL ?? 'info',
+      // redact common secret locations; avoid logging raw auth headers or passwords
+      redact: ['req.headers.authorization', 'headers.authorization', 'password', 'token', 'authorization'],
+    },
+    requestTimeout: cfg.requestTimeoutMs,
+    keepAliveTimeout: cfg.keepAliveTimeoutMs,
+    bodyLimit: cfg.bodyLimitBytes,
+  });
 
   app.register(cors, { origin: true });
 
