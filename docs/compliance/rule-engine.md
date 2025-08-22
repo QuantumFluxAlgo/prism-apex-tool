@@ -9,6 +9,24 @@ Codify Apex Trader Funding rules into machine-enforceable checks.
 - Returns `{ ok, violations[] }`.
 - Violations feed into the Alerts pipeline.
 
+## Example
+```ts
+import { checkCompliance, AccountState } from '../../apps/api/src/services/rules/engine';
+
+const state: AccountState = {
+  phase: 'evaluation',
+  balance: 50000,
+  equityHigh: 50000,
+  openPositions: [],
+  tradeHistory: [],
+  dayPnL: {},
+  trailingDrawdown: 49000,
+};
+
+const res = checkCompliance(state);
+console.log(res.ok);
+```
+
 ## Rules Covered
 | JSON id | Rule | Apex Reference |
 |---------|------|----------------|
@@ -31,6 +49,6 @@ Codify Apex Trader Funding rules into machine-enforceable checks.
 - Operators see compliance alerts before inputting trades.
 - Violations mean: **do not place ticket**.
 
-## TODO
-- Add complete rule mappings from Apex docs.
-- Add diagrams of compliance flow.
+## Future Work
+- Map remaining Apex rules into `apex/rules.json`.
+- Add a diagram of the compliance flow.
