@@ -23,6 +23,8 @@ RUN pnpm run build
 # ---- Nginx stage ----
 FROM nginx:1.27-alpine AS runtime
 
+ENV NODE_ENV=production
+
 # Copy static build
 COPY --from=build /app/apps/dashboard/dist /usr/share/nginx/html
 
@@ -30,4 +32,5 @@ COPY --from=build /app/apps/dashboard/dist /usr/share/nginx/html
 COPY apps/dashboard/nginx.conf /etc/nginx/conf.d/default.conf
 
 EXPOSE 80
+USER nginx
 CMD ["nginx", "-g", "daemon off;"]
