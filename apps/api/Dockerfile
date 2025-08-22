@@ -36,10 +36,7 @@ RUN apk add --no-cache curl
 COPY --from=build /app/apps/api/dist ./apps/api/dist
 # Copy package.json to allow "node dist/index.js" and any runtime resolves
 COPY --from=build /app/apps/api/package.json ./apps/api/package.json
-
-# Non-root user (optional hardening)
-RUN addgroup -S app && adduser -S app -G app
-USER app
+USER node
 
 EXPOSE 8000
 WORKDIR /app/apps/api
