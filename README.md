@@ -11,7 +11,6 @@ Prism Apex Tool is a TypeScript monorepo supporting discretionary futures tradin
 ## Apex Guardrails (Non‑negotiable)
 
 - Every trade requires a stop.
-- Risk/reward ratio must be ≤ 5.
 - Trailing drawdown protection enforced.
 - Trade at half size until buffer is built.
 - Daily profit share limited to ≤30%.
