@@ -1,10 +1,20 @@
+export type TradovateConfig = {
+  baseUrl?: string;
+  username?: string;
+  password?: string;
+  clientId?: string;
+  clientSecret?: string;
+  mock: boolean;
+};
+
 export type Config = {
   nodeEnv: "production" | "development" | "test";
   host: string;
   port: number;
-  requestTimeoutMs: number;     // total request timeout
-  keepAliveTimeoutMs: number;   // socket keep-alive
-  bodyLimitBytes: number;       // max JSON body size
+  requestTimeoutMs: number;
+  keepAliveTimeoutMs: number;
+  bodyLimitBytes: number;
+  tradovate: TradovateConfig;
 };
 
 function parseIntWithDefault(v: string | undefined, def: number): number {
@@ -24,6 +34,15 @@ export function getConfig(env = process.env): Config {
   const keepAliveTimeoutMs = parseIntWithDefault(env.KEEP_ALIVE_TIMEOUT_MS, 5000);
   const bodyLimitBytes = parseIntWithDefault(env.BODY_LIMIT_BYTES, 1048576); // 1 MiB
 
+  const tradovate: TradovateConfig = {
+    baseUrl: env.TRADOVATE_BASE_URL || undefined,
+    username: env.TRADOVATE_USERNAME || undefined,
+    password: env.TRADOVATE_PASSWORD || undefined,
+    clientId: env.TRADOVATE_CLIENT_ID || undefined,
+    clientSecret: env.TRADOVATE_CLIENT_SECRET || undefined,
+    mock: (env.MOCK_TRADOVATE === "1") || !env.TRADOVATE_BASE_URL
+  };
+
   return {
     nodeEnv,
     host,
@@ -31,5 +50,6 @@ export function getConfig(env = process.env): Config {
     requestTimeoutMs,
     keepAliveTimeoutMs,
     bodyLimitBytes,
+    tradovate
   };
 }

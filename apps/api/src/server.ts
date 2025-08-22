@@ -11,6 +11,7 @@ import { notifyRoutes } from './routes/notify';
 import { jobsRoutes } from './routes/jobs';
 import { openapiRoute } from './routes/openapi';
 import { compatRoutes } from './routes/compat';
+import tradovateRoutes from './routes/tradovate';
 import { getConfig } from './config/env';
 
 import { registerJob, startJobs } from './jobs/scheduler';
@@ -46,6 +47,7 @@ export function buildServer() {
   app.register(notifyRoutes);
   app.register(jobsRoutes);
   app.register(openapiRoute);
+  app.register(tradovateRoutes, { prefix: '/compat' });
   app.register(compatRoutes, { prefix: '/compat' });
 
   // ---- Jobs ----
