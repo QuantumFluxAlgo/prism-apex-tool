@@ -3,40 +3,32 @@ version: "3.9"
 services:
   api:
     build:
-      context: .
-      dockerfile: apps/api/Dockerfile
-    container_name: prism-api
+      context: ./apps/api
+      dockerfile: Dockerfile
+    container_name: prism_apex_api
     environment:
-      NODE_ENV: production
-      PORT: 8000
-      DATA_DIR: /var/lib/prism-apex-tool
-      # Safe placeholders; override via .env
-      TRADOVATE_BASE_URL: ${TRADOVATE_BASE_URL:-http://localhost/disabled}
-      TRADOVATE_USERNAME: ${TRADOVATE_USERNAME:-dev}
-      TRADOVATE_PASSWORD: ${TRADOVATE_PASSWORD:-dev}
-      TRADOVATE_CLIENT_ID: ${TRADOVATE_CLIENT_ID:-dev}
-      TRADOVATE_CLIENT_SECRET: ${TRADOVATE_CLIENT_SECRET:-dev}
-    volumes:
-      - ./data:/var/lib/prism-apex-tool
+      - NODE_ENV=production
+      - PORT=8000
     ports:
       - "8000:8000"
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      test: ["CMD-SHELL", "curl -fsS http://localhost:8000/ || exit 1"]
       interval: 5s
       timeout: 3s
-      retries: 15
+      retries: 10
 
   dashboard:
     build:
-      context: .
-      dockerfile: apps/dashboard/Dockerfile
-    container_name: prism-dashboard
+      context: ./apps/dashboard
+      dockerfile: Dockerfile
+    container_name: prism_apex_dashboard
     depends_on:
       api:
         condition: service_healthy
     ports:
-      - "3000:80"   # Nginx serves built dashboard on port 80
-    environment:
-      # Nginx uses service DNS name "api" on port 8000; no env needed here.
-      # This is present to allow future templating if required.
-      API_BASE_URL: http://api:8000
+      - "3000:80"
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://localhost/ || exit 1"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
