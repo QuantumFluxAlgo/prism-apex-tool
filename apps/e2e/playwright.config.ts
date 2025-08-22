@@ -7,10 +7,11 @@ export default defineConfig({
   timeout: 30000,
   retries: 0,
   use: {
-    baseURL: DASH
+    baseURL: DASH,
+    trace: "retain-on-failure",
+    video: "retain-on-failure",
+    screenshot: "only-on-failure"
   },
-  metadata: {
-    dashboard: DASH,
-    api: API
-  }
+  outputDir: "playwright-artifacts",
+  metadata: { dashboard: DASH, api: API }
 });
