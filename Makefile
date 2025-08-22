@@ -6,10 +6,12 @@ help:
 	@echo "  deps           Install deps"
 	@echo "  build          Build all workspaces"
 	@echo "  test           Run all unit tests"
-	@echo "  e2e            Run dashboard Playwright e2e"
-	@echo "  up             docker compose up -d"
-	@echo "  down           docker compose down"
-	@echo "  logs           docker compose logs -f"
+        @echo "  e2e            Run Playwright e2e smoke"
+        @echo "  compose-up     docker compose up -d --build"
+        @echo "  compose-down   docker compose down -v"
+        @echo "  up             docker compose up -d"
+        @echo "  down           docker compose down"
+        @echo "  logs           docker compose logs -f"
 	@echo "  seed           Seed API store with demo data"
 	@echo "  backtest       Run ORB backtest on sample data"
 	@echo "  demo           Build CLI and run sample backtest"
@@ -33,14 +35,19 @@ test:
 	npm test -w apps/api --silent
 
 e2e:
-	npx playwright install --with-deps chromium
-	npm run e2e -w apps/dashboard
+	pnpm --filter @prism-apex/e2e test
 
 up:
 	docker compose up -d
 
 down:
-	docker compose down
+        docker compose down
+
+compose-up:
+	docker compose up -d --build
+
+compose-down:
+	docker compose down -v
 
 logs:
 		docker compose logs -f
