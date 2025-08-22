@@ -1,7 +1,7 @@
-import { buildServer } from './server';
+import { buildServer } from "./server";
 
-const PORT = Number(process.env.PORT || 8080);
-const HOST = process.env.HOST || '0.0.0.0';
+const PORT = Number(process.env.PORT || 8000);
+const HOST = process.env.HOST || "0.0.0.0";
 
 async function main() {
   const app = buildServer();
