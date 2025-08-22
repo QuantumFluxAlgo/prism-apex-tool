@@ -1,5 +1,4 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { TokenManager } from '../auth';
 import { TradovateClientError } from '../types';
 
