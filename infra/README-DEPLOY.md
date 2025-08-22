@@ -2,7 +2,7 @@
 
 ## Overview
 This stack deploys two containers:
-- **API** on port **8080**
+- **API** on port **8000**
 - **Dashboard** on port **80** (proxies `/api/*` to API via Nginx in the image)
 
 ## One-time Server Setup
@@ -26,7 +26,7 @@ This stack deploys two containers:
 
 ## Verify:
 - <http://<server-ip>/> (dashboard)
-- <http://<server-ip>:8080/health> (API)
+- <http://<server-ip>:8000/health> (API)
 
 ## Rollback
 Re-deploy previous tag:
