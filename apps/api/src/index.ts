@@ -1,16 +1,10 @@
 import { buildServer } from "./server";
+import { getConfig } from "./config/env";
 
-const PORT = Number(process.env.PORT || 8000);
-const HOST = process.env.HOST || "0.0.0.0";
+const cfg = getConfig();
 
 async function main() {
   const app = buildServer();
-
-  // Stable health endpoint: 200 if the server is up and ready to accept requests.
-  app.get("/health", async (_req, reply) => {
-    // Lightweight payload; avoid leaking env or secrets.
-    return reply.code(200).send({ ok: true, service: "api", port: PORT });
-  });
 
   // Graceful shutdown on SIGTERM/SIGINT
   const shutdown = async (signal: string) => {
@@ -27,8 +21,8 @@ async function main() {
   process.on("SIGINT", () => shutdown("SIGINT"));
 
   try {
-    await app.listen({ port: PORT, host: HOST });
-    app.log.info(`API listening on ${HOST}:${PORT}`);
+    await app.listen({ port: cfg.port, host: cfg.host });
+    app.log.info(`API listening on ${cfg.host}:${cfg.port}`);
   } catch (err) {
     app.log.error(err);
     process.exit(1);
