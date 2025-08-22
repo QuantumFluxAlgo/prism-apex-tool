@@ -1,3 +1,4 @@
+import { describe, expect, it } from "vitest";
 import { checkCompliance, AccountState } from '../../src/services/rules/engine';
 
 describe('Compliance Rule Engine', () => {
