@@ -1,30 +1,29 @@
 import { buildServer } from "./server";
-import { getConfig } from "./config/env";
-
-const cfg = getConfig();
 
 async function main() {
+  // Hard-bind for Docker reliability
+  const port = Number(process.env.PORT ?? 8000);
+  const host = "0.0.0.0";
+
   const app = buildServer();
 
-  // Graceful shutdown on SIGTERM/SIGINT
-  const shutdown = async (signal: string) => {
-    try {
-      app.log.info({ signal }, "Shutting down gracefully…");
-      await app.close(); // Closes server and registered resources/plugins
-      process.exit(0);
-    } catch (err) {
-      app.log.error({ err }, "Error during shutdown");
-      process.exit(1);
-    }
-  };
-  process.on("SIGTERM", () => shutdown("SIGTERM"));
-  process.on("SIGINT", () => shutdown("SIGINT"));
+  // Minimal routes
+  app.get("/", async () => ({ ok: true, uptime: process.uptime() }));
+  app.get("/health", async () => ({ status: "ok", time: new Date().toISOString() }));
 
+  // Start
   try {
-    await app.listen({ port: cfg.port, host: cfg.host });
-    app.log.info(`API listening on ${cfg.host}:${cfg.port}`);
+    const address = await app.listen({ port, host });
+    const msg = `➡️  API running at ${address}`;
+    app.log?.info?.(msg);
+    console.log("\n" + "=".repeat(60));
+    console.log(msg);
+    console.log("Open this in your browser:");
+    console.log(address);
+    console.log("Health: " + address.replace(/\/$/, "") + "/health");
+    console.log("".padEnd(60, "=") + "\n");
   } catch (err) {
-    app.log.error(err);
+    console.error("❌ Failed to start API:", err);
     process.exit(1);
   }
 }
