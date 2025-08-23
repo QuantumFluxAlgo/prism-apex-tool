@@ -1,27 +1,10 @@
-node / JS noise
-
-node_modules
-npm-debug.log
-pnpm-debug.log
-yarn-error.log
-.vscode
-.DS_Store
-
-build outputs
-
-dist
-coverage
-
-local data
-
-data
-
-docker-compose artifacts
-
-*.pid
-*.log
-
-git
-
 .git
 .gitignore
+**/node_modules
+**/dist
+tmp
+.DS_Store
+npm-debug.log*
+pnpm-debug.log*
+.env
+.vscode

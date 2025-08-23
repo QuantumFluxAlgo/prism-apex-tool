@@ -1,17 +1,26 @@
 {
-  "extends": "../../tsconfig.base.json",
   "compilerOptions": {
-    "target": "ES2020",
+    "target": "ES2022",
     "module": "CommonJS",
-    "moduleResolution": "Bundler",
-    "esModuleInterop": true,
+    "moduleResolution": "Node10",
     "outDir": "dist",
     "rootDir": "src",
-    "sourceMap": true,
-    "resolveJsonModule": true,
     "strict": true,
+    "esModuleInterop": true,
     "skipLibCheck": true,
-    "noEmit": true
+    "resolveJsonModule": true,
+    "sourceMap": true,
+    "types": [
+      "node"
+    ]
   },
-  "include": ["src"]
+  "include": [
+    "src/**/*"
+  ],
+  "exclude": [
+    "src/__tests__/**",
+    "src/**/*.spec.ts",
+    "src/jobs/**",
+    "src/jobs.ts"
+  ]
 }
