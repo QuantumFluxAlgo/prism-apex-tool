@@ -1,22 +1,45 @@
-// eslint.config.mjs
+// Root flat ESLint config (ESLint v9)
 import js from '@eslint/js';
 import tseslint from 'typescript-eslint';
+import globals from 'globals';
+import pluginImport from 'eslint-plugin-import';
+import simpleImportSort from 'eslint-plugin-simple-import-sort';
 
 export default [
-  { ignores: ['archive/**', '**/dist/**', '**/build/**', '**/.turbo/**', '**/.next/**', '**/coverage/**', 'apps/api/scripts/**'] },
+  { ignores: ['**/dist/**', '**/build/**', '**/coverage/**', 'archive/**', '**/*.d.ts'] },
+
+  // Base JS + TS recommendations (fast, non-type-checked)
   js.configs.recommended,
-  ...tseslint.configs.recommended, // type-aware rules intentionally omitted (keep green)
+  ...tseslint.configs.recommended,
+
+  // Global settings for Node & ESM repos
   {
-    files: ['**/*.ts'],
-    languageOptions: { ecmaVersion: 'latest', sourceType: 'module' },
+    languageOptions: {
+      ecmaVersion: 'latest',
+      sourceType: 'module',
+      globals: { ...globals.node, ...globals.es2021 },
+    },
+  },
+
+  // Monorepo-wide rule tuning
+  {
+    plugins: {
+      import: pluginImport,
+      'simple-import-sort': simpleImportSort,
+    },
     rules: {
+      // Keep noise low; we’ll tighten in a later CI hardening PR
       'no-console': 'off',
-      'no-empty': 'off',
+      'no-empty': ['warn', { allowEmptyCatch: true }],
       'no-undef': 'off',
-      'prefer-const': 'off',
-      '@typescript-eslint/no-unused-vars': ['warn', { argsIgnorePattern: '^_', varsIgnorePattern: '^_' }],
       '@typescript-eslint/no-explicit-any': 'off',
-      '@typescript-eslint/ban-ts-comment': 'off',
+      '@typescript-eslint/no-unused-vars': ['warn', { argsIgnorePattern: '^_', varsIgnorePattern: '^_' }],
+      '@typescript-eslint/no-require-imports': 'off',
+      'prefer-const': 'off',
+
+      // Some packages may still reference this rule; keep it off.
+      'simple-import-sort/imports': 'off',
+      'simple-import-sort/exports': 'off',
     },
   },
 ];
