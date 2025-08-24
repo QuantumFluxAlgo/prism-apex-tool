@@ -8,7 +8,7 @@
     "format": "prettier --write .",
     "typecheck": "pnpm -r --parallel --if-present typecheck",
     "test": "pnpm -r --parallel --if-present test",
-    "coverage": "vitest run --coverage",
+    "coverage": "pnpm --filter ./apps/api test -- --coverage",
     "build": "tsc -p tsconfig.base.json",
     "prepare": "husky install",
     "clean": "rimraf node_modules dist coverage",
@@ -31,7 +31,6 @@
   "devDependencies": {
     "@commitlint/cli": "^18.4.3",
     "@commitlint/config-conventional": "^18.4.3",
-    "@types/jest": "30.0.0",
     "@types/node": "^20.11.0",
     "@typescript-eslint/eslint-plugin": "^8.3.0",
     "@typescript-eslint/parser": "^8.3.0",
@@ -50,6 +49,6 @@
     "rimraf": "^5.0.5",
     "ts-node": "^10.9.2",
     "typescript": "^5.9.2",
-    "vitest": "^1.0.4"
+    "vitest": "^2.0.0"
   }
 }
