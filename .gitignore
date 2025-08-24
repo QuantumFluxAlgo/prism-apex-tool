@@ -14,11 +14,11 @@ logs/audit/*
 !logs/audit/.gitkeep
 
 # Coverage
-coverage
+coverage/
 *.lcov
 
 # Build
-dist
+dist/
 build
 
 # Env
