@@ -72,7 +72,7 @@ registry.registerPath({
   },
 });
 
-// ---- Tickets (Phase 8C) ----
+// ---- Tickets ----
 registry.registerPath({
   method: 'post',
   path: '/tickets/promote',
@@ -100,13 +100,19 @@ registry.registerPath({
   },
 });
 
-// ---- Builder (kept for routes/openapi.ts) ----
+// ---- Builder (includes security scheme) ----
 export function buildOpenApi(): Record<string, unknown> {
   const generator = new OpenApiGeneratorV31(registry.definitions);
   return generator.generateDocument({
     openapi: '3.1.0',
     info: { title: 'Prism Apex Tool API', version: '0.1.0' },
     servers: [{ url: '/' }],
+    components: {
+      securitySchemes: {
+        BearerAuth: { type: 'http', scheme: 'bearer', bearerFormat: 'token' },
+      },
+    },
+    security: [{ BearerAuth: [] }],
   });
 }
 export default registry;

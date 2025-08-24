@@ -207,3 +207,19 @@ Run tests:
 - Added `GET /tickets?date=YYYY-MM-DD` to list tickets for a given day.
 - Export and report flows pick up these tickets automatically.
 - No external integrations; purely local.
+
+## Auth (optional, default OFF)
+
+Set `BEARER_TOKEN` to enable bearer auth across the API (read-only endpoints included).
+Public endpoints that remain open:
+
+- `GET /health`
+- `GET /openapi.json`
+- `GET /version`
+
+Example:
+
+```bash
+export BEARER_TOKEN="change-me"
+curl -H "Authorization: Bearer $BEARER_TOKEN" http://localhost:PORT/market/symbols
+```
