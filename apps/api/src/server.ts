@@ -1,16 +1,18 @@
 import Fastify from 'fastify';
 import cors from '@fastify/cors';
-import { marketRoutes } from './routes/market';
-import { signalRoutes } from './routes/signals';
-import { rulesRoutes } from './routes/rules';
-import { reportRoutes } from './routes/report';
-import { ingestRoutes } from './routes/ingest';
-import { alertsRoutes } from './routes/alerts';
-import { exportRoutes } from './routes/export';
-import { notifyRoutes } from './routes/notify';
-import { jobsRoutes } from './routes/jobs';
-import { openapiRoute } from './routes/openapi';
-import { compatRoutes } from './routes/compat';
+import { marketRoutes } from './routes/market.js';
+import { signalRoutes } from './routes/signals.js';
+import { rulesRoutes } from './routes/rules.js';
+import { reportRoutes } from './routes/report.js';
+import { ingestRoutes } from './routes/ingest.js';
+import { alertsRoutes } from './routes/alerts.js';
+import { exportRoutes } from './routes/export.js';
+import { notifyRoutes } from './routes/notify.js';
+import { jobsRoutes } from './routes/jobs.js';
+import { openapiRoute } from './routes/openapi.js';
+import { compatRoutes } from './routes/compat.js';
+import { healthRoutes } from './routes/health.js';
+import { versionRoutes } from './routes/version.js';
 import { getConfig } from './config/env';
 
 import { registerJob, startJobs } from './jobs/scheduler';
@@ -34,7 +36,8 @@ export function buildServer() {
 
   app.register(cors, { origin: true });
 
-  app.get('/health', async () => ({ ok: true }));
+  app.register(healthRoutes);
+  app.register(versionRoutes);
 
   app.register(marketRoutes);
   app.register(signalRoutes);

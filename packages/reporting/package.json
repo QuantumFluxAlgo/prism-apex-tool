@@ -12,7 +12,5 @@
     "test": "vitest",
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
-  "dependencies": {
-    "nodemailer": "^6.9.11"
-  }
+  "dependencies": {}
 }
