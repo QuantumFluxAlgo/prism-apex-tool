@@ -17,6 +17,22 @@ registry.registerComponent('securitySchemes', 'BearerAuth', {
   bearerFormat: 'token',
 });
 
+registry.registerPath({
+  method: 'get',
+  path: '/ready',
+  // Empty security array here marks this endpoint as public,
+  // even though global security is Bearer by default.
+  security: [],
+  responses: {
+    200: {
+      description: 'Readiness',
+      content: {
+        'application/json': { schema: z.object({ ok: z.boolean(), ready: z.boolean() }) },
+      },
+    },
+  },
+});
+
 // ---- Shared schemas for simple endpoints ----
 const SymbolsResponse = z.object({ symbols: z.array(z.string()) });
 const SessionsResponse = z.object({
