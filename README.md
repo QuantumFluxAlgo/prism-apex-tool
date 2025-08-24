@@ -31,13 +31,21 @@ infra/            Deployment and runtime infrastructure (placeholder)
 tests/            Integration and end-to-end tests (future)
 ```
 
-## Development
+## Local Setup
+- Requires Node 20.x (`.nvmrc` / `.node-version`)
+- Install: `pnpm install`
+- Validate: `pnpm run validate`
+- Versions: `pnpm run versions`
 
-Node 20+ required.
-
-```
-npm install
-npm run lint
-npm run format
-npm run typecheck
-```
+## PR Roadmap (Collapsed)
+- PR‑00 Repo scan & dependency sanity
+- PR‑01a API TypeScript baseline
+- PR‑01b API entrypoint & start
+- PR‑01c API smoke routes
+- PR‑02 Ports & process
+- PR‑03 Tests baseline
+- PR‑04 Lint/format CI
+- PR‑05 Typecheck CI
+- PR‑06 Dead code cleanup
+- PR‑07 Docs upkeep
+- PR‑08 Strategies wiring check
