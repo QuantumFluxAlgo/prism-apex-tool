@@ -83,3 +83,21 @@ Run tests:
 - API typecheck stabilized; placeholders added where implementations are pending.
 - Packages now include minimal ESLint configs.
 - No jobs/strategies enabled.
+
+## Unquarantine Phase 4
+
+Restored core API routes backed by a local JSON store:
+- `GET /report/daily?date=YYYY-MM-DD`
+- `POST /ingest/alert`
+- `GET /alerts/peek?limit=50`
+- `POST /alerts/ack`
+- `POST /notify/recipients`
+- `GET /export/tickets?date=YYYY-MM-DD`
+- `POST /rules/check`
+
+All persistence uses the filesystem-based store at `apps/api/src/store.ts` and remains local-only.
+External integrations (email, Telegram, Slack, SMS, exchanges) are still disabled.
+
+Run tests:
+- `pnpm --filter ./apps/api typecheck`
+- `pnpm --filter ./apps/api test`

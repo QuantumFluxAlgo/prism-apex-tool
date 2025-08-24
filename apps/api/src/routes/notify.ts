@@ -1,14 +1,13 @@
-import { FastifyPluginAsync } from "fastify";
+import { FastifyPluginAsync } from 'fastify';
+import { recipientsSchema } from '../schemas/recipients';
+import { store } from '../store';
 
 export const notifyRoutes: FastifyPluginAsync = async (app) => {
-  // Simple ping so we can confirm the plugin is mounted
-  app.get("/notify/ping", async (_req, reply) => {
-    return reply.code(200).send({ ok: true, service: "notify", mode: "disabled" });
-  });
-
-  // Placeholder for email notifications — disabled after cleanup
-  app.post("/notify/email", async (_req, reply) => {
-    return reply.code(501).send({ ok: false, reason: "notify-disabled" });
+  app.post('/notify/recipients', async (req, reply) => {
+    const body = recipientsSchema.safeParse(req.body);
+    if (!body.success) return reply.code(400).send({ error: 'Invalid payload' });
+    const recipients = store.addRecipients(body.data as any);
+    return recipients;
   });
 };
 
