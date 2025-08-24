@@ -13,6 +13,8 @@ import { openapiRoute } from './routes/openapi.js';
 import { compatRoutes } from './routes/compat.js';
 import { healthRoutes } from './routes/health.js';
 import { versionRoutes } from './routes/version.js';
+import { analyticsRoutes } from './routes/analytics.js';
+import { auditRoutes } from './routes/audit.js';
 import { getConfig } from './config/env';
 
 import { registerJob, startJobs } from './jobs/scheduler';
@@ -38,6 +40,8 @@ export function buildServer() {
 
   app.register(healthRoutes);
   app.register(versionRoutes);
+  app.register(analyticsRoutes);
+  app.register(auditRoutes);
 
   app.register(marketRoutes);
   app.register(signalRoutes);

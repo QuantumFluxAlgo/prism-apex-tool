@@ -10,6 +10,12 @@ export default defineConfig({
     globals: true,
     coverage: { reporter: ['text', 'json-summary', 'lcov'] },
   },
+  resolve: {
+    alias: {
+      '@prism-apex-tool/analytics': path.resolve(__dirname, '../../packages/analytics/src/index.ts'),
+      '@prism-apex-tool/audit': path.resolve(__dirname, '../../packages/audit/src/index.ts'),
+    },
+  },
   server: {
     fs: {
       allow: [path.resolve(__dirname, '../..')],
