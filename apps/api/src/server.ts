@@ -29,6 +29,7 @@ import { jobConsistency } from './jobs/consistency';
 
 export function buildServer() {
   const cfg = getConfig();
+  const trustProxy = String(process.env.TRUST_PROXY ?? '').toLowerCase() === 'true';
   const app = Fastify({
     logger: {
       level: process.env.LOG_LEVEL ?? 'info',
@@ -44,8 +45,8 @@ export function buildServer() {
     requestTimeout: cfg.requestTimeoutMs,
     keepAliveTimeout: cfg.keepAliveTimeoutMs,
     bodyLimit: cfg.bodyLimitBytes,
+    trustProxy,
   });
-
   app.register(cors, { origin: true });
   // Public paths (no auth/rate-limit)
   const publicPaths = ['/health', '/ready', '/openapi.json', '/version'];
