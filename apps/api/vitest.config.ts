@@ -14,6 +14,8 @@ export default defineConfig({
     alias: {
       '@prism-apex-tool/analytics': path.resolve(__dirname, '../../packages/analytics/src/index.ts'),
       '@prism-apex-tool/audit': path.resolve(__dirname, '../../packages/audit/src/index.ts'),
+      '@prism-apex-tool/reporting': path.resolve(__dirname, '../../packages/reporting/src/index.ts'),
+      '@prism-apex-tool/signals': path.resolve(__dirname, '../../packages/signals/src/index.ts'),
     },
   },
   server: {
