@@ -1,3 +1,9 @@
 import type { JobFn } from './scheduler';
-// TODO(Unquarantine Phase X): re-enable real implementation
-export const jobConsistency: JobFn = async () => { /* no-op */ };
+import { store } from '../store';
+
+export const jobConsistency: JobFn = () => {
+  const rc = store.getRiskContext();
+  if (rc.maxContracts < 1) {
+    store.setRiskContext({ maxContracts: 1 });
+  }
+};
