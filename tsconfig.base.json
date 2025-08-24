@@ -20,5 +20,5 @@
       "@prism-apex-tool/signals": ["packages/signals/src"]
     }
   },
-  "exclude": ["archive", "packages/clients-tradovate", "apps/dashboard", "apps/e2e", "sdks"]
+  "exclude": ["packages/clients-tradovate", "apps/dashboard", "apps/e2e", "sdks"]
 }

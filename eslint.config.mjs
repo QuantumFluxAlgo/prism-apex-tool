@@ -6,7 +6,7 @@ import pluginImport from 'eslint-plugin-import';
 import simpleImportSort from 'eslint-plugin-simple-import-sort';
 
 export default [
-  { ignores: ['**/dist/**', '**/build/**', '**/coverage/**', 'archive/**', '**/*.d.ts'] },
+  { ignores: ['**/dist/**', '**/build/**', '**/coverage/**', '**/*.d.ts'] },
 
   // Base JS + TS recommendations (fast, non-type-checked)
   js.configs.recommended,
