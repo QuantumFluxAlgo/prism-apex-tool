@@ -1,0 +1,4 @@
+archive/
+**/dist/
+**/build/
+coverage/
