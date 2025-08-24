@@ -223,3 +223,40 @@ Example:
 export BEARER_TOKEN="change-me"
 curl -H "Authorization: Bearer $BEARER_TOKEN" http://localhost:PORT/market/symbols
 ```
+
+## Security & Hardening (PR-13)
+
+### Readiness probe
+
+`GET /ready` → `{"ok": true, "ready": true}`
+Intended for containers/orchestrators to confirm the API is up.
+
+### Bearer auth (optional, default OFF)
+
+Set `BEARER_TOKEN` to require `Authorization: Bearer <token>` on all non-public routes.
+Public routes: `/health`, `/ready`, `/openapi.json`, `/version`.
+Example:
+
+```bash
+export BEARER_TOKEN="change-me"
+curl -H "Authorization: Bearer $BEARER_TOKEN" http://localhost:PORT/market/symbols
+```
+
+### Local rate limit (no external deps)
+
+Per-IP, per-route limiting (excludes public routes & CORS preflight).
+
+- `RATE_LIMIT_MAX` (default: `60`)
+- `RATE_LIMIT_WINDOW_MS` (default: `60000`)
+
+Example 429 behavior (three quick requests with `RATE_LIMIT_MAX=2`):
+
+```bash
+curl -s -o /dev/null -w "%{http_code}\n" http://localhost:PORT/market/symbols  # 200
+curl -s -o /dev/null -w "%{http_code}\n" http://localhost:PORT/market/symbols  # 200
+curl -s -i http://localhost:PORT/market/symbols | sed -n '1,10p'              # HTTP/1.1 429 ...
+```
+
+### CORS
+
+CORS is enabled (`@fastify/cors` with `origin: true`); responses include `Access-Control-Allow-Origin`.

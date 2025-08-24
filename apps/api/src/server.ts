@@ -1,6 +1,7 @@
 import Fastify from 'fastify';
 import cors from '@fastify/cors';
 import authPlugin from './plugins/auth.js';
+import rateLimit from './plugins/rateLimit.js';
 import { marketRoutes } from './routes/market.js';
 import { signalRoutes } from './routes/signals.js';
 import { rulesRoutes } from './routes/rules.js';
@@ -17,6 +18,7 @@ import { versionRoutes } from './routes/version.js';
 import { analyticsRoutes } from './routes/analytics.js';
 import { auditRoutes } from './routes/audit.js';
 import { ticketsRoutes } from './routes/tickets.js';
+import { readyRoutes } from './routes/ready.js';
 import { getConfig } from './config/env';
 
 import { registerJob, startJobs, stopJobs } from './jobs/scheduler';
@@ -45,8 +47,13 @@ export function buildServer() {
   });
 
   app.register(cors, { origin: true });
-  app.register(authPlugin, { publicPaths: ['/health', '/openapi.json', '/version'] });
+  // Public paths (no auth/rate-limit)
+  const publicPaths = ['/health', '/ready', '/openapi.json', '/version'];
 
+  app.register(authPlugin, { publicPaths });
+  app.register(rateLimit, { publicPaths });
+
+  app.register(readyRoutes);
   app.register(healthRoutes);
   app.register(versionRoutes);
   app.register(analyticsRoutes);
