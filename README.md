@@ -32,12 +32,14 @@ tests/            Integration and end-to-end tests (future)
 ```
 
 ## Local Setup
+
 - Requires Node 20.x (`.nvmrc` / `.node-version`)
 - Install: `pnpm install`
 - Validate: `pnpm run validate`
 - Versions: `pnpm run versions`
 
 ## PR Roadmap (Collapsed)
+
 - PR‑00 Repo scan & dependency sanity
 - PR‑01a API TypeScript baseline
 - PR‑01b API entrypoint & start
@@ -53,10 +55,12 @@ tests/            Integration and end-to-end tests (future)
 ## Unquarantine Phase 1
 
 Restored:
+
 - Read-only `/health` and `/version` API routes
 - `@prism-apex-tool/reporting` utilities with a no-op email adapter
 
 Deferred:
+
 - Any write-side endpoints, jobs, or external integrations
 - Real email delivery (stubbed for now)
 
@@ -65,15 +69,18 @@ Smoke tests cover `/health`, `/version`, and reporting utilities.
 ## Unquarantine Phase 2
 
 Restored:
+
 - `@prism-apex-tool/analytics` helpers for summaries and payout status
 - `@prism-apex-tool/audit` log readers
 - Read-only `/analytics/summary` and `/audit/last` API routes
 
 Deferred:
+
 - Persisting reports or payout status
 - Audit log writes and notifications
 
 Run tests:
+
 - `pnpm --filter @prism-apex-tool/analytics test`
 - `pnpm --filter @prism-apex-tool/audit test`
 - `pnpm --filter ./apps/api test`
@@ -87,6 +94,7 @@ Run tests:
 ## Unquarantine Phase 4
 
 Restored:
+
 - Local filesystem-backed API routes:
   - `GET /report/daily?date=YYYY-MM-DD`
   - `POST /ingest/alert`
@@ -98,6 +106,7 @@ Restored:
 - All persistence remains local-only under `DATA_DIR`.
 
 Run tests:
+
 - `pnpm --filter ./apps/api typecheck`
 - `pnpm --filter ./apps/api test`
 
@@ -186,7 +195,15 @@ Response:
 These endpoints only compute and return suggested tickets; operators still manually enter orders.
 
 Run tests:
+
 - `pnpm --filter @prism-apex-tool/signals typecheck`
 - `pnpm --filter @prism-apex-tool/signals test`
 - `pnpm --filter ./apps/api typecheck`
 - `pnpm --filter ./apps/api test`
+
+## Unquarantine Phase 8C — Tickets (local-only)
+
+- Added `POST /tickets/promote` to persist a suggestion as a ticket in the local filesystem store.
+- Added `GET /tickets?date=YYYY-MM-DD` to list tickets for a given day.
+- Export and report flows pick up these tickets automatically.
+- No external integrations; purely local.
