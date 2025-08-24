@@ -3,8 +3,10 @@ import { store } from '../store';
 import { z } from 'zod';
 
 export async function alertsRoutes(app: FastifyInstance) {
-  app.get('/alerts/queue', async (req, reply) => {
-    const q = z.object({ limit: z.coerce.number().min(1).max(200).default(50) }).safeParse(req.query);
+  app.get('/alerts/peek', async (req, reply) => {
+    const q = z
+      .object({ limit: z.coerce.number().min(1).max(200).default(50) })
+      .safeParse(req.query);
     if (!q.success) return reply.code(400).send({ error: 'Invalid query' });
     return store.peekAlerts(q.data.limit);
   });

@@ -84,6 +84,23 @@ Run tests:
 - Packages now include minimal ESLint configs.
 - No jobs/strategies enabled.
 
+## Unquarantine Phase 4
+
+Restored:
+- Local filesystem-backed API routes:
+  - `GET /report/daily?date=YYYY-MM-DD`
+  - `POST /ingest/alert`
+  - `GET /alerts/peek?limit=50`
+  - `POST /alerts/ack`
+  - `POST /notify/recipients`
+  - `GET /export/tickets?date=YYYY-MM-DD`
+  - `POST /rules/check`
+- All persistence remains local-only under `DATA_DIR`.
+
+Run tests:
+- `pnpm --filter ./apps/api typecheck`
+- `pnpm --filter ./apps/api test`
+
 ## Unquarantine Phase 5
 
 - Restored in-process scheduler with deterministic, safe jobs.
