@@ -1,31 +1,27 @@
-import { buildServer } from "./server";
+import Fastify from "fastify";
 
 async function main() {
-  // Hard-bind for Docker reliability
-  const port = Number(process.env.PORT ?? 8000);
-  const host = "0.0.0.0";
+  const port = Number(process.env.PORT ?? 3000);
+  const app = Fastify({ logger: true });
 
-  const app = buildServer();
+  app.get("/health", async () => ({ ok: true }));
 
-  // Minimal routes
-  app.get("/", async () => ({ ok: true, uptime: process.uptime() }));
-  app.get("/health", async () => ({ status: "ok", time: new Date().toISOString() }));
+  app.get("/metrics", async () => ({
+    uptime: Math.round(process.uptime()),
+    now: new Date().toISOString()
+  }));
 
-  // Start
+  app.get("/opportunities", async () => ({
+    items: []
+  }));
+
   try {
-    const address = await app.listen({ port, host });
-    const msg = `➡️  API running at ${address}`;
-    app.log?.info?.(msg);
-    console.log("\n" + "=".repeat(60));
-    console.log(msg);
-    console.log("Open this in your browser:");
-    console.log(address);
-    console.log("Health: " + address.replace(/\/$/, "") + "/health");
-    console.log("".padEnd(60, "=") + "\n");
+    await app.listen({ port, host: "0.0.0.0" });
   } catch (err) {
-    console.error("❌ Failed to start API:", err);
+    app.log.error(err);
     process.exit(1);
   }
 }
 
 main();
+
