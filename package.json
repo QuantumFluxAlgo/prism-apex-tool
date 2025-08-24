@@ -14,7 +14,6 @@
     "clean": "rimraf node_modules dist coverage",
     "compose:up": "docker compose up -d --build",
     "compose:down": "docker compose down -v",
-    "e2e": "pnpm --filter @prism-apex/e2e test",
     "bootstrap": "corepack enable && pnpm install",
     "validate": "pnpm -w run typecheck && pnpm -w run lint",
     "versions": "node -v && pnpm -v",
