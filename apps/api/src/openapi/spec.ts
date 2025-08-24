@@ -15,6 +15,8 @@ registry.registerComponent('securitySchemes', 'BearerAuth', {
   type: 'http',
   scheme: 'bearer',
   bearerFormat: 'token',
+  description:
+    'Send `Authorization: Bearer <token>`. Public endpoints (no auth): /health, /ready, /openapi.json, /version.',
 });
 
 registry.registerPath({
@@ -127,7 +129,11 @@ export function buildOpenApi(): Record<string, unknown> {
   const generator = new OpenApiGeneratorV31(registry.definitions);
   return generator.generateDocument({
     openapi: '3.1.0',
-    info: { title: 'Prism Apex Tool API', version: '0.1.0' },
+    info: {
+      title: 'Prism Apex Tool API',
+      version: '0.1.0',
+      description: 'Public endpoints: /health, /ready, /openapi.json, /version.',
+    },
     servers: [{ url: '/' }],
     security: [{ BearerAuth: [] }],
   }) as unknown as Record<string, unknown>;
