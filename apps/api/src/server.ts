@@ -1,5 +1,6 @@
 import Fastify from 'fastify';
 import cors from '@fastify/cors';
+import authPlugin from './plugins/auth.js';
 import { marketRoutes } from './routes/market.js';
 import { signalRoutes } from './routes/signals.js';
 import { rulesRoutes } from './routes/rules.js';
@@ -44,6 +45,7 @@ export function buildServer() {
   });
 
   app.register(cors, { origin: true });
+  app.register(authPlugin, { publicPaths: ['/health', '/openapi.json', '/version'] });
 
   app.register(healthRoutes);
   app.register(versionRoutes);
