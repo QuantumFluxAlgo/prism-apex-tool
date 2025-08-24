@@ -55,14 +55,13 @@ export function buildServer() {
   app.register(openapiRoute);
   app.register(compatRoutes, { prefix: '/compat' });
 
-  // ---- Jobs ----
-  registerJob('EOD_FLAT', 60_000, jobEodFlat); // check every 60s (phased logic within)
+  // ---- Jobs ---- (placeholders only)
+  registerJob('EOD_FLAT', 60_000, jobEodFlat); // TODO(Unquarantine Phase X): restore real job
   registerJob('MISSING_BRACKETS', 15_000, jobMissingBrackets);
   registerJob('DAILY_LOSS', 60_000, jobDailyLoss);
   registerJob('CONSISTENCY', 300_000, jobConsistency);
 
-  // Defer start to next event loop tick to ensure server initialized
-  setTimeout(startJobs, 10);
+  startJobs();
 
   return app;
 }

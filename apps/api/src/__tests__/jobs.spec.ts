@@ -23,7 +23,7 @@ beforeEach(() => {
 function mockFetchSequence(responses: { status: number; json: any }[]) {
   let i = 0;
   (globalThis as any).fetch = vi.fn(async () => {
-    const r = responses[Math.min(i, responses.length - 1)];
+    const r = responses[Math.min(i, responses.length - 1)]!;
     i++;
     return {
       ok: r.status >= 200 && r.status < 300,
