@@ -9,6 +9,7 @@ export default defineConfig({
     environment: 'node',
     globals: true,
     coverage: { reporter: ['text', 'json-summary', 'lcov'] },
+    setupFiles: [path.resolve(__dirname, './src/tests/setup.ts')],
   },
   resolve: {
     alias: {
