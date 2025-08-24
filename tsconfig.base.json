@@ -11,5 +11,12 @@
     "allowSyntheticDefaultImports": true,
     "jsx": "react-jsx",
     "allowImportingTsExtensions": true
-  }
+  },
+  "exclude": [
+    "archive",
+    "packages/clients-tradovate",
+    "apps/dashboard",
+    "apps/e2e",
+    "sdks"
+  ]
 }
