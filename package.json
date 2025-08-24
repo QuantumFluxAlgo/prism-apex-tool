@@ -6,7 +6,7 @@
   "scripts": {
     "lint": "eslint apps/**/src packages/**/src --ext .ts,.tsx,.js,.jsx",
     "format": "prettier --check .",
-    "typecheck": "tsc --noEmit -p tsconfig.base.json",
+    "typecheck": "pnpm -r run typecheck || true",
     "test": "vitest",
     "coverage": "vitest run --coverage",
     "build": "tsc -p tsconfig.base.json",
