@@ -83,3 +83,16 @@ Run tests:
 - API typecheck stabilized; placeholders added where implementations are pending.
 - Packages now include minimal ESLint configs.
 - No jobs/strategies enabled.
+
+## Unquarantine Phase 5
+
+- Restored in-process scheduler with deterministic, safe jobs.
+- Jobs and intervals:
+  - `EOD_FLAT` – every 60s
+  - `MISSING_BRACKETS` – every 15s
+  - `DAILY_LOSS` – every 60s
+  - `CONSISTENCY` – every 300s
+- Endpoints:
+  - `GET /jobs/status` – job visibility
+  - `POST /jobs/run/:name` – manual trigger for tests/dev
+- Scheduler remains local-only with filesystem-backed store.

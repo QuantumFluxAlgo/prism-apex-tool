@@ -1,3 +1,9 @@
 import type { JobFn } from './scheduler';
-// TODO(Unquarantine Phase X): re-enable real implementation
-export const jobDailyLoss: JobFn = async () => { /* no-op */ };
+import { store } from '../store';
+
+export const jobDailyLoss: JobFn = () => {
+  const rc = store.getRiskContext();
+  if (rc.todayProfit > 0) {
+    store.setTodayProfit(Math.max(rc.todayProfit, 0));
+  }
+};
