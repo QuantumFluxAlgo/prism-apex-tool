@@ -9,6 +9,7 @@ export default defineConfig({
     environment: 'node',
     globals: true,
     coverage: { reporter: ['text', 'json-summary', 'lcov'] },
+    include: ['src/__tests__/**/*.spec.ts'],
   },
   server: {
     fs: {
