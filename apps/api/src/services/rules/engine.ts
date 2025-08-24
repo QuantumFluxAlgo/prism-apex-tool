@@ -63,8 +63,8 @@ const handlers: Record<string, Handler> = {
   cadence: (state, rule) => {
     const history = state.payoutHistory ?? [];
     if (history.length < 2) return false;
-    const last = new Date(history[history.length - 1]).getTime();
-    const prev = new Date(history[history.length - 2]).getTime();
+      const last = new Date(history[history.length - 1]!).getTime();
+      const prev = new Date(history[history.length - 2]!).getTime();
     const diffDays = Math.abs(last - prev) / (1000 * 60 * 60 * 24);
     return diffDays < rule.parameters.minDays;
   },

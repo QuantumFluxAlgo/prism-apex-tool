@@ -1,8 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import crypto from 'node:crypto';
-import type { Ticket } from '../../../packages/shared/src/types';
-import type { ParseResult } from '../../../packages/adapters-tradingview/src/types';
+import type { Ticket, ParseResult } from './types';
 
 const DATA_DIR = process.env.DATA_DIR || '/var/lib/prism-apex-tool';
 const DATA_FILE = path.join(DATA_DIR, 'data.json');
@@ -12,10 +11,10 @@ type TicketEntry = { when: string; ticket: Ticket; reasons: string[] };
 type AlertEntry = {
   id: string;
   ts: string;
-  symbol?: string;
-  side?: 'BUY'|'SELL';
-  price?: number;
-  reason?: string;
+  symbol?: string | undefined;
+  side?: 'BUY' | 'SELL' | undefined;
+  price?: number | undefined;
+  reason?: string | undefined;
   human: string;
   raw: unknown;
   acknowledged: boolean;
@@ -86,7 +85,7 @@ function hash(s: string): string {
   return crypto.createHash('sha256').update(s).digest('hex');
 }
 
-function dedupKey(a: { id: string; ts: string; symbol?: string; side?: string; price?: number; human: string }): string {
+function dedupKey(a: { id: string; ts: string; symbol?: string | undefined; side?: string | undefined; price?: number | undefined; human: string }): string {
   return hash([a.id, a.ts, a.symbol || '', a.side || '', a.price ?? '', a.human].join('|'));
 }
 
