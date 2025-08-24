@@ -49,3 +49,15 @@ tests/            Integration and end-to-end tests (future)
 - PR‑06 Dead code cleanup
 - PR‑07 Docs upkeep
 - PR‑08 Strategies wiring check
+
+## Unquarantine Phase 1
+
+Restored:
+- Read-only `/health` and `/version` API routes
+- `@prism-apex-tool/reporting` utilities with a no-op email adapter
+
+Deferred:
+- Any write-side endpoints, jobs, or external integrations
+- Real email delivery (stubbed for now)
+
+Smoke tests cover `/health`, `/version`, and reporting utilities.

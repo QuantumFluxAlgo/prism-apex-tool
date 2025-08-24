@@ -1,4 +1,4 @@
-import type { DailyJson } from './types';
+import type { DailyJson } from './types.js';
 
 function csvEscape(s: string): string {
   if (/[",\n]/.test(s)) return `"${s.replace(/"/g, '""')}"`;
