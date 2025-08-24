@@ -1,3 +1,11 @@
 import type { JobFn } from './scheduler';
-// TODO(Unquarantine Phase X): re-enable real implementation
-export const jobEodFlat: JobFn = async () => { /* no-op */ };
+
+let lastRun: number | undefined;
+
+export const jobEodFlat: JobFn = () => {
+  lastRun = Date.now();
+};
+
+export function getLastEodFlat(): number | undefined {
+  return lastRun;
+}
