@@ -15,6 +15,7 @@ import { healthRoutes } from './routes/health.js';
 import { versionRoutes } from './routes/version.js';
 import { analyticsRoutes } from './routes/analytics.js';
 import { auditRoutes } from './routes/audit.js';
+import { ticketsRoutes } from './routes/tickets.js';
 import { getConfig } from './config/env';
 
 import { registerJob, startJobs, stopJobs } from './jobs/scheduler';
@@ -29,7 +30,13 @@ export function buildServer() {
     logger: {
       level: process.env.LOG_LEVEL ?? 'info',
       // redact common secret locations; avoid logging raw auth headers or passwords
-      redact: ['req.headers.authorization', 'headers.authorization', 'password', 'token', 'authorization'],
+      redact: [
+        'req.headers.authorization',
+        'headers.authorization',
+        'password',
+        'token',
+        'authorization',
+      ],
     },
     requestTimeout: cfg.requestTimeoutMs,
     keepAliveTimeout: cfg.keepAliveTimeoutMs,
@@ -54,6 +61,7 @@ export function buildServer() {
   app.register(jobsRoutes);
   app.register(openapiRoute);
   app.register(compatRoutes, { prefix: '/compat' });
+  app.register(ticketsRoutes);
 
   // ---- Jobs ----
   registerJob('EOD_FLAT', 60_000, jobEodFlat);
@@ -62,7 +70,10 @@ export function buildServer() {
   registerJob('CONSISTENCY', 300_000, jobConsistency);
 
   startJobs();
-  app.addHook('onClose', (_app, done) => { stopJobs(); done(); });
+  app.addHook('onClose', (_app, done) => {
+    stopJobs();
+    done();
+  });
 
   return app;
 }
