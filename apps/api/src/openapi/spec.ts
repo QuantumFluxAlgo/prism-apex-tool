@@ -11,6 +11,12 @@ extendZodWithOpenApi(z);
 
 export const registry = new OpenAPIRegistry();
 
+registry.registerComponent('securitySchemes', 'BearerAuth', {
+  type: 'http',
+  scheme: 'bearer',
+  bearerFormat: 'token',
+});
+
 // ---- Shared schemas for simple endpoints ----
 const SymbolsResponse = z.object({ symbols: z.array(z.string()) });
 const SessionsResponse = z.object({
@@ -107,12 +113,7 @@ export function buildOpenApi(): Record<string, unknown> {
     openapi: '3.1.0',
     info: { title: 'Prism Apex Tool API', version: '0.1.0' },
     servers: [{ url: '/' }],
-    components: {
-      securitySchemes: {
-        BearerAuth: { type: 'http', scheme: 'bearer', bearerFormat: 'token' },
-      },
-    },
     security: [{ BearerAuth: [] }],
-  });
+  }) as unknown as Record<string, unknown>;
 }
 export default registry;
