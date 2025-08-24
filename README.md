@@ -248,6 +248,9 @@ Per-IP, per-route limiting (excludes public routes & CORS preflight).
 
 - `RATE_LIMIT_MAX` (default: `60`)
 - `RATE_LIMIT_WINDOW_MS` (default: `60000`)
+- `RATE_LIMIT_MAX_BUCKETS` (default: `50000`)
+
+Set `TRUST_PROXY=true` when running behind a reverse proxy (X-Forwarded-\*).
 
 Example 429 behavior (three quick requests with `RATE_LIMIT_MAX=2`):
 

@@ -6,6 +6,7 @@ beforeEach(async () => {
   vi.resetModules(); // avoid double registration/state
   process.env.RATE_LIMIT_MAX = '2';
   process.env.RATE_LIMIT_WINDOW_MS = '60000';
+  process.env.RATE_LIMIT_MAX_BUCKETS = '10';
   delete process.env.BEARER_TOKEN; // ensure auth is OFF for these tests
   ({ buildServer } = await import('../server.js'));
 });
@@ -19,12 +20,37 @@ describe('Hardening', () => {
     await app.close();
   });
 
-  it('applies basic rate limit (429 after threshold)', async () => {
+  it('applies basic rate limit (429 after threshold) and sets Retry-After', async () => {
     const app = buildServer();
     await app.inject({ method: 'GET', url: '/market/symbols' });
     await app.inject({ method: 'GET', url: '/market/symbols' });
     const r3 = await app.inject({ method: 'GET', url: '/market/symbols' });
     expect(r3.statusCode).toBe(429);
+    const retryAfter = r3.headers['retry-after'];
+    expect(retryAfter).toBeDefined();
+    expect(Number(retryAfter)).toBeGreaterThanOrEqual(0);
+    await app.close();
+  });
+
+  it('does not rate-limit CORS preflight (OPTIONS)', async () => {
+    const app = buildServer();
+    // hammer OPTIONS beyond the limit; should not 429
+    await app.inject({
+      method: 'OPTIONS',
+      url: '/market/symbols',
+      headers: { Origin: 'http://example.com' },
+    });
+    await app.inject({
+      method: 'OPTIONS',
+      url: '/market/symbols',
+      headers: { Origin: 'http://example.com' },
+    });
+    const r3 = await app.inject({
+      method: 'OPTIONS',
+      url: '/market/symbols',
+      headers: { Origin: 'http://example.com' },
+    });
+    expect(r3.statusCode).toBeLessThan(429);
     await app.close();
   });
 
