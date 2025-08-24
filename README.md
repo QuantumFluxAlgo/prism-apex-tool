@@ -77,3 +77,9 @@ Run tests:
 - `pnpm --filter @prism-apex-tool/analytics test`
 - `pnpm --filter @prism-apex-tool/audit test`
 - `pnpm --filter ./apps/api test`
+
+## Unquarantine Phase 3
+
+- API typecheck stabilized; placeholders added where implementations are pending.
+- Packages now include minimal ESLint configs.
+- No jobs/strategies enabled.

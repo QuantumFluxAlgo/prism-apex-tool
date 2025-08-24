@@ -14,7 +14,8 @@
     "allowImportingTsExtensions": true,
     "paths": {
       "@prism-apex-tool/analytics": ["packages/analytics/src"],
-      "@prism-apex-tool/audit": ["packages/audit/src"]
+      "@prism-apex-tool/audit": ["packages/audit/src"],
+      "@prism-apex-tool/reporting": ["packages/reporting/src"]
     }
   },
   "exclude": [
