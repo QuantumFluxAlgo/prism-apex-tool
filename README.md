@@ -214,6 +214,20 @@ Each package owns its own `tsconfig.typecheck.json` so CI stays fast and focused
 - Tests are compiled by Vitest at runtime (not by `tsc`).
 - `@ts-expect-error` in test files won’t fail `pnpm typecheck` anymore.
 
+### Test harness (PR-17)
+
+Vitest now loads a small setup file for the API tests:
+
+- resets loaded modules before each test (`vi.resetModules()`), avoiding job double-registration
+- forces quiet logs with `LOG_LEVEL=fatal` unless a test overrides it
+- leaves rate-limiter/auth env vars untouched unless a test sets them
+
+You can still override in a test:
+
+```ts
+process.env.LOG_LEVEL = 'info';
+```
+
 ## Unquarantine Phase 8C — Tickets (local-only)
 
 - Added `POST /tickets/promote` to persist a suggestion as a ticket in the local filesystem store.
