@@ -91,10 +91,10 @@ Restored:
   - `GET /report/daily?date=YYYY-MM-DD`
   - `POST /ingest/alert`
   - `GET /alerts/peek?limit=50`
-  - `POST /alerts/ack`
-  - `POST /notify/recipients`
-  - `GET /export/tickets?date=YYYY-MM-DD`
-  - `POST /rules/check`
+- `POST /alerts/ack`
+- `POST /notify/recipients`
+- `GET /export/tickets?date=YYYY-MM-DD`
+- `POST /rules/check`
 - All persistence remains local-only under `DATA_DIR`.
 
 Run tests:
@@ -111,5 +111,82 @@ Run tests:
   - `CONSISTENCY` – every 300s
 - Endpoints:
   - `GET /jobs/status` – job visibility
-  - `POST /jobs/run/:name` – manual trigger for tests/dev
+- `POST /jobs/run/:name` – manual trigger for tests/dev
 - Scheduler remains local-only with filesystem-backed store.
+
+## Unquarantine Phase 6
+
+Restored:
+
+- `@prism-apex-tool/signals` package with read-only strategies (Open Session Breakout, VWAP First-Touch).
+- Read-only API routes:
+  - `POST /signals/osb`
+  - `POST /signals/vwap-first-touch`
+  - `GET /market/symbols`
+  - `GET /market/sessions`
+  - `GET /signals/ping`
+
+Example `POST /signals/osb`:
+
+```json
+{
+  "symbol": "ES",
+  "session": "RTH",
+  "bars": [{ "ts": "2020-01-01T00:00:00Z", "open": 100, "high": 105, "low": 95, "close": 100 }, ...]
+}
+```
+
+Response:
+
+```json
+{
+  "suggestions": [
+    {
+      "id": "osb-2020-01-01T00:10:00Z",
+      "symbol": "ES",
+      "side": "BUY",
+      "qty": 1,
+      "entry": 106,
+      "stop": 94,
+      "targets": [111],
+      "reasons": ["OSB breakout"]
+    }
+  ]
+}
+```
+
+Example `POST /signals/vwap-first-touch`:
+
+```json
+{
+  "symbol": "ES",
+  "bars": [{ "ts": "2020-01-01T01:00:00Z", "open": 1, "high": 2, "low": 1, "close": 1, "volume": 1 }, ...]
+}
+```
+
+Response:
+
+```json
+{
+  "suggestions": [
+    {
+      "id": "vwapft-2020-01-01T01:10:00Z",
+      "symbol": "ES",
+      "side": "BUY",
+      "qty": 1,
+      "entry": 2,
+      "stop": 0,
+      "targets": [7],
+      "reasons": ["VWAP first touch"]
+    }
+  ]
+}
+```
+
+These endpoints only compute and return suggested tickets; operators still manually enter orders.
+
+Run tests:
+- `pnpm --filter @prism-apex-tool/signals typecheck`
+- `pnpm --filter @prism-apex-tool/signals test`
+- `pnpm --filter ./apps/api typecheck`
+- `pnpm --filter ./apps/api test`
