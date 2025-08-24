@@ -17,7 +17,7 @@ import { analyticsRoutes } from './routes/analytics.js';
 import { auditRoutes } from './routes/audit.js';
 import { getConfig } from './config/env';
 
-import { registerJob, startJobs } from './jobs/scheduler';
+import { registerJob, startJobs, stopJobs } from './jobs/scheduler';
 import { jobEodFlat } from './jobs/eodFlat';
 import { jobMissingBrackets } from './jobs/missingBrackets';
 import { jobDailyLoss } from './jobs/dailyLoss';
@@ -55,13 +55,14 @@ export function buildServer() {
   app.register(openapiRoute);
   app.register(compatRoutes, { prefix: '/compat' });
 
-  // ---- Jobs ---- (placeholders only)
-  registerJob('EOD_FLAT', 60_000, jobEodFlat); // TODO(Unquarantine Phase X): restore real job
+  // ---- Jobs ----
+  registerJob('EOD_FLAT', 60_000, jobEodFlat);
   registerJob('MISSING_BRACKETS', 15_000, jobMissingBrackets);
   registerJob('DAILY_LOSS', 60_000, jobDailyLoss);
   registerJob('CONSISTENCY', 300_000, jobConsistency);
 
   startJobs();
+  app.addHook('onClose', (_app, done) => { stopJobs(); done(); });
 
   return app;
 }
