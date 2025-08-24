@@ -32,7 +32,6 @@ export default fp<Opts>(async (app, opts) => {
     Math.min(windowMs, 30_000),
   );
   // avoid keeping the event loop alive just for the sweeper
-  // @ts-expect-error Node types don’t include unref on Timeout in all TS configs
   sweeper.unref?.();
 
   app.addHook('onClose', async () => {

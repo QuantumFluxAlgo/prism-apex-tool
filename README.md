@@ -198,8 +198,21 @@ Run tests:
 
 - `pnpm --filter @prism-apex-tool/signals typecheck`
 - `pnpm --filter @prism-apex-tool/signals test`
+
 - `pnpm --filter ./apps/api typecheck`
 - `pnpm --filter ./apps/api test`
+
+## Developer Guide
+
+### Tests & Typecheck (PR-15)
+
+- Run all package tests: `pnpm test`
+- Typecheck all packages (source only, tests excluded): `pnpm typecheck`
+
+Each package owns its own `tsconfig.typecheck.json` so CI stays fast and focused:
+
+- Tests are compiled by Vitest at runtime (not by `tsc`).
+- `@ts-expect-error` in test files won’t fail `pnpm typecheck` anymore.
 
 ## Unquarantine Phase 8C — Tickets (local-only)
 
