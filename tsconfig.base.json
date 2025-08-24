@@ -10,7 +10,12 @@
     "esModuleInterop": true,
     "allowSyntheticDefaultImports": true,
     "jsx": "react-jsx",
-    "allowImportingTsExtensions": true
+    "baseUrl": ".",
+    "allowImportingTsExtensions": true,
+    "paths": {
+      "@prism-apex-tool/analytics": ["packages/analytics/src"],
+      "@prism-apex-tool/audit": ["packages/audit/src"]
+    }
   },
   "exclude": [
     "archive",

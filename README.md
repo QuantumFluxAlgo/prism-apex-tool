@@ -61,3 +61,19 @@ Deferred:
 - Real email delivery (stubbed for now)
 
 Smoke tests cover `/health`, `/version`, and reporting utilities.
+
+## Unquarantine Phase 2
+
+Restored:
+- `@prism-apex-tool/analytics` helpers for summaries and payout status
+- `@prism-apex-tool/audit` log readers
+- Read-only `/analytics/summary` and `/audit/last` API routes
+
+Deferred:
+- Persisting reports or payout status
+- Audit log writes and notifications
+
+Run tests:
+- `pnpm --filter @prism-apex-tool/analytics test`
+- `pnpm --filter @prism-apex-tool/audit test`
+- `pnpm --filter ./apps/api test`
