@@ -4,8 +4,8 @@
   "private": true,
   "description": "Prism Apex Tool monorepo",
   "scripts": {
-    "lint": "ESLINT_USE_FLAT_CONFIG=false eslint apps/api/src apps/dashboard/src --ext .ts,.tsx --max-warnings=0",
-    "format": "prettier --write .",
+    "lint": "eslint apps/**/src packages/**/src --ext .ts,.tsx,.js,.jsx",
+    "format": "prettier --check .",
     "typecheck": "tsc --noEmit -p tsconfig.base.json",
     "test": "vitest",
     "coverage": "vitest run --coverage",
@@ -14,7 +14,8 @@
     "clean": "rimraf node_modules dist coverage",
     "compose:up": "docker compose up -d --build",
     "compose:down": "docker compose down -v",
-    "e2e": "pnpm --filter @prism-apex/e2e test"
+    "e2e": "pnpm --filter @prism-apex/e2e test",
+    "format:fix": "prettier --write ."
   },
   "engines": {
     "node": ">=20"
