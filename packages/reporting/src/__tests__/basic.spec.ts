@@ -1,10 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import { toDailyCSV } from '../csv';
-import { sendDailyEmail } from '../email';
-import type { DailyJson } from '../types';
+import { toDailyCSV } from '../csv.js';
+import { sendDailyEmail } from '../email.js';
+import type { DailyJson } from '../types.js';
 
 describe('reporting utils', () => {
-  it('formats CSV and dry-run email', async () => {
+  it('formats CSV and noop email', async () => {
     const json: DailyJson = {
       summary: {
         date: '2025-08-17',
@@ -31,7 +31,6 @@ describe('reporting utils', () => {
     const csv = toDailyCSV(json);
     expect(csv).toContain('date,time,symbol');
     const res = await sendDailyEmail(json.summary.date, 'ops@example.com', json, csv);
-    expect(res.transport).toBe('dry-run');
-    expect(res.preview).toContain('TO: ops@example.com');
+    expect(res).toEqual({ ok: true, transport: 'noop' });
   });
 });
