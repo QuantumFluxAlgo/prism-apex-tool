@@ -7,6 +7,5 @@
     "declarationMap": true,
     "types": ["node"]
   },
-  "include": ["src", "vitest.config.ts"],
-  "exclude": ["archive/**"]
+  "include": ["src", "vitest.config.ts"]
 }
