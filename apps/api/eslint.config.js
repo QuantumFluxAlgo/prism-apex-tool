@@ -1,4 +1,5 @@
 import parser from '@typescript-eslint/parser';
+import pluginImport from 'eslint-plugin-import';
 
 export default [
   {
@@ -7,6 +8,9 @@ export default [
     languageOptions: {
       parser,
     },
-    rules: {},
+    plugins: { import: pluginImport },
+    rules: {
+      'import/extensions': ['error', 'ignorePackages', { ts: 'never' }],
+    },
   },
 ];
