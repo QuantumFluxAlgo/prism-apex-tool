@@ -24,6 +24,7 @@ export type Config = {
     enforceSizeHints: boolean;
     sizeJumpMultiplier: number;
     enforceSizeJumps: boolean;
+    antiWindfall: boolean;
   };
   consistency: {
     enabled: boolean;
@@ -48,12 +49,13 @@ const envSchema = z.object({
   MAX_RR: z.coerce.number().gt(0).max(5).default(5),
   FLAT_BY_UTC: z
     .string()
-    .regex(/^([01]\d|2[0-3]):[0-5]\d$/)
-    .default('20:59'),
+    .regex(/^([01]\d|2[0-3]):[0-5]\d(:[0-5]\d)?$/)
+    .default('20:59:00'),
   SIZE_POLICY: z.literal('percent-of-max').default('percent-of-max'),
   PCT_OF_MAX_WHEN_NO_BUFFER: z.coerce.number().gt(0).lte(1).default(0.5),
   PCT_OF_MAX_WHEN_BUFFER: z.coerce.number().gt(0).lte(1).default(1),
   HALF_SIZE_UNTIL_BUFFER: z.coerce.boolean().default(true),
+  ANTI_WINDFALL: z.coerce.boolean().default(true),
   ENFORCE_SIZE_HINTS: z.coerce.boolean().default(false),
   SIZE_JUMP_MULTIPLIER: z.coerce.number().gt(0).default(2),
   ENFORCE_SIZE_JUMPS: z.coerce.boolean().default(false),
@@ -113,6 +115,7 @@ export function getConfig(env = process.env): Config {
       enforceSizeHints: parsed.ENFORCE_SIZE_HINTS,
       sizeJumpMultiplier: parsed.SIZE_JUMP_MULTIPLIER,
       enforceSizeJumps: parsed.ENFORCE_SIZE_JUMPS,
+      antiWindfall: parsed.ANTI_WINDFALL,
     },
     consistency: {
       enabled: parsed.CONSISTENCY_TRACKING_ENABLED,
