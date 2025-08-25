@@ -8,6 +8,10 @@ Prism Apex Tool is a TypeScript monorepo supporting discretionary futures tradin
 - System suggests trades; the operator confirms and inputs orders manually.
 - Absolutely no automatic order execution.
 
+## Market Data
+
+For the MVP we stream **demo** market data from Tradovate's sandbox. Demo data does not require a CME sub‑vendor license. Live market data would require proper CME licensing, so we avoid it for now. The feed provides full contract symbols and basic tick metadata so downstream tickets can later carry complete contract details.
+
 ## Apex Guardrails (Non‑negotiable)
 
 - Every trade requires a stop.
