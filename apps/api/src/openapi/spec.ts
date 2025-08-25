@@ -174,11 +174,24 @@ registry.registerPath({
 registry.registerPath({
   method: 'get',
   path: '/tickets',
-  request: { query: z.object({ date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/) }) },
+  request: {
+    query: z.object({
+      date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+      cursor: z.string().optional(),
+      limit: z.string().optional(),
+    }),
+  },
   responses: {
     200: {
       description: 'Tickets for date',
-      content: { 'application/json': { schema: z.array(z.any()) } },
+      content: {
+        'application/json': {
+          schema: z.object({
+            tickets: z.array(z.any()),
+            nextCursor: z.number().nullable(),
+          }),
+        },
+      },
     },
   },
 });
