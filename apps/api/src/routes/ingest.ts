@@ -1,6 +1,6 @@
 import { FastifyPluginAsync } from 'fastify';
 import { z } from 'zod';
-import { applyGuardrails } from '../lib/guard';
+import { applyGuardWithSizing } from '../lib/guard';
 import { store } from '../store';
 import { alertSchema } from '../schemas/alert';
 import type { TicketInput } from '@prism-apex-tool/rules-apex';
@@ -11,6 +11,8 @@ const TicketInputSchema = z.object({
   entry: z.number(),
   stop: z.number(),
   target: z.number(),
+  qty: z.number().int().positive().optional(),
+  accountId: z.string().optional(),
   timestampUtc: z.string().optional(),
   meta: z.record(z.unknown()).optional(),
 });
@@ -35,7 +37,7 @@ export const ingestRoutes: FastifyPluginAsync = async (app) => {
       meta: p.data.meta,
     };
 
-    const guard = applyGuardrails(ticket);
+    const guard = await applyGuardWithSizing({ ...ticket, qty: p.data.qty, accountId: p.data.accountId });
     if (!guard.accepted) {
       app.log.warn({
         reasons: guard.reasons,
@@ -44,14 +46,16 @@ export const ingestRoutes: FastifyPluginAsync = async (app) => {
         symbol: p.data.symbol,
         side: p.data.side,
       }, 'guard reject');
-      return reply.code(422).send({ accepted: false, rr: guard.rr, reasons: guard.reasons });
+      return reply
+        .code(422)
+        .send({ accepted: false, rr: guard.rr, reasons: guard.reasons, sizing: guard.sizing });
     }
 
     let entry;
     if (p.data.alert && p.data.human) {
       entry = store.enqueueAlert({ alert: p.data.alert, human: p.data.human } as any);
     }
-    return { ok: true, accepted: true, rr: guard.rr, alert: entry };
+    return { ok: true, accepted: true, rr: guard.rr, sizing: guard.sizing, alert: entry };
   });
 };
 
