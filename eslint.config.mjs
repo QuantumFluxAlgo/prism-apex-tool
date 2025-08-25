@@ -28,18 +28,44 @@ export default [
       'simple-import-sort': simpleImportSort,
     },
     rules: {
-      // Keep noise low; we’ll tighten in a later CI hardening PR
-      'no-console': 'off',
+      // Keep noise low but catch obvious foot-guns (WARN ONLY)
+      'no-console': 'warn',
       'no-empty': ['warn', { allowEmptyCatch: true }],
       'no-undef': 'off',
+      eqeqeq: ['warn', 'smart'],
+      'no-var': 'warn',
+      'prefer-const': 'warn',
       '@typescript-eslint/no-explicit-any': 'off',
       '@typescript-eslint/no-unused-vars': ['warn', { argsIgnorePattern: '^_', varsIgnorePattern: '^_' }],
       '@typescript-eslint/no-require-imports': 'off',
-      'prefer-const': 'off',
 
       // Some packages may still reference this rule; keep it off.
       'simple-import-sort/imports': 'off',
       'simple-import-sort/exports': 'off',
+
+      // Surface missing deps as warnings; allow devDeps in tests/config only
+      'import/no-extraneous-dependencies': [
+        'warn',
+        {
+          devDependencies: [
+            '**/*.spec.*',
+            '**/__tests__/**',
+            '**/vitest.config.*',
+            '**/*.config.*',
+            '**/src/tests/**',
+          ],
+        },
+      ],
+    },
+  },
+
+  // Tests stay loose/ergonomic
+  {
+    files: ['**/__tests__/**', '**/*.spec.*', '**/src/tests/**'],
+    rules: {
+      'no-console': 'off',
+      '@typescript-eslint/no-explicit-any': 'off',
+      '@typescript-eslint/no-unused-vars': 'off',
     },
   },
 ];
