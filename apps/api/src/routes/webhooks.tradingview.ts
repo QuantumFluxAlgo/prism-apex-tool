@@ -1,7 +1,7 @@
 import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
 import { getConfig } from '../config/env';
-import { applyGuardrails } from '../lib/guard';
+import { applyGuardWithSizing } from '../lib/guard';
 import type { TicketInput } from '@prism-apex-tool/rules-apex';
 import { store } from '../store';
 import { alertSchema } from '../schemas/alert';
@@ -18,6 +18,8 @@ const rawPayload = z.object({
   entry: z.coerce.number(),
   stop: z.coerce.number(),
   target: z.coerce.number(),
+  qty: z.coerce.number().int().positive().optional(),
+  accountId: z.string().optional(),
   meta: z.record(z.unknown()).optional(),
 });
 
@@ -54,12 +56,12 @@ export async function tradingviewWebhookRoutes(app: FastifyInstance) {
       meta: p.meta,
     };
 
-    const decision = applyGuardrails(ticket);
+    const decision = await applyGuardWithSizing({ ...ticket, accountId: (p as any).accountId, qty: (p as any).qty });
     if (!decision.accepted) {
       req.log.warn({ rr: decision.rr, reasons: decision.reasons }, 'tradingview webhook rejected');
       return reply
         .code(422)
-        .send({ accepted: false, rr: decision.rr, reasons: decision.reasons });
+        .send({ accepted: false, rr: decision.rr, reasons: decision.reasons, sizing: decision.sizing });
     }
 
     let queuedId: string | undefined;
@@ -68,10 +70,11 @@ export async function tradingviewWebhookRoutes(app: FastifyInstance) {
       queuedId = store.enqueueAlert(maybeAlert.data as ParseResult).id;
     }
 
-    const res: { accepted: true; rr: number; queuedId?: string } = {
+    const res: { accepted: true; rr: number; sizing?: any; queuedId?: string } = {
       accepted: true,
       rr: decision.rr,
     };
+    if (decision.sizing) res.sizing = decision.sizing;
     if (queuedId) res.queuedId = queuedId;
     return reply.code(202).send(res);
   });

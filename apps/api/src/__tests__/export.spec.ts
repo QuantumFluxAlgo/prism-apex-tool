@@ -86,12 +86,15 @@ describe('Export API', () => {
     });
     const body = resJson.json();
     expect(body[0]).toHaveProperty('sizeSuggested');
+    expect(body[0]).toHaveProperty('sizeAllowed');
     expect(body[0]).toHaveProperty('halfSizeSuggested');
     const resCsv = await app.inject({
       method: 'GET',
       url: '/export/tickets?date=2024-08-24&accountId=PA-TEST&format=csv',
     });
     expect(resCsv.body).toContain('size_suggested');
+    expect(resCsv.body).toContain('size_allowed');
+    expect(resCsv.body).toContain('over_allowed');
   });
 
   it('marks preCloseSuppressed within window', async () => {

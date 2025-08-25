@@ -25,6 +25,7 @@ export const exportRoutes: FastifyPluginAsync = async (app) => {
 
     const cfg = getConfig();
     const account = accountId ? await Accounts.get(accountId) : undefined;
+    let lastSuggested = account?.lastSuggestedContracts;
 
     const now = new Date();
     const rawTickets = store.getTicketsForDate(date);
@@ -45,7 +46,10 @@ export const exportRoutes: FastifyPluginAsync = async (app) => {
         now,
       });
       let sizeSuggested: number | undefined;
+      let sizeAllowed: number | undefined;
       let halfSizeSuggested: boolean | undefined;
+      let overAllowed: boolean | undefined;
+      let jumpExceeded: boolean | undefined;
       if (account) {
         const sizing = suggestPercent(
           account.maxContracts,
@@ -53,8 +57,17 @@ export const exportRoutes: FastifyPluginAsync = async (app) => {
           cfg.sizing.percent.noBuffer,
           cfg.sizing.percent.withBuffer,
         );
-        sizeSuggested = sizing.contracts;
+        sizeAllowed = sizing.contracts;
+        sizeSuggested = sizeAllowed;
         halfSizeSuggested = sizing.halfSizeSuggested;
+        const qty = (t.ticket as any).qty;
+        if (typeof qty === 'number') {
+          overAllowed = sizeAllowed !== undefined ? qty > sizeAllowed : undefined;
+          if (lastSuggested !== undefined) {
+            jumpExceeded = qty > lastSuggested * cfg.sizing.sizeJumpMultiplier;
+          }
+        }
+        lastSuggested = sizeAllowed;
       }
       return {
         when: t.when,
@@ -70,13 +83,16 @@ export const exportRoutes: FastifyPluginAsync = async (app) => {
         preCloseSuppressed,
         flatByUtc: cfg.time.flatByUtc,
         sizeSuggested,
+        sizeAllowed,
         halfSizeSuggested,
+        overAllowed,
+        jumpExceeded,
       };
     });
 
     if (format === 'csv') {
       const header =
-        'ts,symbol,side,entry,stop,target,rr,accepted,reason_summary,pre_close,flat_by_utc,size_suggested,half_size_suggested';
+        'ts,symbol,side,entry,stop,target,rr,accepted,reason_summary,pre_close,flat_by_utc,size_suggested,size_allowed,half_size_suggested,over_allowed,jump_exceeded';
       const rows = tickets.map((t) => {
         const cols = [
           t.when,
@@ -91,7 +107,10 @@ export const exportRoutes: FastifyPluginAsync = async (app) => {
           String(t.preCloseSuppressed),
           t.flatByUtc,
           t.sizeSuggested !== undefined ? String(t.sizeSuggested) : '',
+          t.sizeAllowed !== undefined ? String(t.sizeAllowed) : '',
           t.halfSizeSuggested !== undefined ? String(t.halfSizeSuggested) : '',
+          t.overAllowed !== undefined ? String(t.overAllowed) : '',
+          t.jumpExceeded !== undefined ? String(t.jumpExceeded) : '',
         ];
         // remove trailing empty cells
         let end = cols.length;

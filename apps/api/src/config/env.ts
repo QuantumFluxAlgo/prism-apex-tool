@@ -21,6 +21,9 @@ export type Config = {
       withBuffer: number;
     };
     halfSizeUntilBuffer: boolean;
+    enforceSizeHints: boolean;
+    sizeJumpMultiplier: number;
+    enforceSizeJumps: boolean;
   };
   consistency: {
     enabled: boolean;
@@ -51,6 +54,9 @@ const envSchema = z.object({
   PCT_OF_MAX_WHEN_NO_BUFFER: z.coerce.number().gt(0).lte(1).default(0.5),
   PCT_OF_MAX_WHEN_BUFFER: z.coerce.number().gt(0).lte(1).default(1),
   HALF_SIZE_UNTIL_BUFFER: z.coerce.boolean().default(true),
+  ENFORCE_SIZE_HINTS: z.coerce.boolean().default(false),
+  SIZE_JUMP_MULTIPLIER: z.coerce.number().gt(0).default(2),
+  ENFORCE_SIZE_JUMPS: z.coerce.boolean().default(false),
   CONSISTENCY_TRACKING_ENABLED: z.coerce.boolean().default(true),
   CONSISTENCY_DAY_SHARE_LIMIT: z.coerce.number().gt(0).lte(1).default(0.3),
   CONSISTENCY_MIN_PROFIT_DAY_USD: z.coerce.number().default(50),
@@ -104,6 +110,9 @@ export function getConfig(env = process.env): Config {
         withBuffer: parsed.PCT_OF_MAX_WHEN_BUFFER,
       },
       halfSizeUntilBuffer: parsed.HALF_SIZE_UNTIL_BUFFER,
+      enforceSizeHints: parsed.ENFORCE_SIZE_HINTS,
+      sizeJumpMultiplier: parsed.SIZE_JUMP_MULTIPLIER,
+      enforceSizeJumps: parsed.ENFORCE_SIZE_JUMPS,
     },
     consistency: {
       enabled: parsed.CONSISTENCY_TRACKING_ENABLED,

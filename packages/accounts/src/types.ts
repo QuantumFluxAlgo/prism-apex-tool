@@ -4,4 +4,6 @@ export type AccountFile = {
   bufferCleared: boolean;
   updatedAt: string;
   notes?: string;
+  lastSuggestedContracts?: number;
+  lastSuggestedAt?: string;
 };
