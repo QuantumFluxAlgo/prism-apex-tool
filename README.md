@@ -204,6 +204,21 @@ Run tests:
 
 ## Developer Guide
 
+### Dead-deps scan & lint (PR-20)
+
+- Scan for unused deps (writes `reports/depcheck.json`):
+  ```bash
+  pnpm scan:dead
+  ```
+
+Lint is slightly tightened but warn-only (won’t fail CI/dev):
+
+- no-console
+- prefer-const
+- eqeqeq
+- no-var
+- import/no-extraneous-dependencies (tests/config permitted)
+
 ### Tests & Typecheck (PR-15)
 
 - Run all package tests: `pnpm test`
