@@ -5,3 +5,4 @@ packages:
   - 'packages/accounts'
   - 'packages/analytics'
   - 'packages/indicators'
+  - 'packages/strategies'
