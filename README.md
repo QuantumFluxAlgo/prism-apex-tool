@@ -119,6 +119,22 @@ Run tests:
 - Packages now include minimal ESLint configs.
 - No jobs/strategies enabled.
 
+## Signals Runner (S4)
+
+The Strategy Orchestrator consumes normalized `1m` bars from the in-process bus and
+produces strategy suggestions. For each supported contract (ES, NQ, MES, MNQ) it
+maintains a rolling window of RTH bars, computes VWAP, ATR, opening range, and
+swing points, then runs the VWAP First-Touch and Opening Swing Breakout
+strategies. Suggestions are debounced in-memory so repeated touches only emit
+once per leg. The orchestrator publishes `suggestion` events on the bus for
+downstream consumers.
+
+View heartbeat status via:
+
+```bash
+curl -s localhost:3000/ready | jq '.strategies'
+```
+
 ## Unquarantine Phase 4
 
 Restored:
