@@ -1,10 +1,9 @@
+node_modules
+dist
+coverage
 .git
 .gitignore
-**/node_modules
-**/dist
-tmp
-.DS_Store
-npm-debug.log*
-pnpm-debug.log*
-.env
-.vscode
+Dockerfile
+**/*.log
+*.local
+.env.local

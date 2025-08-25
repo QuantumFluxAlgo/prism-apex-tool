@@ -228,6 +228,32 @@ You can still override in a test:
 process.env.LOG_LEVEL = 'info';
 ```
 
+### Run the API with Docker (PR-18)
+
+If you don’t want to install Node/pnpm locally:
+
+1. Copy `.env.example` → `.env` and set any values you need (optional).
+2. Start the API:
+   ```bash
+   pnpm compose:up
+   ```
+
+Hit it:
+
+- Health: GET http://localhost:3000/health
+- OpenAPI: GET http://localhost:3000/openapi.json
+- Symbols: GET http://localhost:3000/market/symbols
+
+Notes:
+
+- Container builds & runs all workspaces it needs, then starts the API (`pnpm --filter ./apps/api start`).
+- Data is persisted in the api-data volume at /data (inside the container).
+- To stop & clean up:
+  ```bash
+  pnpm compose:down
+  ```
+  (You already have `compose:up` and `compose:down` scripts at the root; this will use them.)
+
 ## Unquarantine Phase 8C — Tickets (local-only)
 
 - Added `POST /tickets/promote` to persist a suggestion as a ticket in the local filesystem store.
