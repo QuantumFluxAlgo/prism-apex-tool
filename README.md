@@ -74,8 +74,8 @@ accepted, reasons?
 
 Tickets can be listed or exported via the API:
 
-- `GET /tickets?date=YYYY-MM-DD`
-- `GET /export/tickets?date=YYYY-MM-DD`
+ - `GET /tickets?date=YYYY-MM-DD`
+ - `GET /export/tickets?date=YYYY-MM-DD` (CSV includes strategy metadata)
 
 See [docs/tickets.md](docs/tickets.md) for full schema and guardrail details.
 

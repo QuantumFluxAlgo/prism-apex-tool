@@ -66,6 +66,31 @@ symbol,side,entry,stop,target,qty,accountId,timestampUtc,meta.strategy,meta.rr,a
 ESZ4,BUY,100,99,102,1,A1,2024-01-01T14:30:00Z,VWAP_FT,2,true,
 ```
 
+## Query & Export
+
+Paginate tickets by passing the `cursor` returned from the previous request:
+
+```
+GET /tickets?date=2024-01-01
+GET /tickets?date=2024-01-01&cursor=50
+```
+
+Example JSON response:
+
+```json
+{
+  "tickets": [{ "symbol": "ESZ4", "side": "BUY", "entry": 100, "stop": 99, "target": 102, "qty": 1, "accountId": "A1", "timestampUtc": "2024-01-01T14:30:00Z", "meta": { "strategy": "VWAP_FT", "rr": 2, "guardrails": [] }, "accepted": true }],
+  "nextCursor": null
+}
+```
+
+CSV export returns canonical fields plus strategy metadata:
+
+```
+symbol,side,entry,stop,target,qty,accountId,timestampUtc,meta.strategy,meta.rr,accepted,reasons
+ESZ4,BUY,100,99,102,1,A1,2024-01-01T14:30:00Z,VWAP_FT,2,true,
+```
+
 ## Dashboard
 
 The dashboard listens for the `ticket` bus event to refresh views when new tickets arrive.
