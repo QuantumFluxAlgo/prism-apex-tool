@@ -1,17 +1,9 @@
 {
   "compilerOptions": {
-    "target": "ESNext",
-    "module": "NodeNext",
+    "module": "ESNext",
     "moduleResolution": "NodeNext",
-    "strict": true,
-    "noImplicitAny": true,
-    "skipLibCheck": true,
-    "forceConsistentCasingInFileNames": true,
-    "esModuleInterop": true,
-    "allowSyntheticDefaultImports": true,
-    "jsx": "react-jsx",
+    "target": "ES2022",
     "baseUrl": ".",
-    "allowImportingTsExtensions": true,
     "paths": {
       "@prism-apex-tool/sdk": ["packages/sdk/src"],
       "@prism-apex-tool/analytics": ["packages/analytics/src"],
@@ -20,7 +12,17 @@
       "@prism-apex-tool/signals": ["packages/signals/src"],
       "@prism-apex-tool/rules-apex": ["packages/rules-apex/src"],
       "@prism-apex-tool/accounts": ["packages/accounts/src"]
-    }
+    },
+    "resolveJsonModule": true,
+    "allowSyntheticDefaultImports": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "strict": true,
+    "noImplicitAny": true,
+    "forceConsistentCasingInFileNames": true,
+    "jsx": "react-jsx",
+    "types": []
   },
+  "include": ["packages/*/src", "apps/*/src"],
   "exclude": ["packages/clients-tradovate", "apps/dashboard", "apps/e2e", "sdks"]
 }
