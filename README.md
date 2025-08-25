@@ -58,6 +58,10 @@ Verify the active phase with:
 echo $ACCOUNT_PHASE
 ```
 
+## Telemetry
+
+A temporary no-op `@prism-apex-tool/analytics` package exports helpers (`trackEvent`, `trackError`, `meter`, `createAnalyticsScope`) that currently do nothing. This stub keeps CI green and will be replaced with real telemetry in a future workstream.
+
 ## PR Roadmap (Collapsed)
 
 - PR‑00 Repo scan & dependency sanity

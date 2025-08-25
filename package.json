@@ -28,7 +28,8 @@
   "packageManager": "pnpm@9.15.9",
   "workspaces": [
     "apps/*",
-    "packages/*"
+    "packages/*",
+    "packages/analytics"
   ],
   "devDependencies": {
     "@commitlint/cli": "^18.4.3",
