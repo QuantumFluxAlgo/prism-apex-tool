@@ -1,6 +1,11 @@
 import { EventEmitter } from 'events';
 
-export type Topics = 'bars.1m' | 'bars.5m' | 'quotes.last' | 'meta.contract';
+export type Topics =
+  | 'bars.1m'
+  | 'bars.5m'
+  | 'quotes.last'
+  | 'meta.contract'
+  | 'suggestion';
 
 const emitter = new EventEmitter();
 
