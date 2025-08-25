@@ -46,3 +46,17 @@ test('atomic write leaves valid JSON', async () => {
   const tmp = path.join(path.dirname(file), '.A1.tmp');
   await expect(fs.access(tmp)).rejects.toBeTruthy();
 });
+
+test('optional lastSuggested fields round-trip', async () => {
+  const dir = await tempDir();
+  const iso = new Date().toISOString();
+  await upsertAccount(dir, {
+    id: 'A1',
+    maxContracts: 1,
+    lastSuggestedContracts: 3,
+    lastSuggestedAt: iso,
+  });
+  const read = await readAccount(dir, 'A1');
+  expect(read?.lastSuggestedContracts).toBe(3);
+  expect(read?.lastSuggestedAt).toBe(iso);
+});

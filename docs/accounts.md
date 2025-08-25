@@ -8,11 +8,15 @@ The accounts registry stores account metadata on disk under `DATA_DIR/accounts`.
   "maxContracts": 17,
   "bufferCleared": false,
   "updatedAt": "2024-01-01T00:00:00.000Z",
-  "notes": "plan:150k"
+  "notes": "plan:150k",
+  "lastSuggestedContracts": 2,
+  "lastSuggestedAt": "2024-01-01T00:00:00.000Z"
 }
 ```
 
 These REST endpoints mirror the CLI helpers (e.g. `prism-accounts set --id ...`). They are secured and require a bearer token.
+
+`lastSuggestedContracts` and `lastSuggestedAt` are optional fields used to track the most recent sizing advice.
 
 ## Examples
 
