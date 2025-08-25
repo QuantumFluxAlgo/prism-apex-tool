@@ -35,7 +35,7 @@ describe('/tickets/promote', () => {
     expect(res.statusCode).toBe(200);
     const body = res.json() as any;
     expect(body.ticket.qty).toBe(2);
-    expect(body.ticket.meta.guardrails).toContain('rr');
+    expect(body.ticket.meta.guardrails).toContain('rr-clamp');
     await app.close();
   });
 
@@ -86,7 +86,32 @@ describe('/tickets/promote', () => {
     process.env.ACCOUNT_PHASE = 'eval';
   });
 
-  it('rejects windfall qty jumps', async () => {
+  it('accepts missing stop in eval', async () => {
+    const app = buildServer();
+    const res = await app.inject({
+      method: 'POST',
+      url: '/tickets/promote',
+      payload: {
+        suggestion: {
+          id: '6',
+          symbol: 'ESZ4',
+          side: 'BUY',
+          qty: 1,
+          entry: 100,
+          targets: [102],
+          reasons: [],
+          meta: { strategy: 'VWAP_FT' },
+        },
+      },
+    });
+    expect(res.statusCode).toBe(200);
+    const body = res.json() as any;
+    expect(body.ticket.meta.guardrails).toContain('stop-optional');
+    await app.close();
+  });
+
+  it('rejects windfall qty jumps in funded', async () => {
+    process.env.ACCOUNT_PHASE = 'funded';
     const app = buildServer();
     // Baseline small ticket
     await app.inject({
@@ -126,5 +151,6 @@ describe('/tickets/promote', () => {
     });
     expect(res.statusCode).toBe(400);
     await app.close();
+    process.env.ACCOUNT_PHASE = 'eval';
   });
 });

@@ -6,9 +6,15 @@ export type SizeContext = {
   recentSizes: number[];
 };
 
+export type SizePolicy = {
+  halfSizeUntilBuffer: boolean;
+  antiWindfall: boolean;
+};
+
 export function guardSize(
   s: Suggestion,
   ctx: SizeContext,
+  policy: SizePolicy,
 ):
   | { ok: true; qty: number; guardrails: string[]; sizingHint?: string; consistencyNotes?: string }
   | { ok: false; reason: string } {
@@ -17,9 +23,8 @@ export function guardSize(
   let sizingHint: string | undefined;
   let consistencyNotes: string | undefined;
 
-  if (!ctx.bufferCleared) {
+  if (policy.halfSizeUntilBuffer && !ctx.bufferCleared) {
     qty = Math.max(1, Math.floor(qty / 2));
-    guardrails.push('half-size');
     sizingHint = 'half-size-until-buffer';
   }
 
@@ -28,9 +33,11 @@ export function guardSize(
     guardrails.push('apex-max');
   }
 
-  const last = ctx.recentSizes[ctx.recentSizes.length - 1];
-  if (last && qty > last * 2) {
-    return { ok: false, reason: 'windfall' };
+  if (policy.antiWindfall) {
+    const last = ctx.recentSizes[ctx.recentSizes.length - 1];
+    if (last && qty > last * 2) {
+      return { ok: false, reason: 'windfall' };
+    }
   }
 
   return { ok: true, qty, guardrails, sizingHint, consistencyNotes };
