@@ -18,7 +18,9 @@
     "validate": "pnpm -w run typecheck && pnpm -w run lint",
     "versions": "node -v && pnpm -v",
     "scan:dead": "npx -y depcheck --json > reports/depcheck.json || true",
-    "scan:strays": "git ls-files | egrep -i '\\.(bak|backup|old)$|(^|/)=?[0-9]{2,3}%$|(^|/)server\\.backup\\.|(^|/)\\]$' > reports/strays.txt || true"
+    "scan:strays": "git ls-files | egrep -i '\\.(bak|backup|old)$|(^|/)=?[0-9]{2,3}%$|(^|/)server\\.backup\\.|(^|/)\\]$' > reports/strays.txt || true",
+    "docker:build": "docker build -t prism-apex-api:latest .",
+    "docker:run": "docker run --rm -p 3000:3000 -e LOG_LEVEL=info -e TRUST_PROXY=true -v api-data:/data prism-apex-api:latest"
   },
   "engines": {
     "node": ">=20 <21"
