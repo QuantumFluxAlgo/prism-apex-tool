@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { store } from '../store.js';
 import { PromoteInput } from '../schemas/ticketsPromote.js';
 import { applyGuardWithSizing } from '@prism-apex-tool/rules-apex';
+import { loadRegistry } from '@prism-apex-tool/config';
 
 export async function ticketsRoutes(app: FastifyInstance) {
   app.post('/tickets/promote', async (req, reply) => {
@@ -11,8 +12,8 @@ export async function ticketsRoutes(app: FastifyInstance) {
 
     const { suggestion } = p.data;
 
-    const accountPhase = process.env.ACCOUNT_PHASE === 'funded' ? 'funded' : 'eval';
-    const bufferCleared = false;
+    const registry = loadRegistry();
+    const acct = registry.accounts[0];
     const today = new Date().toISOString().slice(0, 10);
     const recent = store.getTicketsForDate(today).map(t => (t.ticket as any).qty);
 
@@ -27,9 +28,9 @@ export async function ticketsRoutes(app: FastifyInstance) {
         target: suggestion.targets[0],
       },
       {
-        phase: accountPhase,
-        account: { id: 'A1', maxContracts: Number(process.env.APEX_MAX_CONTRACTS || 5) },
-        bufferCleared,
+        phase: acct.phase,
+        account: { id: acct.id, maxContracts: acct.maxContracts },
+        bufferCleared: acct.bufferCleared,
         recentSizes: recent,
         contract: suggestion.symbol,
       },

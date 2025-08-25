@@ -43,13 +43,20 @@ tests/            Integration and end-to-end tests (future)
 Guardrail behavior is configured via environment variables in `.env`:
 
 ```
+ACCOUNT_ID=A1
 ACCOUNT_PHASE=eval  # or funded
 APEX_MAX_CONTRACTS=5
 MIN_RR=1.5
 MAX_RR=5.0
 ```
 
-`ACCOUNT_PHASE` defaults to `eval` for the MVP. `APEX_MAX_CONTRACTS` caps position size per account.
+`ACCOUNT_ID` identifies the primary account. `ACCOUNT_PHASE` defaults to `eval` for the MVP. `APEX_MAX_CONTRACTS` caps position size per account. `bufferCleared` defaults to `false` until telemetry marks the account as buffered.
+
+Verify the active phase with:
+
+```bash
+echo $ACCOUNT_PHASE
+```
 
 ## PR Roadmap (Collapsed)
 
