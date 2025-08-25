@@ -35,6 +35,60 @@ registry.registerPath({
   },
 });
 
+// ---- Accounts ----
+const Account = registry.register(
+  'Account',
+  z.object({
+    id: z.string(),
+    maxContracts: z.number(),
+    bufferCleared: z.boolean(),
+    updatedAt: z.string(),
+    notes: z.string().optional(),
+  }),
+);
+const AccountUpsert = registry.register(
+  'AccountUpsert',
+  z.object({
+    maxContracts: z.number().positive().optional(),
+    bufferCleared: z.boolean().optional(),
+    notes: z.string().optional(),
+  }),
+);
+
+registry.registerPath({
+  method: 'get',
+  path: '/accounts',
+  responses: {
+    200: {
+      description: 'Accounts',
+      content: { 'application/json': { schema: z.array(Account) } },
+    },
+  },
+});
+
+registry.registerPath({
+  method: 'get',
+  path: '/accounts/{id}',
+  request: { params: z.object({ id: z.string() }) },
+  responses: {
+    200: { description: 'Account', content: { 'application/json': { schema: Account } } },
+    404: { description: 'Not found' },
+  },
+});
+
+registry.registerPath({
+  method: 'put',
+  path: '/accounts/{id}',
+  request: {
+    params: z.object({ id: z.string() }),
+    body: { content: { 'application/json': { schema: AccountUpsert } } },
+  },
+  responses: {
+    200: { description: 'Upserted account', content: { 'application/json': { schema: Account } } },
+    400: { description: 'Invalid payload' },
+  },
+});
+
 // ---- Shared schemas for simple endpoints ----
 const SymbolsResponse = z.object({ symbols: z.array(z.string()) });
 const SessionsResponse = z.object({
