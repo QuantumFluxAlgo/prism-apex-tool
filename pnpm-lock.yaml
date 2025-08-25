@@ -92,6 +92,9 @@ importers:
       '@prism-apex-tool/reporting':
         specifier: workspace:*
         version: link:../../packages/reporting
+      '@prism-apex-tool/rules-apex':
+        specifier: workspace:*
+        version: link:../../packages/rules-apex
       '@prism-apex-tool/signals':
         specifier: workspace:*
         version: link:../../packages/signals

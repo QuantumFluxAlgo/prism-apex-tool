@@ -4,6 +4,7 @@ let buildServer: typeof import('../server.js').buildServer;
 
 beforeEach(async () => {
   vi.resetModules();
+  process.env.FLAT_BY_UTC = '23:59';
   ({ buildServer } = await import('../server.js'));
 });
 
