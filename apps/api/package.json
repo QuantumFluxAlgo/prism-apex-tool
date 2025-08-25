@@ -1,7 +1,7 @@
 {
   "name": "prism-apex-tool",
   "private": true,
-  "packageManager": "pnpm@10.15.0",
+  "packageManager": "pnpm@9.15.9",
   "workspaces": [
     "apps/*",
     "packages/*"

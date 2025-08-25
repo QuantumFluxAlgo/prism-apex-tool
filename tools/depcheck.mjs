@@ -9,6 +9,7 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const repoRoot = path.resolve(__dirname, '..');
 
 const cfgPath = path.join(repoRoot, '.depcheckrc.json');
+// Output directory and file for depcheck results
 const outDir = path.join(repoRoot, 'reports');
 const outPath = path.join(outDir, 'depcheck.json');
 
