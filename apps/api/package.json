@@ -16,7 +16,8 @@
     "coverage": "vitest run --config apps/api/vitest.config.ts --coverage",
     "lint": "eslint . --ext .ts",
     "format": "prettier -w .",
-    "format:check": "prettier -c ."
+    "format:check": "prettier -c .",
+    "openapi:emit": "tsx src/scripts/openapi.ts > openapi.json"
   },
   "devDependencies": {
     "@types/node": "^20.19.11",

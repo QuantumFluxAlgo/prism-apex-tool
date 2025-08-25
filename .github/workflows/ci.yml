@@ -1,38 +1,40 @@
 name: CI
-
 on:
-  push:
-    branches: ['test']
   pull_request:
-    branches: ['test']
-
-concurrency:
-  group: ci-${{ github.ref }}
-  cancel-in-progress: true
+  push:
+    branches: [main]
 
 jobs:
-  build-test:
+  build:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
 
-      - uses: pnpm/action-setup@v4
-        with:
-          version: 10.15.0
-
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: '20'
           cache: 'pnpm'
 
-      - name: Install
-        run: pnpm install --frozen-lockfile
+      - run: corepack enable
+      - run: pnpm -v
+      - run: pnpm install
 
-      - name: Typecheck (all workspaces)
-        run: pnpm -r --workspace-concurrency=1 run typecheck
+      - name: Typecheck (all)
+        run: pnpm typecheck
 
-      - name: Lint (all workspaces)
-        run: pnpm -r --workspace-concurrency=1 run lint
+      - name: Lint
+        run: pnpm -w run lint
 
-      - name: Test (all workspaces)
-        run: pnpm -r --workspace-concurrency=1 run test
+      - name: Tests (per workspace)
+        run: pnpm -r --if-present test -- --run
+
+      - name: Dead deps (non-blocking)
+        run: pnpm scan:dead || true
+
+      - name: Upload depcheck report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: depcheck-report
+          path: reports/depcheck.json
+
