@@ -21,6 +21,9 @@ coverage
 dist
 build
 
+# Reports
+reports/
+
 # Env
 .env
 .env.*
