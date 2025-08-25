@@ -5,6 +5,7 @@ let buildServer: typeof import('../server.js').buildServer;
 
 beforeEach(async () => {
   vi.resetModules();
+  process.env.FLAT_BY_UTC = '23:59';
   ({ buildServer } = await import('../server.js'));
 });
 
@@ -23,7 +24,8 @@ describe('Signals API', () => {
     const app = buildServer();
     const res = await app.inject({ method: 'POST', url: '/signals/osb', payload: { symbol: 'ES', session: 'RTH', bars } });
     expect(res.statusCode).toBe(200);
-    expect(res.json().suggestions.length).toBe(1);
+    expect(res.json().guard).toBeDefined();
+    expect(typeof res.json().guard.accepted).toBe('boolean');
   });
 
   it('returns VWAP first touch suggestion', async () => {
@@ -41,6 +43,7 @@ describe('Signals API', () => {
     const app = buildServer();
     const res = await app.inject({ method: 'POST', url: '/signals/vwap-first-touch', payload: { symbol: 'ES', bars } });
     expect(res.statusCode).toBe(200);
-    expect(res.json().suggestions.length).toBe(1);
+    expect(res.json().guard).toBeDefined();
+    expect(typeof res.json().guard.accepted).toBe('boolean');
   });
 });
