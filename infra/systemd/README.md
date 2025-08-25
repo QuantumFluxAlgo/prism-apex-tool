@@ -44,6 +44,8 @@ Ensure backups if needed.
 
 Reverse proxy (optional, HTTP only here)
 
+See [../nginx/README.md](../nginx/README.md) for Nginx + Let's Encrypt TLS termination.
+
 Leave service on HOST=0.0.0.0 PORT=8000
 
 Terminate TLS in Nginx/Traefik and forward to 127.0.0.1:8000
