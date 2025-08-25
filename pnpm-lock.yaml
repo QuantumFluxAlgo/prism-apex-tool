@@ -89,6 +89,9 @@ importers:
       '@fastify/sensible':
         specifier: 6.0.3
         version: 6.0.3
+      '@prism-apex-tool/accounts':
+        specifier: workspace:*
+        version: link:../../packages/accounts
       '@prism-apex-tool/reporting':
         specifier: workspace:*
         version: link:../../packages/reporting
