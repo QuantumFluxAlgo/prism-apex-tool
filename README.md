@@ -385,3 +385,8 @@ curl -s -i http://localhost:PORT/market/symbols | sed -n '1,10p'              # 
 ### CORS
 
 CORS is enabled (`@fastify/cors` with `origin: true`); responses include `Access-Control-Allow-Origin`.
+
+## Release Notes & Upgrade
+
+- See **[docs/RELEASE_NOTES.md](docs/RELEASE_NOTES.md)** for what changed in v0.1.0.
+- Upgrading? Follow **[docs/UPGRADE.md](docs/UPGRADE.md)** for engines, env, and commands.
