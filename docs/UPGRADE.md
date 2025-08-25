@@ -17,13 +17,13 @@ pnpm install
 
 Copy `.env.example` → `.env`.
 
-Optional auth:
+Optional auth
 
 ```bash
 export BEARER_TOKEN="change-me"
 ```
 
-Optional rate-limit tuning:
+Optional rate-limit tuning
 
 ```bash
 export RATE_LIMIT_MAX=60

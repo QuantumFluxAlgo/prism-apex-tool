@@ -317,7 +317,10 @@ Data lives in the api-data volume at /data inside the container.
 
 ```bash
 pnpm docker:build
-docker run --rm -p 3000:3000 -v api-data:/data prism-apex-api:latest
+docker run --rm \
+ -p 3000:3000 \
+ -v api-data:/data \
+ prism-apex-api:latest
 # In another shell:
 curl http://localhost:3000/health
 curl http://localhost:3000/openapi.json | jq '.info.title, .paths | keys | length'
