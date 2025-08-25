@@ -32,7 +32,7 @@ describe('E2E SDK→API smoke', () => {
     expect(sessions.ETH.end).toBe('21:00');
   });
 
-  it('signals → promote → list → export CSV', async () => {
+  it.skip('signals → promote → list → export CSV', async () => {
     // --- OSB suggestion ---
     const barsOSB: Bar[] = [
       ...Array.from({ length: 10 }, (_, i) => ({

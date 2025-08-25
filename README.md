@@ -38,6 +38,19 @@ tests/            Integration and end-to-end tests (future)
 - Validate: `pnpm run validate`
 - Versions: `pnpm run versions`
 
+## Environment
+
+Guardrail behavior is configured via environment variables in `.env`:
+
+```
+ACCOUNT_PHASE=eval  # or funded
+APEX_MAX_CONTRACTS=5
+MIN_RR=1.5
+MAX_RR=5.0
+```
+
+`ACCOUNT_PHASE` defaults to `eval` for the MVP. `APEX_MAX_CONTRACTS` caps position size per account.
+
 ## PR Roadmap (Collapsed)
 
 - PR‑00 Repo scan & dependency sanity
