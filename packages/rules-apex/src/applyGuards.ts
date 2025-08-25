@@ -1,4 +1,4 @@
-import { DEFAULTS } from './config.js';
+import { getPhasePolicy } from './config.js';
 import { guardRR, computeRR } from './guards/rr.js';
 import { guardStop } from './guards/stop.js';
 import { guardSize, SizeContext } from './guards/size.js';
@@ -19,30 +19,45 @@ export function applyGuardWithSizing(
 ): { accepted: boolean; ticket?: Ticket; reasons?: string[] } {
   if (s.target == null) return { accepted: false, reasons: ['missing-target'] };
 
-  const stopCheck = guardStop(s, ctx.phase, DEFAULTS.requireStop);
+  const policy = getPhasePolicy(ctx.phase);
+
+  const guardrails = [`phase:${ctx.phase}`];
+  guardrails.push(policy.requireStop ? 'stop-required' : 'stop-optional');
+  guardrails.push('rr-clamp');
+  if (policy.halfSizeUntilBuffer) guardrails.push('half-size-until-buffer');
+  if (policy.antiWindfall) guardrails.push('anti-windfall');
+
+  const stopCheck = guardStop(s, ctx.phase, policy.requireStop);
   if (!stopCheck.ok) return { accepted: false, reasons: [stopCheck.reason!] };
-  if (s.stop == null) return { accepted: false, reasons: ['stop-required'] };
 
-  const rr = computeRR({ entry: s.entry, stop: s.stop, target: s.target });
-  const rrCheck = guardRR(rr, DEFAULTS.MIN_RR, DEFAULTS.MAX_RR);
-  if (!rrCheck.ok) return { accepted: false, reasons: [rrCheck.reason!] };
+  let rr = 0;
+  if (s.stop == null) {
+    if (policy.requireStop) return { accepted: false, reasons: ['stop-required'] };
+  } else {
+    rr = computeRR({ entry: s.entry, stop: s.stop, target: s.target });
+    const rrCheck = guardRR(rr, policy.minRR, policy.maxRR);
+    if (!rrCheck.ok) return { accepted: false, reasons: [rrCheck.reason!] };
+  }
 
-  const sizeRes = guardSize(s, {
-    bufferCleared: ctx.bufferCleared,
-    accountMax: ctx.account.maxContracts,
-    recentSizes: ctx.recentSizes,
-  });
+  const sizeRes = guardSize(
+    s,
+    {
+      bufferCleared: ctx.bufferCleared,
+      accountMax: ctx.account.maxContracts,
+      recentSizes: ctx.recentSizes,
+    },
+    { halfSizeUntilBuffer: policy.halfSizeUntilBuffer, antiWindfall: policy.antiWindfall },
+  );
   if (!('ok' in sizeRes) || !sizeRes.ok) {
     return { accepted: false, reasons: [sizeRes.reason] };
   }
-
-  const guardrails = ['rr', 'stop', ...sizeRes.guardrails];
+  guardrails.push(...sizeRes.guardrails);
 
   const ticket: Ticket = {
     symbol: ctx.contract,
     side: s.side,
     entry: s.entry,
-    stop: s.stop,
+    stop: s.stop ?? s.entry,
     qty: sizeRes.qty,
     accountId: ctx.account.id,
     timestampUtc: (ctx.now ?? new Date()).toISOString(),

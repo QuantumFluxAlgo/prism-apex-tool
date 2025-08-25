@@ -7,7 +7,7 @@
     "packages/*"
   ],
   "scripts": {
-    "pretest": "pnpm -r --filter @prism-apex-tool/rules-apex --filter @prism-apex-tool/accounts build",
+    "pretest": "pnpm -r --filter @prism-apex-tool/rules-apex --filter @prism-apex-tool/accounts --filter @prism-apex-tool/config --filter @prism-apex-tool/signals --filter @prism-apex-tool/analytics --filter @prism-apex-tool/audit --filter @prism-apex-tool/reporting build",
     "test:api": "vitest run --config apps/api/vitest.config.ts --reporter=verbose --passWithNoTests",
     "dev": "tsx watch src/index.ts",
     "build": "tsc -p tsconfig.build.json",
@@ -45,6 +45,9 @@
     "@prism-apex-tool/reporting": "workspace:*",
     "@prism-apex-tool/signals": "workspace:*",
     "@prism-apex-tool/rules-apex": "workspace:*",
-    "@prism-apex-tool/accounts": "workspace:*"
+    "@prism-apex-tool/accounts": "workspace:*",
+    "@prism-apex-tool/config": "workspace:*",
+    "@prism-apex-tool/analytics": "workspace:*",
+    "@prism-apex-tool/audit": "workspace:*"
   }
 }

@@ -1,6 +1,6 @@
 {
   "compilerOptions": {
-    "module": "ESNext",
+    "module": "NodeNext",
     "moduleResolution": "NodeNext",
     "target": "ES2022",
     "baseUrl": ".",
@@ -11,7 +11,8 @@
       "@prism-apex-tool/reporting": ["packages/reporting/src"],
       "@prism-apex-tool/signals": ["packages/signals/src"],
       "@prism-apex-tool/rules-apex": ["packages/rules-apex/src"],
-      "@prism-apex-tool/accounts": ["packages/accounts/src"]
+      "@prism-apex-tool/accounts": ["packages/accounts/src"],
+      "@prism-apex-tool/config": ["packages/config/src"]
     },
     "resolveJsonModule": true,
     "allowSyntheticDefaultImports": true,

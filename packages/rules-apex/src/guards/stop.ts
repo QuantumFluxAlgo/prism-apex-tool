@@ -1,10 +1,9 @@
 import { AccountPhase, Suggestion } from '../types.js';
-import { DEFAULTS } from '../config.js';
 
 export function guardStop(
   s: Suggestion,
   phase: AccountPhase,
-  requireStop: boolean = DEFAULTS.requireStop,
+  requireStop: boolean,
 ): { ok: boolean; reason?: string } {
   if (s.stop == null) {
     if (phase === 'funded' || requireStop) return { ok: false, reason: 'stop-required' };
