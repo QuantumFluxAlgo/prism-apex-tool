@@ -15,7 +15,7 @@ export const SuggestionSchema = z.object({
   side: z.enum(['BUY', 'SELL']),
   qty: z.number(),
   entry: z.number(),
-  stop: z.number(),
+  stop: z.number().optional(),
   targets: z.array(z.number()),
   apex_blocked: z.boolean().optional(),
   reasons: z.array(z.string()),
