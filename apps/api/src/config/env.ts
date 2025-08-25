@@ -32,6 +32,7 @@ export type Config = {
     minProfitTicks?: number;
     minExpectedProfitUsd?: number;
   };
+  webhook: { tradingviewSecret?: string };
 };
 
 function parseIntWithDefault(v: string | undefined, def: number): number {
@@ -62,6 +63,7 @@ const envSchema = z.object({
     (v) => (v === '' || v === undefined ? undefined : Number(v)),
     z.number().gt(0).optional()
   ),
+  TRADINGVIEW_WEBHOOK_SECRET: z.string().min(1).optional(),
 });
 
 export function getConfig(env = process.env): Config {
@@ -112,6 +114,9 @@ export function getConfig(env = process.env): Config {
     profitFloor: {
       minProfitTicks: parsed.MIN_PROFIT_TICKS,
       minExpectedProfitUsd: parsed.MIN_EXPECTED_PROFIT_USD,
+    },
+    webhook: {
+      tradingviewSecret: parsed.TRADINGVIEW_WEBHOOK_SECRET,
     },
   };
 }
