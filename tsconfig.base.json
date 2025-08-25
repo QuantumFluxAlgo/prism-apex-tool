@@ -13,7 +13,8 @@
       "@prism-apex-tool/rules-apex": ["packages/rules-apex/src"],
       "@prism-apex-tool/accounts": ["packages/accounts/src"],
       "@prism-apex-tool/config": ["packages/config/src"],
-      "@prism-apex-tool/clients-tradovate": ["packages/clients-tradovate/src"]
+      "@prism-apex-tool/clients-tradovate": ["packages/clients-tradovate/src"],
+      "@prism-apex-tool/indicators": ["packages/indicators/src"]
     },
     "resolveJsonModule": true,
     "allowSyntheticDefaultImports": true,
