@@ -65,7 +65,7 @@ describe('E2E SDK→API smoke', () => {
     expect(tickets.length).toBeGreaterThan(0);
 
     // --- Export CSV ---
-    const csvRes = await fetch(new URL('/export/tickets?date=2025-01-01', baseUrl));
+    const csvRes = await fetch(new URL('/export/tickets?date=2025-01-01&format=csv', baseUrl));
     expect(csvRes.ok).toBe(true);
     const ct = csvRes.headers.get('content-type') ?? '';
     expect(ct.includes('text/csv')).toBe(true);
