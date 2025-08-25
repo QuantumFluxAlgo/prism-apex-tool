@@ -12,7 +12,8 @@
       "@prism-apex-tool/signals": ["packages/signals/src"],
       "@prism-apex-tool/rules-apex": ["packages/rules-apex/src"],
       "@prism-apex-tool/accounts": ["packages/accounts/src"],
-      "@prism-apex-tool/config": ["packages/config/src"]
+      "@prism-apex-tool/config": ["packages/config/src"],
+      "@prism-apex-tool/clients-tradovate": ["packages/clients-tradovate/src"]
     },
     "resolveJsonModule": true,
     "allowSyntheticDefaultImports": true,
@@ -25,5 +26,5 @@
     "types": []
   },
   "include": ["packages/*/src", "apps/*/src"],
-  "exclude": ["packages/clients-tradovate", "apps/dashboard", "apps/e2e", "sdks"]
+  "exclude": ["apps/dashboard", "apps/e2e", "sdks"]
 }

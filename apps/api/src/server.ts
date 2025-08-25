@@ -28,6 +28,7 @@ import { jobEodFlat } from './jobs/eodFlat';
 import { jobMissingBrackets } from './jobs/missingBrackets';
 import { jobDailyLoss } from './jobs/dailyLoss';
 import { jobConsistency } from './jobs/consistency';
+import { startFeed, stopFeed } from './jobs/feed';
 
 export function buildServer() {
   const cfg = getConfig();
@@ -103,8 +104,10 @@ export function buildServer() {
   registerJob('CONSISTENCY', 300_000, jobConsistency);
 
   startJobs();
+  startFeed().catch((err) => app.log.error({ err }, 'feed start failed'));
   app.addHook('onClose', (_app, done) => {
     stopJobs();
+    void stopFeed();
     done();
   });
 
