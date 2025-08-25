@@ -3,7 +3,7 @@ import { applyGuardWithSizing } from '@prism-apex-tool/rules-apex';
 import { loadRegistry } from '@prism-apex-tool/config';
 import { getConfig } from '../config/env.js';
 import type { Ticket } from '../schemas/ticket.js';
-import { saveTicket, recentSizes } from '../store/tickets.js';
+import { saveTicket, getRecentTicketSizes } from '../store/tickets.js';
 
 function computeRR(params: { entry: number; stop: number; target: number }): number {
   const risk = Math.abs(params.entry - params.stop);
@@ -140,7 +140,7 @@ function onSuggestion(s: Suggestion): void {
     phase: acct.phase as 'eval' | 'funded',
     maxContracts: acct.maxContracts,
     bufferCleared: acct.bufferCleared,
-    recentSizes: recentSizes(acct.id),
+          recentSizes: getRecentTicketSizes(acct.id),
     flatByUtc: cfg.time.flatByUtc,
   });
   if (t.accepted) {
