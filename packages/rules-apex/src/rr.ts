@@ -1,4 +1,4 @@
-import { TicketInput } from './types.ts';
+import { TicketInput } from './types.js';
 
 export function calcRR(input: TicketInput): number {
   const { side, entry, stop, target } = input;

@@ -1,6 +1,6 @@
-import { TicketInput, EvaluateResult } from './types.ts';
-import { calcRR, validateRR } from './rr.ts';
-import { isAfterFlat } from './curfew.ts';
+import { TicketInput, EvaluateResult } from './types.js';
+import { calcRR, validateRR } from './rr.js';
+import { isAfterFlat } from './curfew.js';
 
 export function evaluateTicket(
   input: TicketInput,
