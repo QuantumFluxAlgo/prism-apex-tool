@@ -5,7 +5,8 @@ export type Topics =
   | 'bars.5m'
   | 'quotes.last'
   | 'meta.contract'
-  | 'suggestion';
+  | 'suggestion'
+  | 'ticket';
 
 const emitter = new EventEmitter();
 
