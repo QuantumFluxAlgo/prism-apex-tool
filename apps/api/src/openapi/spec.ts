@@ -29,7 +29,12 @@ registry.registerPath({
     200: {
       description: 'Readiness',
       content: {
-        'application/json': { schema: z.object({ ok: z.boolean(), ready: z.boolean() }) },
+        'application/json': {
+          schema: z.object({
+            ok: z.boolean(),
+            marketFeed: z.object({ connected: z.boolean(), subs: z.number() }),
+          }),
+        },
       },
     },
   },

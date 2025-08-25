@@ -16,7 +16,7 @@ describe('Hardening', () => {
     const app = buildServer();
     const res = await app.inject({ method: 'GET', url: '/ready' });
     expect(res.statusCode).toBe(200);
-    expect(res.json()).toEqual({ ok: true, ready: true });
+    expect(res.json()).toEqual({ ok: true, marketFeed: { connected: false, subs: 0 } });
     await app.close();
   });
 
