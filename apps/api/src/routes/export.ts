@@ -1,70 +1,108 @@
 import { FastifyPluginAsync } from 'fastify';
-import { store } from '../store';
 import { z } from 'zod';
+import { store } from '../store.js';
+import { getConfig } from '../config/env.js';
+import {
+  evaluateTicket,
+  withinSuppressionWindow,
+  suggestPercent,
+  type TicketInput,
+} from '@prism-apex-tool/rules-apex';
+import { Accounts } from '../lib/accounts.js';
 
 export const exportRoutes: FastifyPluginAsync = async (app) => {
   app.get('/export/tickets', async (req, reply) => {
     const q = z
-      .object({ date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/) })
+      .object({
+        date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+        format: z.enum(['json', 'csv']).optional(),
+        accountId: z.string().optional(),
+      })
       .safeParse(req.query);
-    if (!q.success) return reply.code(400).send({ error: 'Invalid date' });
-    const date = q.data.date;
-    const ticketsRaw = store.getTicketsForDate(date);
-    const tickets = ticketsRaw.map((t) => ({
-      when: t.when,
-      symbol: (t.ticket as any).symbol,
-      side: (t.ticket as any).side,
-      qty: (t.ticket as any).qty,
-      entry: (t.ticket as any).entry,
-      stop: (t.ticket as any).stop,
-      targets: ((t.ticket as any).targets ?? []) as number[],
-      apex_blocked: t.reasons.length > 0,
-      reasons: t.reasons,
-    }));
-    const alerts = store.getAlertsForDate(date).map((a) => ({
-      id: a.id,
-      ts: a.ts,
-      symbol: a.symbol,
-      side: a.side,
-      price: a.price,
-      reason: a.reason,
-      acknowledged: a.acknowledged,
-    }));
-    const summary = {
-      date,
-      ticketsCount: tickets.length,
-      blockedCount: tickets.filter((t) => t.apex_blocked).length,
-      alertsAcked: alerts.filter((a) => a.acknowledged).length,
-      alertsQueued: alerts.filter((a) => !a.acknowledged).length,
-      pnl: { realized: 0, unrealized: 0, netLiq: 0 },
-    };
-    const json = { summary, tickets, alerts, breaches: [] };
-    let csv: string;
-    try {
-      const mod = await import('@prism-apex-tool/reporting');
-      csv = mod.toDailyCSV(json as any);
-    } catch {
-      const header = 'date,time,symbol,side,qty,entry,stop,targets,apex_blocked,reasons';
+    if (!q.success) return reply.code(400).send({ error: 'Invalid query' });
+    const { date, format: formatRaw, accountId } = q.data;
+    const format = formatRaw ?? 'json';
+
+    const cfg = getConfig();
+    const account = accountId ? await Accounts.get(accountId) : undefined;
+
+    const now = new Date();
+    const rawTickets = store.getTicketsForDate(date);
+    const tickets = rawTickets.map((t) => {
+      const input: TicketInput = {
+        symbol: (t.ticket as any).symbol,
+        side: ((t.ticket as any).side === 'BUY' ? 'long' : 'short') as any,
+        entry: (t.ticket as any).entry,
+        stop: (t.ticket as any).stop,
+        target: ((t.ticket as any).targets ?? [])[0],
+        timestampUtc: t.when,
+      };
+      const preCloseSuppressed = withinSuppressionWindow(now, cfg.time.flatByUtc, 5);
+      const res = evaluateTicket(input, {
+        minRR: cfg.guardrails.minRR,
+        maxRR: cfg.guardrails.maxRR,
+        flatByUtc: cfg.time.flatByUtc,
+        now,
+      });
+      let sizeSuggested: number | undefined;
+      let halfSizeSuggested: boolean | undefined;
+      if (account) {
+        const sizing = suggestPercent(
+          account.maxContracts,
+          account.bufferCleared,
+          cfg.sizing.percent.noBuffer,
+          cfg.sizing.percent.withBuffer,
+        );
+        sizeSuggested = sizing.contracts;
+        halfSizeSuggested = sizing.halfSizeSuggested;
+      }
+      return {
+        when: t.when,
+        symbol: (t.ticket as any).symbol,
+        side: (t.ticket as any).side,
+        qty: (t.ticket as any).qty,
+        entry: (t.ticket as any).entry,
+        stop: (t.ticket as any).stop,
+        target: ((t.ticket as any).targets ?? [])[0],
+        accepted: res.decision === 'accept',
+        rr: res.rr,
+        reasons: res.reasons.length ? res.reasons : undefined,
+        preCloseSuppressed,
+        flatByUtc: cfg.time.flatByUtc,
+        sizeSuggested,
+        halfSizeSuggested,
+      };
+    });
+
+    if (format === 'csv') {
+      const header =
+        'ts,symbol,side,entry,stop,target,rr,accepted,reason_summary,pre_close,flat_by_utc,size_suggested,half_size_suggested';
       const rows = tickets.map((t) => {
-        const d = new Date(t.when);
-        const dateStr = d.toISOString().slice(0, 10);
-        const timeStr = d.toISOString().slice(11, 19);
-        return [
-          dateStr,
-          timeStr,
+        const cols = [
+          t.when,
           t.symbol,
           t.side,
-          String(t.qty),
           String(t.entry),
           String(t.stop),
-          t.targets.join('|'),
-          String(t.apex_blocked),
-          t.reasons.join(' | '),
-        ].join(',');
+          String(t.target ?? ''),
+          t.rr !== undefined ? String(t.rr) : '',
+          String(t.accepted),
+          t.reasons?.[0] ?? '',
+          String(t.preCloseSuppressed),
+          t.flatByUtc,
+          t.sizeSuggested !== undefined ? String(t.sizeSuggested) : '',
+          t.halfSizeSuggested !== undefined ? String(t.halfSizeSuggested) : '',
+        ];
+        // remove trailing empty cells
+        let end = cols.length;
+        while (end > 0 && cols[end - 1] === '') end--;
+        return cols.slice(0, end).join(',');
       });
-      csv = [header, ...rows].join('\n');
+      const csv = [header, ...rows].join('\n');
+      return reply.type('text/csv').send(csv);
     }
-    return reply.type('text/csv').send(csv);
+
+    return tickets;
   });
 };
 
