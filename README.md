@@ -307,6 +307,14 @@ The final image includes apps/api/dist plus compiled workspace packages (e.g. pa
 
 Data lives in the api-data volume at /data inside the container.
 
+### Generate OpenAPI JSON
+
+- Emit the current OpenAPI document from runtime types:
+  ```bash
+  pnpm --filter ./apps/api run openapi:emit
+  # Output written to: apps/api/openapi.json
+  ```
+
 ## Why this works
 
 - **Workspace-aware**: we build the whole monorepo, then copy `dist/` outputs and a **pruned** `node_modules` that still resolves workspace deps (via pnpm’s virtual store/symlinks).
