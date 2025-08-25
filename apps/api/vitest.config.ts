@@ -10,6 +10,8 @@ export default defineConfig({
     globals: true,
     coverage: { reporter: ['text', 'json-summary', 'lcov'] },
     setupFiles: [path.resolve(__dirname, './src/tests/setup.ts')],
+    include: ['src/**/*.spec.ts', 'src/**/__tests__/**/*.ts'],
+    exclude: ['dist/**', 'node_modules/**', 'infra/**', '**/*.d.ts'],
   },
   resolve: {
     alias: {
