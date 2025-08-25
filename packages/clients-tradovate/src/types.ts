@@ -1,63 +1,35 @@
-import { z } from 'zod';
+export interface Bar {
+  ts: number;
+  open: number;
+  high: number;
+  low: number;
+  close: number;
+  volume: number;
+  symbol: string;
+  fullSymbol: string;
+  session: 'RTH' | 'ETH';
+}
 
-export const AccountSchema = z.object({
-  netLiq: z.number(),
-  cash: z.number(),
-  margin: z.number(),
-  dayPnlRealized: z.number(),
-  dayPnlUnrealized: z.number(),
-});
+export interface Quote {
+  ts: number;
+  last: number;
+  bid?: number;
+  ask?: number;
+  volume: number;
+  fullSymbol: string;
+}
 
-export type Account = z.infer<typeof AccountSchema>;
+export interface ContractMeta {
+  fullSymbol: string;
+  tickSize: number;
+  tickValue: number;
+  minTick: number;
+  multiplier: number;
+}
 
-export const PositionSchema = z.object({
-  symbol: z.string(),
-  qty: z.number(),
-  avgPrice: z.number(),
-  unrealizedPnl: z.number(),
-});
-
-export type Position = z.infer<typeof PositionSchema>;
-
-export const OrderSchema = z.object({
-  id: z.string().or(z.number()).transform(String),
-  symbol: z.string(),
-  side: z.enum(['BUY', 'SELL']),
-  type: z.enum(['LIMIT', 'MARKET']),
-  limitPrice: z.number().optional(),
-  stopPrice: z.number().optional(),
-  status: z.enum(['WORKING', 'FILLED', 'CANCELED']),
-  ocoGroupId: z.string().optional(),
-});
-
-export type Order = z.infer<typeof OrderSchema>;
-
-export const BarSchema = z.object({
-  ts: z.string(), // ISO UTC
-  symbol: z.string(),
-  interval: z.enum(['1m', '5m']),
-  o: z.number(),
-  h: z.number(),
-  l: z.number(),
-  c: z.number(),
-  v: z.number(),
-});
-
-export type Bar = z.infer<typeof BarSchema>;
-
-export const LastSchema = z.object({
-  symbol: z.string(),
-  last: z.number(),
-  ts: z.string(),
-});
-
-export type Last = z.infer<typeof LastSchema>;
-
-// Generic API error
 export class TradovateClientError extends Error {
   constructor(message: string) {
     super(message);
     this.name = 'TradovateClientError';
   }
 }
-

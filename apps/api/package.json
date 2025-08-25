@@ -48,6 +48,7 @@
     "@prism-apex-tool/accounts": "workspace:*",
     "@prism-apex-tool/config": "workspace:*",
     "@prism-apex-tool/analytics": "workspace:*",
-    "@prism-apex-tool/audit": "workspace:*"
+    "@prism-apex-tool/audit": "workspace:*",
+    "@prism-apex-tool/clients-tradovate": "workspace:*"
   }
 }
