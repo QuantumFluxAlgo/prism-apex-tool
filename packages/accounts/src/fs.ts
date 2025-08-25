@@ -72,7 +72,14 @@ export async function writeAccount(
 
 export async function upsertAccount(
   dataDir: string = DEFAULT_DATA_DIR,
-  input: { id: string; maxContracts?: number; bufferCleared?: boolean; notes?: string },
+  input: {
+    id: string;
+    maxContracts?: number;
+    bufferCleared?: boolean;
+    notes?: string;
+    lastSuggestedContracts?: number;
+    lastSuggestedAt?: string;
+  },
 ): Promise<AccountFile> {
   const existing = await readAccount(dataDir, input.id);
   const acct: AccountFile = {
@@ -80,6 +87,8 @@ export async function upsertAccount(
     maxContracts: input.maxContracts ?? existing?.maxContracts ?? 0,
     bufferCleared: input.bufferCleared ?? existing?.bufferCleared ?? false,
     notes: input.notes ?? existing?.notes,
+    lastSuggestedContracts: input.lastSuggestedContracts ?? existing?.lastSuggestedContracts,
+    lastSuggestedAt: input.lastSuggestedAt ?? existing?.lastSuggestedAt,
     updatedAt: '',
   };
   await writeAccount(dataDir, acct);
