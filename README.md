@@ -20,7 +20,7 @@ Prism Apex Tool is a TypeScript monorepo supporting discretionary futures tradin
 
 ```
 apps/
-  api/            Fastify or Express API (future)
+  api/            Fastify 5 API (future)
   dashboard/      React dashboard (future)
 packages/
   shared/         Shared utilities (future)
@@ -204,6 +204,10 @@ Run tests:
 
 ## Developer Guide
 
+### Environment pins
+
+We pin Node with `.nvmrc`/`.node-version` (Node 20). If you use `nvm` or `asdf`, this will be picked up automatically.
+
 ### Dead-deps scan & lint (PR-20)
 
 - Scan for unused deps (writes `reports/depcheck.json`):
@@ -347,6 +351,7 @@ Set `BEARER_TOKEN` to enable bearer auth across the API (read-only endpoints inc
 Public endpoints that remain open:
 
 - `GET /health`
+- `GET /ready`
 - `GET /openapi.json`
 - `GET /version`
 
