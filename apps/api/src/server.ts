@@ -8,7 +8,6 @@ import { rulesRoutes } from './routes/rules.js';
 import { reportRoutes } from './routes/report.js';
 import { ingestRoutes } from './routes/ingest.js';
 import { alertsRoutes } from './routes/alerts.js';
-import { exportRoutes } from './routes/export.js';
 import { notifyRoutes } from './routes/notify.js';
 import { jobsRoutes } from './routes/jobs.js';
 import { openapiRoute } from './routes/openapi.js';
@@ -19,6 +18,7 @@ import { analyticsRoutes } from './routes/analytics.js';
 import { auditRoutes } from './routes/audit.js';
 import { accountsRoutes } from './routes/accounts.js';
 import { ticketsRoutes } from './routes/tickets.js';
+import { startTicketizer, stopTicketizer } from './jobs/ticketizer.js';
 import { tradingviewWebhookRoutes } from './routes/webhooks.tradingview.js';
 import { readyRoutes } from './routes/ready.js';
 import { getConfig } from './config/env';
@@ -90,7 +90,6 @@ export function buildServer() {
   app.register(reportRoutes);
   app.register(ingestRoutes);
   app.register(alertsRoutes);
-  app.register(exportRoutes);
   app.register(notifyRoutes);
   app.register(jobsRoutes);
   app.register(openapiRoute);
@@ -107,10 +106,12 @@ export function buildServer() {
   startJobs();
   startFeed().catch((err) => app.log.error({ err }, 'feed start failed'));
   startStrategies().catch((err) => app.log.error({ err }, 'strategies start failed'));
+  startTicketizer().catch((err) => app.log.error({ err }, 'ticketizer start failed'));
   app.addHook('onClose', (_app, done) => {
     stopJobs();
     void stopFeed();
     void stopStrategies();
+    void stopTicketizer();
     done();
   });
 

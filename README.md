@@ -62,6 +62,23 @@ Verify the active phase with:
 echo $ACCOUNT_PHASE
 ```
 
+## Ticketizer (S5)
+
+Strategy suggestions are guarded and converted into canonical Tickets:
+
+```ts
+symbol, side, entry, stop, target, qty, accountId, timestampUtc,
+meta { strategy, rr, guardrails, sizingHint?, consistencyNotes? },
+accepted, reasons?
+```
+
+Tickets can be listed or exported via the API:
+
+- `GET /tickets?date=YYYY-MM-DD`
+- `GET /export/tickets?date=YYYY-MM-DD`
+
+See [docs/tickets.md](docs/tickets.md) for full schema and guardrail details.
+
 ## Telemetry
 
 A temporary no-op `@prism-apex-tool/analytics` package exports helpers (`trackEvent`, `trackError`, `meter`, `createAnalyticsScope`) that currently do nothing. This stub keeps CI green and will be replaced with real telemetry in a future workstream.
