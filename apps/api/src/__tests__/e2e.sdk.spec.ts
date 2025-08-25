@@ -13,6 +13,7 @@ describe('E2E SDK→API smoke', () => {
 
   beforeAll(async () => {
     process.env.DATA_DIR = fs.mkdtempSync(path.join(os.tmpdir(), 'e2e-'));
+    process.env.FLAT_BY_UTC = '23:59';
     app = buildServer();
     baseUrl = await app.listen({ port: 0, host: '127.0.0.1' }); // e.g. http://127.0.0.1:54321
     client = new PrismApexClient(baseUrl);

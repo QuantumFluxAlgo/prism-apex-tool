@@ -42,6 +42,7 @@
     "fastify-plugin": "5.0.1",
     "zod": "^3.23.8",
     "@prism-apex-tool/reporting": "workspace:*",
-    "@prism-apex-tool/signals": "workspace:*"
+    "@prism-apex-tool/signals": "workspace:*",
+    "@prism-apex-tool/rules-apex": "workspace:*"
   }
 }

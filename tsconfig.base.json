@@ -17,7 +17,8 @@
       "@prism-apex-tool/analytics": ["packages/analytics/src"],
       "@prism-apex-tool/audit": ["packages/audit/src"],
       "@prism-apex-tool/reporting": ["packages/reporting/src"],
-      "@prism-apex-tool/signals": ["packages/signals/src"]
+      "@prism-apex-tool/signals": ["packages/signals/src"],
+      "@prism-apex-tool/rules-apex": ["packages/rules-apex/src"]
     }
   },
   "exclude": ["packages/clients-tradovate", "apps/dashboard", "apps/e2e", "sdks"]

@@ -24,6 +24,10 @@ export default defineConfig({
       ),
       '@prism-apex-tool/sdk': path.resolve(__dirname, '../../packages/sdk/src/index.ts'),
       '@prism-apex-tool/signals': path.resolve(__dirname, '../../packages/signals/src/index.ts'),
+      '@prism-apex-tool/rules-apex': path.resolve(
+        __dirname,
+        '../../packages/rules-apex/src/index.ts',
+      ),
     },
   },
   server: {
