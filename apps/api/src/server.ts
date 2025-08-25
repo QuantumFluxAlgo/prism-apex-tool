@@ -18,6 +18,7 @@ import { versionRoutes } from './routes/version.js';
 import { analyticsRoutes } from './routes/analytics.js';
 import { auditRoutes } from './routes/audit.js';
 import { ticketsRoutes } from './routes/tickets.js';
+import { tradingviewWebhookRoutes } from './routes/webhooks.tradingview.js';
 import { readyRoutes } from './routes/ready.js';
 import { getConfig } from './config/env';
 
@@ -37,6 +38,8 @@ export function buildServer() {
       redact: [
         'req.headers.authorization',
         'headers.authorization',
+        'req.headers["x-webhook-secret"]',
+        'headers["x-webhook-secret"]',
         'password',
         'token',
         'authorization',
@@ -66,7 +69,7 @@ export function buildServer() {
   );
   app.register(cors, { origin: true });
   // Public paths (no auth/rate-limit)
-  const publicPaths = ['/health', '/ready', '/openapi.json', '/version'];
+  const publicPaths = ['/health', '/ready', '/openapi.json', '/version', '/webhooks/tradingview'];
 
   app.register(authPlugin, { publicPaths });
   app.register(rateLimit, { publicPaths });
@@ -89,6 +92,7 @@ export function buildServer() {
   app.register(openapiRoute);
   app.register(compatRoutes, { prefix: '/compat' });
   app.register(ticketsRoutes);
+  app.register(tradingviewWebhookRoutes, { prefix: '/webhooks' });
 
   // ---- Jobs ----
   registerJob('EOD_FLAT', 60_000, jobEodFlat);

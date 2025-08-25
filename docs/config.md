@@ -17,3 +17,21 @@
 | MIN_EXPECTED_PROFIT_USD | (blank) | profit floor disabled |
 
 Consistency is tracked only in V1; enforcement comes later.
+
+## TradingView Webhook
+
+Set `TRADINGVIEW_WEBHOOK_SECRET` in your environment.
+
+Example alert:
+
+```json
+{
+  "symbol": "ES1!",
+  "side": "BUY",
+  "entry": 5050.25,
+  "stop": 5046.25,
+  "target": 5055.25
+}
+```
+
+Send to `POST /webhooks/tradingview` with header `x-webhook-secret: <secret>`.

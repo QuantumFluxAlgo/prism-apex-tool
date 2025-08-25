@@ -124,6 +124,31 @@ registry.registerPath({
   },
 });
 
+// ---- TradingView Webhook ----
+const TvRaw = z.object({
+  symbol: z.string(),
+  side: z.enum(['BUY','SELL']),
+  entry: z.number(),
+  stop: z.number(),
+  target: z.number(),
+  meta: z.record(z.unknown()).optional(),
+});
+const TvNorm = TvRaw.extend({ timestampUtc: z.string() });
+const TradingViewWebhookPayload = z.union([TvNorm, TvRaw]);
+registry.registerPath({
+  method: 'post',
+  path: '/webhooks/tradingview',
+  security: [],
+  request: {
+    headers: z.object({ 'x-webhook-secret': z.string() }),
+    body: { content: { 'application/json': { schema: TradingViewWebhookPayload } } },
+  },
+  responses: {
+    202: { description: 'Accepted', content: { 'application/json': { schema: z.object({ accepted: z.literal(true), rr: z.number(), queuedId: z.string().optional() }) } } },
+    422: { description: 'Rejected', content: { 'application/json': { schema: z.object({ accepted: z.literal(false), rr: z.number().optional(), reasons: z.array(z.string()) }) } } },
+  },
+});
+
 // ---- Builder (includes security scheme) ----
 export function buildOpenApi(): Record<string, unknown> {
   const generator = new OpenApiGeneratorV31(registry.definitions);
