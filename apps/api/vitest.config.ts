@@ -24,6 +24,14 @@ export default defineConfig({
         __dirname,
         '../../packages/reporting/src/index.ts',
       ),
+      '@prism-apex-tool/indicators': path.resolve(
+        __dirname,
+        '../../packages/indicators/src/index.ts',
+      ),
+      '@prism-apex-tool/strategies': path.resolve(
+        __dirname,
+        '../../packages/strategies/src/index.ts',
+      ),
       '@prism-apex-tool/sdk': path.resolve(__dirname, '../../packages/sdk/src/index.ts'),
       '@prism-apex-tool/signals': path.resolve(__dirname, '../../packages/signals/src/index.ts'),
       '@prism-apex-tool/rules-apex': path.resolve(
