@@ -1,50 +1,41 @@
-# syntax=docker/dockerfile:1
+# ---- Build stage ----
+FROM node:20-alpine AS builder
+WORKDIR /work
+ENV CI=1
 
-########## 1) Builder (API-only, but keep repo-like paths) ##########
-FROM node:20-slim AS builder
+# Enable pnpm via Corepack
+RUN corepack enable
+
+# Bring everything (simplest + reliable for monorepo workspaces)
+COPY . .
+
+# Install all deps (workspace-aware), build all packages, then prune dev deps
+RUN pnpm install
+RUN pnpm -r --if-present build
+RUN pnpm prune --prod
+
+# ---- Runtime stage ----
+FROM node:20-alpine AS runner
 WORKDIR /app
 
-# Enable pnpm
-RUN corepack enable && corepack prepare pnpm@10.15.0 --activate
+# Sensible runtime defaults
+ENV NODE_ENV=production \
+    LOG_LEVEL=info \
+    TRUST_PROXY=true \
+    DATA_DIR=/data
 
-# Create expected workspace-like layout
-RUN mkdir -p apps/api
+# Copy runtime node_modules (already pruned) and needed files
+COPY --from=builder /work/node_modules ./node_modules
+COPY --from=builder /work/package.json ./package.json
+COPY --from=builder /work/pnpm-lock.yaml ./pnpm-lock.yaml
 
-# Install API deps (dev deps included for build)
-COPY apps/api/package.json apps/api/package.json
-WORKDIR /app/apps/api
-RUN pnpm install --ignore-scripts
+# Copy compiled API and workspace package outputs + manifests
+COPY --from=builder /work/apps/api/package.json ./apps/api/package.json
+COPY --from=builder /work/apps/api/dist ./apps/api/dist
+COPY --from=builder /work/packages ./packages
 
-# Bring in API build config, scripts, and sources
-COPY apps/api/tsconfig.build.json tsconfig.build.json
-COPY apps/api/scripts scripts
-COPY apps/api/src src
+# Persist local filesystem store
+VOLUME ["/data"]
 
-# Bring in external data used by the API at repo root (e.g., apex/rules.json)
-WORKDIR /app
-COPY apex apex
-
-# Build API (outputs to /app/apps/api/dist)
-WORKDIR /app/apps/api
-RUN pnpm run build
-
-########## 2) Runner (minimal production) ##########
-FROM node:20-slim AS runner
-WORKDIR /app/apps/api
-ENV NODE_ENV=production
-ENV HOST=0.0.0.0
-ENV PORT=8000
-
-# Enable pnpm
-RUN corepack enable && corepack prepare pnpm@10.15.0 --activate
-
-# Copy built app + external data
-COPY --from=builder /app/apps/api/dist dist
-COPY --from=builder /app/apex /app/apex
-
-# Install ONLY production deps for the API
-COPY apps/api/package.json package.json
-RUN pnpm install --prod --ignore-scripts
-
-EXPOSE 8000
-CMD ["node", "--enable-source-maps", "dist/index.js"]
+EXPOSE 3000
+CMD ["node", "apps/api/dist/index.js"]

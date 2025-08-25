@@ -254,6 +254,60 @@ Notes:
   ```
   (You already have `compose:up` and `compose:down` scripts at the root; this will use them.)
 
+### Build a production Docker image (PR-18b)
+
+Build the image:
+
+```bash
+pnpm docker:build
+```
+
+Run it:
+
+# optional: export BEARER_TOKEN to require auth
+
+# export BEARER_TOKEN="change-me"
+
+docker run --rm \
+ -p 3000:3000 \
+ -e LOG_LEVEL=info \
+ -e TRUST_PROXY=true \
+ -e BEARER_TOKEN="${BEARER_TOKEN:-}" \
+ -v api-data:/data \
+ prism-apex-api:latest
+
+Probe it:
+
+Health: GET http://localhost:3000/health
+
+Ready: GET http://localhost:3000/ready
+
+OpenAPI: GET http://localhost:3000/openapi.json
+
+Notes:
+
+Multi-stage build compiles all workspaces, then pnpm prune --prod strips dev deps.
+
+The final image includes apps/api/dist plus compiled workspace packages (e.g. packages/reporting, packages/signals) required by the API at runtime.
+
+Data lives in the api-data volume at /data inside the container.
+
+## Why this works
+
+- **Workspace-aware**: we build the whole monorepo, then copy `dist/` outputs and a **pruned** `node_modules` that still resolves workspace deps (via pnpm’s virtual store/symlinks).
+- **Small & safe**: dev deps are removed (`pnpm prune --prod`), only runtime assets ship.
+- **No rebuild in runner**: final stage just runs `node apps/api/dist/index.js`.
+
+## Quick verification (no tests required)
+
+```bash
+pnpm docker:build
+docker run --rm -p 3000:3000 -v api-data:/data prism-apex-api:latest
+# In another shell:
+curl http://localhost:3000/health
+curl http://localhost:3000/openapi.json | jq '.info.title, .paths | keys | length'
+```
+
 ## Unquarantine Phase 8C — Tickets (local-only)
 
 - Added `POST /tickets/promote` to persist a suggestion as a ticket in the local filesystem store.
