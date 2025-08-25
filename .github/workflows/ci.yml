@@ -26,10 +26,21 @@ jobs:
         run: pnpm -w run lint
 
       - name: Tests (per workspace)
-        run: pnpm -r --if-present test -- --run
+        # Some packages already pass --run; avoid duplicating the flag here.
+        run: pnpm -r --if-present test
 
       - name: Dead deps (non-blocking)
         run: pnpm scan:dead || true
+
+      - name: Emit OpenAPI
+        run: pnpm --filter ./apps/api run openapi:emit
+
+      - name: Upload OpenAPI
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: openapi.json
+          path: apps/api/openapi.json
 
       - name: Upload depcheck report
         if: always()
@@ -37,4 +48,3 @@ jobs:
         with:
           name: depcheck-report
           path: reports/depcheck.json
-
