@@ -47,6 +47,23 @@ export function buildServer() {
     bodyLimit: cfg.bodyLimitBytes,
     trustProxy,
   });
+  app.log.info(
+    {
+      config: {
+        minRR: cfg.guardrails.minRR,
+        maxRR: cfg.guardrails.maxRR,
+        flatByUtc: cfg.time.flatByUtc,
+        sizePolicy: cfg.sizing.policy,
+        percentNoBuffer: cfg.sizing.percent.noBuffer,
+        percentWithBuffer: cfg.sizing.percent.withBuffer,
+        consistency: {
+          enabled: cfg.consistency.enabled,
+          dayShareLimit: cfg.consistency.dayShareLimit,
+        },
+      },
+    },
+    'config summary'
+  );
   app.register(cors, { origin: true });
   // Public paths (no auth/rate-limit)
   const publicPaths = ['/health', '/ready', '/openapi.json', '/version'];
