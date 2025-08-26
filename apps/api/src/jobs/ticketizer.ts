@@ -4,6 +4,7 @@ import { loadRegistry } from '@prism-apex-tool/config';
 import { getConfig } from '../config/env.js';
 import type { Ticket } from '../schemas/ticket.js';
 import { saveTicket, getRecentTicketSizes } from '../store/tickets.js';
+import { getAccount as getTelemetryAccount } from '../store/telemetry.js';
 
 function computeRR(params: { entry: number; stop: number; target: number }): number {
   const risk = Math.abs(params.entry - params.stop);
@@ -143,12 +144,13 @@ function onSuggestion(s: Suggestion): void {
   const acct = registry.accounts[0];
   const cfg = getConfig();
   ticketizer.lastSuggestionTs = s.timestampUtc;
+  const teleAcct = getTelemetryAccount(acct.id);
   const t = guardSuggestion(s, {
     accountId: acct.id,
     phase: acct.phase as 'eval' | 'funded',
     maxContracts: acct.maxContracts,
-    bufferCleared: acct.bufferCleared,
-          recentSizes: getRecentTicketSizes(acct.id),
+    bufferCleared: teleAcct?.bufferCleared ?? acct.bufferCleared,
+    recentSizes: getRecentTicketSizes(acct.id),
     flatByUtc: cfg.time.flatByUtc,
   });
   if (t.accepted) {

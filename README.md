@@ -89,23 +89,23 @@ See [docs/tickets.md](docs/tickets.md) for full schema and guardrail details.
 
 ## Dashboard
 
-The dashboard provides a `/tickets` view for operators.
+The dashboard provides `/tickets` and `/positions` views for operators.
 
 ```bash
 pnpm --filter ./apps/api dev    # API in one terminal
 pnpm --filter ./apps/dashboard dev # Dashboard in another
 ```
 
-Open [http://localhost:5173/tickets](http://localhost:5173/tickets).
+Open [http://localhost:5173/tickets](http://localhost:5173/tickets) or `/positions`.
 
-The page polls `/tickets` for the selected date (default today) every 5 seconds.
+The tickets page polls `/tickets` for the selected date (default today) every 5 seconds. The positions page polls telemetry endpoints for open positions and account metrics.
 Use the refresh selector to change interval or turn polling off.
 
 Export CSV opens `/export/tickets?date=YYYY-MM-DD` in a new tab.
 
 ## Telemetry
 
-A temporary no-op `@prism-apex-tool/analytics` package exports helpers (`trackEvent`, `trackError`, `meter`, `createAnalyticsScope`) that currently do nothing. This stub keeps CI green and will be replaced with real telemetry in a future workstream.
+A demo-only Tradovate telemetry client polls account balances, positions, fills and daily PnL. When `ENABLE_TELEMETRY=true` the API exposes `/telemetry/*` routes and the dashboard shows a `/positions` tab. See [docs/telemetry.md](docs/telemetry.md) for configuration details. Live wiring will arrive in a later update.
 
 ## PR Roadmap (Collapsed)
 
