@@ -19,20 +19,23 @@ import { analyticsRoutes } from './routes/analytics.js';
 import { auditRoutes } from './routes/audit.js';
 import { accountsRoutes } from './routes/accounts.js';
 import { ticketsRoutes } from './routes/tickets.js';
-import { startTicketizer, stopTicketizer } from './jobs/ticketizer.js';
 import { tradingviewWebhookRoutes } from './routes/webhooks.tradingview.js';
 import { readyRoutes } from './routes/ready.js';
 import { getConfig } from './config/env';
 import { telemetryRoutes } from './routes/telemetry.js';
-import { startTelemetryJob, stopTelemetryJob } from './jobs/telemetry.js';
+import { jobManager } from './lib/jobManager.js';
+import { registerFeedJob } from './jobs/feed.js';
+import { registerStrategiesJob } from './jobs/strategies.js';
+import { registerTicketizerJob } from './jobs/ticketizer.js';
+import { registerTelemetryJob } from './jobs/telemetry.js';
+import { registerEodFlatJob } from './jobs/eodFlat.js';
 
 import { registerJob, startJobs, stopJobs } from './jobs/scheduler';
-import { jobEodFlat } from './jobs/eodFlat';
 import { jobMissingBrackets } from './jobs/missingBrackets';
 import { jobDailyLoss } from './jobs/dailyLoss';
 import { jobConsistency } from './jobs/consistency';
-import { startFeed, stopFeed } from './jobs/feed';
-import { startStrategies, stopStrategies } from './jobs/strategies';
+
+const DISABLE = process.env.DISABLE_JOBS === '1' || process.env.NODE_ENV === 'test';
 
 export function buildServer() {
   const cfg = getConfig();
@@ -104,23 +107,22 @@ export function buildServer() {
   app.register(tradingviewWebhookRoutes, { prefix: '/webhooks' });
 
   // ---- Jobs ----
-  registerJob('EOD_FLAT', 60_000, jobEodFlat);
+  registerFeedJob();
+  registerStrategiesJob();
+  registerTicketizerJob();
+  registerTelemetryJob();
+  registerEodFlatJob();
   registerJob('MISSING_BRACKETS', 15_000, jobMissingBrackets);
   registerJob('DAILY_LOSS', 60_000, jobDailyLoss);
   registerJob('CONSISTENCY', 300_000, jobConsistency);
 
-  startJobs();
-  startFeed().catch((err) => app.log.error({ err }, 'feed start failed'));
-  startStrategies().catch((err) => app.log.error({ err }, 'strategies start failed'));
-  startTicketizer().catch((err) => app.log.error({ err }, 'ticketizer start failed'));
-  startTelemetryJob();
-  app.addHook('onClose', (_app, done) => {
+  if (!DISABLE) {
+    jobManager.startAll().catch((err) => app.log.error({ err }, 'job start failed'));
+    startJobs();
+  }
+  app.addHook('onClose', async () => {
     stopJobs();
-    void stopFeed();
-    void stopStrategies();
-    void stopTicketizer();
-    stopTelemetryJob();
-    done();
+    await jobManager.stopAll();
   });
 
   return app;
