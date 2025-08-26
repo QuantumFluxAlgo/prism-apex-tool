@@ -22,7 +22,7 @@ export const reportConsistencyRoutes: FastifyPluginAsync = async (app) => {
     start.setDate(end.getDate() - (q.data.window - 1));
     const startStr = start.toISOString().slice(0, 10);
     const endStr = end.toISOString().slice(0, 10);
-    const days = await provider.getDailyPnL(q.data.accountId, startStr, endStr);
+    const days = await provider.getDailyNetPnl(q.data.accountId, startStr, endStr);
     const result = computeConsistency(days, { windowDays: q.data.window });
     return { accountId: q.data.accountId, ...result };
   });

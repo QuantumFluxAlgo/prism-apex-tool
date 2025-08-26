@@ -1,6 +1,8 @@
 import { login, AuthEnv, TokenBundle } from './auth.js';
 import { TradovateClientError } from './types.js';
 
+type FillSide = 'BUY' | 'SELL';
+
 export type TelemetrySnapshot = {
   accounts: Array<{ accountId: string; balance: number; buyingPower?: number }>;
   positions: Array<{
@@ -14,7 +16,7 @@ export type TelemetrySnapshot = {
   fills: Array<{
     accountId: string;
     contract: string;
-    side: 'BUY' | 'SELL';
+    side: FillSide;
     qty: number;
     price: number;
     ts: string;
@@ -63,10 +65,17 @@ export function createTelemetryClient(env: Env, opts?: { pollMs?: number }) {
       avgPrice: Number(p.avgPrice ?? 0),
       unrealizedPnL: p.unrealizedPnl != null ? Number(p.unrealizedPnl) : undefined,
     }));
-    const fills = (Array.isArray(fillsRaw) ? fillsRaw : []).map((f: any) => ({
+    const fills: Array<{
+      accountId: string;
+      contract: string;
+      side: FillSide;
+      qty: number;
+      price: number;
+      ts: string;
+    }> = (Array.isArray(fillsRaw) ? fillsRaw : []).map((f: any) => ({
       accountId: String(f.accountId ?? ''),
       contract: String(f.contractId ?? f.contract ?? ''),
-      side: (f.side?.toUpperCase() === 'BUY' ? 'BUY' : 'SELL') as 'BUY' | 'SELL',
+      side: f.side === 'BUY' || f.side === 'B' ? 'BUY' : 'SELL',
       qty: Number(f.quantity ?? f.qty ?? 0),
       price: Number(f.price ?? 0),
       ts: new Date(f.timestamp ?? f.ts ?? Date.now()).toISOString(),
