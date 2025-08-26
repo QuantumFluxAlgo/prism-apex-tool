@@ -138,7 +138,7 @@ export async function compatRoutes(app: FastifyInstance) {
             symbol: it.symbol ?? 'ES',
             side: it.side ?? 'BUY',
             price: it.price ?? 0,
-            reason: it.reason,
+            reason: 'reason' in it ? (it as any).reason : undefined,
             raw: it,
           },
           human: {
@@ -165,7 +165,7 @@ export async function compatRoutes(app: FastifyInstance) {
     }
 
     if (body.risk && Object.keys(body.risk).length) {
-      store.setRiskContext(body.risk);
+      store.setRiskContext(body.risk as any);
     }
 
     return { ok: true, alertsAdded, ticketsAdded, riskPatched: Boolean(body.risk) };

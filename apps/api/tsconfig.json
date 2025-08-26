@@ -1,12 +1,12 @@
 {
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
+    "module": "NodeNext",
     "outDir": "dist",
     "rootDir": ".",
     "declaration": true,
     "declarationMap": true,
     "types": ["node"]
   },
-  "include": ["src", "vitest.config.ts"],
-  "exclude": ["archive/**"]
+  "include": ["src", "vitest.config.ts"]
 }

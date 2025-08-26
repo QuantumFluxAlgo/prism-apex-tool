@@ -1,61 +1,127 @@
 import Fastify from 'fastify';
 import cors from '@fastify/cors';
-import { marketRoutes } from './routes/market';
-import { signalRoutes } from './routes/signals';
-import { rulesRoutes } from './routes/rules';
-import { reportRoutes } from './routes/report';
-import { ingestRoutes } from './routes/ingest';
-import { alertsRoutes } from './routes/alerts';
-import { exportRoutes } from './routes/export';
-import { notifyRoutes } from './routes/notify';
-import { jobsRoutes } from './routes/jobs';
-import { openapiRoute } from './routes/openapi';
-import { compatRoutes } from './routes/compat';
+import authPlugin from './plugins/auth.js';
+import rateLimit from './plugins/rateLimit.js';
+import { marketRoutes } from './routes/market.js';
+import { signalRoutes } from './routes/signals.js';
+import { rulesRoutes } from './routes/rules.js';
+import { reportRoutes } from './routes/report.js';
+import { reportConsistencyRoutes } from './routes/report.consistency.js';
+import { ingestRoutes } from './routes/ingest.js';
+import { alertsRoutes } from './routes/alerts.js';
+import { notifyRoutes } from './routes/notify.js';
+import { jobsRoutes } from './routes/jobs.js';
+import { openapiRoute } from './routes/openapi.js';
+import { compatRoutes } from './routes/compat.js';
+import { healthRoutes } from './routes/health.js';
+import { versionRoutes } from './routes/version.js';
+import { analyticsRoutes } from './routes/analytics.js';
+import { auditRoutes } from './routes/audit.js';
+import { accountsRoutes } from './routes/accounts.js';
+import { ticketsRoutes } from './routes/tickets.js';
+import { startTicketizer, stopTicketizer } from './jobs/ticketizer.js';
+import { tradingviewWebhookRoutes } from './routes/webhooks.tradingview.js';
+import { readyRoutes } from './routes/ready.js';
 import { getConfig } from './config/env';
+import { telemetryRoutes } from './routes/telemetry.js';
+import { startTelemetryJob, stopTelemetryJob } from './jobs/telemetry.js';
 
-import { registerJob, startJobs } from './jobs/scheduler';
+import { registerJob, startJobs, stopJobs } from './jobs/scheduler';
 import { jobEodFlat } from './jobs/eodFlat';
 import { jobMissingBrackets } from './jobs/missingBrackets';
 import { jobDailyLoss } from './jobs/dailyLoss';
 import { jobConsistency } from './jobs/consistency';
+import { startFeed, stopFeed } from './jobs/feed';
+import { startStrategies, stopStrategies } from './jobs/strategies';
 
 export function buildServer() {
   const cfg = getConfig();
+  const trustProxy = String(process.env.TRUST_PROXY ?? '').toLowerCase() === 'true';
   const app = Fastify({
     logger: {
       level: process.env.LOG_LEVEL ?? 'info',
       // redact common secret locations; avoid logging raw auth headers or passwords
-      redact: ['req.headers.authorization', 'headers.authorization', 'password', 'token', 'authorization'],
+      redact: [
+        'req.headers.authorization',
+        'headers.authorization',
+        'req.headers["x-webhook-secret"]',
+        'headers["x-webhook-secret"]',
+        'password',
+        'token',
+        'authorization',
+      ],
     },
     requestTimeout: cfg.requestTimeoutMs,
     keepAliveTimeout: cfg.keepAliveTimeoutMs,
     bodyLimit: cfg.bodyLimitBytes,
+    trustProxy,
   });
-
+  app.log.info(
+    {
+      config: {
+        minRR: cfg.guardrails.minRR,
+        maxRR: cfg.guardrails.maxRR,
+        flatByUtc: cfg.time.flatByUtc,
+        sizePolicy: cfg.sizing.policy,
+        percentNoBuffer: cfg.sizing.percent.noBuffer,
+        percentWithBuffer: cfg.sizing.percent.withBuffer,
+        consistency: {
+          enabled: cfg.consistency.enabled,
+          dayShareLimit: cfg.consistency.dayShareLimit,
+          enforce: cfg.consistency.enforce,
+        },
+      },
+    },
+    'config summary'
+  );
   app.register(cors, { origin: true });
+  // Public paths (no auth/rate-limit)
+  const publicPaths = ['/health', '/ready', '/openapi.json', '/version', '/webhooks/tradingview'];
 
-  app.get('/health', async () => ({ ok: true }));
+  app.register(authPlugin, { publicPaths });
+  app.register(rateLimit, { publicPaths });
+
+  app.register(readyRoutes);
+  app.register(healthRoutes);
+  app.register(versionRoutes);
+  app.register(analyticsRoutes);
+  app.register(auditRoutes);
+  app.register(accountsRoutes);
 
   app.register(marketRoutes);
   app.register(signalRoutes);
   app.register(rulesRoutes);
   app.register(reportRoutes);
+  app.register(reportConsistencyRoutes);
   app.register(ingestRoutes);
   app.register(alertsRoutes);
-  app.register(exportRoutes);
   app.register(notifyRoutes);
   app.register(jobsRoutes);
   app.register(openapiRoute);
   app.register(compatRoutes, { prefix: '/compat' });
+  app.register(ticketsRoutes);
+  app.register(telemetryRoutes);
+  app.register(tradingviewWebhookRoutes, { prefix: '/webhooks' });
 
   // ---- Jobs ----
-  registerJob('EOD_FLAT', 60_000, jobEodFlat); // check every 60s (phased logic within)
+  registerJob('EOD_FLAT', 60_000, jobEodFlat);
   registerJob('MISSING_BRACKETS', 15_000, jobMissingBrackets);
   registerJob('DAILY_LOSS', 60_000, jobDailyLoss);
   registerJob('CONSISTENCY', 300_000, jobConsistency);
 
-  // Defer start to next event loop tick to ensure server initialized
-  setTimeout(startJobs, 10);
+  startJobs();
+  startFeed().catch((err) => app.log.error({ err }, 'feed start failed'));
+  startStrategies().catch((err) => app.log.error({ err }, 'strategies start failed'));
+  startTicketizer().catch((err) => app.log.error({ err }, 'ticketizer start failed'));
+  startTelemetryJob();
+  app.addHook('onClose', (_app, done) => {
+    stopJobs();
+    void stopFeed();
+    void stopStrategies();
+    void stopTicketizer();
+    stopTelemetryJob();
+    done();
+  });
 
   return app;
 }

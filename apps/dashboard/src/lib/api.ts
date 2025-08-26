@@ -13,21 +13,24 @@ export type Market = unknown;
 export type Position = unknown;
 export type Order = unknown;
 
-const API_BASE =
-  typeof window === "undefined"
-    ? "http://localhost:3000/api/compat"
-    : "/api/compat";
+const COMPAT_BASE =
+  typeof window === 'undefined' ? 'http://localhost:3000/api/compat' : '/api/compat';
 
-async function request(path: string, init?: RequestInit) {
-  const res = await fetch(`${API_BASE}${path}`, init);
+const DIRECT_BASE =
+  typeof window === 'undefined' ? 'http://localhost:3000' : window.location.origin;
+
+async function request(base: string, path: string, init?: RequestInit) {
+  const res = await fetch(`${base}${path}`, init);
   if (!res.ok) {
-    const text = await res.text().catch(() => "");
-    throw new Error(`API error ${res.status}${text ? `: ${text}` : ""}`);
+    const text = await res.text().catch(() => '');
+    throw new Error(`API error ${res.status}${text ? `: ${text}` : ''}`);
   }
   return res.json();
 }
 
 export const api = {
-  get: (path: string) => request(path),
+  get: (path: string) => request(COMPAT_BASE, path),
+  tickets: (date: string, cursor?: string) =>
+    request(DIRECT_BASE, `/tickets?date=${date}${cursor ? `&cursor=${cursor}` : ''}`),
+  ready: () => request(DIRECT_BASE, '/ready'),
 };
-

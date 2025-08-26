@@ -21,6 +21,9 @@ coverage
 dist
 build
 
+# Reports
+reports/
+
 # Env
 .env
 .env.*
@@ -29,3 +32,4 @@ build
 
 # Misc
 .DS_Store
+data/accounts/
