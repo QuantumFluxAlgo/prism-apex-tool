@@ -37,8 +37,10 @@ export const reportConsistencyRoutes: FastifyPluginAsync = async (app) => {
         })
         .safeParse(req.body);
       if (!body.success) return reply.code(400).send({ error: 'Invalid body' });
-      // upsert is optional; invoke only if provided
-      provider.upsert?.(body.data.accountId, body.data.date, body.data.net);
+      // upsert is optional (mock/debug providers); only call when available
+      if (typeof (provider as any).upsert === 'function') {
+        (provider as any).upsert(body.data.accountId, body.data.date, body.data.net);
+      }
       return { ok: true };
     });
   }

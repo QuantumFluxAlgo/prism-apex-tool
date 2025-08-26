@@ -91,7 +91,7 @@ export function createTelemetryClient(env: Env, opts?: { pollMs?: number }) {
     const snap: TelemetrySnapshot = {
       accounts,
       positions,
-      // Coerce side to the safe union
+      // Coerce broker fill sides to strict 'BUY' | 'SELL' union
       fills: fills.map((f) => ({
         ...f,
         side: (String(f.side).toUpperCase() === 'SELL' ? 'SELL' : 'BUY') as 'BUY' | 'SELL',
