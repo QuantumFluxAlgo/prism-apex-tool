@@ -2,8 +2,11 @@ import type { FastifyPluginAsync } from 'fastify';
 import { z } from 'zod';
 import { computeConsistency } from '@prism-apex-tool/consistency';
 import { createMockPnlProvider } from '../services/consistency/mockProvider.js';
+import { createTelemetryPnlProvider } from '../services/consistency/provider.telemetry.js';
 
-const provider = createMockPnlProvider();
+const provider = process.env.ENABLE_TELEMETRY === 'true'
+  ? createTelemetryPnlProvider()
+  : createMockPnlProvider();
 
 export const reportConsistencyRoutes: FastifyPluginAsync = async (app) => {
   app.get('/report/consistency', async (req, reply) => {
