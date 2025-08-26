@@ -19,6 +19,7 @@ For the MVP we stream **demo** market data from Tradovate's sandbox. Demo data d
 - Trade at half size until buffer is built.
 - Daily profit share limited to ≤30%.
 - Flat by end of day at **20:59 GMT**.
+- Consistency metrics tracked (top-day share and profit days) but not enforced; see [docs/consistency.md](docs/consistency.md).
 
 ## Repository Structure
 
@@ -34,6 +35,13 @@ packages/
 infra/            Deployment and runtime infrastructure (placeholder)
 tests/            Integration and end-to-end tests (future)
 ```
+
+## Consistency Mode
+
+The Consistency Enforcer computes payout eligibility metrics but does not
+block trades. By default `CONSISTENCY_ENFORCE=false`, so tickets are annotated
+with `metrics-only; enforce=false`. See [docs/consistency.md](docs/consistency.md)
+for details and the `/report/consistency` API.
 
 ## Local Setup
 

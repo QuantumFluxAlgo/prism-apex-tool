@@ -6,6 +6,7 @@ import { marketRoutes } from './routes/market.js';
 import { signalRoutes } from './routes/signals.js';
 import { rulesRoutes } from './routes/rules.js';
 import { reportRoutes } from './routes/report.js';
+import { reportConsistencyRoutes } from './routes/report.consistency.js';
 import { ingestRoutes } from './routes/ingest.js';
 import { alertsRoutes } from './routes/alerts.js';
 import { notifyRoutes } from './routes/notify.js';
@@ -65,6 +66,7 @@ export function buildServer() {
         consistency: {
           enabled: cfg.consistency.enabled,
           dayShareLimit: cfg.consistency.dayShareLimit,
+          enforce: cfg.consistency.enforce,
         },
       },
     },
@@ -88,6 +90,7 @@ export function buildServer() {
   app.register(signalRoutes);
   app.register(rulesRoutes);
   app.register(reportRoutes);
+  app.register(reportConsistencyRoutes);
   app.register(ingestRoutes);
   app.register(alertsRoutes);
   app.register(notifyRoutes);
