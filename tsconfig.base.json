@@ -27,7 +27,7 @@
     "noImplicitAny": true,
     "forceConsistentCasingInFileNames": true,
     "jsx": "react-jsx",
-    "types": ["node", "vitest/globals"]
+    "types": ["vitest/globals", "node"]
   },
   "include": ["packages/*/src", "apps/*/src"],
   "exclude": ["apps/dashboard", "apps/e2e", "sdks", "**/*.spec.ts", "**/__tests__/**"]
