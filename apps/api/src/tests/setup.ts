@@ -1,27 +1,25 @@
-// Global Vitest setup for API package
-import { beforeEach, afterEach, vi } from 'vitest';
-import { installTestEnv } from './helpers/testEnv';
+import { afterEach, beforeAll, beforeEach, vi } from 'vitest';
+import { resetBusForTests } from '../lib/bus';
+import { stopAllJobs, getJobManagerForTests, resetJobsForTests } from '../jobs/jobManagerTestHooks';
 
-installTestEnv();
+// Ensure the JobManager exists but does not auto-start anything.
+beforeAll(() => {
+  // Nothing to start by default. Suites that need jobs will start them explicitly.
+});
 
 // Keep tests isolated: prevents job re-registration & stale singletons
 beforeEach(() => {
   vi.resetModules();
-  // Keep logs quiet unless explicitly overridden in a test
   if (!process.env.LOG_LEVEL) process.env.LOG_LEVEL = 'fatal';
 });
 
-// Clean up any env tweaks a test might have applied
-afterEach(() => {
-  // Add keys here if tests set them temporarily
-  for (const k of [
-    'BEARER_TOKEN',
-    'RATE_LIMIT_MAX',
-    'RATE_LIMIT_WINDOW_MS',
-    'RATE_LIMIT_MAX_BUCKETS',
-  ]) {
-    if (Object.prototype.hasOwnProperty.call(process.env, k) && process.env[k] === '') {
-      delete process.env[k];
-    }
-  }
+// Clean up after *every* test to prevent cross-test contamination.
+afterEach(async () => {
+  try {
+    await stopAllJobs();
+  } catch {}
+  resetJobsForTests?.();
+  resetBusForTests();
+  const jm = getJobManagerForTests?.();
+  jm?.resetForTests?.();
 });
