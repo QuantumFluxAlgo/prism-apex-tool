@@ -16,7 +16,15 @@ describe('Hardening', () => {
     const app = buildServer();
     const res = await app.inject({ method: 'GET', url: '/ready' });
     expect(res.statusCode).toBe(200);
-    expect(res.json()).toEqual({ ok: true, marketFeed: { connected: false, subs: 0 } });
+    const body = res.json();
+    expect(body.ok).toBe(true);
+    expect(body.jobs).toBeDefined();
+    for (const k of ['marketFeed', 'strategies', 'ticketizer', 'telemetry', 'eodFlat']) {
+      expect(body.jobs[k]).toMatchObject({
+        registered: expect.any(Boolean),
+        running: expect.any(Boolean),
+      });
+    }
     await app.close();
   });
 

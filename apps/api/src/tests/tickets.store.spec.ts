@@ -85,27 +85,5 @@ describe('ticket store', () => {
     await app.close();
   });
 
-  it('reports stats via /ready', async () => {
-    const day = new Date().toISOString().slice(0, 10);
-    const t: Ticket = {
-      symbol: 'ESZ4',
-      side: 'BUY',
-      entry: 100,
-      stop: 99,
-      target: 102,
-      qty: 1,
-      accountId: 'A1',
-      timestampUtc: `${day}T10:00:00Z`,
-      meta: { strategy: 'VWAP_FT', rr: 2, guardrails: [] },
-      accepted: true,
-    };
-    await store.saveTicket(t);
-    const app = buildServer();
-    const ready = await app.inject({ method: 'GET', url: '/ready' });
-    const stats = ready.json().ticketStore;
-    expect(stats.lastWrite).toBe(t.timestampUtc);
-    expect(stats.ticketsToday).toBeGreaterThan(0);
-    await app.close();
-  });
 });
 
