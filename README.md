@@ -173,7 +173,7 @@ downstream consumers.
 View heartbeat status via:
 
 ```bash
-curl -s localhost:3000/ready | jq '.strategies'
+curl -s localhost:3000/ready | jq '.jobs.strategies'
 ```
 
 ## Unquarantine Phase 4
@@ -451,8 +451,12 @@ curl -H "Authorization: Bearer $BEARER_TOKEN" http://localhost:PORT/market/symbo
 
 ### Readiness probe
 
-`GET /ready` → `{"ok": true, "ready": true}`
+`GET /ready` → `{ "ok": true, env: {...}, jobs: { ... } }`
 Intended for containers/orchestrators to confirm the API is up.
+
+The `jobs` map always includes `marketFeed`, `strategies`, `ticketizer`, `telemetry`,
+and `eodFlat` with default statuses. When `DISABLE_JOBS=1` jobs remain
+`registered: true` but `running: false` so tests and probes see a stable shape.
 
 ### Bearer auth (optional, default OFF)
 
