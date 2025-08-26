@@ -6,7 +6,8 @@ export type Topics =
   | 'quotes.last'
   | 'meta.contract'
   | 'suggestion'
-  | 'ticket';
+  | 'ticket'
+  | 'telemetry.snapshot';
 
 const emitter = new EventEmitter();
 

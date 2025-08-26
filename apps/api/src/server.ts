@@ -23,6 +23,8 @@ import { startTicketizer, stopTicketizer } from './jobs/ticketizer.js';
 import { tradingviewWebhookRoutes } from './routes/webhooks.tradingview.js';
 import { readyRoutes } from './routes/ready.js';
 import { getConfig } from './config/env';
+import { telemetryRoutes } from './routes/telemetry.js';
+import { startTelemetryJob, stopTelemetryJob } from './jobs/telemetry.js';
 
 import { registerJob, startJobs, stopJobs } from './jobs/scheduler';
 import { jobEodFlat } from './jobs/eodFlat';
@@ -98,6 +100,7 @@ export function buildServer() {
   app.register(openapiRoute);
   app.register(compatRoutes, { prefix: '/compat' });
   app.register(ticketsRoutes);
+  app.register(telemetryRoutes);
   app.register(tradingviewWebhookRoutes, { prefix: '/webhooks' });
 
   // ---- Jobs ----
@@ -110,11 +113,13 @@ export function buildServer() {
   startFeed().catch((err) => app.log.error({ err }, 'feed start failed'));
   startStrategies().catch((err) => app.log.error({ err }, 'strategies start failed'));
   startTicketizer().catch((err) => app.log.error({ err }, 'ticketizer start failed'));
+  startTelemetryJob();
   app.addHook('onClose', (_app, done) => {
     stopJobs();
     void stopFeed();
     void stopStrategies();
     void stopTicketizer();
+    stopTelemetryJob();
     done();
   });
 
