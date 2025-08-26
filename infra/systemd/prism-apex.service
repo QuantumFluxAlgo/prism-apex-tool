@@ -1,0 +1,31 @@
+[Unit]
+Description=Prism Apex API
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=prism
+Group=prism
+WorkingDirectory=%h/prism-apex-tool/apps/api
+EnvironmentFile=%h/prism-apex.env
+# Node.js memory and file limits are reasonable by default; tweak if needed
+ExecStart=/usr/bin/node dist/index.js
+Restart=always
+RestartSec=3
+# Hardening
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=full
+ProtectHome=true
+ProtectControlGroups=true
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectClock=true
+LockPersonality=true
+ReadWritePaths=%h/prism-apex-tool %h/prism-apex-data
+# Limits
+LimitNOFILE=65535
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,29 @@
+{
+  "ignores": [
+    "@eslint/js",
+    "eslint",
+    "eslint-config-prettier",
+    "eslint-plugin-import",
+    "eslint-plugin-prettier",
+    "eslint-plugin-simple-import-sort",
+    "globals",
+    "@types/node",
+    "vitest",
+    "@vitest/coverage-v8",
+    "ts-node",
+    "rimraf",
+    "prettier",
+    "jsdom"
+  ],
+  "ignorePatterns": [
+    "**/dist/**",
+    "**/coverage/**",
+    "**/*.d.ts",
+    "**/*.config.*",
+    "**/vitest.config.ts",
+    "**/*.spec.ts",
+    "**/__tests__/**",
+    "**/src/tests/**"
+  ],
+  "specials": ["bin", "pnpm", "vite", "vitest", "eslint", "ts-node"]
+}

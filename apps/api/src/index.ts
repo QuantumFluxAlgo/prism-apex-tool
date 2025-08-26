@@ -1,17 +1,30 @@
-import Fastify from "fastify";
+import { buildServer } from './server.js';
+
+const port = Number(process.env.PORT ?? 3000);
+const host = process.env.HOST ?? '0.0.0.0';
 
 async function main() {
-  const port = process.env.PORT ? Number(process.env.PORT) : 3000;
-  const app = Fastify({ logger: true });
+  const app = buildServer();
+  const address = await app.listen({ port, host });
+  app.log.info({ address }, 'Prism Apex Tool API listening');
 
-  try {
-    await app.listen({ port, host: "0.0.0.0" });
-    app.log.info(`API listening on ${port}`);
-  } catch (err) {
-    app.log.error(err);
-    process.exit(1);
-  }
+  const shutdown = async (signal: string) => {
+    try {
+      app.log.info({ signal }, 'shutting down');
+      await app.close(); // triggers onClose hook -> stops jobs
+      process.exit(0);
+    } catch (err) {
+      app.log.error({ err }, 'graceful shutdown failed');
+      process.exit(1);
+    }
+  };
+
+  process.on('SIGINT', () => void shutdown('SIGINT'));
+  process.on('SIGTERM', () => void shutdown('SIGTERM'));
 }
 
-void main();
-
+main().catch((err) => {
+   
+  console.error(err);
+  process.exit(1);
+});

@@ -1,0 +1,17 @@
+{
+  "VWAP_FT": {
+    "slopeLookback": 10,
+    "minDistanceATR": 0.5,
+    "stopATR": 0.25,
+    "rr": 2.0,
+    "rrClamp": [1.5, 3.0]
+  },
+  "OSB": {
+    "orMinutes": 5,
+    "widthMinTicks": 6,
+    "widthMaxATR": 3.0,
+    "requireCloseBeyond": true,
+    "rr": 2.0,
+    "rrClamp": [1.5, 5.0]
+  }
+}
