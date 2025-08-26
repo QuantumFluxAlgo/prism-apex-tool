@@ -1,6 +1,9 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { buildServer } from '../server.js';
 import { _clear, saveTicket } from '../store/tickets.js';
+import { withJobs } from './helpers/jobs';
+
+withJobs();
 
 beforeEach(() => {
   _clear();
