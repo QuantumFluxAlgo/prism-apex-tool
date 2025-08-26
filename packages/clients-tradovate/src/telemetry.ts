@@ -66,7 +66,7 @@ export function createTelemetryClient(env: Env, opts?: { pollMs?: number }) {
     const fills = (Array.isArray(fillsRaw) ? fillsRaw : []).map((f: any) => ({
       accountId: String(f.accountId ?? ''),
       contract: String(f.contractId ?? f.contract ?? ''),
-      side: String(f.side ?? '').toUpperCase() === 'SELL' ? 'SELL' : 'BUY',
+      side: (f.side?.toUpperCase() === 'BUY' ? 'BUY' : 'SELL') as 'BUY' | 'SELL',
       qty: Number(f.quantity ?? f.qty ?? 0),
       price: Number(f.price ?? 0),
       ts: new Date(f.timestamp ?? f.ts ?? Date.now()).toISOString(),
