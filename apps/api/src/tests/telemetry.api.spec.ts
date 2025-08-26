@@ -26,8 +26,7 @@ describe('telemetry API', () => {
     const { buildServer } = await import('../server.js');
     const app = buildServer();
     const ready = await app.inject({ method: 'GET', url: '/ready' });
-    const r = ready.json().telemetry;
-    expect(r.running).toBe(true);
+    expect(ready.json().jobs.telemetry.running).toBe(true);
     const pos = await app.inject({ method: 'GET', url: '/telemetry/positions?accountId=A1' });
     expect(pos.json()[0].contract).toBe('ESZ4');
     const acct = await app.inject({ method: 'GET', url: '/telemetry/account?accountId=A1' });
