@@ -1,4 +1,5 @@
 import { publish, subscribe } from '../lib/bus.js';
+import { jobManager } from '../lib/jobManager.js';
 import {
   initialVwapState,
   updateVwap,
@@ -93,19 +94,20 @@ function sessionKey(ts: string): string {
   return ts.slice(0, 10);
 }
 
-export async function startStrategies(): Promise<void> {
+async function start(): Promise<void> {
   cfg = loadConfig();
   strategies.running = true;
   unsub = subscribe<BarMessage>('bars.1m', onBar);
 }
 
-export async function stopStrategies(): Promise<void> {
+async function stop(): Promise<void> {
   unsub?.();
   state.clear();
   strategies.running = false;
 }
 
 function onBar(bar: BarMessage): void {
+  jobManager.beat('STRATEGIES');
   strategies.lastBarTs = bar.ts;
   if (bar.session !== 'RTH') return;
   const tick = TICK_SPECS[bar.symbol];
@@ -199,5 +201,9 @@ function emitSuggestion(s: Suggestion): void {
   strategies.counts[s.meta.strategy as 'VWAP_FT' | 'OSB']++;
   publish<Suggestion>('suggestion', s);
   trackEvent('strategies.suggestion', { strategy: s.meta.strategy, contract: s.contract });
+}
+
+export function registerStrategiesJob(): void {
+  jobManager.register('STRATEGIES', start, stop);
 }
 

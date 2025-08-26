@@ -1,5 +1,8 @@
 // Global Vitest setup for API package
 import { beforeEach, afterEach, vi } from 'vitest';
+import { installTestEnv } from './helpers/testEnv';
+
+installTestEnv();
 
 // Keep tests isolated: prevents job re-registration & stale singletons
 beforeEach(() => {
