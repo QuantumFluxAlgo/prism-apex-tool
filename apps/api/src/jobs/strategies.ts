@@ -138,8 +138,8 @@ function onBar(bar: BarMessage): void {
   cs.vwapSeries.push(vwap);
   if (cs.vwapSeries.length > MAX_BARS) cs.vwapSeries.shift();
 
-  const raw = atrWilderSeries(cs.bars as any, 14);
-  cs.atrSeries = raw.map((x) => x ?? 0);
+  // atrWilderSeries returns (number|null)[] — normalize for strict consumers
+  cs.atrSeries = (atrWilderSeries(cs.bars as any, 14) as Array<number | null>).map((v) => v ?? 0);
   const atr = cs.atrSeries[cs.atrSeries.length - 1] ?? 0;
   const atrTicks = atr / tick.tickSize;
 
