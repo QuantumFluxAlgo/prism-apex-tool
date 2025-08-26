@@ -1,6 +1,7 @@
 import { createTelemetryClient, TelemetrySnapshot } from '@prism-apex-tool/clients-tradovate/telemetry';
 import { publish } from '../lib/bus.js';
 import { applySnapshot } from '../store/telemetry.js';
+import { jobManager } from '../lib/jobManager.js';
 
 export const telemetry = {
   running: false,
@@ -14,6 +15,7 @@ export const telemetry = {
 let stopper: (() => void) | null = null;
 
 function onSnapshot(s: TelemetrySnapshot) {
+  jobManager.beat('TELEMETRY');
   telemetry.lastSnapshotTs = new Date().toISOString();
   telemetry.accounts = s.accounts.length;
   telemetry.positions = s.positions.length;
@@ -23,7 +25,7 @@ function onSnapshot(s: TelemetrySnapshot) {
   publish('telemetry.snapshot', s);
 }
 
-export function startTelemetryJob() {
+function start(): void {
   if (process.env.ENABLE_TELEMETRY !== 'true') return;
   const env = {
     restBase: process.env.TRADOVATE_DEMO_REST_BASE || '',
@@ -42,7 +44,11 @@ export function startTelemetryJob() {
   telemetry.running = true;
 }
 
-export function stopTelemetryJob() {
+function stop(): void {
   stopper?.();
   telemetry.running = false;
+}
+
+export function registerTelemetryJob(): void {
+  jobManager.register('TELEMETRY', start, stop);
 }
