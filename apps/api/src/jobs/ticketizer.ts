@@ -11,6 +11,14 @@ function computeRR(params: { entry: number; stop: number; target: number }): num
   return reward / risk;
 }
 
+function buildConsistencyNotes(phase: 'eval' | 'funded'): string {
+  let notes = 'metrics-only; enforce=false';
+  if (process.env.CONSISTENCY_ENFORCE === 'true' && phase === 'funded') {
+    notes += '; preblock=disabled-pending-telemetry';
+  }
+  return notes;
+}
+
 export type Suggestion = {
   symbol: string; // root symbol
   contract: string; // full contract
@@ -69,7 +77,7 @@ export function guardSuggestion(
             ? computeRR({ entry: s.entry, stop: s.stop, target: s.target })
             : 0,
         guardrails: ['phase:' + ctx.phase, 'preclose-suppressed'],
-        consistencyNotes: 'consistency:metrics-only',
+        consistencyNotes: buildConsistencyNotes(ctx.phase),
       },
       accepted: false,
       reasons: ['preclose-suppression'],
@@ -102,7 +110,7 @@ export function guardSuggestion(
       accepted: true,
       meta: {
         ...res.ticket.meta,
-        consistencyNotes: 'consistency:metrics-only',
+        consistencyNotes: buildConsistencyNotes(ctx.phase),
       },
     } as Ticket;
   }
@@ -123,7 +131,7 @@ export function guardSuggestion(
           ? computeRR({ entry: s.entry, stop: s.stop, target: s.target })
           : 0,
       guardrails: ['phase:' + ctx.phase, ctx.bufferCleared ? 'buffer' : 'half-size-until-buffer', 'anti-windfall'],
-      consistencyNotes: 'consistency:metrics-only',
+      consistencyNotes: buildConsistencyNotes(ctx.phase),
     },
     accepted: false,
     reasons: res.reasons,
