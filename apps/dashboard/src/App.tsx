@@ -1,5 +1,6 @@
 import { BrowserRouter, Routes, Route, Navigate, Link } from 'react-router-dom';
 import TicketsPage from './pages/Tickets';
+import PositionsPage from './pages/Positions';
 import { AlertsPanel } from './components/AlertsPanel';
 import { AccountStatus } from './components/AccountStatus';
 import { ReportsView } from './components/ReportsView';
@@ -18,6 +19,9 @@ export default function App() {
             <Link to="/tickets" className="px-3 py-1 bg-blue-600 text-white rounded">
               Tickets
             </Link>
+            <Link to="/positions" className="px-3 py-1 bg-gray-200 text-gray-800 rounded">
+              Positions
+            </Link>
             <Link to="/reports" className="px-3 py-1 bg-gray-200 text-gray-800 rounded">
               Reports
             </Link>
@@ -29,6 +33,7 @@ export default function App() {
             <Routes>
               <Route path="/" element={<Navigate to="/tickets" replace />} />
               <Route path="/tickets" element={<TicketsPage />} />
+              <Route path="/positions" element={<PositionsPage />} />
               <Route path="/reports" element={<ReportsView />} />
             </Routes>
           </section>
