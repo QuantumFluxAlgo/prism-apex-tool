@@ -3,6 +3,7 @@ import path from 'node:path';
 import crypto from 'node:crypto';
 import type { Ticket as StoreTicket, ParseResult } from './types';
 export type { Ticket } from './schemas/ticket.js';
+export type { Ticket as TicketType } from './schemas/ticket.js';
 
 const DATA_DIR = process.env.DATA_DIR || '/var/lib/prism-apex-tool';
 const DATA_FILE = path.join(DATA_DIR, 'data.json');
