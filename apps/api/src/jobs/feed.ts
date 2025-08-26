@@ -1,5 +1,6 @@
 import { createTradovateDemoClient, TradovateClient } from '@prism-apex-tool/clients-tradovate';
 import { publish } from '../lib/bus.js';
+import { jobManager } from '../lib/jobManager.js';
 
 export const marketFeed = { connected: false, subs: 0 };
 
@@ -23,7 +24,7 @@ export function setClientFactory(f: ClientFactory) {
 
 let client: TradovateClient | null = null;
 
-export async function startFeed(): Promise<void> {
+async function start(): Promise<void> {
   client = await factory();
   marketFeed.connected = true;
   const symbols = (process.env.FEED_SYMBOLS || '').split(',').filter(Boolean);
@@ -31,18 +32,28 @@ export async function startFeed(): Promise<void> {
   let subs = 0;
   for (const s of symbols) {
     for (const int of intervals) {
-      client.subscribeBars(s, int, (bar) => publish(`bars.${int}` as any, bar));
+      client.subscribeBars(s, int, (bar) => {
+        jobManager.beat('FEED');
+        publish(`bars.${int}` as any, bar);
+      });
       subs++;
     }
-    client.subscribeQuotes(s, (q) => publish('quotes.last', q));
+    client.subscribeQuotes(s, (q) => {
+      jobManager.beat('FEED');
+      publish('quotes.last', q);
+    });
     subs++;
   }
   marketFeed.subs = subs;
 }
 
-export async function stopFeed(): Promise<void> {
+async function stop(): Promise<void> {
   await client?.close();
   client = null;
   marketFeed.connected = false;
   marketFeed.subs = 0;
+}
+
+export function registerFeedJob(): void {
+  jobManager.register('FEED', start, stop);
 }
