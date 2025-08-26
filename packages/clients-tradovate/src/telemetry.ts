@@ -91,7 +91,11 @@ export function createTelemetryClient(env: Env, opts?: { pollMs?: number }) {
     const snap: TelemetrySnapshot = {
       accounts,
       positions,
-      fills,
+      // Coerce side to the safe union
+      fills: fills.map((f) => ({
+        ...f,
+        side: (String(f.side).toUpperCase() === 'SELL' ? 'SELL' : 'BUY') as 'BUY' | 'SELL',
+      })),
       dailyPnL,
       bufferCleared: realized >= env.bufferThreshold,
     };

@@ -71,6 +71,9 @@ export async function runJobNow(name: string): Promise<boolean> {
   return true;
 }
 
-export function resetJobsForTests(): void {
+export function resetSchedulerForTests(): void {
   jobs.length = 0;
 }
+
+// backward compatibility
+export { resetSchedulerForTests as resetJobsForTests };
