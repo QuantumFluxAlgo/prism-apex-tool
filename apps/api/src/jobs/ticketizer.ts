@@ -1,4 +1,5 @@
 import { subscribe, publish } from '../lib/bus.js';
+import { jobManager } from '../lib/jobManager.js';
 import { applyGuardWithSizing } from '@prism-apex-tool/rules-apex';
 import { loadRegistry } from '@prism-apex-tool/config';
 import { getConfig } from '../config/env.js';
@@ -140,6 +141,7 @@ export function guardSuggestion(
 }
 
 function onSuggestion(s: Suggestion): void {
+  jobManager.beat('TICKETIZER');
   const registry = loadRegistry();
   const acct = registry.accounts[0];
   const cfg = getConfig();
@@ -163,13 +165,17 @@ function onSuggestion(s: Suggestion): void {
   publish('ticket', t);
 }
 
-export async function startTicketizer(): Promise<void> {
+async function start(): Promise<void> {
   ticketizer.running = true;
   unsub = subscribe<Suggestion>('suggestion', onSuggestion);
 }
 
-export async function stopTicketizer(): Promise<void> {
+async function stop(): Promise<void> {
   unsub?.();
   ticketizer.running = false;
+}
+
+export function registerTicketizerJob(): void {
+  jobManager.register('TICKETIZER', start, stop);
 }
 

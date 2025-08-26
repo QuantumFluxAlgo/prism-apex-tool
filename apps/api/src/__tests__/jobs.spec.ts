@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { buildServer } from '../server';
+import { startJobs } from '../jobs/scheduler.js';
 import { store } from '../store';
 
 describe('job scheduler', () => {
@@ -9,6 +10,7 @@ describe('job scheduler', () => {
     vi.useFakeTimers();
     store.setOcoMissing(false);
     app = buildServer();
+    startJobs();
   });
 
   afterEach(async () => {
