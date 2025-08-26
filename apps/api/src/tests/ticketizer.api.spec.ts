@@ -62,7 +62,7 @@ describe('ticketizer API', () => {
     expect(csv.body.split('\n')[0]).toContain('meta.strategy');
 
     const ready = await app.inject({ method: 'GET', url: '/ready' });
-    expect(ready.json().ticketizer.running).toBe(true);
+    expect(ready.json().jobs.ticketizer.running).toBe(true);
     await app.close();
   });
 });
