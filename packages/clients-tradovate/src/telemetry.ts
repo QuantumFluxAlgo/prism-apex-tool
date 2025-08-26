@@ -1,8 +1,6 @@
 import { login, AuthEnv, TokenBundle } from './auth.js';
 import { TradovateClientError } from './types.js';
 
-type FillSide = 'BUY' | 'SELL';
-
 export type TelemetrySnapshot = {
   accounts: Array<{ accountId: string; balance: number; buyingPower?: number }>;
   positions: Array<{
@@ -16,7 +14,7 @@ export type TelemetrySnapshot = {
   fills: Array<{
     accountId: string;
     contract: string;
-    side: FillSide;
+    side: 'BUY' | 'SELL';
     qty: number;
     price: number;
     ts: string;
@@ -68,14 +66,14 @@ export function createTelemetryClient(env: Env, opts?: { pollMs?: number }) {
     const fills: Array<{
       accountId: string;
       contract: string;
-      side: FillSide;
+      side: string;
       qty: number;
       price: number;
       ts: string;
     }> = (Array.isArray(fillsRaw) ? fillsRaw : []).map((f: any) => ({
       accountId: String(f.accountId ?? ''),
       contract: String(f.contractId ?? f.contract ?? ''),
-      side: f.side === 'BUY' || f.side === 'B' ? 'BUY' : 'SELL',
+      side: String(f.side ?? ''),
       qty: Number(f.quantity ?? f.qty ?? 0),
       price: Number(f.price ?? 0),
       ts: new Date(f.timestamp ?? f.ts ?? Date.now()).toISOString(),
