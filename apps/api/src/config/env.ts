@@ -29,8 +29,10 @@ export type Config = {
   consistency: {
     enabled: boolean;
     dayShareLimit: number;
-    minProfitDayUsd: number;
+    minDayPnl: number;
+    minProfitDays: number;
     windowDays: number;
+    enforce: boolean;
   };
   profitFloor: {
     minProfitTicks?: number;
@@ -60,9 +62,11 @@ const envSchema = z.object({
   SIZE_JUMP_MULTIPLIER: z.coerce.number().gt(0).default(2),
   ENFORCE_SIZE_JUMPS: z.coerce.boolean().default(false),
   CONSISTENCY_TRACKING_ENABLED: z.coerce.boolean().default(true),
-  CONSISTENCY_DAY_SHARE_LIMIT: z.coerce.number().gt(0).lte(1).default(0.3),
-  CONSISTENCY_MIN_PROFIT_DAY_USD: z.coerce.number().default(50),
+  CONSISTENCY_TOPDAY_MAX_SHARE: z.coerce.number().gt(0).lte(1).default(0.3),
+  CONSISTENCY_MIN_DAY_PNL: z.coerce.number().default(50),
+  CONSISTENCY_MIN_PROFIT_DAYS: z.coerce.number().int().min(1).default(5),
   CONSISTENCY_WINDOW_DAYS: z.coerce.number().int().min(1).default(8),
+  CONSISTENCY_ENFORCE: z.coerce.boolean().default(false),
   MIN_PROFIT_TICKS: z.preprocess(
     (v) => (v === '' || v === undefined ? undefined : Number(v)),
     z.number().gt(0).optional()
@@ -119,9 +123,11 @@ export function getConfig(env = process.env): Config {
     },
     consistency: {
       enabled: parsed.CONSISTENCY_TRACKING_ENABLED,
-      dayShareLimit: parsed.CONSISTENCY_DAY_SHARE_LIMIT,
-      minProfitDayUsd: parsed.CONSISTENCY_MIN_PROFIT_DAY_USD,
+      dayShareLimit: parsed.CONSISTENCY_TOPDAY_MAX_SHARE,
+      minDayPnl: parsed.CONSISTENCY_MIN_DAY_PNL,
+      minProfitDays: parsed.CONSISTENCY_MIN_PROFIT_DAYS,
       windowDays: parsed.CONSISTENCY_WINDOW_DAYS,
+      enforce: parsed.CONSISTENCY_ENFORCE,
     },
     profitFloor: {
       minProfitTicks: parsed.MIN_PROFIT_TICKS,
