@@ -1,12 +1,13 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import crypto from 'node:crypto';
-import type { Ticket, ParseResult } from './types';
+import type { Ticket as StoreTicket, ParseResult } from './types';
+export type { Ticket } from './schemas/ticket.js';
 
 const DATA_DIR = process.env.DATA_DIR || '/var/lib/prism-apex-tool';
 const DATA_FILE = path.join(DATA_DIR, 'data.json');
 
-type TicketEntry = { when: string; ticket: Ticket; reasons: string[] };
+type TicketEntry = { when: string; ticket: StoreTicket; reasons: string[] };
 
 type AlertEntry = {
   id: string;
@@ -79,7 +80,7 @@ function save(d: DataShape) {
   fs.writeFileSync(DATA_FILE, JSON.stringify(d, null, 2));
 }
 
-let state: DataShape = load();
+const state: DataShape = load();
 
 function hash(s: string): string {
   return crypto.createHash('sha256').update(s).digest('hex');

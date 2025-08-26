@@ -7,14 +7,12 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 export default defineConfig({
   test: {
     environment: 'node',
-    include: ['src/tests/**/*.spec.ts'],
-    exclude: ['**/node_modules/**', '**/dist/**'],
     globals: true,
-    coverage: { reporter: ['text', 'json-summary', 'lcov'] },
-    setupFiles: [path.resolve(__dirname, './src/tests/setup.ts')],
+    include: ['src/tests/**/*.{spec,test}.ts', 'src/__tests__/**/*.{spec,test}.ts'],
+    setupFiles: ['src/tests/setup.ts'],
     env: {
-      DISABLE_JOBS: '1',
       NODE_ENV: 'test',
+      DISABLE_JOBS: '1',
     },
   },
   resolve: {
