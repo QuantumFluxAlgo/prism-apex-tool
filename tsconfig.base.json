@@ -14,8 +14,10 @@
       "@prism-apex-tool/accounts": ["packages/accounts/src"],
       "@prism-apex-tool/config": ["packages/config/src"],
       "@prism-apex-tool/clients-tradovate": ["packages/clients-tradovate/src"],
+      "@prism-apex-tool/clients-tradovate/telemetry": ["packages/clients-tradovate/src/telemetry.ts"],
       "@prism-apex-tool/indicators": ["packages/indicators/src"],
-      "@prism-apex-tool/strategies": ["packages/strategies/src"]
+      "@prism-apex-tool/strategies": ["packages/strategies/src"],
+      "@prism-apex-tool/consistency": ["packages/consistency/src"]
     },
     "resolveJsonModule": true,
     "allowSyntheticDefaultImports": true,
@@ -25,8 +27,8 @@
     "noImplicitAny": true,
     "forceConsistentCasingInFileNames": true,
     "jsx": "react-jsx",
-    "types": []
+    "types": ["node"]
   },
   "include": ["packages/*/src", "apps/*/src"],
-  "exclude": ["apps/dashboard", "apps/e2e", "sdks"]
+  "exclude": ["apps/dashboard", "apps/e2e", "sdks", "**/*.spec.ts", "**/__tests__/**"]
 }

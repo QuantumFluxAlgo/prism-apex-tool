@@ -18,5 +18,5 @@ export function createMockPnlProvider() {
     upsert(accountId: string, date: string, net: number) {
       data.set(accountId + date, net);
     },
-  } satisfies PnlProvider & { upsert: (accountId: string, date: string, net: number) => void };
+  } satisfies PnlProvider;
 }
