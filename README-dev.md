@@ -72,3 +72,5 @@ If your UI references monorepo packages, ensure they’re copied in Docker build
 pnpm -r build         # builds packages (emits .d.ts)
 pnpm --filter ./apps/api test
 ```
+
+To run API tests locally, the `apps/api` package must list all internal `@prism-apex-tool/*` packages it imports under `dependencies` so pnpm links their builds in `node_modules`.

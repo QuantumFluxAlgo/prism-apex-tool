@@ -37,7 +37,7 @@ export const reportConsistencyRoutes: FastifyPluginAsync = async (app) => {
         })
         .safeParse(req.body);
       if (!body.success) return reply.code(400).send({ error: 'Invalid body' });
-      provider.upsert(body.data.accountId, body.data.date, body.data.net);
+      provider.upsert?.(body.data.accountId, body.data.date, body.data.net);
       return { ok: true };
     });
   }
