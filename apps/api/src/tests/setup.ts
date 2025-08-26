@@ -1,33 +1,17 @@
-// Unified test setup: stop background jobs, reset scheduler & bus after each test
 import { afterEach, beforeEach } from 'vitest';
 import { resetBusForTests } from '../lib/bus.js';
-import { jobManager, stopAllJobs, resetJobsForTests } from '../jobs/jobManager.js';
+import { jobManager as JobManager } from '../lib/jobManager.js';
+import { resetSchedulerForTests } from '../jobs/scheduler.js';
 
-beforeEach(async () => {
-  // Ensure jobs start disabled unless explicitly started in a suite
-  process.env.DISABLE_JOBS = '1';
-  try {
-    await stopAllJobs?.();
-  } catch {}
-  try {
-    resetJobsForTests?.();
-  } catch {}
-  try {
-    jobManager?.reset?.();
-  } catch {}
-  resetBusForTests();
+// Stop all jobs & clear listeners around tests to avoid cross-suite bleed.
+beforeEach(() => {
+  // nothing: suites start jobs explicitly if they need them
 });
 
 afterEach(async () => {
   try {
-    await stopAllJobs?.();
+    await JobManager.stopAll();
   } catch {}
-  try {
-    resetJobsForTests?.();
-  } catch {}
-  try {
-    jobManager?.reset?.();
-  } catch {}
-  resetBusForTests();
+  resetSchedulerForTests?.();
+  resetBusForTests?.();
 });
-
