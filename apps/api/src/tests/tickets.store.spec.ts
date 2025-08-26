@@ -1,4 +1,5 @@
 import { describe, it, expect, beforeEach } from 'vitest';
+import type { Ticket } from '../store/tickets';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
@@ -15,7 +16,7 @@ beforeEach(async () => {
 
 describe('ticket store', () => {
   it('deduplicates identical tickets', async () => {
-    const t: store.Ticket = {
+    const t: Ticket = {
       symbol: 'ESZ4',
       side: 'BUY',
       entry: 100,
@@ -34,7 +35,7 @@ describe('ticket store', () => {
   });
 
   it('paginates results', async () => {
-    const base: store.Ticket = {
+    const base: Ticket = {
       symbol: 'ESZ4',
       side: 'BUY',
       entry: 100,
@@ -62,7 +63,7 @@ describe('ticket store', () => {
   });
 
   it('exports CSV with strategy column', async () => {
-    const t: store.Ticket = {
+    const t: Ticket = {
       symbol: 'ESZ4',
       side: 'BUY',
       entry: 100,
@@ -86,7 +87,7 @@ describe('ticket store', () => {
 
   it('reports stats via /ready', async () => {
     const day = new Date().toISOString().slice(0, 10);
-    const t: store.Ticket = {
+    const t: Ticket = {
       symbol: 'ESZ4',
       side: 'BUY',
       entry: 100,
