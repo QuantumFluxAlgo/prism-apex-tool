@@ -3,12 +3,12 @@ import { telemetryStore } from '../../store/telemetry.js';
 
 export function createTelemetryPnlProvider(): PnlProvider {
   return {
-    async getDailyPnL(accountId: string, start: string, end: string) {
+    async getDailyNetPnl(accountId: string, startIso: string, endIso: string) {
       const map = telemetryStore.dailyPnl.get(accountId);
       if (!map) return [];
-      const res: { date: string; net: number }[] = [];
-      const s = new Date(start);
-      const e = new Date(end);
+      const res: Array<{ date: string; net: number }> = [];
+      const s = new Date(startIso);
+      const e = new Date(endIso);
       for (let d = new Date(s); d <= e; d.setDate(d.getDate() + 1)) {
         const key = d.toISOString().slice(0, 10);
         const net = map.get(key);
