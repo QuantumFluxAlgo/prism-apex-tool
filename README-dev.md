@@ -65,3 +65,10 @@ Vite proxy (dev): apps/dashboard/vite.config.ts
 Compose port mappings (prod-like): docker-compose.yml
 
 If your UI references monorepo packages, ensure they’re copied in Docker build context (we already copy packages/).
+
+## Tests
+
+```bash
+pnpm -r build         # builds packages (emits .d.ts)
+pnpm --filter ./apps/api test
+```

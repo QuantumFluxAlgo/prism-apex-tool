@@ -1,14 +1,15 @@
-import { FastifyPluginAsync } from "fastify";
+import { FastifyPluginAsync } from 'fastify';
+import { z } from 'zod';
+import { store } from '../store';
 
 export const reportRoutes: FastifyPluginAsync = async (app) => {
-  // Simple ping so we can confirm the plugin is mounted
-  app.get("/report/ping", async (_req, reply) => {
-    return reply.code(200).send({ ok: true, service: "report", mode: "disabled" });
-  });
-
-  // Placeholder for export/report operations — disabled after cleanup
-  app.all("/report/*", async (_req, reply) => {
-    return reply.code(501).send({ ok: false, reason: "reporting-disabled" });
+  app.get('/report/daily', async (req, reply) => {
+    const q = z
+      .object({ date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/) })
+      .safeParse(req.query);
+    if (!q.success) return reply.code(400).send({ error: 'Invalid date' });
+    const report = store.buildDailyReport(q.data.date);
+    return report;
   });
 };
 

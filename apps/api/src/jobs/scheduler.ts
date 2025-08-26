@@ -1,52 +1,72 @@
-/**
- * Minimal job scheduler for Prism Apex Tool.
- * - register(name, everyMs, fn): schedules setInterval after server start.
- * - maintains last run/ok/error for /jobs/status.
- */
-type JobFn = () => Promise<void> | void;
+export type JobFn = () => Promise<void> | void;
 
-export type JobStatus = {
+export type JobMeta = {
   name: string;
   everyMs: number;
-  lastRun?: string;
-  lastOk?: string;
-  lastError?: string;
+  fn: JobFn;
+  timer?: NodeJS.Timeout;
   running: boolean;
+  lastRun?: number;
+  lastOk?: boolean;
+  lastError?: string;
 };
 
-const jobs: Record<string, { everyMs: number; fn: JobFn; status: JobStatus; timer?: NodeJS.Timeout }> = {};
+const jobs: JobMeta[] = [];
 
-export function registerJob(name: string, everyMs: number, fn: JobFn) {
-  if (jobs[name]) return;
-  jobs[name] = { everyMs, fn, status: { name, everyMs, running: false } };
+async function run(job: JobMeta): Promise<void> {
+  if (job.running) return;
+  job.running = true;
+  try {
+    await job.fn();
+    job.lastOk = true;
+    delete job.lastError;
+  } catch (err: any) {
+    job.lastOk = false;
+    job.lastError = err instanceof Error ? err.message : String(err);
+  } finally {
+    job.lastRun = Date.now();
+    job.running = false;
+  }
 }
 
-export function startJobs() {
-  Object.entries(jobs).forEach(([name, j]) => {
-    if (j.timer) return;
-    const tick = async () => {
-      if (j.status.running) return;
-      j.status.running = true;
-      j.status.lastRun = new Date().toISOString();
-      try {
-        await Promise.resolve(j.fn());
-        j.status.lastOk = new Date().toISOString();
-        j.status.lastError = undefined;
-      } catch (e: any) {
-        j.status.lastError = e?.message || String(e);
-      } finally {
-        j.status.running = false;
-      }
-    };
-    setTimeout(tick, Math.min(1000, j.everyMs));
-    j.timer = setInterval(tick, j.everyMs);
-  });
+export function registerJob(name: string, everyMs: number, fn: JobFn): void {
+  if (jobs.find(j => j.name === name)) throw new Error(`Job ${name} already registered`);
+  jobs.push({ name, everyMs, fn, running: false });
 }
 
-export function listJobStatus(): JobStatus[] {
-  return Object.values(jobs).map(j => j.status);
+export function startJobs(): void {
+  for (const job of jobs) {
+    if (job.timer) continue;
+    job.timer = setInterval(() => {
+      if (!job.running) void run(job);
+    }, job.everyMs);
+  }
 }
 
-export function stopJobs() {
-  Object.values(jobs).forEach(j => j.timer && clearInterval(j.timer));
+export function stopJobs(): void {
+  for (const job of jobs) {
+    if (job.timer) {
+      clearInterval(job.timer);
+      delete job.timer;
+    }
+    job.running = false;
+  }
+}
+
+export function listJobStatus(): Array<Pick<JobMeta, 'name' | 'everyMs' | 'running' | 'lastRun' | 'lastOk' | 'lastError'>> {
+  return jobs.map(({ name, everyMs, running, lastRun, lastOk, lastError }) => ({
+    name,
+    everyMs,
+    running,
+    ...(lastRun !== undefined ? { lastRun } : {}),
+    ...(lastOk !== undefined ? { lastOk } : {}),
+    ...(lastError !== undefined ? { lastError } : {}),
+  }));
+}
+
+export async function runJobNow(name: string): Promise<boolean> {
+  const job = jobs.find(j => j.name === name);
+  if (!job || job.running) return false;
+  await run(job);
+  return true;
 }
