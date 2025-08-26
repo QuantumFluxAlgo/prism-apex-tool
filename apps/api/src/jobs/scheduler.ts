@@ -70,3 +70,7 @@ export async function runJobNow(name: string): Promise<boolean> {
   await run(job);
   return true;
 }
+
+export function resetJobsForTests(): void {
+  jobs.length = 0;
+}
