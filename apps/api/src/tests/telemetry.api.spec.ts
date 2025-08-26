@@ -1,4 +1,8 @@
 import { describe, it, expect, vi } from 'vitest';
+import { withJobs } from './helpers/jobs';
+
+process.env.ENABLE_TELEMETRY = 'true';
+withJobs();
 
 const sampleSnapshot = {
   accounts: [{ accountId: 'A1', balance: 1000 }],
@@ -19,7 +23,6 @@ vi.mock('@prism-apex-tool/clients-tradovate/telemetry', () => ({
 
 describe('telemetry API', () => {
   it('exposes telemetry via routes and provider', async () => {
-    process.env.ENABLE_TELEMETRY = 'true';
     const { buildServer } = await import('../server.js');
     const app = buildServer();
     const ready = await app.inject({ method: 'GET', url: '/ready' });
