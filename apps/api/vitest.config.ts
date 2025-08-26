@@ -6,17 +6,18 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 export default defineConfig({
   test: {
-    include: ['src/tests/**/*.spec.ts', 'src/__tests__/**/*.spec.ts'],
     globals: true,
     environment: 'node',
     setupFiles: ['src/tests/setup.ts'],
+    env: {
+      DISABLE_JOBS: '1',
+      NODE_ENV: 'test',
+    },
+    include: ['src/**/__tests__/**/*.ts', 'src/tests/**/*.ts'],
+    pool: 'threads',
     restoreMocks: true,
     clearMocks: true,
     mockReset: true,
-  },
-  define: {
-    'process.env.NODE_ENV': JSON.stringify('test'),
-    'process.env.DISABLE_JOBS': JSON.stringify('1'),
   },
   resolve: {
     alias: {

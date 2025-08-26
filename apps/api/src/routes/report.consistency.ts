@@ -37,7 +37,7 @@ export const reportConsistencyRoutes: FastifyPluginAsync = async (app) => {
         })
         .safeParse(req.body);
       if (!body.success) return reply.code(400).send({ error: 'Invalid body' });
-      // upsert is optional (mock/debug providers); only call when available
+      // Some mock/debug providers don’t implement upsert — guard it.
       if (typeof (provider as any).upsert === 'function') {
         (provider as any).upsert(body.data.accountId, body.data.date, body.data.net);
       }

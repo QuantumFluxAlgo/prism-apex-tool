@@ -138,7 +138,7 @@ function onBar(bar: BarMessage): void {
   cs.vwapSeries.push(vwap);
   if (cs.vwapSeries.length > MAX_BARS) cs.vwapSeries.shift();
 
-  // Normalize ATR output for strict number[] consumers (tests & downstream)
+  // Ensure downstream consumers always get number[]
   cs.atrSeries = atrWilderSeries(cs.bars as any, 14).map(v => v ?? 0);
   const atr = cs.atrSeries[cs.atrSeries.length - 1] ?? 0;
   const atrTicks = atr / tick.tickSize;
