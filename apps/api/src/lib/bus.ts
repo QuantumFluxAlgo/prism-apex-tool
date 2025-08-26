@@ -19,3 +19,7 @@ export function subscribe<T>(topic: Topics, handler: (payload: T) => void): () =
   emitter.on(topic, handler);
   return () => emitter.off(topic, handler);
 }
+
+export function resetBusForTests(): void {
+  emitter.removeAllListeners();
+}
