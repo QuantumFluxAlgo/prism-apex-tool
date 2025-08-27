@@ -49,4 +49,11 @@ describe('vwapFirstTouch', () => {
     const res = vwapFirstTouch('ESZ4', bars, vwap, atr, tick);
     expect(res).toHaveLength(0);
   });
+
+  it('returns empty when ATR series is missing latest value', () => {
+    const { bars, vwap, atr } = buildBars({});
+    atr.pop();
+    const res = vwapFirstTouch('ESZ4', bars, vwap, atr, tick);
+    expect(res).toHaveLength(0);
+  });
 });

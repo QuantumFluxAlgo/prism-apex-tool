@@ -30,6 +30,7 @@ export function vwapFirstTouch(
   const n = bars.length;
   const vnow = vwapSeries[n - 1];
   const atrNow = atrSeries[n - 1];
+  if (atrNow == null) return [];
   const slopeStart = Math.max(0, n - 1 - P.slopeLookback);
   const slopeEnd = n - 1;
   const slope = (vwapSeries[slopeEnd] - vwapSeries[slopeStart]) / P.slopeLookback;
