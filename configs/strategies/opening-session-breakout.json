@@ -1,0 +1,14 @@
+{
+  "orMinutes": 5,
+  "requireCloseBreak": true,
+  "rrDefault": 2.0,
+  "rrMin": 1.5,
+  "rrMax": 5.0,
+  "widthMinTicks": 6,
+  "widthMinATR": 0.3,
+  "widthMaxATR": 3.0,
+  "minRiskTicks": 3,
+  "entryOffsetTicks": 1,
+  "stopOffsetTicks": 1,
+  "postOrBars": 2
+}

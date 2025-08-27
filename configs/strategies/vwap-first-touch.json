@@ -1,0 +1,12 @@
+{
+  "slopeLookback": 10,
+  "minDistanceATR": 0.5,
+  "stopKATR": 0.25,
+  "rrDefault": 2.0,
+  "rrMin": 1.5,
+  "rrMax": 3.0,
+  "minStopTicks": 2,
+  "warmupBars": 20,
+  "maxTouchKATR": 0.25,
+  "entryOffsetTicks": 1
+}
