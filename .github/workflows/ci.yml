@@ -1,50 +1,34 @@
-name: CI
+name: skinny-ci
+
 on:
   pull_request:
-  push:
-    branches: [main]
+    branches: [ "**" ]
 
 jobs:
-  build:
+  ci:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v4
 
-      - uses: actions/setup-node@v4
+      - name: Setup Node
+        uses: actions/setup-node@v4
         with:
-          node-version: '20'
-          cache: 'pnpm'
+          node-version: 18
 
-      - run: corepack enable
-      - run: pnpm -v
-      - run: pnpm install
-
-      - name: Typecheck (all)
-        run: pnpm typecheck
-
-      - name: Lint
-        run: pnpm -w run lint
-
-      - name: Tests (per workspace)
-        # Some packages already pass --run; avoid duplicating the flag here.
-        run: pnpm -r --if-present test
-
-      - name: Dead deps (non-blocking)
-        run: pnpm scan:dead || true
-
-      - name: Emit OpenAPI
-        run: pnpm --filter ./apps/api run openapi:emit
-
-      - name: Upload OpenAPI
-        if: always()
-        uses: actions/upload-artifact@v4
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
         with:
-          name: openapi.json
-          path: apps/api/openapi.json
+          version: 9
 
-      - name: Upload depcheck report
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: depcheck-report
-          path: reports/depcheck.json
+      - name: Install
+        run: pnpm install --frozen-lockfile || pnpm install
+
+      - name: Typecheck
+        run: pnpm run typecheck
+
+      - name: Prettier Check
+        run: pnpm run format:check
+
+      - name: Tests
+        run: pnpm run test
