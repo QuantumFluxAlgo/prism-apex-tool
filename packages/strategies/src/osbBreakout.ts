@@ -30,6 +30,7 @@ export function openingSwingBreakout(
   const orHigh = Math.max(...orBars.map((b) => b.high));
   const orLow = Math.min(...orBars.map((b) => b.low));
   const atrNow = atrSeries[atrSeries.length - 1];
+  if (atrNow == null) return [];
 
   const widthTicks = Math.round((orHigh - orLow) / tick.tickSize);
   const minWidthTicks = Math.max(
