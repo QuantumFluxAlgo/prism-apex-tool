@@ -39,7 +39,9 @@ function generateSummary(events: TradeEvent[], date: Date = new Date()) {
   const net = gross - fees;
 
   const breaches = events.filter((e) => e.type === 'GUARDRAIL' || e.type === 'PANIC');
-  const operatorActions = events.filter((e) => ['TICKET', 'PANIC', 'TRAINING'].includes(e.type ?? ''));
+  const operatorActions = events.filter((e) =>
+    ['TICKET', 'PANIC', 'TRAINING'].includes(e.type ?? ''),
+  );
 
   const payoutStatus = calculatePayoutStatus(net, breaches);
   return {

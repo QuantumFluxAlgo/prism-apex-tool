@@ -60,7 +60,11 @@ export async function saveTicket(t: Ticket): Promise<void> {
   indexRecord(rec);
 }
 
-export function listTickets(date: string, cursor = 0, limit = 50): {
+export function listTickets(
+  date: string,
+  cursor = 0,
+  limit = 50,
+): {
   items: Ticket[];
   nextCursor?: number;
 } {
@@ -96,4 +100,3 @@ export function _clear() {
     fs.unlinkSync(FILE);
   } catch {}
 }
-

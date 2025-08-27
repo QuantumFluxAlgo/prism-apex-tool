@@ -22,7 +22,11 @@ describe('Signals API', () => {
       { ts: '2020-01-01T00:10:00Z', open: 100, high: 106, low: 99, close: 106 },
     ];
     const app = buildServer();
-    const res = await app.inject({ method: 'POST', url: '/signals/osb', payload: { symbol: 'ES', session: 'RTH', bars } });
+    const res = await app.inject({
+      method: 'POST',
+      url: '/signals/osb',
+      payload: { symbol: 'ES', session: 'RTH', bars },
+    });
     expect(res.statusCode).toBe(200);
     expect(res.json().guard).toBeDefined();
     expect(typeof res.json().guard.accepted).toBe('boolean');
@@ -41,7 +45,11 @@ describe('Signals API', () => {
       { ts: '2020-01-01T01:10:00Z', open: 1, high: 2, low: 1, close: 2, volume: 1 },
     ];
     const app = buildServer();
-    const res = await app.inject({ method: 'POST', url: '/signals/vwap-first-touch', payload: { symbol: 'ES', bars } });
+    const res = await app.inject({
+      method: 'POST',
+      url: '/signals/vwap-first-touch',
+      payload: { symbol: 'ES', bars },
+    });
     expect(res.statusCode).toBe(200);
     expect(res.json().guard).toBeDefined();
     expect(typeof res.json().guard.accepted).toBe('boolean');

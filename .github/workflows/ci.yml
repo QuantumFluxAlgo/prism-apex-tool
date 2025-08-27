@@ -2,7 +2,7 @@ name: skinny-ci
 
 on:
   pull_request:
-    branches: [ "**" ]
+    branches: ['**']
 
 jobs:
   ci:

@@ -10,12 +10,14 @@ against Apex Trader Funding guardrails.
 - Across all runs, ~72% parameter sets breached at least one Apex rule.
 
 ## Metrics Recorded
+
 - Win rate (%)
 - Expectancy ($ per trade)
 - Max drawdown
 - Rule breaches (daily loss, trailing drawdown, consistency, EOD flat)
 
 ## Next Steps
+
 - Narrow parameter ranges to those that consistently pass Apex rules.
 - Incorporate into **live guardrails** (Prompt 14).
 - Share CSV/JSON results with strategy engineers.

@@ -1,17 +1,20 @@
 # Tick-Level Readiness (Post-MVP)
 
 ## What’s Included Now
+
 - **Tick replay hooks** with a simple **cross-through fill** model.
 - Feature-flagged CLI (`--modeReplay=tick`).
 - Tiny sample tick CSV for demos.
 
 ## What’s Next (Not Included Yet)
+
 - Queue/latency modeling.
 - Partial fills & order book depth.
 - Realistic slippage tied to spreads & volume.
 - Parquet reader for high-volume tick data (planned).
 
 ## Usage
+
 ```bash
 # Tick replay (uses sample ticks)
 node apps/cli/dist/backtest.js \
@@ -23,6 +26,7 @@ node apps/cli/dist/backtest.js \
 ```
 
 Diagram
+
 ```mermaid
 flowchart TD
     A[Signals: ORB/VWAP] --> B{Replay Mode}

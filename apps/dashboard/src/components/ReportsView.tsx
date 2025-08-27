@@ -12,7 +12,10 @@ export function ReportsView() {
   const [report, setReport] = useState<Report | null>(null);
 
   useEffect(() => {
-    api.get('/reports').then(setReport).catch(() => {});
+    api
+      .get('/reports')
+      .then(setReport)
+      .catch(() => {});
   }, []);
 
   if (!report) return <div className="bg-white p-4 shadow rounded">Loading...</div>;

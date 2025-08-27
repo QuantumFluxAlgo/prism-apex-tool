@@ -12,6 +12,6 @@ export default defineConfig({
   splitting: false,
   skipNodeModulesBundle: true,
   env: {
-    NODE_ENV: 'production'
-  }
+    NODE_ENV: 'production',
+  },
 });

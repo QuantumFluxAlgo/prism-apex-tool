@@ -1,4 +1,7 @@
-import { createTelemetryClient, TelemetrySnapshot } from '@prism-apex-tool/clients-tradovate/telemetry';
+import {
+  createTelemetryClient,
+  TelemetrySnapshot,
+} from '@prism-apex-tool/clients-tradovate/telemetry';
 import { publish } from '../lib/bus.js';
 import { applySnapshot } from '../store/telemetry.js';
 import { jobManager } from '../lib/jobManager.js';

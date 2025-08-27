@@ -1,11 +1,13 @@
 # Prism Apex Tool — Operator Training Deck (MVP)
 
 ## 1) Context & Roles
+
 - **What you do:** Manually key trades into **Tradovate** from system-generated **tickets**.
 - **What you don’t do:** You **do not** pick instruments, sides, or sizes.
 - **Why:** Apex rules require strict guardrails; our system computes signals and monitors risk.
 
 ## 2) Daily Flow (High-Level)
+
 1. **SOD:** Health check → recipients → session time.
 2. **Execute:** Read ticket → enter order in Tradovate **with OCO stop + target**.
 3. **Monitor:** Watch alerts (Slack/Email) and dashboard status.
@@ -23,6 +25,7 @@ flowchart TD
 ```
 
 ## 3) Tickets (Plain English)
+
 A ticket contains: symbol, side (BUY/SELL), entry, stop, target, size.
 
 Stop is mandatory. Target is capped at ≤5R by our system.
@@ -30,6 +33,7 @@ Stop is mandatory. Target is capped at ≤5R by our system.
 If the dashboard shows Pause or OCO Missing, do not enter new trades.
 
 ## 4) Alerts (What They Mean)
+
 WARN (amber): Approaching a limit (e.g., 70% daily loss). Be cautious.
 
 CRITICAL (red): Breach imminent or detected (e.g., 85% daily loss; missing OCO). Stop and escalate.
@@ -37,11 +41,13 @@ CRITICAL (red): Breach imminent or detected (e.g., 85% daily loss; missing OCO).
 EOD T–10 / T–5: Close out to be flat by 21:59 GMT.
 
 ## 5) EOD Flat (Non-Negotiable)
+
 By 21:59 GMT, zero open positions.
 
 The system nudges you but you own the final check.
 
 ## 6) Do / Don’t
+
 **Do**
 Double-check stop and target are attached (OCO).
 
@@ -57,6 +63,7 @@ Don’t trade past 21:59 GMT.
 Don’t ignore CRITICAL alerts.
 
 ## 7) Escalation
+
 Post in #ops-incidents with a one-liner (time, symbol, issue).
 
 Ping Solutions Architect → IT PM → CTO (if needed).

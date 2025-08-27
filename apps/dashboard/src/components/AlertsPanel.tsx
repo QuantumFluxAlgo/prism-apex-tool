@@ -10,7 +10,10 @@ export function AlertsPanel() {
 
   useEffect(() => {
     const interval = setInterval(() => {
-      api.get('/alerts').then(setAlerts).catch(() => {});
+      api
+        .get('/alerts')
+        .then(setAlerts)
+        .catch(() => {});
     }, 5000);
     return () => clearInterval(interval);
   }, []);
