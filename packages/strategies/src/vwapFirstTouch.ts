@@ -1,6 +1,7 @@
 import { Candle, Suggestion } from './types.js';
-import { VwapSeries, AtrSeries, VwapFtParams, TickSpec } from './inputs.js';
+import { VwapSeries, AtrSeries, TickSpec } from './inputs.js';
 import { clamp, last, rMultiple, ticksBetween, pricePlusTicks } from './util.js';
+import { VwapFirstTouchParams, loadStrategyConfig, mergeParams } from './config/strategy-config.js';
 
 /**
  * Assumes bars are RTH-filtered for the session and vwapSeries resets at session open.
@@ -12,20 +13,12 @@ export function vwapFirstTouch(
   vwapSeries: VwapSeries,
   atrSeries: AtrSeries,
   tick: TickSpec,
-  params: Partial<VwapFtParams> = {},
+  params: Partial<VwapFirstTouchParams> = {},
   nowIso?: string,
 ): Suggestion[] {
-  const P: VwapFtParams = {
-    slopeLookback: 10,
-    minDistanceATR: 0.5,
-    stopKATR: 0.25,
-    rrDefault: 2.0,
-    rrMin: 1.5,
-    rrMax: 3.0,
-    minStopTicks: 2,
-    ...params,
-  };
-  if (bars.length < Math.max(20, P.slopeLookback + 1)) return [];
+  const defaults = loadStrategyConfig<VwapFirstTouchParams>('vwap-first-touch');
+  const P = mergeParams(defaults, params);
+  if (bars.length < Math.max(P.warmupBars, P.slopeLookback + 1)) return [];
 
   const n = bars.length;
   const vnow = vwapSeries[n - 1];
@@ -47,23 +40,23 @@ export function vwapFirstTouch(
     lastClose >= vnow && slope >= 0 ? 'BUY' : lastClose <= vnow && slope <= 0 ? 'SELL' : null;
   if (!side || !hadDistance) return [];
 
-  // "Clean touch": price touches VWAP w/o blasting through > 0.25*ATR
+  // "Clean touch": price touches VWAP w/o blasting through > maxTouchKATR * ATR
   const touchBar = last(bars);
   const overshoot = Math.abs(touchBar.close - vnow);
-  if (overshoot > 0.25 * atrNow) return [];
+  if (overshoot > P.maxTouchKATR * atrNow) return [];
 
-  // Entry at VWAP (one tick inside)
+  // Entry at VWAP (one tick inside by default)
   const entry =
     side === 'BUY'
-      ? pricePlusTicks(vnow, +1, tick.tickSize)
-      : pricePlusTicks(vnow, -1, tick.tickSize);
-  const stopBuf = Math.max(P.minStopTicks ?? 2, Math.round((P.stopKATR * atrNow) / tick.tickSize));
+      ? pricePlusTicks(vnow, +P.entryOffsetTicks, tick.tickSize)
+      : pricePlusTicks(vnow, -P.entryOffsetTicks, tick.tickSize);
+  const stopBuf = Math.max(P.minStopTicks, Math.round((P.stopKATR * atrNow) / tick.tickSize));
   const stop =
     side === 'BUY'
       ? pricePlusTicks(vnow, -stopBuf, tick.tickSize)
       : pricePlusTicks(vnow, +stopBuf, tick.tickSize);
   const riskTicks = ticksBetween(entry, stop, tick.tickSize);
-  if (riskTicks < (P.minStopTicks ?? 2)) return [];
+  if (riskTicks < P.minStopTicks) return [];
 
   const rr = clamp(P.rrDefault, P.rrMin, P.rrMax);
   const target = side === 'BUY' ? entry + rr * (entry - stop) : entry - rr * (stop - entry);

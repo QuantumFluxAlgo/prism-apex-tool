@@ -1,6 +1,11 @@
 import { Candle, Suggestion } from './types.js';
-import { AtrSeries, OsbParams, TickSpec } from './inputs.js';
+import { AtrSeries, TickSpec } from './inputs.js';
 import { clamp, pricePlusTicks, rMultiple, ticksBetween } from './util.js';
+import {
+  OpeningSessionBreakoutParams,
+  loadStrategyConfig,
+  mergeParams,
+} from './config/strategy-config.js';
 
 /** Opening Swing Breakout over first N minutes of RTH */
 export function openingSwingBreakout(
@@ -8,22 +13,12 @@ export function openingSwingBreakout(
   barsRth: Candle[],
   atrSeries: AtrSeries,
   tick: TickSpec,
-  params: Partial<OsbParams> = {},
+  params: Partial<OpeningSessionBreakoutParams> = {},
   nowIso?: string,
 ): Suggestion[] {
-  const P: OsbParams = {
-    orMinutes: 5,
-    requireCloseBreak: true,
-    rrDefault: 2.0,
-    rrMin: 1.5,
-    rrMax: 5.0,
-    widthMinTicks: 6,
-    widthMinATR: 0.3,
-    widthMaxATR: 3.0,
-    minRiskTicks: 3,
-    ...params,
-  };
-  if (barsRth.length < P.orMinutes + 2) return [];
+  const defaults = loadStrategyConfig<OpeningSessionBreakoutParams>('opening-session-breakout');
+  const P = mergeParams(defaults, params);
+  if (barsRth.length < P.orMinutes + P.postOrBars) return [];
 
   const orBars = barsRth.slice(0, P.orMinutes);
   const rest = barsRth.slice(P.orMinutes);
@@ -49,17 +44,17 @@ export function openingSwingBreakout(
   const side = brokeUp ? 'BUY' : 'SELL';
   const entry =
     side === 'BUY'
-      ? pricePlusTicks(orHigh, +1, tick.tickSize)
-      : pricePlusTicks(orLow, -1, tick.tickSize);
+      ? pricePlusTicks(orHigh, +P.entryOffsetTicks, tick.tickSize)
+      : pricePlusTicks(orLow, -P.entryOffsetTicks, tick.tickSize);
   let stop =
     side === 'BUY'
-      ? pricePlusTicks(orLow, -1, tick.tickSize)
-      : pricePlusTicks(orHigh, +1, tick.tickSize);
+      ? pricePlusTicks(orLow, -P.stopOffsetTicks, tick.tickSize)
+      : pricePlusTicks(orHigh, +P.stopOffsetTicks, tick.tickSize);
 
   let riskTicks = ticksBetween(entry, stop, tick.tickSize);
-  if (riskTicks < (P.minRiskTicks ?? 3)) {
+  if (riskTicks < P.minRiskTicks) {
     // enforce minimum risk ticks to avoid micro boxes
-    const adj = (P.minRiskTicks ?? 3) - riskTicks;
+    const adj = P.minRiskTicks - riskTicks;
     stop =
       side === 'BUY'
         ? pricePlusTicks(stop, -adj, tick.tickSize)
