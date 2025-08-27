@@ -1,0 +1,37 @@
+{
+  "name": "@prism-apex-tool/metrics",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "main": "dist/consistency.cjs",
+  "module": "dist/consistency.js",
+  "types": "dist/consistency.d.ts",
+  "exports": {
+    "./consistency": {
+      "require": "./dist/consistency.cjs",
+      "import": "./dist/consistency.js",
+      "types": "./dist/consistency.d.ts"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsup src/consistency.ts --format esm,cjs --dts",
+    "lint": "eslint . --ext .ts",
+    "test": "vitest run",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "format": "prettier -w .",
+    "format:check": "prettier -c ."
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "eslint": "^9.10.0",
+    "@eslint/js": "^9.10.0",
+    "typescript-eslint": "^8.7.0",
+    "prettier": "^3.3.3",
+    "typescript": "^5.9.2",
+    "vitest": "^2.0.0",
+    "tsup": "^8.0.1"
+  }
+}

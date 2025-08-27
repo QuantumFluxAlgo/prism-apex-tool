@@ -7,7 +7,7 @@
     "packages/*"
   ],
   "scripts": {
-    "pretest": "pnpm -r --filter @prism-apex-tool/rules-apex --filter @prism-apex-tool/accounts --filter @prism-apex-tool/config --filter @prism-apex-tool/signals --filter @prism-apex-tool/analytics --filter @prism-apex-tool/audit --filter @prism-apex-tool/reporting --filter @prism-apex-tool/consistency --filter @prism-apex-tool/indicators --filter @prism-apex-tool/strategies --filter @prism-apex-tool/clients-tradovate build",
+    "pretest": "pnpm -r --filter @prism-apex-tool/rules-apex --filter @prism-apex-tool/accounts --filter @prism-apex-tool/config --filter @prism-apex-tool/signals --filter @prism-apex-tool/analytics --filter @prism-apex-tool/audit --filter @prism-apex-tool/reporting --filter @prism-apex-tool/consistency --filter @prism-apex-tool/metrics --filter @prism-apex-tool/indicators --filter @prism-apex-tool/strategies --filter @prism-apex-tool/clients-tradovate build",
     "test:api": "vitest run --config apps/api/vitest.config.ts --reporter=verbose --passWithNoTests",
     "dev": "tsx watch src/index.ts",
     "build": "tsc -p tsconfig.build.json",
@@ -53,6 +53,7 @@
     "@prism-apex-tool/runtime": "workspace:*",
     "fastify": "5.5.0",
     "fastify-plugin": "5.0.1",
-    "zod": "^3.23.8"
+    "zod": "^3.23.8",
+    "@prism-apex-tool/metrics": "workspace:*"
   }
 }
