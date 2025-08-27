@@ -44,6 +44,14 @@ describe('vwapFirstTouch', () => {
     expect(res).toHaveLength(0);
   });
 
+  it('applies override for minDistanceATR', () => {
+    const { bars, vwap, atr } = buildBars({});
+    const res = vwapFirstTouch('ESZ4', bars, vwap, atr, tick, {
+      minDistanceATR: 2,
+    });
+    expect(res).toHaveLength(0);
+  });
+
   it('requires positive slope for long trades', () => {
     const { bars, vwap, atr } = buildBars({ slope: -0.1, overshoot: 0.01 });
     const res = vwapFirstTouch('ESZ4', bars, vwap, atr, tick);
