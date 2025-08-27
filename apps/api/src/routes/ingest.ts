@@ -37,15 +37,22 @@ export const ingestRoutes: FastifyPluginAsync = async (app) => {
       meta: p.data.meta,
     };
 
-    const guard = await applyGuardWithSizing({ ...ticket, qty: p.data.qty, accountId: p.data.accountId });
+    const guard = await applyGuardWithSizing({
+      ...ticket,
+      qty: p.data.qty,
+      accountId: p.data.accountId,
+    });
     if (!guard.accepted) {
-      app.log.warn({
-        reasons: guard.reasons,
-        rr: guard.rr,
-        route: '/ingest/alert',
-        symbol: p.data.symbol,
-        side: p.data.side,
-      }, 'guard reject');
+      app.log.warn(
+        {
+          reasons: guard.reasons,
+          rr: guard.rr,
+          route: '/ingest/alert',
+          symbol: p.data.symbol,
+          side: p.data.side,
+        },
+        'guard reject',
+      );
       return reply
         .code(422)
         .send({ accepted: false, rr: guard.rr, reasons: guard.reasons, sizing: guard.sizing });

@@ -4,7 +4,9 @@ import path from 'path';
 const SRC = path.resolve('src');
 const DIST = path.resolve('dist');
 
-function ensureDir(p) { fs.mkdirSync(p, { recursive: true }); }
+function ensureDir(p) {
+  fs.mkdirSync(p, { recursive: true });
+}
 
 function walk(dir, root) {
   for (const name of fs.readdirSync(dir)) {

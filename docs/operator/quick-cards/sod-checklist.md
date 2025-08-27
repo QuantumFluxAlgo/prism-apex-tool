@@ -3,6 +3,7 @@
 **Goal:** Be fully ready when the session opens.
 
 ## Checklist
+
 - [ ] Open **Prism Apex Dashboard** → `/health` shows **OK**.
 - [ ] Check **/jobs/status** → no stale errors; `ocoMissing=false`.
 - [ ] Confirm **notifications** work (Slack/Email visible).
@@ -11,6 +12,7 @@
 - [ ] Read any **operator notes** in Slack.
 
 ## Do / Don’t
+
 **Do:** Keep Slack open.  
 **Don’t:** Enter trades before session open.
 

@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it } from 'vitest';
 import { checkCompliance, AccountState } from '../../src/services/rules/engine';
 
 describe('Compliance Rule Engine', () => {
@@ -146,7 +146,7 @@ describe('Compliance Rule Engine', () => {
       const state = { ...fundedBase, dayPnL };
       const res = checkCompliance(state);
       expect(res.ok).toBe(false);
-      expect(res.violations.some(v => v.id === 'funded-windfall')).toBe(true);
+      expect(res.violations.some((v) => v.id === 'funded-windfall')).toBe(true);
     });
   });
 

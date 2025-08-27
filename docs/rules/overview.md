@@ -32,15 +32,15 @@ and funded accounts, applying appropriate controls for each stage.
 
 ## Operator Checklist
 
-| Rule / Control | Enforced Automatically | Notes |
-| -------------- | --------------------- | ----- |
-| Trailing Drawdown | ✅ | Both phases emit violations when breached |
-| Minimum Trading Days | ✅ | Evaluation module tracks unique trading days |
-| End-of-Day Flat | ✅ | Evaluation module raises events for open positions |
-| Consistency Rule | ✅ | Funded module validates 30% limit |
-| Stop-Loss Presence | ✅ | Funded module requires stop-loss on each trade |
-| Payout Caps | ✅ | Funded module computes capped payouts |
-| Discretionary Conduct | ⚠️ | Operators monitor for reckless behaviour |
+| Rule / Control        | Enforced Automatically | Notes                                              |
+| --------------------- | ---------------------- | -------------------------------------------------- |
+| Trailing Drawdown     | ✅                     | Both phases emit violations when breached          |
+| Minimum Trading Days  | ✅                     | Evaluation module tracks unique trading days       |
+| End-of-Day Flat       | ✅                     | Evaluation module raises events for open positions |
+| Consistency Rule      | ✅                     | Funded module validates 30% limit                  |
+| Stop-Loss Presence    | ✅                     | Funded module requires stop-loss on each trade     |
+| Payout Caps           | ✅                     | Funded module computes capped payouts              |
+| Discretionary Conduct | ⚠️                     | Operators monitor for reckless behaviour           |
 
 ## Technical References
 

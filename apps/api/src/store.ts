@@ -48,7 +48,11 @@ type DataShape = {
   };
 };
 
-function ensureDir() { try { fs.mkdirSync(DATA_DIR, { recursive: true }); } catch {} }
+function ensureDir() {
+  try {
+    fs.mkdirSync(DATA_DIR, { recursive: true });
+  } catch {}
+}
 
 function load(): DataShape {
   ensureDir();
@@ -87,12 +91,21 @@ function hash(s: string): string {
   return crypto.createHash('sha256').update(s).digest('hex');
 }
 
-function dedupKey(a: { id: string; ts: string; symbol?: string | undefined; side?: string | undefined; price?: number | undefined; human: string }): string {
+function dedupKey(a: {
+  id: string;
+  ts: string;
+  symbol?: string | undefined;
+  side?: string | undefined;
+  price?: number | undefined;
+  human: string;
+}): string {
   return hash([a.id, a.ts, a.symbol || '', a.side || '', a.price ?? '', a.human].join('|'));
 }
 
 export const store = {
-  getRiskContext() { return state.riskContext; },
+  getRiskContext() {
+    return state.riskContext;
+  },
   setRiskContext(patch: Partial<DataShape['riskContext']>) {
     state.riskContext = { ...state.riskContext, ...patch };
     save(state);
@@ -102,9 +115,9 @@ export const store = {
     save(state);
   },
   buildDailyReport(date: string) {
-    const dayTickets = state.tickets.filter(t => t.when.startsWith(date));
+    const dayTickets = state.tickets.filter((t) => t.when.startsWith(date));
     const trades = dayTickets.length;
-    const blocked = dayTickets.filter(t => t.reasons.length > 0).length;
+    const blocked = dayTickets.filter((t) => t.reasons.length > 0).length;
     return {
       date,
       trades,
@@ -129,13 +142,20 @@ export const store = {
       human: parsed.human.text,
       raw: parsed.alert.raw,
       acknowledged: false,
-      hash: dedupKey({ id: a.id, ts: a.ts, symbol: a.symbol, side: a.side, price: a.price, human: parsed.human.text }),
+      hash: dedupKey({
+        id: a.id,
+        ts: a.ts,
+        symbol: a.symbol,
+        side: a.side,
+        price: a.price,
+        human: parsed.human.text,
+      }),
     };
 
     // Deduplicate within 24h (same hash)
     const dayAgo = Date.now() - 24 * 60 * 60 * 1000;
-    state.alerts = state.alerts.filter(x => new Date(x.ts).getTime() >= dayAgo);
-    if (state.alerts.some(x => x.hash === entry.hash)) {
+    state.alerts = state.alerts.filter((x) => new Date(x.ts).getTime() >= dayAgo);
+    if (state.alerts.some((x) => x.hash === entry.hash)) {
       return entry; // ignore duplicate; do not store again
     }
 
@@ -145,11 +165,11 @@ export const store = {
   },
 
   peekAlerts(limit: number): AlertEntry[] {
-    return state.alerts.filter(a => !a.acknowledged).slice(0, limit);
+    return state.alerts.filter((a) => !a.acknowledged).slice(0, limit);
   },
 
   ackAlert(id: string): boolean {
-    const a = state.alerts.find(x => x.id === id && !x.acknowledged);
+    const a = state.alerts.find((x) => x.id === id && !x.acknowledged);
     if (!a) return false;
     a.acknowledged = true;
     save(state);
@@ -157,11 +177,11 @@ export const store = {
   },
 
   getTicketsForDate(date: string) {
-    return state.tickets.filter(t => t.when.startsWith(date));
+    return state.tickets.filter((t) => t.when.startsWith(date));
   },
 
   getAlertsForDate(date: string) {
-    return state.alerts.filter(a => a.ts.startsWith(date));
+    return state.alerts.filter((a) => a.ts.startsWith(date));
   },
 
   getRecipients(): Recipients {
@@ -171,7 +191,8 @@ export const store = {
   addRecipients(update: Partial<Recipients> & { tags?: string[] }) {
     const r = state.recipients;
     if (update.email?.length) r.email = Array.from(new Set([...(r.email || []), ...update.email]));
-    if (update.telegram?.length) r.telegram = Array.from(new Set([...(r.telegram || []), ...update.telegram]));
+    if (update.telegram?.length)
+      r.telegram = Array.from(new Set([...(r.telegram || []), ...update.telegram]));
     if (update.slack?.length) r.slack = Array.from(new Set([...(r.slack || []), ...update.slack]));
     if (update.sms?.length) r.sms = Array.from(new Set([...(r.sms || []), ...update.sms]));
     if (update.tags?.length) r.tags = Array.from(new Set([...(r.tags || []), ...update.tags]));
@@ -180,9 +201,20 @@ export const store = {
     return r;
   },
 
-  setOcoMissing(v: boolean) { state.flags = { ...(state.flags || {}), ocoMissing: v }; save(state); },
-  getOcoMissing(): boolean { return Boolean(state.flags?.ocoMissing); },
+  setOcoMissing(v: boolean) {
+    state.flags = { ...(state.flags || {}), ocoMissing: v };
+    save(state);
+  },
+  getOcoMissing(): boolean {
+    return Boolean(state.flags?.ocoMissing);
+  },
 
-  setTodayProfit(p: number) { state.riskContext.todayProfit = p; save(state); },
-  setPeriodProfit(p: number) { state.riskContext.periodProfit = p; save(state); },
+  setTodayProfit(p: number) {
+    state.riskContext.todayProfit = p;
+    save(state);
+  },
+  setPeriodProfit(p: number) {
+    state.riskContext.periodProfit = p;
+    save(state);
+  },
 };

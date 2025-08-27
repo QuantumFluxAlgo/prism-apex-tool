@@ -9,7 +9,7 @@ export function trueRange(curr: Bar1m, prevClose?: number): number {
 export function atrWilderSeries(
   bars: Bar1m[],
   period = 14,
-  opts?: { asTicks?: boolean; tickSpec?: TickSpec }
+  opts?: { asTicks?: boolean; tickSpec?: TickSpec },
 ): (number | null)[] {
   const out: (number | null)[] = [];
   let prevClose: number | undefined;
@@ -51,6 +51,6 @@ function convert(value: number, opts?: { asTicks?: boolean; tickSpec?: TickSpec 
 
 function isValidBar(bar: Bar1m): boolean {
   return [bar.open, bar.high, bar.low, bar.close, bar.volume].every(
-    (n) => typeof n === 'number' && Number.isFinite(n)
+    (n) => typeof n === 'number' && Number.isFinite(n),
   );
 }

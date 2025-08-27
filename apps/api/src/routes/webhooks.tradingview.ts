@@ -56,12 +56,19 @@ export async function tradingviewWebhookRoutes(app: FastifyInstance) {
       meta: p.meta,
     };
 
-    const decision = await applyGuardWithSizing({ ...ticket, accountId: (p as any).accountId, qty: (p as any).qty });
+    const decision = await applyGuardWithSizing({
+      ...ticket,
+      accountId: (p as any).accountId,
+      qty: (p as any).qty,
+    });
     if (!decision.accepted) {
       req.log.warn({ rr: decision.rr, reasons: decision.reasons }, 'tradingview webhook rejected');
-      return reply
-        .code(422)
-        .send({ accepted: false, rr: decision.rr, reasons: decision.reasons, sizing: decision.sizing });
+      return reply.code(422).send({
+        accepted: false,
+        rr: decision.rr,
+        reasons: decision.reasons,
+        sizing: decision.sizing,
+      });
     }
 
     let queuedId: string | undefined;

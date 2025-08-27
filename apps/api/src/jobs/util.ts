@@ -7,7 +7,7 @@ export async function notify(
   _level: 'INFO' | 'WARN' | 'CRITICAL',
   _subject: string,
   _text: string,
-  _tags: string[] = []
+  _tags: string[] = [],
 ) {
   return { ok: false, reason: 'notify-disabled' };
 }

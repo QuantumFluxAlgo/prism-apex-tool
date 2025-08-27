@@ -58,7 +58,15 @@ describe('Ingest API', () => {
     const res = await app.inject({
       method: 'POST',
       url: '/ingest/alert',
-      payload: { symbol: 'ES', side: 'BUY', entry: 100, stop: 99, target: 103, qty: 2, accountId: 'A1' },
+      payload: {
+        symbol: 'ES',
+        side: 'BUY',
+        entry: 100,
+        stop: 99,
+        target: 103,
+        qty: 2,
+        accountId: 'A1',
+      },
     });
     expect(res.statusCode).toBe(422);
     expect(res.json().reasons).toContain('qty exceeds allowed');
@@ -71,7 +79,15 @@ describe('Ingest API', () => {
     const res = await app.inject({
       method: 'POST',
       url: '/ingest/alert',
-      payload: { symbol: 'ES', side: 'BUY', entry: 100, stop: 99, target: 103, qty: 1, accountId: 'A1' },
+      payload: {
+        symbol: 'ES',
+        side: 'BUY',
+        entry: 100,
+        stop: 99,
+        target: 103,
+        qty: 1,
+        accountId: 'A1',
+      },
     });
     expect(res.statusCode).toBe(200);
     expect(res.json().sizing).toMatchObject({ allowed: 1, halfSizeSuggested: true });

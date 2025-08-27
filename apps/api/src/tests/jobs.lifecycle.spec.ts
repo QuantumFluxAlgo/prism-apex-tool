@@ -9,7 +9,11 @@ describe('job lifecycle', () => {
     const jm = getJobManagerForTests();
     jm.resetForTests();
     resetJobsForTests();
-    jm.register('FEED', async () => {}, async () => {});
+    jm.register(
+      'FEED',
+      async () => {},
+      async () => {},
+    );
 
     let res = await app.inject({ method: 'GET', url: '/ready' });
     expect(res.json().jobs.marketFeed.running).toBe(false);

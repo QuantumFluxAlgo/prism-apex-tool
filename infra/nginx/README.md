@@ -1,11 +1,13 @@
 # Prism Apex — Nginx + Let’s Encrypt TLS
 
 ## Prereqs
+
 - DNS A/AAAA records for **YOUR_DOMAIN** pointing to this VM’s public IP
 - Prism Apex API running via systemd on `127.0.0.1:8000`
 - Ubuntu 22.04+ (or Debian-based)
 
 ## One-time setup
+
 ```bash
 # From repo root, as sudo-capable user
 export DOMAIN=YOUR_DOMAIN
@@ -23,6 +25,7 @@ bash infra/nginx/setup-nginx-certbot.sh
 - Adds rate limiting and security headers
 
 ### Verify
+
 ```bash
 curl -I https://$DOMAIN/health
 # Should return HTTP/2 200

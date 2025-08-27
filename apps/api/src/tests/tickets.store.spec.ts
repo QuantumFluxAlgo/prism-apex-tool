@@ -55,7 +55,10 @@ describe('ticket store', () => {
     const body1 = page1.json();
     expect(body1.tickets).toHaveLength(2);
     expect(body1.nextCursor).toBe(2);
-    const page2 = await app.inject({ method: 'GET', url: '/tickets?date=2024-01-01&cursor=2&limit=2' });
+    const page2 = await app.inject({
+      method: 'GET',
+      url: '/tickets?date=2024-01-01&cursor=2&limit=2',
+    });
     const body2 = page2.json();
     expect(body2.tickets).toHaveLength(1);
     expect(body2.nextCursor).toBeNull();
@@ -84,6 +87,4 @@ describe('ticket store', () => {
     expect(row).toContain('VWAP_FT');
     await app.close();
   });
-
 });
-

@@ -199,7 +199,7 @@ registry.registerPath({
 // ---- TradingView Webhook ----
 const TvRaw = z.object({
   symbol: z.string(),
-  side: z.enum(['BUY','SELL']),
+  side: z.enum(['BUY', 'SELL']),
   entry: z.number(),
   stop: z.number(),
   target: z.number(),
@@ -216,8 +216,30 @@ registry.registerPath({
     body: { content: { 'application/json': { schema: TradingViewWebhookPayload } } },
   },
   responses: {
-    202: { description: 'Accepted', content: { 'application/json': { schema: z.object({ accepted: z.literal(true), rr: z.number(), queuedId: z.string().optional() }) } } },
-    422: { description: 'Rejected', content: { 'application/json': { schema: z.object({ accepted: z.literal(false), rr: z.number().optional(), reasons: z.array(z.string()) }) } } },
+    202: {
+      description: 'Accepted',
+      content: {
+        'application/json': {
+          schema: z.object({
+            accepted: z.literal(true),
+            rr: z.number(),
+            queuedId: z.string().optional(),
+          }),
+        },
+      },
+    },
+    422: {
+      description: 'Rejected',
+      content: {
+        'application/json': {
+          schema: z.object({
+            accepted: z.literal(false),
+            rr: z.number().optional(),
+            reasons: z.array(z.string()),
+          }),
+        },
+      },
+    },
   },
 });
 
