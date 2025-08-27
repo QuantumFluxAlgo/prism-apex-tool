@@ -6,8 +6,10 @@
   "scripts": {
     "lint": "eslint .",
     "format": "prettier --write .",
-    "typecheck": "pnpm -r --parallel --if-present typecheck",
-    "test": "pnpm -r --parallel --if-present test",
+    "format:check": "prettier --check .",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run --reporter=verbose",
+    "test:watch": "vitest",
     "coverage": "pnpm --filter ./apps/api test -- --coverage",
     "build": "tsc -p tsconfig.base.json",
     "prepare": "husky install",
