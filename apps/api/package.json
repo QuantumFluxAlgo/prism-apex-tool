@@ -1,5 +1,5 @@
 {
-  "name": "prism-apex-tool",
+  "name": "@prism-apex-tool/api",
   "private": true,
   "packageManager": "pnpm@9.15.9",
   "workspaces": [
@@ -50,6 +50,7 @@
     "@prism-apex-tool/rules-apex": "workspace:*",
     "@prism-apex-tool/signals": "workspace:*",
     "@prism-apex-tool/strategies": "workspace:*",
+    "@prism-apex-tool/runtime": "workspace:*",
     "fastify": "5.5.0",
     "fastify-plugin": "5.0.1",
     "zod": "^3.23.8"

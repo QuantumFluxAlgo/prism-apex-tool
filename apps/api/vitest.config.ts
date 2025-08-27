@@ -44,6 +44,10 @@ export default defineConfig({
         __dirname,
         '../../packages/rules-apex/src/index.ts',
       ),
+      '@prism-apex-tool/runtime': path.resolve(
+        __dirname,
+        '../../packages/runtime/src/index.ts',
+      ),
     },
   },
   server: {
