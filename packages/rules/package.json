@@ -1,0 +1,33 @@
+{
+  "name": "@prism-apex-tool/rules",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "test": "vitest --run",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "lint": "eslint . --ext .ts",
+    "format": "prettier -w .",
+    "format:check": "prettier -c ."
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "eslint": "^9.10.0",
+    "@eslint/js": "^9.10.0",
+    "typescript-eslint": "^8.7.0",
+    "prettier": "^3.3.3"
+  }
+}

@@ -1,0 +1,6 @@
+{
+  "minRR": 1.5,
+  "maxRR": 5,
+  "eodFlatCutoffET": "16:59:00",
+  "halfSizeUntilBufferCleared": true
+}
