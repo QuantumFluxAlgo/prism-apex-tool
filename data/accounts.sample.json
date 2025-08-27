@@ -11,9 +11,7 @@
           "symbols": ["ES", "NQ"],
           "balance": 50500,
           "trailingDD": 2500,
-          "openPositions": [
-            {"symbol": "ES", "side": "FLAT", "size": 0, "avgPx": 0}
-          ]
+          "openPositions": [{ "symbol": "ES", "side": "FLAT", "size": 0, "avgPx": 0 }]
         },
         {
           "id": "Apex-ES-50k-2",
@@ -22,9 +20,7 @@
           "symbols": ["ES", "NQ"],
           "balance": 49800,
           "trailingDD": 2500,
-          "openPositions": [
-            {"symbol": "ES", "side": "FLAT", "size": 0, "avgPx": 0}
-          ]
+          "openPositions": [{ "symbol": "ES", "side": "FLAT", "size": 0, "avgPx": 0 }]
         }
       ]
     },
@@ -40,9 +36,7 @@
           "balance": 52000,
           "trailingDD": 2500,
           "bufferAchieved": false,
-          "openPositions": [
-            {"symbol": "ES", "side": "FLAT", "size": 0, "avgPx": 0}
-          ]
+          "openPositions": [{ "symbol": "ES", "side": "FLAT", "size": 0, "avgPx": 0 }]
         }
       ]
     }

@@ -79,7 +79,9 @@ interface Config {
 let cfg: Config = { VWAP_FT: {}, OSB: {} };
 
 function loadConfig(): Config {
-  const defaultPath = process.env.STRATEGIES_CONFIG_PATH || path.join(process.cwd(), 'configs/strategies.default.json');
+  const defaultPath =
+    process.env.STRATEGIES_CONFIG_PATH ||
+    path.join(process.cwd(), 'configs/strategies.default.json');
   const p = fs.existsSync(defaultPath)
     ? defaultPath
     : path.join(process.cwd(), '../../configs/strategies.default.json');
@@ -139,7 +141,7 @@ function onBar(bar: BarMessage): void {
   if (cs.vwapSeries.length > MAX_BARS) cs.vwapSeries.shift();
 
   // Ensure downstream consumers always get number[]
-  cs.atrSeries = atrWilderSeries(cs.bars as any, 14).map(v => v ?? 0);
+  cs.atrSeries = atrWilderSeries(cs.bars as any, 14).map((v) => v ?? 0);
   const atr = cs.atrSeries[cs.atrSeries.length - 1] ?? 0;
   const atrTicks = atr / tick.tickSize;
 
@@ -160,7 +162,14 @@ function onBar(bar: BarMessage): void {
         cs.debounce.vwapActive = false;
       }
     } else {
-      const res = vwapFirstTouch(bar.symbol, cs.bars as any, cs.vwapSeries, cs.atrSeries, tick, cfg.VWAP_FT);
+      const res = vwapFirstTouch(
+        bar.symbol,
+        cs.bars as any,
+        cs.vwapSeries,
+        cs.atrSeries,
+        tick,
+        cfg.VWAP_FT,
+      );
       if (res.length > 0) {
         cs.debounce.vwapActive = true;
         emitSuggestion({
@@ -209,4 +218,3 @@ export function registerStrategiesJob(): void {
 
 export const startStrategies = start;
 export const stopStrategies = stop;
-

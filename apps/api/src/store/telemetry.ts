@@ -59,7 +59,9 @@ export function applySnapshot(s: TelemetrySnapshot) {
     for (const d of s.dailyPnL) {
       map.set(d.date, d.net);
     }
-    const entries = Array.from(map.entries()).sort(([a], [b]) => a.localeCompare(b)).slice(-30);
+    const entries = Array.from(map.entries())
+      .sort(([a], [b]) => a.localeCompare(b))
+      .slice(-30);
     telemetryStore.dailyPnl.set(accountId, new Map(entries));
   }
 }

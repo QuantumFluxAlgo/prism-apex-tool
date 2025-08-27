@@ -14,7 +14,9 @@
       "@prism-apex-tool/accounts": ["packages/accounts/src"],
       "@prism-apex-tool/config": ["packages/config/src"],
       "@prism-apex-tool/clients-tradovate": ["packages/clients-tradovate/src"],
-      "@prism-apex-tool/clients-tradovate/telemetry": ["packages/clients-tradovate/src/telemetry.ts"],
+      "@prism-apex-tool/clients-tradovate/telemetry": [
+        "packages/clients-tradovate/src/telemetry.ts"
+      ],
       "@prism-apex-tool/indicators": ["packages/indicators/src"],
       "@prism-apex-tool/strategies": ["packages/strategies/src"],
       "@prism-apex-tool/consistency": ["packages/consistency/src"]

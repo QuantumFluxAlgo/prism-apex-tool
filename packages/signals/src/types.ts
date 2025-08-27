@@ -1,5 +1,12 @@
 export type Side = 'BUY' | 'SELL';
-export type Bar = { ts: string; open: number; high: number; low: number; close: number; volume?: number };
+export type Bar = {
+  ts: string;
+  open: number;
+  high: number;
+  low: number;
+  close: number;
+  volume?: number;
+};
 export type Suggestion = {
   id: string;
   symbol: string;

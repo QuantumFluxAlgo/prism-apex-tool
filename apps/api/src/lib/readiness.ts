@@ -2,7 +2,13 @@ import type { FastifyInstance } from 'fastify';
 import { getConfig } from '../config/env.js';
 import { jobManager } from './jobManager.js';
 
-export const DEFAULT_JOBS = ['marketFeed', 'strategies', 'ticketizer', 'telemetry', 'eodFlat'] as const;
+export const DEFAULT_JOBS = [
+  'marketFeed',
+  'strategies',
+  'ticketizer',
+  'telemetry',
+  'eodFlat',
+] as const;
 export type JobKey = (typeof DEFAULT_JOBS)[number];
 export type JobStatus = {
   registered: boolean;
@@ -10,7 +16,12 @@ export type JobStatus = {
   lastBeatTs: string | null;
   beatCount: number;
 };
-const defaultStatus: JobStatus = { registered: false, running: false, lastBeatTs: null, beatCount: 0 };
+const defaultStatus: JobStatus = {
+  registered: false,
+  running: false,
+  lastBeatTs: null,
+  beatCount: 0,
+};
 
 const JOB_NAME_MAP: Record<JobKey, string> = {
   marketFeed: 'FEED',

@@ -66,4 +66,3 @@ describe('ticketizer API', () => {
     await app.close();
   });
 });
-

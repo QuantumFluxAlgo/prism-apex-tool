@@ -64,10 +64,7 @@ export async function applyGuardWithSizing(
         allowed: s.contracts,
         halfSizeSuggested: s.halfSizeSuggested,
       };
-      if (
-        typeof account.lastSuggestedContracts === 'number' &&
-        typeof input.qty === 'number'
-      ) {
+      if (typeof account.lastSuggestedContracts === 'number' && typeof input.qty === 'number') {
         sizing.jumpExceeded =
           input.qty > account.lastSuggestedContracts * cfg.sizing.sizeJumpMultiplier;
       }

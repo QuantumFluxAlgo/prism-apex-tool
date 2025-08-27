@@ -8,7 +8,7 @@ export const accountStateSchema = z.object({
     z.object({
       contracts: z.number(),
       stopLoss: z.number().optional(),
-    })
+    }),
   ),
   tradeHistory: z.array(
     z.object({
@@ -16,7 +16,7 @@ export const accountStateSchema = z.object({
       stopLoss: z.number().optional(),
       day: z.string(),
       profit: z.number(),
-    })
+    }),
   ),
   dayPnL: z.record(z.number()),
   trailingDrawdown: z.number(),

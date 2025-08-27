@@ -18,7 +18,9 @@
       "require": "./dist/telemetry.cjs"
     }
   },
-  "files": ["dist"],
+  "files": [
+    "dist"
+  ],
   "scripts": {
     "build": "tsup src/index.ts src/telemetry.ts --format esm,cjs --dts",
     "test": "vitest --run --passWithNoTests"
