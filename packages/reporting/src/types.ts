@@ -1,5 +1,5 @@
 export type DailyTicketRow = {
-  when: string;            // ISO
+  when: string; // ISO
   symbol: string;
   side: 'BUY' | 'SELL';
   qty: number;
@@ -30,7 +30,7 @@ export type DailyJson = {
     id: string;
     ts: string;
     symbol?: string;
-    side?: 'BUY'|'SELL';
+    side?: 'BUY' | 'SELL';
     price?: number;
     reason?: string;
     acknowledged: boolean;

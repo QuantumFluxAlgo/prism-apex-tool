@@ -3,20 +3,22 @@ import { test, expect } from '@playwright/test';
 test.describe('EOD block modal & copy disabling', () => {
   test.beforeEach(async ({ page }) => {
     // Intercept /rules/status to simulate EOD T-5 block
-    await page.route('**/rules/status', route => {
+    await page.route('**/rules/status', (route) => {
       route.fulfill({
         status: 200,
         contentType: 'application/json',
         body: JSON.stringify({
-          stopRequired: true, rrLeq5: true, ddHeadroom: true,
+          stopRequired: true,
+          rrLeq5: true,
+          ddHeadroom: true,
           halfSize: 'Half until buffer; maxContracts=4',
-          consistencyPolicy: { warnAt: 0.25, failAt: 0.30 },
-          eodState: 'BLOCK_NEW'
-        })
+          consistencyPolicy: { warnAt: 0.25, failAt: 0.3 },
+          eodState: 'BLOCK_NEW',
+        }),
       });
     });
     // Intercept /signals/preview to return a valid ticket but with block=false
-    await page.route('**/signals/preview', route => {
+    await page.route('**/signals/preview', (route) => {
       route.fulfill({
         status: 200,
         contentType: 'application/json',
@@ -27,20 +29,50 @@ test.describe('EOD block modal & copy disabling', () => {
             contract: 'ESU5',
             side: 'BUY',
             qty: 1,
-            order: { type: 'LIMIT', entry: 5000, stop: 4995, targets: [5005], tif: 'DAY', oco: true },
+            order: {
+              type: 'LIMIT',
+              entry: 5000,
+              stop: 4995,
+              targets: [5005],
+              tif: 'DAY',
+              oco: true,
+            },
             risk: { perTradeUsd: 5, rMultipleByTarget: [1] },
-            apex: { stopRequired: true, rrLeq5: true, ddHeadroom: true, halfSize: true, eodReady: true, consistency30: 'OK' }
+            apex: {
+              stopRequired: true,
+              rrLeq5: true,
+              ddHeadroom: true,
+              halfSize: true,
+              eodReady: true,
+              consistency30: 'OK',
+            },
           },
           block: false,
-          reasons: []
-        })
+          reasons: [],
+        }),
       });
     });
 
     // Other endpoints
-    await page.route('**/account', r => r.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ netLiq: 52000, cash: 52000, margin: 0, dayPnlRealized: 0, dayPnlUnrealized: 0 }) }));
-    await page.route('**/positions', r => r.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify([]) }));
-    await page.route('**/orders', r => r.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify([]) }));
+    await page.route('**/account', (r) =>
+      r.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          netLiq: 52000,
+          cash: 52000,
+          margin: 0,
+          dayPnlRealized: 0,
+          dayPnlUnrealized: 0,
+        }),
+      }),
+    );
+    await page.route('**/positions', (r) =>
+      r.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify([]) }),
+    );
+    await page.route('**/orders', (r) =>
+      r.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify([]) }),
+    );
   });
 
   test('EOD modal appears and copy is blocked until “I am flat” checked', async ({ page }) => {
@@ -64,4 +96,3 @@ test.describe('EOD block modal & copy disabling', () => {
     await expect(page.getByText('EOD Block Window')).toHaveCount(0);
   });
 });
-

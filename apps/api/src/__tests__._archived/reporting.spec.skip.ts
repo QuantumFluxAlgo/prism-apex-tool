@@ -48,7 +48,14 @@ describe.skip('Reporting exports', () => {
         qty: 1,
         order: { type: 'LIMIT', entry: 5000, stop: 4995, targets: [5005], tif: 'DAY', oco: true },
         risk: { perTradeUsd: 5, rMultipleByTarget: [1] },
-        apex: { stopRequired: true, rrLeq5: true, ddHeadroom: true, halfSize: true, eodReady: true, consistency30: 'OK' },
+        apex: {
+          stopRequired: true,
+          rrLeq5: true,
+          ddHeadroom: true,
+          halfSize: true,
+          eodReady: true,
+          consistency30: 'OK',
+        },
       },
       reasons: [],
     });
@@ -62,26 +69,75 @@ describe.skip('Reporting exports', () => {
         contract: 'NQU5',
         side: 'SELL',
         qty: 1,
-        order: { type: 'LIMIT', entry: 18000, stop: 18010, targets: [17990], tif: 'DAY', oco: true },
+        order: {
+          type: 'LIMIT',
+          entry: 18000,
+          stop: 18010,
+          targets: [17990],
+          tif: 'DAY',
+          oco: true,
+        },
         risk: { perTradeUsd: 10, rMultipleByTarget: [1] },
-        apex: { stopRequired: true, rrLeq5: true, ddHeadroom: true, halfSize: true, eodReady: true, consistency30: 'OK' },
+        apex: {
+          stopRequired: true,
+          rrLeq5: true,
+          ddHeadroom: true,
+          halfSize: true,
+          eodReady: true,
+          consistency30: 'OK',
+        },
       },
       reasons: ['Half-size until buffer'],
     });
 
     (store as any).enqueueAlert({
-      alert: { id: 'a1', ts: `${date}T14:00:00.000Z`, symbol: 'ES', side: 'BUY', price: 5000, reason: 'VWAP', raw: {} },
+      alert: {
+        id: 'a1',
+        ts: `${date}T14:00:00.000Z`,
+        symbol: 'ES',
+        side: 'BUY',
+        price: 5000,
+        reason: 'VWAP',
+        raw: {},
+      },
       human: { id: 'a1', text: 'ES BUY @ 5000 — VWAP' },
     });
 
     // Mock Tradovate account
     mockFetchSequence([
       { status: 200, json: { accessToken: 'a', refreshToken: 'r', expiresIn: 3600 } },
-      { status: 200, json: { netLiq: 52050, cash: 52050, margin: 0, dayPnlRealized: 150.25, dayPnlUnrealized: -25.5 } }, // account for daily.json
+      {
+        status: 200,
+        json: {
+          netLiq: 52050,
+          cash: 52050,
+          margin: 0,
+          dayPnlRealized: 150.25,
+          dayPnlUnrealized: -25.5,
+        },
+      }, // account for daily.json
       { status: 200, json: { accessToken: 'a', refreshToken: 'r', expiresIn: 3600 } },
-      { status: 200, json: { netLiq: 52050, cash: 52050, margin: 0, dayPnlRealized: 150.25, dayPnlUnrealized: -25.5 } }, // account for daily.csv
+      {
+        status: 200,
+        json: {
+          netLiq: 52050,
+          cash: 52050,
+          margin: 0,
+          dayPnlRealized: 150.25,
+          dayPnlUnrealized: -25.5,
+        },
+      }, // account for daily.csv
       { status: 200, json: { accessToken: 'a', refreshToken: 'r', expiresIn: 3600 } },
-      { status: 200, json: { netLiq: 52050, cash: 52050, margin: 0, dayPnlRealized: 150.25, dayPnlUnrealized: -25.5 } }, // account for email
+      {
+        status: 200,
+        json: {
+          netLiq: 52050,
+          cash: 52050,
+          margin: 0,
+          dayPnlRealized: 150.25,
+          dayPnlUnrealized: -25.5,
+        },
+      }, // account for email
     ]);
 
     const app = buildServer();
@@ -102,7 +158,7 @@ describe.skip('Reporting exports', () => {
     const e = await app.inject({
       method: 'POST',
       url: '/report/email-daily',
-      payload: { date, to: 'ops@example.com' }
+      payload: { date, to: 'ops@example.com' },
     });
     expect(e.statusCode).toBe(200);
     const er = e.json();

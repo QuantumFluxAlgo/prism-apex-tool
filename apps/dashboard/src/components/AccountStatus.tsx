@@ -11,7 +11,10 @@ export function AccountStatus() {
   const [status, setStatus] = useState<Status | null>(null);
 
   useEffect(() => {
-    api.get('/account').then(setStatus).catch(() => {});
+    api
+      .get('/account')
+      .then(setStatus)
+      .catch(() => {});
   }, []);
 
   if (!status) return <div className="bg-white p-4 shadow rounded">Loading...</div>;

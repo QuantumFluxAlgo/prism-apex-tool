@@ -59,4 +59,3 @@ describe('ticketizer guards', () => {
     expect(t.reasons).toContain('preclose-suppression');
   });
 });
-

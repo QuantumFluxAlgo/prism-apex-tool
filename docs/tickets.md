@@ -4,8 +4,8 @@
 
 ```ts
 export type Ticket = {
-  symbol: string;            // full contract, e.g., ESZ4
-  side: "BUY" | "SELL";
+  symbol: string; // full contract, e.g., ESZ4
+  side: 'BUY' | 'SELL';
   entry: number;
   stop: number;
   target: number;
@@ -13,7 +13,7 @@ export type Ticket = {
   accountId: string;
   timestampUtc: string;
   meta: {
-    strategy: "VWAP_FT" | "OSB";
+    strategy: 'VWAP_FT' | 'OSB';
     rr: number;
     guardrails: string[];
     sizingHint?: string;
@@ -79,7 +79,20 @@ Example JSON response:
 
 ```json
 {
-  "tickets": [{ "symbol": "ESZ4", "side": "BUY", "entry": 100, "stop": 99, "target": 102, "qty": 1, "accountId": "A1", "timestampUtc": "2024-01-01T14:30:00Z", "meta": { "strategy": "VWAP_FT", "rr": 2, "guardrails": [] }, "accepted": true }],
+  "tickets": [
+    {
+      "symbol": "ESZ4",
+      "side": "BUY",
+      "entry": 100,
+      "stop": 99,
+      "target": 102,
+      "qty": 1,
+      "accountId": "A1",
+      "timestampUtc": "2024-01-01T14:30:00Z",
+      "meta": { "strategy": "VWAP_FT", "rr": 2, "guardrails": [] },
+      "accepted": true
+    }
+  ],
   "nextCursor": null
 }
 ```
@@ -94,4 +107,3 @@ ESZ4,BUY,100,99,102,1,A1,2024-01-01T14:30:00Z,VWAP_FT,2,true,
 ## Dashboard
 
 The dashboard listens for the `ticket` bus event to refresh views when new tickets arrive.
-

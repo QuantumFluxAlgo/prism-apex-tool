@@ -6,16 +6,38 @@ function toText(t: Ticket) {
 }
 function toCSV(t: Ticket) {
   return [
-    ['symbol','contract','side','qty','entry','stop','targets','tif'].join(','),
-    [t.symbol,t.contract,t.side,t.qty,t.order.entry,t.order.stop,t.order.targets.join('|'),t.order.tif].join(',')
+    ['symbol', 'contract', 'side', 'qty', 'entry', 'stop', 'targets', 'tif'].join(','),
+    [
+      t.symbol,
+      t.contract,
+      t.side,
+      t.qty,
+      t.order.entry,
+      t.order.stop,
+      t.order.targets.join('|'),
+      t.order.tif,
+    ].join(','),
   ].join('\n');
 }
 
-export function NextTicket({ ticket, block, reasons }: { ticket: Ticket | null; block: boolean; reasons: string[] }) {
+export function NextTicket({
+  ticket,
+  block,
+  reasons,
+}: {
+  ticket: Ticket | null;
+  block: boolean;
+  reasons: string[];
+}) {
   const disabled = block || !ticket;
-  const copy = (fmt: 'text'|'csv'|'json') => {
+  const copy = (fmt: 'text' | 'csv' | 'json') => {
     if (!ticket) return;
-    const payload = fmt === 'text' ? toText(ticket) : fmt === 'csv' ? toCSV(ticket) : JSON.stringify(ticket, null, 2);
+    const payload =
+      fmt === 'text'
+        ? toText(ticket)
+        : fmt === 'csv'
+          ? toCSV(ticket)
+          : JSON.stringify(ticket, null, 2);
     navigator.clipboard.writeText(payload);
   };
 
@@ -26,19 +48,37 @@ export function NextTicket({ ticket, block, reasons }: { ticket: Ticket | null; 
         {disabled ? (
           <span className="text-sm px-2 py-1 rounded bg-red-100 text-red-700">Copy blocked</span>
         ) : (
-          <span className="text-sm px-2 py-1 rounded bg-green-100 text-green-700">Copy enabled</span>
+          <span className="text-sm px-2 py-1 rounded bg-green-100 text-green-700">
+            Copy enabled
+          </span>
         )}
       </div>
       <div className="mt-3 text-sm">
         {ticket ? (
           <>
-            <div className="font-mono text-sm">
-              {toText(ticket)}
-            </div>
+            <div className="font-mono text-sm">{toText(ticket)}</div>
             <div className="mt-3 flex gap-2">
-              <button className="px-3 py-1 rounded bg-gray-200 hover:bg-gray-300 disabled:opacity-50" onClick={() => copy('text')} disabled={disabled}>Copy Text</button>
-              <button className="px-3 py-1 rounded bg-gray-200 hover:bg-gray-300 disabled:opacity-50" onClick={() => copy('csv')} disabled={disabled}>Copy CSV</button>
-              <button className="px-3 py-1 rounded bg-gray-200 hover:bg-gray-300 disabled:opacity-50" onClick={() => copy('json')} disabled={disabled}>Copy JSON</button>
+              <button
+                className="px-3 py-1 rounded bg-gray-200 hover:bg-gray-300 disabled:opacity-50"
+                onClick={() => copy('text')}
+                disabled={disabled}
+              >
+                Copy Text
+              </button>
+              <button
+                className="px-3 py-1 rounded bg-gray-200 hover:bg-gray-300 disabled:opacity-50"
+                onClick={() => copy('csv')}
+                disabled={disabled}
+              >
+                Copy CSV
+              </button>
+              <button
+                className="px-3 py-1 rounded bg-gray-200 hover:bg-gray-300 disabled:opacity-50"
+                onClick={() => copy('json')}
+                disabled={disabled}
+              >
+                Copy JSON
+              </button>
             </div>
           </>
         ) : (
@@ -49,11 +89,14 @@ export function NextTicket({ ticket, block, reasons }: { ticket: Ticket | null; 
         <div className="mt-3 text-sm">
           <div className="font-semibold mb-1">Reasons:</div>
           <ul className="list-disc ml-6">
-            {reasons.map((r, i) => <li key={i} className="text-red-700">{r}</li>)}
+            {reasons.map((r, i) => (
+              <li key={i} className="text-red-700">
+                {r}
+              </li>
+            ))}
           </ul>
         </div>
       )}
     </div>
   );
 }
-

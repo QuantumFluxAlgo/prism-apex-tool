@@ -1,10 +1,12 @@
 # Docker & Compose (Prod-like)
 
 ## Prereqs
+
 - Docker Desktop or Docker Engine
 - (Optional) copy `.env.docker.example` to `.env` and fill in values
 
 ## One command up
+
 ```bash
 docker compose up --build
 ```

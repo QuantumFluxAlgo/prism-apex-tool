@@ -29,10 +29,13 @@ describe('vwap', () => {
   });
 
   it('matches golden values', () => {
-    const series = vwapSessionSeries(bars, (() => {
-      let idx = 0;
-      return () => (idx++ < 25 ? 's1' : 's2');
-    })());
+    const series = vwapSessionSeries(
+      bars,
+      (() => {
+        let idx = 0;
+        return () => (idx++ < 25 ? 's1' : 's2');
+      })(),
+    );
     const indices = [4, 9, 24, 25, 30];
     const expected = [103.834203, 108.387974, 119.598033, 129.14, 129.880562];
     indices.forEach((i, j) => {
@@ -41,10 +44,13 @@ describe('vwap', () => {
   });
 
   it('incremental matches batch', () => {
-    const series = vwapSessionSeries(bars, (() => {
-      let idx = 0;
-      return () => (idx++ < 25 ? 's1' : 's2');
-    })());
+    const series = vwapSessionSeries(
+      bars,
+      (() => {
+        let idx = 0;
+        return () => (idx++ < 25 ? 's1' : 's2');
+      })(),
+    );
     const inc: number[] = [];
     let state = initialVwapState();
     let idx = 0;
