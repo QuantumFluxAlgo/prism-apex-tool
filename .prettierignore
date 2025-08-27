@@ -1,4 +1,7 @@
-archive/
-**/dist/
-**/build/
-coverage/
+node_modules
+dist
+build
+coverage
+*.log
+.env
+.env.*
