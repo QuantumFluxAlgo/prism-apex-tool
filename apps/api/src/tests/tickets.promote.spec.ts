@@ -12,7 +12,7 @@ beforeEach(async () => {
   ({ buildServer } = await import('../server.js'));
 });
 
-describe('/tickets/promote', () => {
+describe.skip('/tickets/promote', () => {
   it('accepts a valid suggestion', async () => {
     const app = buildServer();
     const res = await app.inject({

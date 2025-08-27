@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 let buildServer: typeof import('../server.js').buildServer;
+let setJobBeat: typeof import('@prism-apex-tool/runtime').setJobBeat;
 
 beforeEach(async () => {
   vi.resetModules(); // avoid double registration/state
@@ -9,22 +10,18 @@ beforeEach(async () => {
   process.env.RATE_LIMIT_MAX_BUCKETS = '10';
   delete process.env.BEARER_TOKEN; // ensure auth is OFF for these tests
   ({ buildServer } = await import('../server.js'));
+  ({ setJobBeat } = await import('@prism-apex-tool/runtime'));
 });
 
 describe('Hardening', () => {
   it('returns readiness', async () => {
     const app = buildServer();
+    setJobBeat('marketFeed');
     const res = await app.inject({ method: 'GET', url: '/ready' });
     expect(res.statusCode).toBe(200);
     const body = res.json();
-    expect(body.ok).toBe(true);
-    expect(body.jobs).toBeDefined();
-    for (const k of ['marketFeed', 'strategies', 'ticketizer', 'telemetry', 'eodFlat']) {
-      expect(body.jobs[k]).toMatchObject({
-        registered: expect.any(Boolean),
-        running: expect.any(Boolean),
-      });
-    }
+    expect(body.jobs.marketFeed.healthy).toBe(true);
+    expect(body.overall).toBe('healthy');
     await app.close();
   });
 
