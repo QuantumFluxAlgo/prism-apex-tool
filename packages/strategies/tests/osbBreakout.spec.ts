@@ -111,4 +111,32 @@ describe('openingSwingBreakout', () => {
     const s = res[0];
     expect(ticksBetween(s.entry, s.stop, tick.tickSize)).toBe(3);
   });
+
+  it('returns empty when ATR series has no data', () => {
+    const bars: Candle[] = [];
+    const atr: number[] = [];
+    for (let i = 0; i < 7; i++) {
+      if (i < 5) {
+        bars.push({ ts: `2024-01-01T00:0${i}:00.000Z`, open: 100, high: 101, low: 99, close: 100 });
+      } else if (i === 5) {
+        bars.push({
+          ts: `2024-01-01T00:0${i}:00.000Z`,
+          open: 100.5,
+          high: 101,
+          low: 100,
+          close: 100.5,
+        });
+      } else {
+        bars.push({
+          ts: `2024-01-01T00:0${i}:00.000Z`,
+          open: 101,
+          high: 101.5,
+          low: 100.5,
+          close: 101.25,
+        });
+      }
+    }
+    const res = openingSwingBreakout('ESZ4', bars, atr, tick);
+    expect(res).toHaveLength(0);
+  });
 });
