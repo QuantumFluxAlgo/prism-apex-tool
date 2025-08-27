@@ -11,13 +11,7 @@ import {
 import Fastify from 'fastify';
 
 vi.mock('@prism-apex-tool/strategies', () => ({
-  vwapFirstTouch: (
-    symbol: string,
-    bars: any[],
-    _vwap: number[],
-    _atr: number[],
-    _tick: any,
-  ) => {
+  vwapFirstTouch: (symbol: string, bars: any[], _vwap: number[], _atr: number[], _tick: any) => {
     const last = bars[bars.length - 1];
     if (last.close === 101) {
       return [
@@ -47,12 +41,7 @@ vi.mock('@prism-apex-tool/strategies', () => ({
     }
     return [];
   },
-  openingSwingBreakout: (
-    symbol: string,
-    bars: any[],
-    _atr: number[],
-    _tick: any,
-  ) => {
+  openingSwingBreakout: (symbol: string, bars: any[], _atr: number[], _tick: any) => {
     const last = bars[bars.length - 1];
     if (last.close === 102) {
       return [
@@ -125,18 +114,8 @@ describe('strategy orchestrator', () => {
     for (const b of a) publish('bars.1m', b);
     const b = loadCsv('session_b.csv');
     for (const bar of b) publish('bars.1m', bar);
-    expect(suggestions.map((s) => s.meta.strategy)).toEqual([
-      'OSB',
-      'VWAP_FT',
-      'OSB',
-      'VWAP_FT',
-    ]);
-    expect(suggestions.map((s) => s.side)).toEqual([
-      'BUY',
-      'BUY',
-      'SELL',
-      'SELL',
-    ]);
+    expect(suggestions.map((s) => s.meta.strategy)).toEqual(['OSB', 'VWAP_FT', 'OSB', 'VWAP_FT']);
+    expect(suggestions.map((s) => s.side)).toEqual(['BUY', 'BUY', 'SELL', 'SELL']);
   });
 
   it('ready route exposes heartbeat', async () => {
@@ -148,4 +127,3 @@ describe('strategy orchestrator', () => {
     await app.close();
   });
 });
-

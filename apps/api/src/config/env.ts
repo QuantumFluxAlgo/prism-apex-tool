@@ -69,11 +69,11 @@ const envSchema = z.object({
   CONSISTENCY_ENFORCE: z.coerce.boolean().default(false),
   MIN_PROFIT_TICKS: z.preprocess(
     (v) => (v === '' || v === undefined ? undefined : Number(v)),
-    z.number().gt(0).optional()
+    z.number().gt(0).optional(),
   ),
   MIN_EXPECTED_PROFIT_USD: z.preprocess(
     (v) => (v === '' || v === undefined ? undefined : Number(v)),
-    z.number().gt(0).optional()
+    z.number().gt(0).optional(),
   ),
   TRADINGVIEW_WEBHOOK_SECRET: z.string().min(1).optional(),
 });

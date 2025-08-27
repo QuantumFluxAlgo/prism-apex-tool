@@ -1,11 +1,13 @@
 # Prism Apex — Ubuntu VM (systemd) Runbook
 
 ## Prereqs
+
 - Ubuntu 22.04+ VM (you chose VM deployment)
 - Open outbound internet for npm install; inbound TCP :8000 (or reverse proxy)
 - Node LTS and pnpm (installer script handles it)
 
 ## One‑time setup (as a sudo‑capable user)
+
 ```bash
 # 1) Clone the repo into prism user's home (or adjust REPO_DIR for your layout)
 sudo useradd -m -s /bin/bash prism || true
@@ -30,6 +32,7 @@ curl -s http://127.0.0.1:8000/health | jq .
 ```
 
 Logs & lifecycle
+
 ```
 journalctl -u prism-apex -f
 sudo systemctl restart prism-apex
@@ -50,9 +53,10 @@ Leave service on HOST=0.0.0.0 PORT=8000
 
 Terminate TLS in Nginx/Traefik and forward to 127.0.0.1:8000
 
-If proxy adds X-Forwarded-*, set TRUST_PROXY=true in /home/prism/prism-apex.env
+If proxy adds X-Forwarded-\*, set TRUST_PROXY=true in /home/prism/prism-apex.env
 
 Firewall quickstart (optional)
+
 ```
 sudo ufw allow 22/tcp
 sudo ufw allow 8000/tcp   # or only allow from proxy host
@@ -68,6 +72,7 @@ GET /ready → readiness check
 GET /version → version metadata (if enabled)
 
 Updates / redeploy
+
 ```
 sudo -u prism -H bash -lc 'cd ~/prism-apex-tool && git fetch && git checkout Test && git pull'
 sudo -u prism -H bash -lc 'pnpm install && pnpm --filter ./apps/api build'

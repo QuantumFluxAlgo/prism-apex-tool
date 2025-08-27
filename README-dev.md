@@ -1,6 +1,7 @@
 # Local Development & Production Parity
 
 ## Dev (two terminals)
+
 - **API** (Terminal A):
   ```bash
   ./dev_api.sh
@@ -36,18 +37,21 @@ API: http://localhost:8000
 Data persists in api-data volume at /var/lib/prism-apex-tool inside the API container.
 
 Rebuild only one service
+
 ```bash
 docker compose build api && docker compose up -d api
 docker compose build dashboard && docker compose up -d dashboard
 ```
 
 Logs
+
 ```bash
 docker compose logs -f api
 docker compose logs -f dashboard
 ```
 
 Tear down
+
 ```bash
 docker compose down -v
 ```
@@ -56,7 +60,7 @@ Notes / Gotchas
 
 API build uses tsup (CJS output). Dev continues to use tsx.
 
-Dashboard is static and served by nginx. nginx.conf should proxy /api/* to http://api:8000 (container hostname).
+Dashboard is static and served by nginx. nginx.conf should proxy /api/\* to http://api:8000 (container hostname).
 
 If you change ports, also update:
 

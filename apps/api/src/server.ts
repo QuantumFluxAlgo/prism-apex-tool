@@ -75,7 +75,7 @@ export function buildServer() {
         },
       },
     },
-    'config summary'
+    'config summary',
   );
   app.register(cors, { origin: true });
   // Public paths (no auth/rate-limit)

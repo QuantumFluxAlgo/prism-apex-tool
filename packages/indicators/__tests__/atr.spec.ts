@@ -20,7 +20,19 @@ describe('atr wilder', () => {
   it('matches expected series', () => {
     const series = atrWilderSeries(bars, 14);
     const expected: (number | null)[] = [
-      null, null, null, null, null, null, null, null, null, null, null, null, null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
+      null,
       2.0614285714285705,
       2.042040816326529,
       2.0240379008746348,
@@ -48,7 +60,7 @@ describe('atr wilder', () => {
     const manual = Math.max(
       bars[1].high - bars[1].low,
       Math.abs(bars[1].high - bars[0].close),
-      Math.abs(bars[1].low - bars[0].close)
+      Math.abs(bars[1].low - bars[0].close),
     );
     expect(tr).toBeCloseTo(manual, 10);
   });

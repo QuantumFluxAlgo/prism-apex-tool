@@ -6,6 +6,7 @@
 ---
 
 ## Summary
+
 - MVP Scope: Manual execution via Tradovate; strategies ORB + VWAP.
 - Risk Controls: Apex guardrails enforced (EOD flat, daily loss proximity, consistency, stop-loss, ≤5R).
 - Monitoring: Email/Telegram/Slack alerts + background jobs.
@@ -14,12 +15,14 @@
 ---
 
 ## Readiness Checklist Status
-- Go-Live Master Checklist: **All items ✅**  
+
+- Go-Live Master Checklist: **All items ✅**
 - UAT Scenarios: **All PASS** (see `docs/release/uat-scenarios.md`)
 
 ---
 
 ## Residual Risks (Known & Accepted)
+
 - Manual order entry risk (operator error) — mitigated by ticket UI + OCO + alerts.
 - Bar-level backtest approximation — conservative execution assumptions.
 - Single-host deployment — acceptable for MVP; DR plan documented.
@@ -27,14 +30,15 @@
 ---
 
 ## Approval
+
 **CTO (Sean):**  
-Name: _______________________  Signature: _______________________  Date: __________
+Name: \***\*\*\*\*\***\_\_\_\***\*\*\*\*\*** Signature: \***\*\*\*\*\***\_\_\_\***\*\*\*\*\*** Date: \***\*\_\_\*\***
 
 **CEO (Craig):**  
-Name: _______________________  Signature: _______________________  Date: __________
+Name: \***\*\*\*\*\***\_\_\_\***\*\*\*\*\*** Signature: \***\*\*\*\*\***\_\_\_\***\*\*\*\*\*** Date: \***\*\_\_\*\***
 
 **Solutions Architect:**  
-Name: _______________________  Signature: _______________________  Date: __________
+Name: \***\*\*\*\*\***\_\_\_\***\*\*\*\*\*** Signature: \***\*\*\*\*\***\_\_\_\***\*\*\*\*\*** Date: \***\*\_\_\*\***
 
 **IT PM:**  
-Name: _______________________  Signature: _______________________  Date: __________
+Name: \***\*\*\*\*\***\_\_\_\***\*\*\*\*\*** Signature: \***\*\*\*\*\***\_\_\_\***\*\*\*\*\*** Date: \***\*\_\_\*\***

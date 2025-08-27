@@ -8,7 +8,13 @@ type Position = {
   unrealizedPnL?: number;
 };
 
-export function PositionsTable({ positions, updatedAt }: { positions: Position[]; updatedAt: string }) {
+export function PositionsTable({
+  positions,
+  updatedAt,
+}: {
+  positions: Position[];
+  updatedAt: string;
+}) {
   return (
     <table className="min-w-full bg-white">
       <thead>
@@ -25,7 +31,9 @@ export function PositionsTable({ positions, updatedAt }: { positions: Position[]
       <tbody>
         {positions.map((p) => (
           <tr key={p.contract} className="text-center">
-            <td className="border px-2 py-1">{updatedAt ? new Date(updatedAt).toLocaleTimeString() : '—'}</td>
+            <td className="border px-2 py-1">
+              {updatedAt ? new Date(updatedAt).toLocaleTimeString() : '—'}
+            </td>
             <td className="border px-2 py-1">{p.contract}</td>
             <td className="border px-2 py-1">{p.qty >= 0 ? 'LONG' : 'SHORT'}</td>
             <td className="border px-2 py-1">{p.qty}</td>

@@ -37,13 +37,16 @@ export async function signalRoutes(app: FastifyInstance) {
         })
       : { accepted: false, reasons: ['no suggestion'] };
     if (!guard.accepted) {
-      app.log.warn({
-        reasons: guard.reasons,
-        rr: guard.rr,
-        route: '/signals/osb',
-        symbol: first?.symbol,
-        side: first?.side,
-      }, 'guard reject');
+      app.log.warn(
+        {
+          reasons: guard.reasons,
+          rr: guard.rr,
+          route: '/signals/osb',
+          symbol: first?.symbol,
+          side: first?.side,
+        },
+        'guard reject',
+      );
     }
     return { ...out, guard };
   });
@@ -63,13 +66,16 @@ export async function signalRoutes(app: FastifyInstance) {
         })
       : { accepted: false, reasons: ['no suggestion'] };
     if (!guard.accepted) {
-      app.log.warn({
-        reasons: guard.reasons,
-        rr: guard.rr,
-        route: '/signals/vwap-first-touch',
-        symbol: first?.symbol,
-        side: first?.side,
-      }, 'guard reject');
+      app.log.warn(
+        {
+          reasons: guard.reasons,
+          rr: guard.rr,
+          route: '/signals/vwap-first-touch',
+          symbol: first?.symbol,
+          side: first?.side,
+        },
+        'guard reject',
+      );
     }
     return { ...out, guard };
   });

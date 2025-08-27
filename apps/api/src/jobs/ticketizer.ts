@@ -74,10 +74,7 @@ export function guardSuggestion(
       timestampUtc: s.timestampUtc,
       meta: {
         strategy: s.meta.strategy,
-        rr:
-          s.stop != null
-            ? computeRR({ entry: s.entry, stop: s.stop, target: s.target })
-            : 0,
+        rr: s.stop != null ? computeRR({ entry: s.entry, stop: s.stop, target: s.target }) : 0,
         guardrails: ['phase:' + ctx.phase, 'preclose-suppressed'],
         consistencyNotes: buildConsistencyNotes(ctx.phase),
       },
@@ -128,11 +125,12 @@ export function guardSuggestion(
     timestampUtc: s.timestampUtc,
     meta: {
       strategy: s.meta.strategy,
-      rr:
-        s.stop != null
-          ? computeRR({ entry: s.entry, stop: s.stop, target: s.target })
-          : 0,
-      guardrails: ['phase:' + ctx.phase, ctx.bufferCleared ? 'buffer' : 'half-size-until-buffer', 'anti-windfall'],
+      rr: s.stop != null ? computeRR({ entry: s.entry, stop: s.stop, target: s.target }) : 0,
+      guardrails: [
+        'phase:' + ctx.phase,
+        ctx.bufferCleared ? 'buffer' : 'half-size-until-buffer',
+        'anti-windfall',
+      ],
       consistencyNotes: buildConsistencyNotes(ctx.phase),
     },
     accepted: false,
@@ -178,4 +176,3 @@ async function stop(): Promise<void> {
 export function registerTicketizerJob(): void {
   jobManager.register('TICKETIZER', start, stop);
 }
-

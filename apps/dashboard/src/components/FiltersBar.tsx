@@ -32,18 +32,12 @@ export function FiltersBar({
   onExport,
 }: Props) {
   const toggleSymbol = (sym: string) => {
-    setSymbols(
-      symbols.includes(sym)
-        ? symbols.filter((s) => s !== sym)
-        : [...symbols, sym]
-    );
+    setSymbols(symbols.includes(sym) ? symbols.filter((s) => s !== sym) : [...symbols, sym]);
   };
 
   const toggleStrategy = (str: string) => {
     setStrategies(
-      strategies.includes(str)
-        ? strategies.filter((s) => s !== str)
-        : [...strategies, str]
+      strategies.includes(str) ? strategies.filter((s) => s !== str) : [...strategies, str],
     );
   };
 
@@ -59,11 +53,7 @@ export function FiltersBar({
       <div className="flex items-center gap-2">
         {SYMBOLS.map((s) => (
           <label key={s} className="flex items-center gap-1">
-            <input
-              type="checkbox"
-              checked={symbols.includes(s)}
-              onChange={() => toggleSymbol(s)}
-            />
+            <input type="checkbox" checked={symbols.includes(s)} onChange={() => toggleSymbol(s)} />
             {s}
           </label>
         ))}
@@ -111,11 +101,7 @@ export function FiltersBar({
         <option value="0">Off</option>
       </select>
 
-      <button
-        type="button"
-        onClick={onExport}
-        className="px-2 py-1 bg-gray-200 rounded"
-      >
+      <button type="button" onClick={onExport} className="px-2 py-1 bg-gray-200 rounded">
         Export CSV
       </button>
     </div>

@@ -41,8 +41,7 @@ const handlers: Record<string, Handler> = {
   'min-days': (state, rule) => Object.keys(state.dayPnL).length < rule.parameters.minDays,
   flat: (state, _rule) => !!state.isEndOfDay && state.openPositions.length > 0,
   resets: (state, rule) => (state.resetsUsed ?? 0) > rule.parameters.maxResets,
-  'order-check': (state, _rule) =>
-    state.openPositions.some(p => p.stopLoss === undefined),
+  'order-check': (state, _rule) => state.openPositions.some((p) => p.stopLoss === undefined),
   distribution: (state, rule) => {
     const total = Object.values(state.dayPnL).reduce((a, b) => a + b, 0);
     const maxDay = Math.max(0, ...Object.values(state.dayPnL));
@@ -63,13 +62,12 @@ const handlers: Record<string, Handler> = {
   cadence: (state, rule) => {
     const history = state.payoutHistory ?? [];
     if (history.length < 2) return false;
-      const last = new Date(history[history.length - 1]!).getTime();
-      const prev = new Date(history[history.length - 2]!).getTime();
+    const last = new Date(history[history.length - 1]!).getTime();
+    const prev = new Date(history[history.length - 2]!).getTime();
     const diffDays = Math.abs(last - prev) / (1000 * 60 * 60 * 24);
     return diffDays < rule.parameters.minDays;
   },
-  'profit-split': (state, rule) =>
-    (state.payoutRequestPct ?? 0) > rule.parameters.payoutPct,
+  'profit-split': (state, rule) => (state.payoutRequestPct ?? 0) > rule.parameters.payoutPct,
 };
 
 export function checkCompliance(state: AccountState): { ok: boolean; violations: RuleViolation[] } {

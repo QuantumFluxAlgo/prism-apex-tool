@@ -5,6 +5,7 @@ Overview of supported platforms: Rithmic/NinjaTrader, Tradovate/TradingView, Wea
 TODO: Add operator guidance chart.
 
 ## Links
+
 - [Rithmic + NinjaTrader](./rithmic.md)
 - [Tradovate + TradingView](./tradovate.md)
 - [WealthCharts](./wealthcharts.md)
