@@ -1,4 +1,5 @@
 import { describe, it, expect, beforeEach } from 'vitest';
+import { setJobBeat } from '@prism-apex-tool/runtime';
 import { buildServer } from '../server.js';
 import { _clear, saveTicket } from '../store/tickets.js';
 import { withJobs } from './helpers/jobs';
@@ -61,8 +62,9 @@ describe('ticketizer API', () => {
     expect(csv.headers['content-type']).toContain('text/csv');
     expect(csv.body.split('\n')[0]).toContain('meta.strategy');
 
+    setJobBeat('ticketizer');
     const ready = await app.inject({ method: 'GET', url: '/ready' });
-    expect(ready.json().jobs.ticketizer.running).toBe(true);
+    expect(ready.json().jobs.ticketizer.healthy).toBe(true);
     await app.close();
   });
 });

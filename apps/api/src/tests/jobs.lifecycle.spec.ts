@@ -1,31 +1,18 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import { buildServer } from '../server.js';
-import { startJobs, stopAllJobs, resetJobsForTests } from '../jobs/jobManager';
-import { getJobManagerForTests } from '../jobs/jobManagerTestHooks';
+import { setJobBeat } from '@prism-apex-tool/runtime';
 
 describe('job lifecycle', () => {
   it('reflects job running state in /ready', async () => {
+    vi.useFakeTimers();
     const app = buildServer();
-    const jm = getJobManagerForTests();
-    jm.resetForTests();
-    resetJobsForTests();
-    jm.register(
-      'FEED',
-      async () => {},
-      async () => {},
-    );
-
+    setJobBeat('marketFeed');
     let res = await app.inject({ method: 'GET', url: '/ready' });
-    expect(res.json().jobs.marketFeed.running).toBe(false);
-
-    await startJobs();
+    expect(res.json().jobs.marketFeed.healthy).toBe(true);
+    await vi.advanceTimersByTimeAsync(11_000);
     res = await app.inject({ method: 'GET', url: '/ready' });
-    expect(res.json().jobs.marketFeed.running).toBe(true);
-
-    await stopAllJobs();
-    res = await app.inject({ method: 'GET', url: '/ready' });
-    expect(res.json().jobs.marketFeed.running).toBe(false);
-
+    expect(res.json().jobs.marketFeed.healthy).toBe(false);
+    vi.useRealTimers();
     await app.close();
   });
 });
