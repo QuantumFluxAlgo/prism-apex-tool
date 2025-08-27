@@ -28,7 +28,9 @@ async function start(): Promise<void> {
   client = await factory();
   marketFeed.connected = true;
   const symbols = (process.env.FEED_SYMBOLS || '').split(',').filter(Boolean);
-  const intervals = (process.env.BAR_INTERVALS || '1m').split(',').filter(Boolean) as Array<'1m' | '5m'>;
+  const intervals = (process.env.BAR_INTERVALS || '1m').split(',').filter(Boolean) as Array<
+    '1m' | '5m'
+  >;
   let subs = 0;
   for (const s of symbols) {
     for (const int of intervals) {

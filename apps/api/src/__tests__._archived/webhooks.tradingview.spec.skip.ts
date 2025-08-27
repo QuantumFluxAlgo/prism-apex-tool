@@ -78,7 +78,15 @@ describe('TradingView webhook', () => {
       method: 'POST',
       url: '/webhooks/tradingview',
       headers: { 'x-webhook-secret': 's' },
-      payload: { symbol: 'ES', side: 'BUY', entry: 100, stop: 99, target: 103, accountId: 'A1', qty: 2 },
+      payload: {
+        symbol: 'ES',
+        side: 'BUY',
+        entry: 100,
+        stop: 99,
+        target: 103,
+        accountId: 'A1',
+        qty: 2,
+      },
     });
     expect(res.statusCode).toBe(422);
     expect(res.json().reasons).toContain('qty exceeds allowed');
@@ -95,7 +103,15 @@ describe('TradingView webhook', () => {
       method: 'POST',
       url: '/webhooks/tradingview',
       headers: { 'x-webhook-secret': 's' },
-      payload: { symbol: 'ES', side: 'BUY', entry: 100, stop: 99, target: 103, accountId: 'A1', qty: 1 },
+      payload: {
+        symbol: 'ES',
+        side: 'BUY',
+        entry: 100,
+        stop: 99,
+        target: 103,
+        accountId: 'A1',
+        qty: 1,
+      },
     });
     expect(res.statusCode).toBe(202);
     expect(res.json().sizing).toMatchObject({ allowed: 1, halfSizeSuggested: true });

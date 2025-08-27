@@ -36,9 +36,7 @@ describe('swings', () => {
     const lows = [0, 1, 1, 0.5];
     const bars: Bar1m[] = highs.map((h, i) => makeBar(base + i * 60000, h, lows[i]));
     const pts = swings(bars, 1);
-    expect(pts).toEqual([
-      { index: 1, ts: bars[1].ts, price: bars[1].high, type: 'PH' },
-    ]);
+    expect(pts).toEqual([{ index: 1, ts: bars[1].ts, price: bars[1].high, type: 'PH' }]);
   });
 
   it('returns empty when too few bars', () => {

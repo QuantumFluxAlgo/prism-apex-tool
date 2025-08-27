@@ -29,7 +29,13 @@ export function TicketsTable({ tickets, hasMore, onLoadMore }: Props) {
   if (tickets.length === 0) {
     return (
       <div className="p-4 bg-white rounded shadow">
-        <p>No tickets. Check <a href="/ready" className="underline">/ready</a>?</p>
+        <p>
+          No tickets. Check{' '}
+          <a href="/ready" className="underline">
+            /ready
+          </a>
+          ?
+        </p>
       </div>
     );
   }
@@ -85,11 +91,7 @@ export function TicketsTable({ tickets, hasMore, onLoadMore }: Props) {
       </table>
       {hasMore && (
         <div className="mt-2 text-center">
-          <button
-            type="button"
-            onClick={onLoadMore}
-            className="px-2 py-1 bg-gray-200 rounded"
-          >
+          <button type="button" onClick={onLoadMore} className="px-2 py-1 bg-gray-200 rounded">
             Load more
           </button>
         </div>

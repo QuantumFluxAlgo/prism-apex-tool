@@ -8,12 +8,25 @@ function csvEscape(s: string): string {
 export function toDailyCSV(j: DailyJson): string {
   const lines: string[] = [];
   // Header
-  lines.push(['date','time','symbol','side','qty','entry','stop','targets','apex_blocked','reasons'].join(','));
+  lines.push(
+    [
+      'date',
+      'time',
+      'symbol',
+      'side',
+      'qty',
+      'entry',
+      'stop',
+      'targets',
+      'apex_blocked',
+      'reasons',
+    ].join(','),
+  );
   // Rows
   for (const t of j.tickets) {
     const d = new Date(t.when);
-    const date = d.toISOString().slice(0,10);
-    const time = d.toISOString().slice(11,19);
+    const date = d.toISOString().slice(0, 10);
+    const time = d.toISOString().slice(11, 19);
     const row = [
       date,
       time,

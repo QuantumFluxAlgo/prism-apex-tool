@@ -17,14 +17,16 @@ const cfg = JSON.parse(fs.readFileSync(cfgPath, 'utf8'));
 const options = {
   ignoreMatches: cfg.ignores ?? [],
   ignorePatterns: cfg.ignorePatterns ?? [],
-  specials: (cfg.specials ?? []).map((name) => {
-    // depcheck ships helpers under depcheck.special
-    const special = depcheck.special[name];
-    if (!special) {
-      console.warn(`depcheck: unknown special "${name}", skipping`);
-    }
-    return special;
-  }).filter(Boolean),
+  specials: (cfg.specials ?? [])
+    .map((name) => {
+      // depcheck ships helpers under depcheck.special
+      const special = depcheck.special[name];
+      if (!special) {
+        console.warn(`depcheck: unknown special "${name}", skipping`);
+      }
+      return special;
+    })
+    .filter(Boolean),
 };
 
 await fs.promises.mkdir(outDir, { recursive: true });
@@ -36,9 +38,6 @@ const result = await new Promise((resolve) => {
 fs.writeFileSync(outPath, JSON.stringify(result, null, 2), 'utf8');
 
 // Print a tiny summary for DX
-const unused = [
-  ...result.dependencies ?? [],
-  ...result.devDependencies ?? [],
-];
+const unused = [...(result.dependencies ?? []), ...(result.devDependencies ?? [])];
 console.log(`depcheck: ${unused.length} unused deps (see reports/depcheck.json)`);
 process.exit(0);

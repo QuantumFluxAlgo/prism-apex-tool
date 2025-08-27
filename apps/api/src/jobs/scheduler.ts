@@ -30,7 +30,7 @@ async function run(job: JobMeta): Promise<void> {
 }
 
 export function registerJob(name: string, everyMs: number, fn: JobFn): void {
-  if (jobs.find(j => j.name === name)) throw new Error(`Job ${name} already registered`);
+  if (jobs.find((j) => j.name === name)) throw new Error(`Job ${name} already registered`);
   jobs.push({ name, everyMs, fn, running: false });
 }
 
@@ -53,7 +53,9 @@ export function stopJobs(): void {
   }
 }
 
-export function listJobStatus(): Array<Pick<JobMeta, 'name' | 'everyMs' | 'running' | 'lastRun' | 'lastOk' | 'lastError'>> {
+export function listJobStatus(): Array<
+  Pick<JobMeta, 'name' | 'everyMs' | 'running' | 'lastRun' | 'lastOk' | 'lastError'>
+> {
   return jobs.map(({ name, everyMs, running, lastRun, lastOk, lastError }) => ({
     name,
     everyMs,
@@ -65,7 +67,7 @@ export function listJobStatus(): Array<Pick<JobMeta, 'name' | 'everyMs' | 'runni
 }
 
 export async function runJobNow(name: string): Promise<boolean> {
-  const job = jobs.find(j => j.name === name);
+  const job = jobs.find((j) => j.name === name);
   if (!job || job.running) return false;
   await run(job);
   return true;

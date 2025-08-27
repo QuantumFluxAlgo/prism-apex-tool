@@ -7,7 +7,7 @@ export async function sendDailyEmail(
   _date: string,
   _to: string,
   _report: DailyJson,
-  _csvAttachment?: string
+  _csvAttachment?: string,
 ): Promise<EmailResult> {
   return { ok: true, transport: 'noop' };
 }

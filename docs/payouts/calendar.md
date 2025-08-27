@@ -1,6 +1,7 @@
 # Prism Apex Tool — Payout Calendar
 
 ## Rules Recap
+
 - **First payout**: After 10 trading days AND $1,000 net profit.
 - **Cycle**: Every 14 days after first payout.
 - **Amounts**:
@@ -8,6 +9,7 @@
   - 90% of profits above $25,000.
 
 ## Current Account Example
+
 - Trading days completed: 12
 - Total profit: $2,050
 - Eligible? **Yes**
@@ -17,6 +19,7 @@
 _All dates are in UTC/GMT._
 
 ## Mermaid Flow
+
 ```mermaid
 flowchart TD
     A[10+ Days + $1k Profit?] -->|No| B[Not Eligible]

@@ -6,11 +6,10 @@ export default defineConfig({
     command: 'npm run preview -w apps/dashboard',
     port: 5173,
     reuseExistingServer: true,
-    timeout: 120000
+    timeout: 120000,
   },
   use: {
     baseURL: 'http://localhost:5173',
-    headless: true
-  }
+    headless: true,
+  },
 });
-

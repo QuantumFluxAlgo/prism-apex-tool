@@ -45,15 +45,11 @@ describe('TicketsPage', () => {
 
     const acceptedToggle = screen.getByLabelText('Accepted');
     fireEvent.click(acceptedToggle);
-    await waitFor(() =>
-      expect(screen.queryByText('ESZ4')).not.toBeInTheDocument(),
-    );
+    await waitFor(() => expect(screen.queryByText('ESZ4')).not.toBeInTheDocument());
 
     const rejectedToggle = screen.getByLabelText('Rejected');
     fireEvent.click(rejectedToggle);
-    await waitFor(() =>
-      expect(screen.queryByText('NQZ4')).not.toBeInTheDocument(),
-    );
+    await waitFor(() => expect(screen.queryByText('NQZ4')).not.toBeInTheDocument());
   });
 
   it('copies entry to clipboard', async () => {

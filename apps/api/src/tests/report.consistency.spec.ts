@@ -21,7 +21,10 @@ describe('report consistency API', () => {
         payload: { accountId, date: d.toISOString().slice(0, 10), net: 60 - i },
       });
     }
-    const res = await app.inject({ method: 'GET', url: `/report/consistency?accountId=${accountId}&window=8` });
+    const res = await app.inject({
+      method: 'GET',
+      url: `/report/consistency?accountId=${accountId}&window=8`,
+    });
     const body = res.json();
     expect(body.passed).toBe(true);
     await app.close();
@@ -42,7 +45,10 @@ describe('report consistency API', () => {
         payload: { accountId, date: d.toISOString().slice(0, 10), net: nets[i] },
       });
     }
-    const res = await app.inject({ method: 'GET', url: `/report/consistency?accountId=${accountId}&window=8` });
+    const res = await app.inject({
+      method: 'GET',
+      url: `/report/consistency?accountId=${accountId}&window=8`,
+    });
     const body = res.json();
     expect(body.passed).toBe(false);
     expect(body.reasons).toContain('topday>30%');
@@ -64,7 +70,10 @@ describe('report consistency API', () => {
         payload: { accountId, date: d.toISOString().slice(0, 10), net: nets[i] },
       });
     }
-    const res = await app.inject({ method: 'GET', url: `/report/consistency?accountId=${accountId}&window=8` });
+    const res = await app.inject({
+      method: 'GET',
+      url: `/report/consistency?accountId=${accountId}&window=8`,
+    });
     const body = res.json();
     expect(body.passed).toBe(false);
     expect(body.reasons).toContain('profitDays<5');
