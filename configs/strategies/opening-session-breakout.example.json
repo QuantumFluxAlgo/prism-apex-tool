@@ -1,0 +1,7 @@
+{
+  "//": "Replace keys to match your strategy; names below are examples only",
+  "sessionWindowMinutes": 60,
+  "bufferTicks": 3,
+  "cooldownBars": 2,
+  "minRR": 1.5
+}

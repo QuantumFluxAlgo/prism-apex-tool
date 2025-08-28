@@ -1,0 +1,24 @@
+{
+  "accounts": [
+    {
+      "name": "PA-1",
+      "accountId": 123456,
+      "accountSpec": "PA123456",
+      "mode": "funded",
+      "planMaxContracts": 10,
+      "baseSize": 2,
+      "multiplier": 1.0,
+      "minQty": 1
+    },
+    {
+      "name": "PA-2",
+      "accountId": 234567,
+      "accountSpec": "PA234567",
+      "mode": "eval",
+      "planMaxContracts": 5,
+      "baseSize": 1,
+      "multiplier": 1.0,
+      "minQty": 1
+    }
+  ]
+}
