@@ -1,17 +1,22 @@
-const beats = new Map<string, number>();
+type JobStatus = { lastBeatIso: string; healthy: boolean };
 
-export function setJobBeat(jobName: string) {
-  beats.set(jobName, Date.now());
+const state: Record<string, number> = Object.create(null);
+
+export function setJobBeat(jobName: string, nowTs: number = Date.now()): void {
+  state[jobName] = nowTs;
 }
 
-export function getHealth() {
-  const now = Date.now();
-  const jobs: Record<string, { lastBeatIso: string | null; healthy: boolean }> = {};
-  for (const [name, ts] of beats.entries()) {
-    const lastBeatIso = ts ? new Date(ts).toISOString() : null;
-    const healthy = now - ts < 10_000;
-    jobs[name] = { lastBeatIso, healthy };
+export function getHealth(nowTs: number = Date.now()): {
+  jobs: Record<string, JobStatus>;
+  overall: 'healthy' | 'degraded';
+} {
+  const jobs: Record<string, JobStatus> = {};
+  const entries = Object.entries(state);
+  for (const [name, ts] of entries) {
+    const healthy = nowTs - ts < 10_000;
+    jobs[name] = { lastBeatIso: new Date(ts).toISOString(), healthy };
   }
-  const overall = Object.values(jobs).every((j) => j.healthy) ? 'healthy' : 'degraded';
-  return { jobs, overall } as const;
+  const overall: 'healthy' | 'degraded' =
+    entries.length > 0 && entries.every(([, ts]) => nowTs - ts < 10_000) ? 'healthy' : 'degraded';
+  return { jobs, overall };
 }

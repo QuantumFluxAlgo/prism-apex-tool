@@ -20,7 +20,7 @@ import { auditRoutes } from './routes/audit.js';
 import { accountsRoutes } from './routes/accounts.js';
 import { ticketsRoutes } from './routes/tickets.js';
 import { tradingviewWebhookRoutes } from './routes/webhooks.tradingview.js';
-import { readyRoutes } from './routes/ready.js';
+import readyRoute from './routes/ready.js';
 import { getConfig } from './config/env';
 import { telemetryRoutes } from './routes/telemetry.js';
 import { jobManager } from './lib/jobManager.js';
@@ -84,7 +84,7 @@ export function buildServer() {
   app.register(authPlugin, { publicPaths });
   app.register(rateLimit, { publicPaths });
 
-  app.register(readyRoutes);
+  app.register(readyRoute);
   app.register(healthRoutes);
   app.register(versionRoutes);
   app.register(analyticsRoutes);
