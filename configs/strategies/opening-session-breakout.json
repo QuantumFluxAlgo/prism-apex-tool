@@ -1,6 +1,6 @@
 {
   "orMinutes": 5,
-  "requireCloseBreak": true,
+  "requireCloseBreak": 1,
   "rrDefault": 2.0,
   "rrMin": 1.5,
   "rrMax": 5.0,
