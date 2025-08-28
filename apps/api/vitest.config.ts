@@ -44,6 +44,14 @@ export default defineConfig({
         __dirname,
         '../../packages/rules-apex/src/index.ts',
       ),
+      '@prism-apex-tool/runtime/health': path.resolve(
+        __dirname,
+        '../../packages/runtime/src/health.ts',
+      ),
+      '@prism-apex-tool/runtime/heartbeat': path.resolve(
+        __dirname,
+        '../../packages/runtime/src/heartbeat.ts',
+      ),
       '@prism-apex-tool/runtime': path.resolve(
         __dirname,
         '../../packages/runtime/src/index.ts',
