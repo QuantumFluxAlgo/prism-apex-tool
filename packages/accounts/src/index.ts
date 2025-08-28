@@ -1,3 +1,2 @@
-export * from './types.js';
-export * from './fs.js';
-export * from './registry.js';
+// Re-export the registry and types so consumers can `import { getAccounts } from '@prism-apex-tool/accounts'`
+export * from './registry';
