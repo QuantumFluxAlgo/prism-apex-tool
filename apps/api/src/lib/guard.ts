@@ -55,8 +55,7 @@ export async function applyGuardWithSizing(
     const account = await Accounts.get(input.accountId);
     if (account) {
       const s = suggestPercent(
-        account.maxContracts,
-        account.bufferCleared,
+        account.planMaxContracts, false,
         cfg.sizing.percent.noBuffer,
         cfg.sizing.percent.withBuffer,
       );
@@ -64,11 +63,7 @@ export async function applyGuardWithSizing(
         allowed: s.contracts,
         halfSizeSuggested: s.halfSizeSuggested,
       };
-      if (typeof account.lastSuggestedContracts === 'number' && typeof input.qty === 'number') {
-        sizing.jumpExceeded =
-          input.qty > account.lastSuggestedContracts * cfg.sizing.sizeJumpMultiplier;
-      }
-      if (
+            if (
         cfg.sizing.enforceSizeHints &&
         typeof input.qty === 'number' &&
         s.contracts !== undefined &&
@@ -90,11 +85,7 @@ export async function applyGuardWithSizing(
         };
       }
       // best effort memory update
-      Accounts.upsert({
-        id: input.accountId,
-        lastSuggestedContracts: s.contracts,
-        lastSuggestedAt: now.toISOString(),
-      }).catch(() => {});
+      Accounts.upsert({ id: input.accountId });
     }
   }
 

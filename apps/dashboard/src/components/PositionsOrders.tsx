@@ -62,7 +62,7 @@ export function PositionsOrders() {
                     <td>{p.qty}</td>
                     <td className="font-mono">{p.avgPrice?.toFixed?.(2) ?? p.avgPrice}</td>
                     <td
-                      className={`font-mono ${p.unrealizedPnl >= 0 ? 'text-green-700' : 'text-red-700'}`}
+                      className={`font-mono ${(p.unrealizedPnl ?? 0) >= 0 ? 'text-green-700' : 'text-red-700'}`}
                     >
                       {p.unrealizedPnl?.toFixed?.(2) ?? p.unrealizedPnl}
                     </td>
