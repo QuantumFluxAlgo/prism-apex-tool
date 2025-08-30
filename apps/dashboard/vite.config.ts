@@ -1,7 +1,7 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 
-const jsLoader: Record<string, 'jsx'> = { '.js': 'jsx' };
+const jsLoader = { '.js': 'jsx' } as const;
 
 export default defineConfig({
   plugins: [react()],
@@ -16,5 +16,5 @@ export default defineConfig({
     },
   },
   optimizeDeps: { esbuildOptions: { loader: jsLoader } },
-  esbuild: { jsx: 'automatic', loader: jsLoader },
+  esbuild: { jsx: 'automatic' },
 });
