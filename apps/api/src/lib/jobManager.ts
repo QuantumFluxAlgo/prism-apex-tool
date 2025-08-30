@@ -1,3 +1,4 @@
+import { setJobBeat } from '@prism-apex-tool/runtime';
 export type StartFn = () => Promise<void> | void;
 export type StopFn = () => Promise<void> | void;
 
@@ -19,6 +20,8 @@ class JobManager {
     if (existing) return existing; // idempotent
     const job: Job = { name, start, stop, started: false, beatCount: 0 };
     this.jobs.set(name, job);
+    try { setJobBeat(name, 0); } catch {}
+  
     return job;
   }
 
@@ -30,6 +33,7 @@ class JobManager {
         j.started = true;
         j.lastBeat = Date.now();
         j.beatCount = 0;
+        try { setJobBeat(j.name, j.lastBeat); } catch {}
       }
     }
     this.started = true;
@@ -53,6 +57,7 @@ class JobManager {
     if (j) {
       j.lastBeat = Date.now();
       j.beatCount++;
+      try { setJobBeat(name, j.lastBeat); } catch {}
     }
   }
 
@@ -82,4 +87,13 @@ class JobManager {
   }
 }
 
-export const jobManager = new JobManager();
+export type JobManagerApi = {
+  register: JobManager['register'];
+  startAll: JobManager['startAll'];
+  stopAll: JobManager['stopAll'];
+  beat: JobManager['beat'];
+  snapshot: JobManager['snapshot'];
+  status: JobManager['status'];
+  resetForTests: JobManager['resetForTests'];
+};
+export const jobManager: JobManagerApi = new JobManager();

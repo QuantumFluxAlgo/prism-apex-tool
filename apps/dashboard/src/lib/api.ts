@@ -8,10 +8,42 @@ export type ComplianceSnapshot = {
 };
 
 // TODO: replace with real API shapes when schema is finalized
-export type Ticket = unknown;
-export type Market = unknown;
-export type Position = unknown;
-export type Order = unknown;
+export type Ticket = {
+  symbol: string;
+  contract: string;
+  side: string;
+  qty: number;
+  order: {
+    entry: number | string;
+    stop: number | string;
+    targets: Array<number | string>;
+    tif: string;
+  };
+  reasons?: string[];
+};
+export const Market: {
+  positions: () => Promise<Position[]>;
+  orders: () => Promise<Order[]>;
+} = {
+  positions: async () => [],
+  orders: async () => [],
+};
+export type Position = {
+  symbol: string;
+  qty: number;
+  avgPrice?: number;
+  unrealizedPnl?: number;
+};
+export type Order = {
+  id: number | string;
+  symbol: string;
+  side: string;
+  type: string;
+  limitPrice?: number;
+  stopPrice?: number;
+  status: string;
+  ocoGroupId?: string | null;
+};
 
 const COMPAT_BASE =
   typeof window === 'undefined' ? 'http://localhost:3000/api/compat' : '/api/compat';
