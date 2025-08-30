@@ -4,8 +4,15 @@
     "outDir": "dist",
     "rootDir": "src",
     "declaration": true,
-    "declarationMap": true
+    "declarationMap": true,
+    "paths": {}
   },
   "include": ["src"],
-  "exclude": ["src/__tests__/**", "src/tests/**", "**/*.spec.ts"]
+  "exclude": [
+    "src/__tests__/**",
+    "src/tests/**",
+    "**/*.spec.ts",
+    "src/__tests__._archived/**",
+    "src/jobs/jobManagerTestHooks.ts"
+  ]
 }

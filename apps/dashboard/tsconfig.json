@@ -4,7 +4,10 @@
     "jsx": "react-jsx",
     "outDir": "dist",
     "rootDir": ".",
-    "types": ["vite/client"]
+    "types": ["vite/client"],
+    "moduleResolution": "bundler",
+    "verbatimModuleSyntax": false,
+    "module": "ESNext"
   },
   "include": [
     "src",
