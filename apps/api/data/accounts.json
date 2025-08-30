@@ -1,0 +1,13 @@
+{
+  "accounts": [
+    {
+      "name": "alpha",
+      "accountId": 1,
+      "accountSpec": "ES",
+      "mode": "eval",
+      "planMaxContracts": 4,
+      "baseSize": 1,
+      "id": "alpha"
+    }
+  ]
+}

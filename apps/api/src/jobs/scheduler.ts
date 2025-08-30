@@ -1,3 +1,4 @@
+import { setJobBeat } from '@prism-apex-tool/runtime';
 export type JobFn = () => Promise<void> | void;
 
 export type JobMeta = {
@@ -25,6 +26,8 @@ async function run(job: JobMeta): Promise<void> {
     job.lastError = err instanceof Error ? err.message : String(err);
   } finally {
     job.lastRun = Date.now();
+    setJobBeat(job.name, job.lastRun);
+    setJobBeat(job.name, job.lastRun);
     job.running = false;
   }
 }
@@ -32,6 +35,8 @@ async function run(job: JobMeta): Promise<void> {
 export function registerJob(name: string, everyMs: number, fn: JobFn): void {
   if (jobs.find((j) => j.name === name)) throw new Error(`Job ${name} already registered`);
   jobs.push({ name, everyMs, fn, running: false });
+  setJobBeat(name, 0);
+setJobBeat(name, 0);
 }
 
 export function startJobs(): void {
