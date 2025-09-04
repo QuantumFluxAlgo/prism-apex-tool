@@ -8,7 +8,7 @@ const plugin: FastifyPluginCallback = (app: FastifyInstance, _opts, done) => {
   const mgr = new Set(['FEED','STRATEGIES','TICKETIZER','TELEMETRY','EOD_FLAT']);
   let jobs = health.jobs;
   if (DISABLE) {
-    const filtered = {};
+    const filtered: typeof health.jobs = {};
     for (const [name, st] of Object.entries(jobs)) {
       if (!mgr.has(name)) filtered[name] = st;
     }
