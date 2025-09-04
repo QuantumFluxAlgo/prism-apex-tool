@@ -1,4 +1,5 @@
 const state = Object.create(null);
+// test-only: clears in-memory heartbeat state
 export function __resetHealth() {
   for (const k of Object.keys(state)) delete state[k];
 }
