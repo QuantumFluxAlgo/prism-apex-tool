@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi, afterEach } from 'vitest';
+import { beforeEach, afterEach, describe, expect, it, vi } from 'vitest';
 
 let buildServer: typeof import('../server.js').buildServer;
 let setJobBeat: typeof import('@prism-apex-tool/runtime').setJobBeat;
@@ -7,7 +7,7 @@ let __resetHealth: typeof import('@prism-apex-tool/runtime').__resetHealth;
 beforeEach(async () => {
   vi.resetModules();
   vi.useFakeTimers();
-  vi.setSystemTime(new Date('2024-01-01T00:00:00Z'));
+  vi.setSystemTime(new Date("2024-01-01T00:00:00Z"));
 
   process.env.RATE_LIMIT_MAX = '2';
   process.env.RATE_LIMIT_WINDOW_MS = '60000';
@@ -16,7 +16,6 @@ beforeEach(async () => {
 
   ({ buildServer } = await import('../server.js'));
   ({ setJobBeat, __resetHealth } = await import('@prism-apex-tool/runtime'));
-
   __resetHealth();
 });
 
@@ -27,15 +26,15 @@ afterEach(() => {
 describe('Hardening', () => {
   it('returns readiness', async () => {
     const app = buildServer();
+    __resetHealth();
 
-    setJobBeat('alpha', Date.now());
-    setJobBeat('beta', Date.now());
-    setJobBeat('marketFeed', Date.now());
+    setJobBeat('alpha');
+    setJobBeat('beta');
+    setJobBeat('marketFeed');
 
     const res = await app.inject({ method: 'GET', url: '/ready' });
     expect(res.statusCode).toBe(200);
     const body = res.json();
-
     expect(body.jobs.alpha.healthy).toBe(true);
     expect(body.jobs.beta.healthy).toBe(true);
     expect(body.jobs.marketFeed.healthy).toBe(true);

@@ -4,6 +4,6 @@ declare module '@prism-apex-tool/runtime' {
     jobs: Record<string, { lastBeatIso: string; healthy: boolean }>;
     overall: 'healthy' | 'degraded';
   };
-  // test-only helper, safe to export
+  // test-only
   export function __resetHealth(): void;
 }
