@@ -20,3 +20,8 @@ export function getHealth(nowTs: number = Date.now()): {
     entries.length > 0 && entries.every(([, ts]) => nowTs - ts < 10_000) ? 'healthy' : 'degraded';
   return { jobs, overall };
 }
+
+// test-only utility to avoid cross-test leakage of state
+export function __resetHealth(): void {
+  for (const k of Object.keys(state)) delete (state as any)[k];
+}
