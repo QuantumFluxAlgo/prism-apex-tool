@@ -1,18 +1,22 @@
-import { beforeEach, afterEach, describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi, afterEach } from 'vitest';
 
 let buildServer: typeof import('../server.js').buildServer;
 let setJobBeat: typeof import('@prism-apex-tool/runtime').setJobBeat;
 let __resetHealth: typeof import('@prism-apex-tool/runtime').__resetHealth;
 
 beforeEach(async () => {
-  vi.resetModules(); // avoid double registration/state
+  vi.resetModules();
   vi.useFakeTimers();
+  vi.setSystemTime(new Date('2024-01-01T00:00:00Z'));
+
   process.env.RATE_LIMIT_MAX = '2';
   process.env.RATE_LIMIT_WINDOW_MS = '60000';
   process.env.RATE_LIMIT_MAX_BUCKETS = '10';
-  delete process.env.BEARER_TOKEN; // ensure auth is OFF for these tests
+  delete process.env.BEARER_TOKEN;
+
   ({ buildServer } = await import('../server.js'));
   ({ setJobBeat, __resetHealth } = await import('@prism-apex-tool/runtime'));
+
   __resetHealth();
 });
 
@@ -24,22 +28,19 @@ describe('Hardening', () => {
   it('returns readiness', async () => {
     const app = buildServer();
 
-    // Set all jobs to healthy
-    setJobBeat('alpha');
-    setJobBeat('beta');
-    setJobBeat('marketFeed');
-
-    // No real sleeping; the health uses Date.now, so it's instant
+    setJobBeat('alpha', Date.now());
+    setJobBeat('beta', Date.now());
+    setJobBeat('marketFeed', Date.now());
 
     const res = await app.inject({ method: 'GET', url: '/ready' });
     expect(res.statusCode).toBe(200);
     const body = res.json();
 
-    // Ensure job is healthy and overall is healthy
-    expect(body.jobs.alpha?.healthy).toBe(true);
-    expect(body.jobs.beta?.healthy).toBe(true);
-    expect(body.jobs.marketFeed?.healthy).toBe(true);
-    expect(body.overall).toBe('healthy'); // Expect overall to be healthy
+    expect(body.jobs.alpha.healthy).toBe(true);
+    expect(body.jobs.beta.healthy).toBe(true);
+    expect(body.jobs.marketFeed.healthy).toBe(true);
+    expect(body.overall).toBe('healthy');
+
     await app.close();
   });
 
