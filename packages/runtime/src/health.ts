@@ -2,6 +2,7 @@ type JobStatus = { lastBeatIso: string; healthy: boolean };
 
 const state: Record<string, number> = Object.create(null);
 
+// test-only: clears in-memory heartbeat state
 export function __resetHealth(): void {
   for (const k of Object.keys(state)) delete state[k];
 }
