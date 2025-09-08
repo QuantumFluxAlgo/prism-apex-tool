@@ -16,6 +16,7 @@ RUN mkdir -p /runtime \
  && pnpm --filter "@prism-apex-tool/api" deploy /runtime --prod \
  && mkdir -p /runtime/apps/api/dist \
  && cp -r /work/apps/api/dist/* /runtime/apps/api/dist/
+RUN node /work/scripts/build-openapi.js || true
 
 # ---- Runtime stage ----
 FROM node:20-alpine AS runner
