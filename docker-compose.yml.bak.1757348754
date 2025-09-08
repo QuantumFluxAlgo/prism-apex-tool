@@ -1,0 +1,32 @@
+version: '3.9'
+
+services:
+  api:
+    image: node:20
+    working_dir: /work
+    environment:
+      NODE_ENV: production
+      LOG_LEVEL: info
+      TRUST_PROXY: 'true'
+      DATA_DIR: /data
+      # Optional: pass through if you set one in your shell or .env
+      BEARER_TOKEN: ${BEARER_TOKEN:-}
+    ports:
+      - '3000:3000'
+    volumes:
+      - .:/work
+      - api-data:/data
+      - pnpm-store:/root/.local/share/pnpm/store
+      - node_modules:/work/node_modules
+    command: >
+      bash -lc "
+      corepack enable &&
+      pnpm install &&
+      pnpm -r --if-present build &&
+      pnpm --filter ./apps/api start
+      "
+
+volumes:
+  api-data:
+  pnpm-store:
+  node_modules:
