@@ -1,43 +1,69 @@
-# ---- Build stage ----
+# ------------ Build stage ------------
 FROM node:20-alpine AS build
-
 WORKDIR /app
-# Enable corepack to use pnpm reliably
-RUN corepack enable
 
-# Copy only manifests first for better layer caching
-COPY package.json pnpm-lock.yaml ./
-# Include workspace manifests for linking
-COPY apps/api/package.json apps/api/package.json
+# Tools for building
+RUN apk add --no-cache python3 make g++ curl && corepack enable
+
+# Workspace manifests (cache-friendly)
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+COPY tsconfig.base.json tsconfig.base.json
+
+# Source
 COPY packages packages
 COPY apps apps
 COPY sdks sdks
 COPY tests tests
-COPY tsconfig.base.json tsconfig.base.json
+COPY apex apex
 
-# Install deps for entire workspace (no postinstall scripts)
+# Install all workspace deps (dev deps OK in build stage)
 RUN pnpm install --frozen-lockfile=false
 
-# Build the workspace (types + bundles)
-RUN pnpm -w run build
+# Build everything so internal libs emit dist/** before the API compiles
+RUN pnpm -r build
 
-# ---- Runtime stage ----
+# Build the API (emits apps/api/dist/**)
+RUN pnpm -C apps/api build
+
+# --- Build the OpenAPI JSON once (uses build-time deps only) ---
+# This tries common export shapes so we don't have to change your spec module.
+RUN node -e "\
+  const fs=require('fs');\
+  const path=require('path');\
+  const specMod=require('/app/apps/api/dist/openapi/spec.js');\
+  const choose=(m)=> m.buildOpenAPIDocument?.() \
+                 ?? m.buildOpenApiDocument?.() \
+                 ?? m.buildOpenApi?.() \
+                 ?? m.default?.() \
+                 ?? m.openApiDocument \
+                 ?? m.document; \
+  const doc=choose(specMod); \
+  if(!doc){ \
+    console.error('Could not obtain OpenAPI document from dist/openapi/spec.js');\
+    process.exit(2);\
+  } \
+  const out=path.join('/app/apps/api/dist','openapi.json');\
+  fs.writeFileSync(out, JSON.stringify(doc,null,2));\
+  console.log('Wrote', out);\
+"
+
+# Produce a clean runtime (only prod deps for the API)
+# pnpm deploy syntax: pnpm --filter "<pkg>" deploy <target_dir> --prod
+RUN mkdir -p /app/runtime && \
+    pnpm --filter "@prism-apex-tool/api" deploy /app/runtime --prod
+
+# Bring compiled API output & runtime data into the runtime tree
+RUN mkdir -p /app/runtime/apps/api/dist /app/runtime/apex && \
+    cp -r /app/apps/api/dist/. /app/runtime/apps/api/dist/ && \
+    cp -r /app/apex/.        /app/runtime/apex/
+
+# ------------ Runtime stage ------------
 FROM node:20-alpine AS runtime
-
 WORKDIR /app
 ENV NODE_ENV=production
-ENV PORT=8000
-ENV DATA_DIR=/var/lib/prism-apex-tool
 
-# Minimal runtime deps
-RUN apk add --no-cache curl
+# Copy the prepared runtime (node_modules + API dist + apex) as a unit
+COPY --from=build /app/runtime/ /app/
 
-# Copy built dist for API only
-COPY --from=build /app/apps/api/dist ./apps/api/dist
-# Copy package.json to allow "node dist/index.js" and any runtime resolves
-COPY --from=build /app/apps/api/package.json ./apps/api/package.json
-USER node
-
-EXPOSE 8000
-WORKDIR /app/apps/api
-CMD ["node", "dist/index.js"]
+EXPOSE 3000
+CMD ["node", "/app/apps/api/dist/index.js"]

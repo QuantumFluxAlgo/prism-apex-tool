@@ -3,19 +3,21 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "main": "dist/index.cjs",
+  "main": "dist/index.js",
   "module": "dist/index.js",
   "types": "dist/index.d.ts",
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js",
-      "require": "./dist/index.cjs"
+      "require": "./dist/index.cjs",
+      "default": "./dist/index.js"
     },
     "./telemetry": {
       "types": "./dist/telemetry.d.ts",
       "import": "./dist/telemetry.js",
-      "require": "./dist/telemetry.cjs"
+      "require": "./dist/telemetry.cjs",
+      "default": "./dist/telemetry.js"
     }
   },
   "files": [

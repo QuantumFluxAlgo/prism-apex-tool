@@ -77,6 +77,9 @@ importers:
 
   apps/api:
     dependencies:
+      '@asteasolutions/zod-to-openapi':
+        specifier: ^7.1.0
+        version: 7.3.4(zod@3.25.76)
       '@fastify/autoload':
         specifier: 6.3.1
         version: 6.3.1
@@ -122,6 +125,9 @@ importers:
       '@prism-apex-tool/runtime':
         specifier: workspace:*
         version: link:../../packages/runtime
+      '@prism-apex-tool/sdk':
+        specifier: workspace:*
+        version: link:../../packages/sdk
       '@prism-apex-tool/signals':
         specifier: workspace:*
         version: link:../../packages/signals
@@ -138,15 +144,9 @@ importers:
         specifier: ^3.23.8
         version: 3.25.76
     devDependencies:
-      '@asteasolutions/zod-to-openapi':
-        specifier: ^7.1.0
-        version: 7.3.4(zod@3.25.76)
       '@eslint/js':
         specifier: ^9.10.0
         version: 9.33.0
-      '@prism-apex-tool/sdk':
-        specifier: workspace:*
-        version: link:../../packages/sdk
       '@types/node':
         specifier: ^20.19.11
         version: 20.19.11

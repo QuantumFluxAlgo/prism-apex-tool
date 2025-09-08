@@ -2,10 +2,11 @@
 FROM node:20-alpine AS build
 
 WORKDIR /app
+ENV CI=1 PNPM_CONFIG_PROD=false
 RUN corepack enable
 
-# Copy manifests for cache
-COPY package.json pnpm-lock.yaml ./
+# Copy manifests for cache (include workspace file so pnpm sees the monorepo)
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 COPY apps/dashboard/package.json apps/dashboard/package.json
 COPY apps apps
 COPY packages packages
@@ -13,11 +14,12 @@ COPY sdks sdks
 COPY tests tests
 COPY tsconfig.base.json tsconfig.base.json
 
-# Install deps
+# Install deps (dev deps included because PNPM_CONFIG_PROD=false)
 RUN pnpm install --frozen-lockfile=false
 
-# Build dashboard only (avoid building all if desired)
+# Build dashboard only
 WORKDIR /app/apps/dashboard
+RUN pnpm install --frozen-lockfile=false
 RUN pnpm run build
 
 # ---- Nginx stage ----
@@ -28,10 +30,9 @@ ENV NODE_ENV=production
 # Copy static build
 COPY --from=build /app/apps/dashboard/dist /usr/share/nginx/html
 
-# Use our nginx config
+# Use our nginx config from the repo
 COPY apps/dashboard/nginx.conf /etc/nginx/conf.d/default.conf
 
-# Expose HTTP
 EXPOSE 80
-
 CMD ["nginx", "-g", "daemon off;"]
+
