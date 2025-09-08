@@ -1,0 +1,25 @@
+<!doctype html>
+<html>
+  <head><meta charset="utf-8"><title>Dashboard Smoke</title></head>
+  <body>
+    <h1>Dashboard Smoke</h1>
+    <pre id="out">Loading…</pre>
+    <script>
+      const out = document.getElementById('out');
+      (async () => {
+        try {
+          const base = 'http://localhost:3000';
+          const health = await fetch(base + '/health').then(r => r.json());
+          const openapi = await fetch(base + '/openapi.json').then(r => r.json());
+          const ready = await fetch(base + '/ready').then(r => r.json());
+          const version = await fetch(base + '/version').then(r => r.json());
+          out.textContent = JSON.stringify({ health, openapi_head: {
+              openapi: openapi.openapi, title: openapi?.info?.title, version: openapi?.info?.version
+            }, ready, version }, null, 2);
+        } catch (e) {
+          out.textContent = 'FAILED: ' + (e && e.message || e);
+        }
+      })();
+    </script>
+  </body>
+</html>
