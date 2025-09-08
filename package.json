@@ -12,7 +12,7 @@
     "test:watch": "vitest",
     "test:api": "pnpm --filter @prism-apex-tool/runtime build && pnpm --filter @prism-apex-tool/consistency build && pnpm --filter @prism-apex-tool/api test",
     "coverage": "pnpm --filter ./apps/api test -- --coverage",
-    "build": "pnpm -w -r build",
+    "build": "pnpm -r build",
     "prepare": "husky install",
     "clean": "rimraf node_modules dist coverage",
     "compose:up": "docker compose up -d --build",
@@ -24,7 +24,8 @@
     "scan:strays": "git ls-files | egrep -i '\\.(bak|backup|old)$|(^|/)=?[0-9]{2,3}%$|(^|/)server\\.backup\\.|(^|/)\\]$' > reports/strays.txt || true",
     "docker:build": "docker build -t prism-apex-api:latest .",
     "docker:run": "docker run --rm -p 3000:3000 -e LOG_LEVEL=info -e TRUST_PROXY=true -v api-data:/data prism-apex-api:latest",
-    "config:check": "node scripts/config-check.js"
+    "config:check": "node scripts/config-check.js",
+    "build:api": "pnpm -C apps/api build"
   },
   "engines": {
     "node": ">=20 <21"

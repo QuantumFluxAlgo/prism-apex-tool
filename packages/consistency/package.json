@@ -26,5 +26,13 @@
     "typescript": "^5.9.2",
     "vitest": "^2.0.0",
     "rimraf": "^5.0.5"
+  },
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.js",
+      "default": "./dist/index.js"
+    }
   }
 }

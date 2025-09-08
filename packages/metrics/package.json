@@ -3,14 +3,21 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "main": "dist/consistency.cjs",
+  "main": "dist/index.js",
   "module": "dist/consistency.js",
-  "types": "dist/consistency.d.ts",
+  "types": "dist/index.d.ts",
   "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.js",
+      "default": "./dist/index.js"
+    },
     "./consistency": {
-      "require": "./dist/consistency.cjs",
+      "types": "./dist/consistency.d.ts",
       "import": "./dist/consistency.js",
-      "types": "./dist/consistency.d.ts"
+      "require": "./dist/consistency.cjs",
+      "default": "./dist/consistency.js"
     }
   },
   "files": [

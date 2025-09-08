@@ -1,10 +1,11 @@
 import type { FastifyInstance } from 'fastify';
-import { buildOpenApi } from '../openapi/spec.js';
+import { readFileSync } from 'fs';
+import path from 'path';
 
-export async function openapiRoute(app: FastifyInstance) {
+export default async function openapiRoute(app: FastifyInstance) {
   app.get('/openapi.json', async (_req, reply) => {
-    const doc = buildOpenApi();
-    return reply.type('application/json').send(doc);
+    const filePath = path.join(__dirname, '..', 'openapi.json');
+    const json = readFileSync(filePath, 'utf8');
+    reply.type('application/json').send(json);
   });
 }
-export default openapiRoute;
