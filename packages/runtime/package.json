@@ -9,17 +9,8 @@
     ".": {
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js",
-      "require": "./dist/index.js"
-    },
-    "./health": {
-      "types": "./src/health.ts",
-      "import": "./src/health.ts",
-      "require": "./src/health.ts"
-    },
-    "./heartbeat": {
-      "types": "./src/heartbeat.ts",
-      "import": "./src/heartbeat.ts",
-      "require": "./src/heartbeat.ts"
+      "require": "./dist/index.js",
+      "default": "./dist/index.js"
     }
   },
   "files": [
