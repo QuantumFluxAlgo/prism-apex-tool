@@ -1,31 +1,23 @@
-version: '3.9'
-
+name: prism-apex-tool
 services:
   api:
-    image: node:20
-    working_dir: /work
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: prism-apex-tool-api:latest
     environment:
       NODE_ENV: production
       LOG_LEVEL: info
-      TRUST_PROXY: 'true'
+      TRUST_PROXY: "true"
       DATA_DIR: /data
-      # Optional: pass through if you set one in your shell or .env
-      BEARER_TOKEN: ${BEARER_TOKEN:-}
+      BEARER_TOKEN: ""
     ports:
-      - '3000:3000'
+      - "3000:3000"
+    # IMPORTANT: do not bind-mount the repo; it would hide compiled files.
     volumes:
-      - .:/work
       - api-data:/data
-      - pnpm-store:/root/.local/share/pnpm/store
-      - node_modules:/work/node_modules
-    command: >
-      bash -lc "
-      corepack enable &&
-      pnpm install &&
-      pnpm -r --if-present build &&
-      pnpm --filter ./apps/api start
-      "
-
+    # Let the Dockerfile's CMD run: ["node","apps/api/dist/index.js"]
+    working_dir: /app
 volumes:
   api-data:
   pnpm-store:
