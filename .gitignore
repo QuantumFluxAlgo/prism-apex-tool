@@ -34,3 +34,14 @@ reports/
 .DS_Store
 data/accounts/
 path/to/file
+# Local backups / temp
+Dockerfile.bak.*
+*.bak
+
+# Accidental files from copy/paste
+/or
+/copy
+/into
+/your
+/browser
+\#
