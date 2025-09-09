@@ -53,3 +53,11 @@ export type {
   SymbolsResponse,
   SessionsResponse,
 } from './types.js';
+
+// type-only re-exports for consumers (no runtime impact)
+export type {
+  ApexTicket,
+  ApexTicketMeta,
+  ApexStrategyId,
+  ApexGuardrailReason,
+} from '../../..//types/global/contracts';
