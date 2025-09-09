@@ -1,3 +1,4 @@
+import { ensureDefined } from '../../__tests__/helpers/assert';
 import { readFileSync } from 'fs';
 import { join } from 'path';
 import { describe, it, expect } from 'vitest';
