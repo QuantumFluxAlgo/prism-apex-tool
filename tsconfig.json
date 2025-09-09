@@ -12,8 +12,18 @@
     "forceConsistentCasingInFileNames": true,
     "resolveJsonModule": true,
     "outDir": "dist",
-    "types": ["node"]
+    "types": [
+      "node"
+    ]
   },
-  "include": ["**/*.ts"],
-  "exclude": ["node_modules", "dist", "build", "**/*.test-d.ts"]
+  "include": [
+    "**/*.ts",
+    "types/**/*.d.ts"
+  ],
+  "exclude": [
+    "node_modules",
+    "dist",
+    "build",
+    "**/*.test-d.ts"
+  ]
 }
