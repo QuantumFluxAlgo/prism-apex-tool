@@ -1,8 +1,10 @@
+/* eslint import/no-extraneous-dependencies: ["error", { devDependencies: true }] */
 /**
- * Narrow ESLint overrides for the monorepo:
- * - Allow underscore-prefixed unused vars/args/caughtErrors in TS/TSX
- * - Allow devDependencies in test files
+ * Augmented overrides: include eslint-plugin-unused-imports to auto-remove
+ * unused imports and tolerate underscore placeholders for unused vars/args.
  */
+const unusedImports = require('eslint-plugin-unused-imports');
+
 module.exports = {
   overrides: [
     {
@@ -34,6 +36,28 @@ module.exports = {
         'import/no-extraneous-dependencies': [
           'error',
           { devDependencies: true },
+        ],
+      },
+    },
+    // Global (all files) rules for unused imports/vars
+    {
+      plugins: {
+        'unused-imports': unusedImports,
+      },
+      files: ['**/*.{ts,tsx,js,jsx}'],
+      rules: {
+        // Remove unused imports automatically
+        'unused-imports/no-unused-imports': 'error',
+        // Flag (and autofix) unused vars, but allow underscores
+        'unused-imports/no-unused-vars': [
+          'warn',
+          {
+            args: 'after-used',
+            argsIgnorePattern: '^_',
+            varsIgnorePattern: '^_',
+            caughtErrors: 'all',
+            caughtErrorsIgnorePattern: '^_',
+          },
         ],
       },
     },

@@ -8,7 +8,7 @@ if (!fs.existsSync(p)) {
 }
 
 let s = fs.readFileSync(p, 'utf8');
-let orig = s;
+const orig = s;
 
 // A) Health route: named -> default import + usage (safe if absent)
 s = s.replace(
