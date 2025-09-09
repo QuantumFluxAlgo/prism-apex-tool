@@ -4,18 +4,21 @@
     "jsx": "react-jsx",
     "outDir": "dist",
     "rootDir": ".",
-    "types": ["vite/client"],
+    "types": ["vite/client", "vitest/globals"],
     "moduleResolution": "bundler",
     "verbatimModuleSyntax": false,
-    "module": "ESNext"
+    "module": "ESNext",
+    "resolveJsonModule": true,
+    "skipLibCheck": true
   },
   "include": [
-    "src",
-    "vite.config.ts",
-    "tailwind.config.cjs",
+    "index.html",
     "postcss.config.cjs",
-    "vitest.config.ts",
-    "index.html"
+    "src",
+    "tailwind.config.cjs",
+    "types/**/*.d.ts",
+    "vite.config.ts",
+    "vitest.config.ts"
   ],
   "exclude": ["src/__tests__"]
 }
