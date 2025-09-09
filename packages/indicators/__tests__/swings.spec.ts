@@ -1,3 +1,4 @@
+import { ensureDefined } from '../../__tests__/helpers/assert';
 import { describe, it, expect } from 'vitest';
 import { swings, SwingPoint } from '../src/swings.js';
 import type { Bar1m } from '../src/types.js';
