@@ -4,7 +4,7 @@
   "private": true,
   "description": "Prism Apex Tool monorepo",
   "scripts": {
-    "lint": "eslint .",
+    "lint": "eslint -c .eslint/flat-merge.mjs .",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "typecheck": "tsc --noEmit",
