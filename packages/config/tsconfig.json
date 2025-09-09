@@ -7,7 +7,10 @@
     "declaration": true,
     "declarationMap": true,
     "emitDeclarationOnly": false,
-    "types": ["node"]
+    "types": ["node", "vitest/globals"],
+    "resolveJsonModule": true,
+    "skipLibCheck": true,
+    "moduleResolution": "node"
   },
-  "include": ["src"]
+  "include": ["src", "types/**/*.d.ts"]
 }

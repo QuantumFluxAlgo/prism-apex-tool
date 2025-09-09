@@ -1,5 +1,11 @@
 {
   "extends": "./tsconfig.json",
-  "include": ["src"],
-  "exclude": ["src/__tests__/**", "**/*.spec.ts", "vitest.config.ts"]
+  "include": ["src", "types/**/*.d.ts"],
+  "exclude": ["src/__tests__/**", "**/*.spec.ts", "vitest.config.ts"],
+  "compilerOptions": {
+    "types": ["vitest/globals"],
+    "resolveJsonModule": true,
+    "skipLibCheck": true,
+    "moduleResolution": "node"
+  }
 }
