@@ -72,3 +72,14 @@ export default [
     },
   },
 ];
+
+// Added by lint-autofix-round2 (safe, additive):
+import overridesTsTests from './.eslint-overrides/ts-tests-overrides.cjs';
+const __appliedTsTestsOverrides = Array.isArray(overridesTsTests?.overrides)
+  ? overridesTsTests.overrides
+  : [];
+export default Array.isArray(globalThis.__mergedEslintConfig)
+  ? [...globalThis.__mergedEslintConfig, ...__appliedTsTestsOverrides]
+  : (Array.isArray(exports.default)
+      ? [...exports.default, ...__appliedTsTestsOverrides]
+      : (__appliedTsTestsOverrides));
