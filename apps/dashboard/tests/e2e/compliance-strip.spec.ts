@@ -1,3 +1,5 @@
+import { ensureDefined } from '../../../../__tests__/helpers/assert';
+import { describe as _describe, it as _it, expect as _expect } from 'vitest';
 import { test, expect } from '@playwright/test';
 
 test('Compliance strip shows badges and EOD OK', async ({ page }) => {
