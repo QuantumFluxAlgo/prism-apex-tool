@@ -63,3 +63,20 @@ module.exports = {
     },
   ],
 };
+
+// L4: scope console usage to warn in test + scripts only
+module.exports.overrides = [
+  ...(module.exports.overrides || []),
+  {
+    files: [
+      '**/__tests__/**',
+      '**/*.test.*',
+      '**/*.spec.*',
+      'scripts/**',
+      'tools/**'
+    ],
+    rules: {
+      'no-console': ['warn', { allow: ['warn', 'error', 'info'] }],
+    },
+  },
+];
