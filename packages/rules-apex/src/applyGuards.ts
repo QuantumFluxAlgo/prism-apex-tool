@@ -1,7 +1,7 @@
 import { getPhasePolicy } from './config.js';
 import { guardRR, computeRR } from './guards/rr.js';
 import { guardStop } from './guards/stop.js';
-import { guardSize, SizeContext } from './guards/size.js';
+import { guardSize } from './guards/size.js';
 import { Suggestion, Ticket, AccountPhase } from './types.js';
 
 export type GuardContext = {
