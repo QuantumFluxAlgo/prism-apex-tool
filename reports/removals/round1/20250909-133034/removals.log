@@ -1,0 +1,9 @@
+# Removals Round 1 — 20250909-133034
+## Deleted (1)
+- apps/api/src/__tests__._archived/accounts.spec.skip.ts
+
+## Skipped — referenced in code (0)
+- 
+
+## Skipped — mentioned in docs (0)
+- 
