@@ -2,7 +2,11 @@
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
     "outDir": "dist",
-    "rootDir": "src"
+    "rootDir": "src",
+    "types": ["vitest/globals"],
+    "resolveJsonModule": true,
+    "skipLibCheck": true,
+    "moduleResolution": "node"
   },
-  "include": ["src", "src/**/*.ts", "src/**/*.d.ts"]
+  "include": ["src", "src/**/*.d.ts", "src/**/*.ts", "types/**/*.d.ts"]
 }
