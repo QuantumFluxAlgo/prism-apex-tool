@@ -421,6 +421,8 @@ docker run --rm \
 # In another shell:
 curl http://localhost:3000/health
 curl http://localhost:3000/openapi.json | jq '.info.title, .paths | keys | length'
+curl http://localhost:3000/ready
+curl http://localhost:3000/version
 ```
 
 ## Unquarantine Phase 8C — Tickets (local-only)

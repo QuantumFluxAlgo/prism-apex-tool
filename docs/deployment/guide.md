@@ -9,8 +9,8 @@
 ## Docker
 
 ```bash
-docker-compose build
-docker-compose up -d
+docker compose build
+docker compose up -d
 ```
 
 ## GitHub Actions
