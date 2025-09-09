@@ -8,8 +8,10 @@
     "declarationMap": true,
     "allowImportingTsExtensions": false,
     "emitDeclarationOnly": false,
-    "types": ["node"],
-    "moduleResolution": "Bundler"
+    "types": ["node", "vitest/globals"],
+    "moduleResolution": "Bundler",
+    "resolveJsonModule": true,
+    "skipLibCheck": true
   },
-  "include": ["src"]
+  "include": ["src", "types/**/*.d.ts"]
 }
