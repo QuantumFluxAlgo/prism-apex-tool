@@ -1,44 +1,27 @@
-# Docker & Compose (Prod-like)
+# Docker — API-only quickstart
 
 ## Prereqs
+- Docker Desktop (Compose v2)
 
-- Docker Desktop or Docker Engine
-- (Optional) copy `.env.docker.example` to `.env` and fill in values
-
-## One command up
-
+## Run
 ```bash
-docker compose up --build
+docker compose up -d --build
+docker compose ps
+
+Verify
+curl -fsS http://localhost:3000/health
+curl -fsS http://localhost:3000/openapi.json | head -n 20
+curl -fsS http://localhost:3000/ready
+curl -fsS http://localhost:3000/version
+bash scripts/smoke-openapi.sh
+bash scripts/smoke-endpoints.sh
+bash scripts/smoke-api-docker.sh
 ```
 
-Dashboard: http://localhost:3000
+Notes:
 
-API: http://localhost:8000/health
+This compose is API-only. Public endpoints: /health, /ready, /openapi.json, /version.
 
-Data persistence:
+scripts/smoke-api.sh is dev-only (requires host Node/tsc). Prefer the Docker-only scripts above.
 
-API writes to /var/lib/prism-apex-tool inside the container
-
-Mounted to ./data on your host
-
-Common tasks
-
-Rebuild after code changes:
-
-```bash
-docker compose build --no-cache
-docker compose up
-```
-
-Stop & clean:
-
-```bash
-docker compose down
-```
-
-View logs:
-
-```bash
-docker compose logs -f api
-docker compose logs -f dashboard
-```
+For server deploys, docker-compose.prod.yml may map port 80 (via 80:${PORT:-8000}); local quickstart uses port 3000.
