@@ -1,3 +1,4 @@
+# API-only compose for local Docker runs.
 name: prism-apex-tool
 services:
   api:
@@ -13,12 +14,15 @@ services:
       BEARER_TOKEN: ""
     ports:
       - "3000:3000"
-    # IMPORTANT: do not bind-mount the repo; it would hide compiled files.
     volumes:
       - api-data:/data
-    # Let the Dockerfile's CMD run: ["node","apps/api/dist/index.js"]
     working_dir: /app
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3000/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+      start_period: 10s
+
 volumes:
   api-data:
-  pnpm-store:
-  node_modules:
