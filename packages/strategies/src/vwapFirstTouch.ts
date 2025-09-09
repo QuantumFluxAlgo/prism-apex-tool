@@ -1,3 +1,21 @@
+/* type-only: strategy IO contracts */
+interface Bar {
+  time: number;
+  open: number;
+  high: number;
+  low: number;
+  close: number;
+  volume: number;
+}
+interface Signal {
+  symbol: string;
+  side: ApexStrategyId extends never ? 'BUY' | 'SELL' : 'BUY' | 'SELL';
+  entry: number;
+  stop: number;
+  target: number;
+  rr?: number;
+}
+
 import { Candle, Suggestion } from './types.js';
 import { VwapSeries, AtrSeries, TickSpec } from './inputs.js';
 import { clamp, last, rMultiple, ticksBetween, pricePlusTicks } from './util.js';
