@@ -1,0 +1,210 @@
+
+> prism-apex-tool@0.1.0 lint /workspace/prism-apex-tool
+> eslint .
+
+
+/workspace/prism-apex-tool/apps/api/eslint.config.mjs
+  4:1  warning  'globals' should be listed in the project's dependencies. Run 'npm i -S globals' to add it  import/no-extraneous-dependencies
+
+/workspace/prism-apex-tool/apps/api/scripts/check-runtime.js
+  3:3  warning  Unexpected console statement  no-console
+  6:3  warning  Unexpected console statement  no-console
+  7:3  warning  Unexpected console statement  no-console
+
+/workspace/prism-apex-tool/apps/api/scripts/postbuild.mjs
+  35:3  warning  Unexpected console statement  no-console
+  37:3  warning  Unexpected console statement  no-console
+
+/workspace/prism-apex-tool/apps/api/scripts/seed.ts
+  100:3  warning  Unexpected console statement  no-console
+
+/workspace/prism-apex-tool/apps/api/src/index.ts
+  27:3  warning  Unexpected console statement  no-console
+
+/workspace/prism-apex-tool/apps/api/src/jobs/feed.ts
+  30:9  warning  'client' is assigned a value but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+
+/workspace/prism-apex-tool/apps/api/src/server.ts
+  14:8  warning  'openapiRoute' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+
+/workspace/prism-apex-tool/apps/api/src/store/tickets.ts
+  72:58  warning  'hash' is defined but never used. Allowed unused args must match /^_/u  @typescript-eslint/no-unused-vars
+  78:40  warning  'hash' is defined but never used. Allowed unused args must match /^_/u  @typescript-eslint/no-unused-vars
+
+/workspace/prism-apex-tool/apps/api/test/rules/engine.test.ts
+  1:1  warning  'vitest' should be listed in the project's dependencies, not devDependencies  import/no-extraneous-dependencies
+
+/workspace/prism-apex-tool/apps/dashboard/src/__tests__/App.test.tsx
+  1:1  warning  Unused eslint-disable directive (no problems were reported from 'simple-import-sort/imports')
+  4:1  warning  'vitest' should be listed in the project's dependencies. Run 'npm i -S vitest' to add it       import/no-extraneous-dependencies
+  6:1  warning  Unused eslint-disable directive (no problems were reported from 'import/no-unresolved')
+
+/workspace/prism-apex-tool/apps/dashboard/src/__tests__/Positions.test.tsx
+  3:1  warning  'vitest' should be listed in the project's dependencies. Run 'npm i -S vitest' to add it  import/no-extraneous-dependencies
+
+/workspace/prism-apex-tool/apps/dashboard/src/__tests__/Tickets.test.tsx
+  3:1  warning  'vitest' should be listed in the project's dependencies. Run 'npm i -S vitest' to add it  import/no-extraneous-dependencies
+
+/workspace/prism-apex-tool/apps/dashboard/src/lib/copy.ts
+  16:5  warning  Unexpected console statement  no-console
+
+/workspace/prism-apex-tool/apps/dashboard/src/main.tsx
+  1:1  warning  Unused eslint-disable directive (no problems were reported from 'simple-import-sort/imports')
+
+/workspace/prism-apex-tool/apps/dashboard/src/pages/Tickets.tsx
+  37:7  warning  Unexpected console statement  no-console
+
+/workspace/prism-apex-tool/apps/dashboard/vitest.config.ts
+  1:1  warning  Unused eslint-disable directive (no problems were reported from 'import/no-default-export')
+  2:1  warning  Unused eslint-disable directive (no problems were reported from 'import/no-unresolved')
+  3:1  warning  Unused eslint-disable directive (no problems were reported from 'simple-import-sort/imports')
+
+/workspace/prism-apex-tool/packages/accounts/src/cli.ts
+  18:3  warning  Unexpected console statement  no-console
+  43:9  warning  Unexpected console statement  no-console
+  57:9  warning  Unexpected console statement  no-console
+  70:9  warning  Unexpected console statement  no-console
+  78:9  warning  Unexpected console statement  no-console
+  86:5  warning  Unexpected console statement  no-console
+
+/workspace/prism-apex-tool/packages/accounts/src/index.js
+   2:1   warning  Unexpected var, use let or const instead  no-var
+   7:9   warning  Unexpected var, use let or const instead  no-var
+  22:1   warning  Unexpected var, use let or const instead  no-var
+  25:10  warning  Unexpected var, use let or const instead  no-var
+
+/workspace/prism-apex-tool/packages/accounts/src/registry.js
+  2:1  warning  Unexpected var, use let or const instead  no-var
+
+/workspace/prism-apex-tool/packages/accounts/tests/fs.test.ts
+  4:1  warning  'vitest' should be listed in the project's dependencies, not devDependencies  import/no-extraneous-dependencies
+
+/workspace/prism-apex-tool/packages/analytics/src/index.js
+   2:34  warning  'props' is assigned a value but never used. Allowed unused args must match /^_/u    @typescript-eslint/no-unused-vars
+   6:35  warning  'context' is assigned a value but never used. Allowed unused args must match /^_/u  @typescript-eslint/no-unused-vars
+  10:36  warning  'tags' is assigned a value but never used. Allowed unused args must match /^_/u     @typescript-eslint/no-unused-vars
+
+/workspace/prism-apex-tool/packages/analytics/src/index.ts
+   5:42  warning  'props' is assigned a value but never used. Allowed unused args must match /^_/u    @typescript-eslint/no-unused-vars
+  10:44  warning  'context' is assigned a value but never used. Allowed unused args must match /^_/u  @typescript-eslint/no-unused-vars
+  15:52  warning  'tags' is assigned a value but never used. Allowed unused args must match /^_/u     @typescript-eslint/no-unused-vars
+
+/workspace/prism-apex-tool/packages/audit/src/__tests__/readers.spec.ts
+  1:1  warning  'vitest' should be listed in the project's dependencies. Run 'npm i -S vitest' to add it  import/no-extraneous-dependencies
+
+/workspace/prism-apex-tool/packages/clients-tradovate/vitest.config.ts
+  1:1  warning  Unused eslint-disable directive (no problems were reported from 'import/no-default-export')
+  2:1  warning  Unused eslint-disable directive (no problems were reported from 'import/no-unresolved')
+
+/workspace/prism-apex-tool/packages/rules-apex/src/applyGuards.ts
+  4:21  warning  'SizeContext' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+
+/workspace/prism-apex-tool/packages/rules/__tests__/apex.guard.spec.ts
+  1:1  warning  'vitest' should be listed in the project's dependencies. Run 'npm i -S vitest' to add it  import/no-extraneous-dependencies
+
+/workspace/prism-apex-tool/packages/runtime/__tests__/heartbeat.spec.ts
+  1:1  warning  'vitest' should be listed in the project's dependencies. Run 'npm i -S vitest' to add it  import/no-extraneous-dependencies
+
+/workspace/prism-apex-tool/packages/runtime/__tests__/ws.resilience.spec.ts
+  1:1  warning  'vitest' should be listed in the project's dependencies. Run 'npm i -S vitest' to add it  import/no-extraneous-dependencies
+
+/workspace/prism-apex-tool/packages/sdk/src/index.spec.ts
+  1:1  warning  'vitest' should be listed in the project's dependencies. Run 'npm i -S vitest' to add it  import/no-extraneous-dependencies
+
+/workspace/prism-apex-tool/packages/sdk/src/index.ts
+  2:3  warning  'Bar' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+
+/workspace/prism-apex-tool/packages/signals/src/__tests__/core.spec.ts
+  1:1  warning  'vitest' should be listed in the project's dependencies. Run 'npm i -S vitest' to add it  import/no-extraneous-dependencies
+
+/workspace/prism-apex-tool/scripts/build-openapi.js
+   6:11  warning  Unexpected console statement  no-console
+  24:15  warning  Unexpected console statement  no-console
+  27:3   warning  Unexpected console statement  no-console
+
+/workspace/prism-apex-tool/scripts/config-check.js
+  70:5  warning  Unexpected console statement  no-console
+  82:5  warning  Unexpected console statement  no-console
+  85:3  warning  Unexpected console statement  no-console
+
+/workspace/prism-apex-tool/scripts/ensure-api-prodeps.mjs
+  53:3  warning  Unexpected console statement  no-console
+  57:3  warning  Unexpected console statement  no-console
+
+/workspace/prism-apex-tool/scripts/ensure-openapi-dep.mjs
+  14:1  warning  Unexpected console statement  no-console
+
+/workspace/prism-apex-tool/scripts/fix-api.mjs
+  106:30  error    Unnecessary escape character: \-                                     no-useless-escape
+  113:61  warning  'm' is defined but never used. Allowed unused args must match /^_/u  @typescript-eslint/no-unused-vars
+  143:3   warning  Unexpected console statement                                         no-console
+  147:3   warning  Unexpected console statement                                         no-console
+
+/workspace/prism-apex-tool/scripts/fix-exports-auto.mjs
+  37:9   warning  'js' is assigned a value but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+  74:5   warning  Unexpected console statement                                                   no-console
+  78:22  warning  Unexpected console statement                                                   no-console
+
+/workspace/prism-apex-tool/scripts/fix-feed-final.mjs
+  42:48  error    Unnecessary escape character: \[  no-useless-escape
+  82:3   warning  Unexpected console statement      no-console
+  84:3   warning  Unexpected console statement      no-console
+
+/workspace/prism-apex-tool/scripts/fix-feed-solid.mjs
+  42:48  error    Unnecessary escape character: \[  no-useless-escape
+  95:3   warning  Unexpected console statement      no-console
+  97:3   warning  Unexpected console statement      no-console
+
+/workspace/prism-apex-tool/scripts/fix-feed.mjs
+   6:3  warning  Unexpected console statement                     no-console
+  10:5  warning  'orig' is never reassigned. Use 'const' instead  prefer-const
+  71:3  warning  Unexpected console statement                     no-console
+  73:3  warning  Unexpected console statement                     no-console
+
+/workspace/prism-apex-tool/scripts/fix-jobs-guard.mjs
+   2:8   warning  'path' is defined but never used. Allowed unused vars must match /^_/u  @typescript-eslint/no-unused-vars
+   9:5   warning  Unexpected console statement                                            no-console
+  11:5   warning  Unexpected console statement                                            no-console
+  31:7   warning  Unexpected console statement                                            no-console
+  33:7   warning  Unexpected console statement                                            no-console
+  36:5   warning  Unexpected console statement                                            no-console
+  71:32  error    Unnecessary escape character: \-                                        no-useless-escape
+  98:1   warning  Unexpected console statement                                            no-console
+
+/workspace/prism-apex-tool/scripts/fix-package-exports.mjs
+  70:5  warning  Unexpected console statement  no-console
+  75:3  warning  Unexpected console statement  no-console
+
+/workspace/prism-apex-tool/scripts/fix-server-final.mjs
+  23:3  warning  Unexpected console statement  no-console
+  25:3  warning  Unexpected console statement  no-console
+
+/workspace/prism-apex-tool/scripts/fix-server.mjs
+   6:3   warning  Unexpected console statement                     no-console
+  11:5   warning  'orig' is never reassigned. Use 'const' instead  prefer-const
+  66:28  error    Unnecessary escape character: \-                 no-useless-escape
+  73:3   warning  Unexpected console statement                     no-console
+  75:3   warning  Unexpected console statement                     no-console
+
+/workspace/prism-apex-tool/scripts/repair-feed.mjs
+  24:48  error    Unnecessary escape character: \[  no-useless-escape
+  73:3   warning  Unexpected console statement      no-console
+  75:3   warning  Unexpected console statement      no-console
+
+/workspace/prism-apex-tool/scripts/repair-server.mjs
+  41:3  warning  Unexpected console statement  no-console
+  43:3  warning  Unexpected console statement  no-console
+
+/workspace/prism-apex-tool/scripts/verify-api.mjs
+   3:20  warning  Unexpected console statement  no-console
+  31:1   warning  Unexpected console statement  no-console
+
+/workspace/prism-apex-tool/scripts/verify-jobs-boot.mjs
+   8:3  warning  Unexpected console statement  no-console
+  12:3  warning  Unexpected console statement  no-console
+  15:1  warning  Unexpected console statement  no-console
+
+✖ 105 problems (6 errors, 99 warnings)
+  0 errors and 15 warnings potentially fixable with the `--fix` option.
+
+ ELIFECYCLE  Command failed with exit code 1.
