@@ -11,7 +11,6 @@ import { ingestRoutes } from './routes/ingest.js';
 import { alertsRoutes } from './routes/alerts.js';
 import { notifyRoutes } from './routes/notify.js';
 import { jobsRoutes } from './routes/jobs.js';
-import openapiRoute from './routes/openapi.js';
 import { compatRoutes } from './routes/compat.js';
 import healthRoute from './routes/health.js';
 import { versionRoutes } from './routes/version.js';

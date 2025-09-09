@@ -1,5 +1,4 @@
 import type {
-  Bar,
   OSBInput,
   VWAPInput,
   SuggestionResult,

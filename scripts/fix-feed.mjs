@@ -7,7 +7,7 @@ if (!fs.existsSync(p)) {
   process.exit(0);
 }
 let s = fs.readFileSync(p, 'utf8');
-let orig = s;
+const orig = s;
 
 // 1) Replace old import with getConfig (remove tvUrl, hasTradovateAuth, env)
 s = s.replace(
