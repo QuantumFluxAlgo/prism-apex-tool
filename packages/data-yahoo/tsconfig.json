@@ -6,7 +6,10 @@
     "moduleResolution": "Bundler",
     "outDir": "dist",
     "declaration": true,
-    "strict": true
+    "declarationMap": false,
+    "sourceMap": false,
+    "strict": true,
+    "rootDir": "."
   },
-  "include": ["src/**/*", "test/**/*", "scripts/**/*"]
+  "include": ["src/**/*", "test/**/*"]
 }
