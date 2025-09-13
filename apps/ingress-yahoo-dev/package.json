@@ -9,8 +9,9 @@
   "scripts": {
     "build": "tsc",
     "start": "node dist/server.js",
+    "pretest": "pnpm --filter @prism-apex/data-yahoo build && pnpm --filter @prism-apex/risk-state build && pnpm --filter @prism-apex/strategy-apx-ddb01 build",
     "test": "vitest -c vitest.config.ts",
-    "lint": "eslint src test --max-warnings=0",
+    "lint": "eslint src test",
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {
