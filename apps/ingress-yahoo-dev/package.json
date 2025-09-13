@@ -1,0 +1,27 @@
+{
+  "name": "@prism-apex/ingress-yahoo-dev",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "main": "dist/server.js",
+  "module": "dist/server.js",
+  "types": "dist/server.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/server.js",
+    "test": "vitest -c vitest.config.ts"
+  },
+  "dependencies": {
+    "@prism-apex/data-yahoo": "workspace:*",
+    "@prism-apex/risk-state": "workspace:*",
+    "@prism-apex/strategy-apx-ddb01": "workspace:*",
+    "express": "^4.19.2",
+    "morgan": "^1.10.0"
+  },
+  "devDependencies": {
+    "@types/express": "^4.17.21",
+    "supertest": "^7.0.0",
+    "typescript": "^5.4.0",
+    "vitest": "^1.6.0"
+  }
+}
