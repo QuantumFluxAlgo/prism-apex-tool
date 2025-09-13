@@ -1,0 +1,17 @@
+services:
+  ingress-yahoo:
+    build:
+      context: .
+      dockerfile: apps/ingress-yahoo-dev/Dockerfile
+    image: prism-apex:ingress-dev
+    container_name: prism-apex-ingress
+    env_file:
+      - .env.ingress
+    volumes:
+      - ./tickets:/app/tickets
+      - ./.cache:/app/.cache
+      - ./config:/app/config:ro
+    ports:
+      - "8080:8080"
+    restart: unless-stopped
+    command: ["pnpm","-C","apps/ingress-yahoo-dev","start"]
