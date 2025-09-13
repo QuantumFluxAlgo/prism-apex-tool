@@ -1,0 +1,15 @@
+services:
+  dashboard-lite:
+    build:
+      context: .
+      dockerfile: apps/dashboard-lite/Dockerfile
+    image: prism-apex:dashboard-lite
+    container_name: prism-apex-dashboard-lite
+    environment:
+      - DASHBOARD_LITE_PORT=5178
+      - APEX_TICKETS_DIR=/app/tickets
+    volumes:
+      - ./tickets:/app/tickets:ro
+    ports:
+      - "5178:5178"
+    restart: unless-stopped
