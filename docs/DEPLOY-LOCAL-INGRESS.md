@@ -56,3 +56,16 @@ docker compose -f docker-compose.ingress.yml down -v
 rm -rf tickets .cache .state
 
 
+
+## Reviewer Notes (scoped checks)
+
+Use package-scoped commands for this microservice:
+```bash
+pnpm --filter @prism-apex/ingress-yahoo-dev lint
+pnpm --filter @prism-apex/ingress-yahoo-dev typecheck
+pnpm --filter @prism-apex/ingress-yahoo-dev build
+pnpm --filter @prism-apex/ingress-yahoo-dev test
+```
+
+### Docker prerequisite
+Start Docker Desktop (or dockerd) **before** running `./scripts/smoke-ingress.sh`.
