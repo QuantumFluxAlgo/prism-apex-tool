@@ -1,0 +1,6 @@
+{
+  "MES": { "month": "Z5", "note": "Resolve levels from ES=F; operator verifies month in Tradovate" },
+  "MNQ": { "month": "Z5", "note": "Resolve from NQ=F; operator verifies" },
+  "GC":  { "month": "Z5", "note": "Resolve from GC=F; operator verifies" },
+  "CL":  { "month": "Z5", "note": "Resolve from CL=F; operator verifies" }
+}

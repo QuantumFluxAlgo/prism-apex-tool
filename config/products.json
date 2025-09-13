@@ -1,0 +1,9 @@
+{
+  "ES":  { "tickSize": 0.25, "tickValue": 12.5 },
+  "MES": { "tickSize": 0.25, "tickValue": 1.25 },
+  "NQ":  { "tickSize": 0.25, "tickValue": 5 },
+  "MNQ": { "tickSize": 0.25, "tickValue": 0.5 },
+  "GC":  { "tickSize": 0.10, "tickValue": 10 },
+  "MGC": { "tickSize": 0.10, "tickValue": 1 },
+  "CL":  { "tickSize": 0.01, "tickValue": 10 }
+}
