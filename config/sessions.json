@@ -1,0 +1,29 @@
+{
+  "tz": "America/Chicago",
+  "roots": {
+    "MES": {
+      "rth_start": "08:30:00",
+      "rth_end":   "15:00:00",
+      "no_new_after": "14:30:00",
+      "flat_by":      "15:00:00"
+    },
+    "MNQ": {
+      "rth_start": "08:30:00",
+      "rth_end":   "15:00:00",
+      "no_new_after": "14:30:00",
+      "flat_by":      "15:00:00"
+    },
+    "GC": {
+      "rth_start": "07:20:00",
+      "rth_end":   "12:30:00",
+      "no_new_after": "12:10:00",
+      "flat_by":      "12:30:00"
+    },
+    "CL": {
+      "rth_start": "08:00:00",
+      "rth_end":   "13:30:00",
+      "no_new_after": "13:10:00",
+      "flat_by":      "13:30:00"
+    }
+  }
+}
