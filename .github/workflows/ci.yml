@@ -47,6 +47,12 @@ jobs:
       - name: Tests (non-blocking)
         run: pnpm -r test || true
 
+      - name: Typecheck (API)
+        run: pnpm run typecheck:api || true
+
+      - name: Tests (API)
+        run: pnpm run test:api || true
+
       - name: Upload workspace diagnostics on failure
         if: failure()
         uses: actions/upload-artifact@v4
