@@ -7,5 +7,10 @@
     "skipLibCheck": true,
     "moduleResolution": "node"
   },
-  "include": ["__tests__", "src", "types/**/*.d.ts"]
+  "include": ["__tests__", "src", "types/**/*.d.ts"],
+  "references": [
+    {
+      "path": "../../tsconfig.paths.json"
+    }
+  ]
 }
