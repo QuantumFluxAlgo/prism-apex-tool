@@ -56,11 +56,25 @@ Tear down
 docker compose down -v
 ```
 
+Dashboard Lite smoke deploy
+
+Use the compose override to run the API and dashboard-lite together:
+
+```bash
+./scripts/smoke_deploy.sh
+# or manually:
+docker compose -f docker-compose.yml -f docker-compose.dashboard-lite.override.yml up -d
+# Dashboard Lite: http://localhost:5178
+# API: http://localhost:3000
+# tear down
+docker compose down
+```
+
 Notes / Gotchas
 
 API build uses tsup (CJS output). Dev continues to use tsx.
 
-Dashboard is static and served by nginx. nginx.conf should proxy /api/\* to http://api:8000 (container hostname).
+Dashboard is static and served by nginx. nginx.conf should proxy /api/* to http://api:8000 (container hostname).
 
 If you change ports, also update:
 
