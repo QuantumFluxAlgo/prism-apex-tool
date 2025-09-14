@@ -1,0 +1,8 @@
+{
+  "extends": "./tsconfig.build.json",
+  "compilerOptions": {
+    "types": ["vitest", "node"],
+    "noEmit": true
+  },
+  "include": ["src/**/*.{test,spec}.ts"]
+}
