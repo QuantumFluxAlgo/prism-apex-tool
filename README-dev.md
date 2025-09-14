@@ -1,5 +1,13 @@
 # Local Development & Production Parity
 
+## Preflight
+
+Check git, Node, pnpm, Docker, and API port:
+
+```bash
+bash scripts/preflight.sh
+```
+
 ## Dev (two terminals)
 
 - **API** (Terminal A):
