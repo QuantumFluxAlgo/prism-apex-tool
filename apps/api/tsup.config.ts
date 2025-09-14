@@ -1,17 +1,20 @@
 import { defineConfig } from 'tsup';
 
+/**
+ * If your API entry is not src/server.ts, change the "entry" below.
+ */
 export default defineConfig({
-  entry: ['src/index.ts'],
+  entry: ['src/server.ts'],
   outDir: 'dist',
-  format: ['cjs'],
-  target: 'node20',
-  sourcemap: true,
   clean: true,
+  sourcemap: true,
+  target: 'node20',
+  format: ['cjs'],
+  splitting: false,
+  treeshake: false,
   dts: false,
   minify: false,
-  splitting: false,
-  skipNodeModulesBundle: true,
-  env: {
-    NODE_ENV: 'production',
-  },
+  external: [
+    // Keep runtime deps external (installed in image), safer for dynamic imports.
+  ]
 });

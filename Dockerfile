@@ -39,4 +39,4 @@ HEALTHCHECK --interval=15s --timeout=3s --start-period=20s --retries=5 \
   CMD curl -fsS http://127.0.0.1:3000/health | grep -q '"ok":true' || exit 1
 
 # NOTE: if your compiled entrypoint differs, adjust the path below.
-CMD ["node","apps/api/dist/server.js"]
+CMD ["node","apps/api/dist/server.cjs"]
