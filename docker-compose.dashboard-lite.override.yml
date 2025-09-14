@@ -3,6 +3,8 @@ services:
     build:
       context: .
       dockerfile: apps/dashboard-lite/Dockerfile
+    depends_on:
+      - api
     image: prism-apex:dashboard-lite
     container_name: prism-apex-dashboard-lite
     environment:
