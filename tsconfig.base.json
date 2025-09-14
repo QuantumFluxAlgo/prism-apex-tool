@@ -1,79 +1,16 @@
 {
   "compilerOptions": {
+    "target": "ES2022",
     "module": "NodeNext",
     "moduleResolution": "NodeNext",
-    "target": "ES2022",
-    "baseUrl": ".",
-    "paths": {
-      "@prism-apex-tool/sdk": [
-        "packages/sdk/src"
-      ],
-      "@prism-apex-tool/analytics": [
-        "packages/analytics/src"
-      ],
-      "@prism-apex-tool/audit": [
-        "packages/audit/src"
-      ],
-      "@prism-apex-tool/reporting": [
-        "packages/reporting/src"
-      ],
-      "@prism-apex-tool/signals": [
-        "packages/signals/src"
-      ],
-      "@prism-apex-tool/rules-apex": [
-        "packages/rules-apex/src"
-      ],
-      "@prism-apex-tool/rules/*": [
-        "packages/rules/src/*"
-      ],
-      "@prism-apex-tool/accounts": [
-        "packages/accounts/src/index.ts"
-      ],
-      "@prism-apex-tool/config": [
-        "packages/config/src"
-      ],
-      "@prism-apex-tool/clients-tradovate": [
-        "packages/clients-tradovate/src"
-      ],
-      "@prism-apex-tool/clients-tradovate/telemetry": [
-        "packages/clients-tradovate/src/telemetry.ts"
-      ],
-      "@prism-apex-tool/indicators": [
-        "packages/indicators/src"
-      ],
-      "@prism-apex-tool/strategies": [
-        "packages/strategies/src"
-      ],
-      "@prism-apex-tool/consistency": [
-        "packages/consistency/src"
-      ],
-      "@prism-apex-tool/ticketizer": [
-        "packages/ticketizer/src"
-      ]
-    },
+    "lib": ["ES2022"],
+    "strict": true,
+    "skipLibCheck": true,
     "resolveJsonModule": true,
     "allowSyntheticDefaultImports": true,
     "esModuleInterop": true,
-    "skipLibCheck": true,
-    "strict": true,
-    "noImplicitAny": true,
+    "isolatedModules": false,
     "forceConsistentCasingInFileNames": true,
-    "jsx": "react-jsx",
-    "types": [
-      "node",
-      "vitest/globals"
-    ]
-  },
-  "include": [
-    "apps/*/src",
-    "packages/*/src",
-    "types/**/*.d.ts"
-  ],
-  "exclude": [
-    "apps/dashboard",
-    "apps/e2e",
-    "sdks",
-    "**/*.spec.ts",
-    "**/__tests__/**"
-  ]
+    "noEmit": false
+  }
 }

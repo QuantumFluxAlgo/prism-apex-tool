@@ -32,3 +32,8 @@ If Docker is not installed locally, compose builds will be skipped. Install Dock
 Absolute rule
 
 The codebase must never introduce broker order placement (tickets-only). CI enforces this at PR time.
+
+### API-focused commands
+- `pnpm build:api` — build only the API workspace and its deps  
+- `pnpm typecheck:api` — typecheck API scope  
+- `pnpm test:api` — run API tests only  
