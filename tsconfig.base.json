@@ -11,6 +11,12 @@
     "esModuleInterop": true,
     "isolatedModules": false,
     "forceConsistentCasingInFileNames": true,
-    "noEmit": false
+    "noEmit": false,
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["*"],
+      "@api/*": ["apps/api/src/*"],
+      "@pkg/*": ["packages/*/src"]
+    }
   }
 }

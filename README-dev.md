@@ -42,3 +42,8 @@ The codebase must never introduce broker order placement (tickets-only). CI enfo
 - Runtime artifact is **CommonJS**: `apps/api/dist/server.cjs` (bundled by **tsup**).
 - Typechecking remains via `tsc --noEmit` using `tsconfig.build.json`.
 - If your entry file is not `src/server.ts`, update `apps/api/tsup.config.ts`.
+
+### Path aliases
+- TS path aliases are defined in `tsconfig.base.json` (e.g. `@api/*` → `apps/api/src/*`).
+- Vitest honors these via `vite-tsconfig-paths` and `tsconfig-paths/register` (`apps/api/test.setup.ts`).
+- If you change folder layout, update the `paths` map accordingly.
