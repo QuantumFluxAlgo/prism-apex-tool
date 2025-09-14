@@ -14,7 +14,7 @@ pnpm -w -C apps/dashboard-lite --silent exec vite --config web/vite.config.ts
 
 Build & Run (Docker)
 docker build -t prism-apex:dashboard-lite -f apps/dashboard-lite/Dockerfile .
-docker compose -f docker-compose.dashboard-lite.yml up -d
+docker compose -f docker-compose.yml -f docker-compose.dashboard-lite.override.yml up -d
 # open http://localhost:5178
 
 API
