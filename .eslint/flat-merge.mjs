@@ -12,3 +12,7 @@ const base = Array.isArray(baseConfig) ? baseConfig : (baseConfig ? [baseConfig]
 // include dashboard-lite overrides
 import dl from '../.eslint-overrides/dashboard-lite.cjs';
 export default [...base, ...overrides, ...dl.overrides];
+
+// include dashboard-lite local app config
+import dl_app from '../apps/dashboard-lite/.eslint.app.cjs'
+export default [...base, ...cjs.overrides, ...(dl?.overrides||[]), ...(dl_app?.overrides||[])]
