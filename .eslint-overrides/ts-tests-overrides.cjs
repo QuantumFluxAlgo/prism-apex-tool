@@ -80,3 +80,12 @@ module.exports.overrides = [
     },
   },
 ];
+
+// dashboard-lite console scope
+module.exports.overrides = [
+  ...(module.exports.overrides || []),
+  {
+    files: ['apps/dashboard-lite/**/*.{ts,tsx,js,jsx}'],
+    rules: { 'no-console': ['warn', { allow: ['warn', 'error', 'info'] }] }
+  }
+];
