@@ -1,39 +1,42 @@
-# ---- Build stage ----
-FROM node:20-alpine AS builder
-WORKDIR /work
-ENV CI=1
-
-# Ensure pnpm 9.x so `pnpm deploy` is available
-RUN corepack enable && corepack prepare pnpm@9.11.0 --activate
-
-# Bring sources and build
-COPY . .
-RUN pnpm install
-RUN pnpm -r --if-present build
-
-# Create a runtime bundle that includes ONLY prod deps for apps/api
-RUN mkdir -p /runtime \
- && pnpm --filter "@prism-apex-tool/api" deploy /runtime --prod \
- && mkdir -p /runtime/apps/api/dist \
- && cp -r /work/apps/api/dist/* /runtime/apps/api/dist/
-RUN node /work/scripts/build-openapi.js || true
-
-# ---- Runtime stage ----
-FROM node:20-alpine AS runner
+# ==== build stage ====
+FROM node:20-alpine AS build
 WORKDIR /app
+ENV CI=1
+# Enable pnpm deterministically
+RUN corepack enable && corepack prepare pnpm@9.0.0 --activate
+# Copy lockfiles first for better caching
+COPY pnpm-workspace.yaml package.json pnpm-lock.yaml ./
+# Copy the rest of the monorepo
+COPY . .
+# Install deps and build all packages/apps
+RUN pnpm install --frozen-lockfile
+RUN pnpm -r build
+
+# ==== runtime stage for API ====
+FROM node:20-alpine AS api
+WORKDIR /app
+# Install curl for reliable healthchecks
+RUN apk add --no-cache curl
 ENV NODE_ENV=production \
     LOG_LEVEL=info \
-    TRUST_PROXY=true \
-    DATA_DIR=/data
-VOLUME ["/data"]
+    APEX_DATA_DIR=/data \
+    PORT=3000
+# Copy only what's needed at runtime
+COPY --from=build /app/apps/api /app/apps/api
+COPY --from=build /app/packages /app/packages
+COPY --from=build /app/configs /app/configs
+COPY --from=build /app/apex /app/apex
+# Install production deps (respect lockfile)
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+RUN corepack enable && corepack prepare pnpm@9.0.0 --activate \
+ && pnpm install --frozen-lockfile --prod
+
 EXPOSE 3000
+VOLUME ["/data"]
 
-# Copy the deployed runtime bundle
-COPY --from=builder /runtime/ .
+# Healthcheck: API should return {"ok":true} on /health
+HEALTHCHECK --interval=15s --timeout=3s --start-period=20s --retries=5 \
+  CMD curl -fsS http://127.0.0.1:3000/health | grep -q '"ok":true' || exit 1
 
-# Include non-NPM assets referenced by compiled code
-COPY --from=builder /work/apex /app/apex
-COPY --from=builder /work/configs /configs
-
-# Start the API
-CMD ["node","apps/api/dist/index.js"]
+# NOTE: if your compiled entrypoint differs, adjust the path below.
+CMD ["node","apps/api/dist/server.js"]
