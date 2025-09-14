@@ -1,28 +1,28 @@
-# API-only compose for local Docker runs.
-name: prism-apex-tool
 services:
   api:
     build:
       context: .
-      dockerfile: Dockerfile
-    image: prism-apex-tool-api:latest
+      target: api
+    image: prism-apex/api:local
+    container_name: prism-apex-api
+    ports:
+      - "3000:3000"
     environment:
       NODE_ENV: production
       LOG_LEVEL: info
-      TRUST_PROXY: "true"
-      DATA_DIR: /data
-      BEARER_TOKEN: ""
-    ports:
-      - "3000:3000"
+      APEX_DATA_DIR: /data
+      # Safe defaults; provide real values via env/.env if needed
+      TRADOVATE_BASE_URL: "http://localhost/disabled"
+      TRADINGVIEW_WEBHOOK_SECRET: ""
     volumes:
       - api-data:/data
-    working_dir: /app
     healthcheck:
-      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3000/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
-      interval: 10s
+      test: ["CMD-SHELL","curl -fsS http://127.0.0.1:3000/health | grep -q '\"ok\":true'"]
+      interval: 15s
       timeout: 3s
-      retries: 3
-      start_period: 10s
+      start_period: 20s
+      retries: 5
+    restart: unless-stopped
 
 volumes:
   api-data:
