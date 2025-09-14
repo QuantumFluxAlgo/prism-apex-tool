@@ -65,3 +65,6 @@ jobs:
             **/coverage/**
             **/dist/**
             **/*.tsbuildinfo
+
+      - name: Build (API)
+        run: pnpm run build:api || true
