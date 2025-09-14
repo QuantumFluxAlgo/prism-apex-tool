@@ -1,102 +1,34 @@
-# Local Development & Production Parity
 
-## Preflight
+Developer Guide
+Ports at a glance
 
-Check git, Node, pnpm, Docker, and API port:
+API (prod-like via compose): 3000
 
-```bash
-bash scripts/preflight.sh
-```
+Dashboard-Lite (compose): 5178
 
-## Dev (two terminals)
+Full Dashboard (compose): 8080
 
-- **API** (Terminal A):
-  ```bash
-  ./dev_api.sh
-  # http://localhost:8000/health -> {"ok":true}
-  ```
+API (dev script, if provided): 8000 (hot-reload)
 
-Dashboard (Terminal B):
+Dev workflow (hot reload, if scripts exist)
+./dev_api.sh              # API on :8000 (Fastify watch) — optional
+pnpm --filter @prism-apex*/dashboard-lite dev   # Vite dev UI on :5173 (if applicable)
 
-```bash
-./dev_dashboard.sh
-# http://localhost:3000
-```
+Prod-like workflow (Docker)
+docker compose up -d --build
+docker compose -f docker-compose.yml -f docker-compose.dashboard-lite.yml up -d --build
+docker compose -f docker-compose.yml -f docker-compose.dashboard-full.yml up -d --build
 
-Seed demo data (optional):
+Sanity checks
+curl -fsS http://localhost:3000/health
+curl -fsS http://localhost:3000/ready
 
-```bash
-./seed_demo.sh
-```
+Notes
 
-Production-like (Docker)
+This repo may contain pre-existing lint/typecheck/test failures; CI runs are non-blocking except for the no-order-API guard, which is hard-fail by design.
 
-Build and run both services locally like prod:
+If Docker is not installed locally, compose builds will be skipped. Install Docker to run containers.
 
-```bash
-docker compose build
-docker compose up
-```
+Absolute rule
 
-Dashboard: http://localhost:8080
-
-API: http://localhost:8000
-
-Data persists in api-data volume at /var/lib/prism-apex-tool inside the API container.
-
-Rebuild only one service
-
-```bash
-docker compose build api && docker compose up -d api
-docker compose build dashboard && docker compose up -d dashboard
-```
-
-Logs
-
-```bash
-docker compose logs -f api
-docker compose logs -f dashboard
-```
-
-Tear down
-
-```bash
-docker compose down -v
-```
-
-Dashboard Lite smoke deploy
-
-Use the compose override to run the API and dashboard-lite together:
-
-```bash
-./scripts/smoke_deploy.sh
-# or manually:
-docker compose -f docker-compose.yml -f docker-compose.dashboard-lite.override.yml up -d
-# Dashboard Lite: http://localhost:5178
-# API: http://localhost:3000
-# tear down
-docker compose down
-```
-
-Notes / Gotchas
-
-API build uses tsup (CJS output). Dev continues to use tsx.
-
-Dashboard is static and served by nginx. nginx.conf should proxy /api/* to http://api:8000 (container hostname).
-
-If you change ports, also update:
-
-Vite proxy (dev): apps/dashboard/vite.config.ts
-
-Compose port mappings (prod-like): docker-compose.yml
-
-If your UI references monorepo packages, ensure they’re copied in Docker build context (we already copy packages/).
-
-## Tests
-
-```bash
-pnpm -r build         # builds packages (emits .d.ts)
-pnpm --filter ./apps/api test
-```
-
-To run API tests locally, the `apps/api` package must list all internal `@prism-apex-tool/*` packages it imports under `dependencies` so pnpm links their builds in `node_modules`.
+The codebase must never introduce broker order placement (tickets-only). CI enforces this at PR time.
