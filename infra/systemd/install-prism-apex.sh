@@ -26,7 +26,7 @@ fi
 
 # 3) Build app
 cd "$REPO_DIR"
-sudo -u "$APP_USER" pnpm install
+sudo -u "$APP_USER" pnpm install --prefer-offline --frozen-lockfile
 sudo -u "$APP_USER" pnpm --filter ./apps/api build
 
 # 4) Seed env file if missing
