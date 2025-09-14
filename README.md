@@ -1,65 +1,52 @@
+# Prism-Apex Tool — Operator-Assisted Trading (Tickets Only)
 
-Prism-Apex Tool
+> **Non-negotiable:** This app **never places orders via API**. It only emits **tickets** (entry/stop/target) that a human operator copies into Tradovate as an OCO. Local, Docker-first.
 
-Hard rule: This project never places orders via API. It emits tickets only. A human operator enters OCO orders in Tradovate based on those tickets.
-
-Docker-only local workflow (no host Node/Python required).
-
-Public endpoints (read/health only):
-GET /health, GET /ready, GET /openapi.json, GET /version
-
-Quickstart (Docker)
-# from repo root
+## Quickstart (production-like, local)
+```bash
 docker compose up -d --build
+# API → http://localhost:3000
+# Health: curl -fsS http://localhost:3000/health   # expect {"ok":true}
+# Ready:  curl -fsS http://localhost:3000/ready
 
-# wait a few seconds, then:
-curl -fsS http://localhost:3000/health
-curl -fsS http://localhost:3000/ready
-curl -fsS http://localhost:3000/version
+Choose your UI
+
+Dashboard-Lite (recommended):
+
+docker compose -f docker-compose.yml -f docker-compose.dashboard-lite.yml up -d --build
+# UI → http://localhost:5178
 
 
-If both health and ready return OK, your local API is alive at http://localhost:3000.
+Full Dashboard (original/legacy):
 
-What it does
+docker compose -f docker-compose.yml -f docker-compose.dashboard-full.yml up -d --build
+# UI → http://localhost:8080
 
-Connects to Tradovate market data (live WS) for series (Bar/VWAP/ATR).
 
-Runs strategies:
+Run both: add both overrides to the compose command.
 
-VWAP First-Touch (packages/strategies/src/vwapFirstTouch.ts)
+Data & volumes
 
-Opening-Session Breakout (packages/strategies/src/osbBreakout.ts)
+API persists state under Docker volume api-data mounted at /data (e.g., /data/tickets/YYYY-MM-DD/*.json).
 
-Applies Apex guardrails & sizing; produces tickets.
+UIs mount the same volume read-only to display tickets.
 
-Operator copies ticket values into Tradovate as an OCO bracket (no API orders).
+Environment (safe defaults)
 
-Tickets stored per-day (JSONL) and exported as CSV.
+NODE_ENV=production, LOG_LEVEL=info, APEX_DATA_DIR=/data
 
-Key Docs
+TRADOVATE_BASE_URL=http://localhost/disabled (market-data OFF by default)
 
-Project overview: PROJECT.md
+Set secrets via your own .env/envs when needed; orders are never placed.
 
-Operator guide (copy format, OCO mapping, fanout, EOD): docs/operator-console.md
+What this is (and isn’t)
 
-Tickets (schema & CSV): docs/tickets.md
+✅ Signals/guardrails/tickets, operator copies into Tradovate
 
-ADR — operator-assisted only: docs/adr/ADR-2025-09-09-operator-assisted-architecture.md
+✅ Local/Docker only; reproducible builds
 
-Non-Negotiables
+❌ No automated order placement
 
-No API order placement, ever.
+❌ No emergency liquidation via API
 
-Live market data drives strategy logic.
-
-Incremental, copy-pasteable changes; Docker-only local workflow.
-
-Development (FYI)
-
-CI must pass: pnpm lint && pnpm typecheck && pnpm test
-
-Python checks (where applicable): ruff --fix && black --check && pytest -q
-
-Dead-code scan: pnpm run scan:dead
-
-Looking for how to operate the console? Read docs/operator-console.md.
+See README-dev.md for development workflow and docs/OPERATIONS.md for operator checklist.
