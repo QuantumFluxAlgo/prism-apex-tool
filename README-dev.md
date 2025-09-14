@@ -37,3 +37,8 @@ The codebase must never introduce broker order placement (tickets-only). CI enfo
 - `pnpm build:api` — build only the API workspace and its deps  
 - `pnpm typecheck:api` — typecheck API scope  
 - `pnpm test:api` — run API tests only  
+
+### API bundling
+- Runtime artifact is **CommonJS**: `apps/api/dist/server.cjs` (bundled by **tsup**).
+- Typechecking remains via `tsc --noEmit` using `tsconfig.build.json`.
+- If your entry file is not `src/server.ts`, update `apps/api/tsup.config.ts`.
