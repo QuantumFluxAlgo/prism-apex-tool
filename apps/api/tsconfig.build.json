@@ -5,16 +5,11 @@
     "rootDir": "./src",
     "declaration": false,
     "sourceMap": true,
-    "composite": false
+    "composite": false,
+    "module": "CommonJS",
+    "moduleResolution": "Node",
+    "types": ["node"]
   },
   "include": ["src/**/*"],
-  "exclude": [
-    "**/*.test.ts",
-    "**/*.spec.ts",
-    "node_modules",
-    "dist",
-    "src/__tests__._archived/**",
-    "src/tests/**",
-    "src/jobs/jobManagerTestHooks.ts"
-  ]
+  "exclude": ["**/*.test.ts", "**/*.spec.ts", "node_modules", "dist"]
 }
