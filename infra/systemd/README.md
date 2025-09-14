@@ -75,7 +75,7 @@ Updates / redeploy
 
 ```
 sudo -u prism -H bash -lc 'cd ~/prism-apex-tool && git fetch && git checkout Test && git pull'
-sudo -u prism -H bash -lc 'pnpm install && pnpm --filter ./apps/api build'
+sudo -u prism -H bash -lc 'pnpm install --prefer-offline --frozen-lockfile && pnpm --filter ./apps/api build'
 sudo systemctl restart prism-apex
 ```
 
