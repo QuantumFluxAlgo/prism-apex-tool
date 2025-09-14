@@ -8,4 +8,7 @@ const overridesMod = require('../.eslint-overrides/ts-tests-overrides.cjs');
 const overrides = Array.isArray(overridesMod?.overrides) ? overridesMod.overrides : [];
 
 const base = Array.isArray(baseConfig) ? baseConfig : (baseConfig ? [baseConfig] : []);
-export default [...base, ...overrides];
+
+// include dashboard-lite overrides
+import dl from '../.eslint-overrides/dashboard-lite.cjs';
+export default [...base, ...overrides, ...dl.overrides];
