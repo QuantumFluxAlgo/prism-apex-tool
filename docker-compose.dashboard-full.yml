@@ -1,0 +1,21 @@
+services:
+  dashboard-full:
+    build:
+      context: apps/dashboard
+    image: prism-apex/dashboard-full:local
+    container_name: prism-apex-dashboard-full
+    environment:
+      PORT: "8080"
+      APEX_TICKETS_DIR: "/data/tickets"
+      API_BASE_URL: "http://api:3000"
+    depends_on:
+      - api
+    ports:
+      - "8080:8080"
+    volumes:
+      - api-data:/data:ro
+    restart: unless-stopped
+
+volumes:
+  api-data:
+    external: false
