@@ -9,7 +9,7 @@
   "scripts": {
     "test:api": "vitest run --config apps/api/vitest.config.ts --reporter=verbose --passWithNoTests",
     "dev": "tsx watch src/index.ts",
-    "build": "tsc -p tsconfig.build.json",
+    "build": "tsup --config tsup.config.ts",
     "typecheck": "tsc -p tsconfig.build.json --noEmit",
     "start": "node dist/index.js",
     "test": "vitest run --reporter=verbose --passWithNoTests",
@@ -56,5 +56,5 @@
     "@asteasolutions/zod-to-openapi": "^7.1.0"
   },
   "type": "module",
-  "main": "dist/server.js"
+  "main": "dist/server.cjs"
 }
