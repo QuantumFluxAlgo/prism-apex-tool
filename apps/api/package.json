@@ -31,7 +31,7 @@
     "typescript-eslint": "^8.7.0",
     "prettier": "^3.3.3",
     "vite": "latest",
-    "vite-tsconfig-paths": "latest",
+    "vite-tsconfig-paths": "4.3.2",
     "tsconfig-paths": "latest"
   },
   "dependencies": {
