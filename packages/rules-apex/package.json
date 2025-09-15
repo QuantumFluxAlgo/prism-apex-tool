@@ -1,5 +1,5 @@
 {
-  "name": "@prism-apex-tool/rules-apex",
+  "name": "@prism-apex/rules-apex",
   "version": "0.1.0",
   "private": true,
   "type": "module",

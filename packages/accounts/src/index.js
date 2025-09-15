@@ -27,5 +27,5 @@ const __exportStar =
         __createBinding(exports, m, p);
   };
 Object.defineProperty(exports, '__esModule', { value: true });
-// Re-export the registry and types so consumers can `import { getAccounts } from '@prism-apex-tool/accounts'`
+// Re-export the registry and types so consumers can `import { getAccounts } from '@prism-apex/accounts'`
 __exportStar(require('./registry'), exports);

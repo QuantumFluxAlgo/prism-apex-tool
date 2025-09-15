@@ -3,7 +3,7 @@ import { z } from 'zod';
 import { applyGuardWithSizing } from '../lib/guard';
 import { store } from '../store';
 import { alertSchema } from '../schemas/alert';
-import type { TicketInput } from '@prism-apex-tool/rules-apex';
+import type { TicketInput } from '@prism-apex/rules-apex';
 
 const TicketInputSchema = z.object({
   symbol: z.string(),

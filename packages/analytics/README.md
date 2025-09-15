@@ -1,4 +1,4 @@
-# @prism-apex-tool/analytics (stub)
+# @prism-apex/analytics (stub)
 
 Temporary no-op analytics facade used to keep CI green.
 
