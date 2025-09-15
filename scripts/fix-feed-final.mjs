@@ -39,7 +39,7 @@ if (!/\bconst\s+cfg\s*=\s*getConfig\(\)/.test(s)) {
 
 // 4) Delete ALL hasAuth/clientEnv blocks; we’ll insert fresh ones (idempotent)
 s = s.replace(/^\s*const\s+hasAuth\s*=\s*Boolean\([\s\S]*?\)\s*;?\s*$/mg, '');
-s = s.replace(/^\s*const\s+clientEnv\s*[:\w\s<>\[\],]*=\s*\{\s*[\s\S]*?\}\s*;?\s*$/mg, '');
+s = s.replace(/^\s*const\s+clientEnv\s*[^=]*=\s*\{\s*[\s\S]*?\}\s*;?\s*$/mg, '');
 
 // 5) Insert fresh hasAuth + clientEnv immediately after cfg (once)
 s = s.replace(
