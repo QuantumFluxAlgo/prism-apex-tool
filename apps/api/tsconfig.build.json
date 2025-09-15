@@ -6,8 +6,8 @@
     "declaration": false,
     "sourceMap": true,
     "composite": false,
-    "module": "CommonJS",
-    "moduleResolution": "Node",
+    "module": "NodeNext",
+    "moduleResolution": "nodenext",
     "types": ["node"]
   },
   "include": ["src/**/*"],
