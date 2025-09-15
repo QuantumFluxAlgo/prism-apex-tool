@@ -8,10 +8,5 @@
     "resolveJsonModule": true,
     "skipLibCheck": true
   },
-  "include": ["__tests__", "src", "types/**/*.d.ts"],
-  "references": [
-    {
-      "path": "../../tsconfig.paths.json"
-    }
-  ]
+  "include": ["__tests__", "src", "types/**/*.d.ts"]
 }

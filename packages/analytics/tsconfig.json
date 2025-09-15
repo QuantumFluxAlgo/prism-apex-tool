@@ -8,10 +8,5 @@
     "skipLibCheck": true,
     "moduleResolution": "node"
   },
-  "include": ["src", "src/**/*.d.ts", "src/**/*.ts", "types/**/*.d.ts"],
-  "references": [
-    {
-      "path": "../../tsconfig.paths.json"
-    }
-  ]
+  "include": ["src", "src/**/*.d.ts", "src/**/*.ts", "types/**/*.d.ts"]
 }

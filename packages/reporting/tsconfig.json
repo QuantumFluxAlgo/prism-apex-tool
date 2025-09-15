@@ -10,10 +10,5 @@
     "skipLibCheck": true,
     "moduleResolution": "node"
   },
-  "include": ["src", "types/**/*.d.ts", "vitest.config.ts"],
-  "references": [
-    {
-      "path": "../../tsconfig.paths.json"
-    }
-  ]
+  "include": ["src", "types/**/*.d.ts", "vitest.config.ts"]
 }

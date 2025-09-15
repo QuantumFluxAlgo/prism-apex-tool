@@ -1,4 +1,5 @@
 {
+  "extends": "./tsconfig.paths.json",
   "compilerOptions": {
     "target": "ES2022",
     "module": "NodeNext",
@@ -11,12 +12,6 @@
     "esModuleInterop": true,
     "isolatedModules": false,
     "forceConsistentCasingInFileNames": true,
-    "noEmit": false,
-    "baseUrl": ".",
-    "paths": {
-      "@/*": ["*"],
-      "@api/*": ["apps/api/src/*"],
-      "@pkg/*": ["packages/*/src"]
-    }
+    "noEmit": false
   }
 }
