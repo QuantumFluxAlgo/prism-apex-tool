@@ -41,9 +41,14 @@
       "@prism-apex/ticketizer": ["packages/ticketizer/src"],
       "@prism-apex/ticketizer/*": ["packages/ticketizer/src/*"],
 
+      "@prism-apex/app-api": ["apps/api/src"],
       "@prism-apex/app-api/*": ["apps/api/src/*"],
+      "@prism-apex/app-dashboard": ["apps/dashboard/src"],
       "@prism-apex/app-dashboard/*": ["apps/dashboard/src/*"],
-      "@prism-apex/app-dashboard-lite/*": ["apps/dashboard-lite/src/*"]
+      "@prism-apex/app-dashboard-lite": ["apps/dashboard-lite/src"],
+      "@prism-apex/app-dashboard-lite/*": ["apps/dashboard-lite/src/*"],
+      "@prism-apex/ingress-yahoo-dev": ["apps/ingress-yahoo-dev/src"],
+      "@prism-apex/ingress-yahoo-dev/*": ["apps/ingress-yahoo-dev/src/*"]
     }
   }
 }
