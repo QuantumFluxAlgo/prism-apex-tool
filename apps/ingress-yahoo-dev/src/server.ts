@@ -25,16 +25,22 @@ const DISABLE_NEWS = (process.env.APEX_NEWS_BLACKOUT || '')
   .map((s) => s.trim())
   .filter(Boolean);
 
-// Static configs
-const products = safeJson('config/products.json');
-const sessions = safeJson('config/sessions.json');
-const rollmap = safeJson('config/roll.json');
+type ProductConfig = Record<string, { tickSize?: number; tickValue?: number }>;
+interface SessionConfig {
+  roots?: Record<string, { flat_by?: string }>;
+}
+type RollMapConfig = Record<string, { month?: string }>;
 
-function safeJson(p: string): any {
+// Static configs
+const products = safeJson<ProductConfig>('config/products.json');
+const sessions = safeJson<SessionConfig>('config/sessions.json');
+const rollmap = safeJson<RollMapConfig>('config/roll.json');
+
+function safeJson<T>(p: string): T {
   try {
-    return JSON.parse(readFileSync(p, 'utf8'));
+    return JSON.parse(readFileSync(p, 'utf8')) as T;
   } catch {
-    return {};
+    return {} as T;
   }
 }
 
