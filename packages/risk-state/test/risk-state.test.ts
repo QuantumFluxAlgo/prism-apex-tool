@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { existsSync, rmSync } from 'node:fs';
-import { getState, resetIfNewDay, canAfford, addRisk } from '../src/index';
+import { getState, resetIfNewDay, canAfford, addRisk } from '../src/index.js';
 
 const FILE = '.state/daily-risk.json';
 

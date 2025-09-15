@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { validateAccountsConfig } from '../src/schema';
+import { validateAccountsConfig } from '../src/schema.js';
 
 describe('accounts schema', () => {
   it('accepts a valid config', () => {
