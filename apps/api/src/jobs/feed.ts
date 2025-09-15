@@ -27,7 +27,7 @@ export async function factory(_ctx: Ctx) {
   // Construct absolute login URL from BASE_URL
 
   // The clients-tradovate lib likely accepts config; pass absolute url + creds
-  const client = await createTradovateDemoClient(clientEnv as any);
+  const _client = await createTradovateDemoClient(clientEnv as any);
 
   return {
     async start() {

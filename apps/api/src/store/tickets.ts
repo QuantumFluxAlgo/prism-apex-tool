@@ -69,13 +69,13 @@ export function listTickets(
   nextCursor?: number;
 } {
   const day = days.get(date) ?? [];
-  const slice = day.slice(cursor, cursor + limit).map(({ hash, ...t }) => t);
+  const slice = day.slice(cursor, cursor + limit).map(({ hash: _hash, ...t }) => t);
   const nextCursor = cursor + limit < day.length ? cursor + limit : undefined;
   return { items: slice, nextCursor };
 }
 
 export function exportTickets(date: string): Ticket[] {
-  return (days.get(date) ?? []).map(({ hash, ...t }) => t);
+  return (days.get(date) ?? []).map(({ hash: _hash, ...t }) => t);
 }
 
 export function getRecentTicketSizes(accountId: string, n = 10): number[] {
