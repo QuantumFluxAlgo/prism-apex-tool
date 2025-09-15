@@ -11,10 +11,5 @@
     "skipLibCheck": true,
     "resolveJsonModule": true
   },
-  "include": ["src/**/*"],
-  "references": [
-    {
-      "path": "../../tsconfig.paths.json"
-    }
-  ]
+  "include": ["src/**/*"]
 }
