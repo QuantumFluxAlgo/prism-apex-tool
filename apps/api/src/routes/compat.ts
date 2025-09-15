@@ -1,5 +1,5 @@
 import type { FastifyInstance } from 'fastify';
-import { store } from '../store';
+import { store } from '../store.js';
 import { z } from 'zod';
 import { randomUUID } from 'node:crypto';
 

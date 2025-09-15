@@ -1,4 +1,4 @@
-import type { JobFn } from './scheduler';
+import type { JobFn } from './scheduler.js';
 import { jobManager } from '../lib/jobManager.js';
 
 let lastRun: number | undefined;

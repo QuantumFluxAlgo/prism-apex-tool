@@ -1,6 +1,6 @@
 import { FastifyPluginAsync } from 'fastify';
-import { store } from '../store';
-import { recipientsSchema } from '../schemas/recipients';
+import { store } from '../store.js';
+import { recipientsSchema } from '../schemas/recipients.js';
 
 export const notifyRoutes: FastifyPluginAsync = async (app) => {
   app.post('/notify/recipients', async (req, reply) => {

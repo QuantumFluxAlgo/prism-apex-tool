@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach } from 'vitest';
 import { setJobBeat } from '@prism-apex/runtime';
 import { buildServer } from '../server.js';
 import { _clear, saveTicket } from '../store/tickets.js';
-import { withJobs } from './helpers/jobs';
+import { withJobs } from './helpers/jobs.js';
 
 withJobs();
 

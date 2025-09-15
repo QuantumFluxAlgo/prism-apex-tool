@@ -1,4 +1,4 @@
-import { jobManager } from '../lib/jobManager';
+import { jobManager } from '../lib/jobManager.js';
 
 export class JobManager {
   private static inst = jobManager;

@@ -1,11 +1,11 @@
-import { getConfig } from '../config/env';
+import { getConfig } from '../config/env.js';
 import {
   evaluateTicket,
   withinSuppressionWindow,
   TicketInput,
   suggestPercent,
 } from '@prism-apex/rules-apex';
-import { Accounts } from './accounts';
+import { Accounts } from './accounts.js';
 
 export type GuardSizing = {
   allowed?: number;
