@@ -3,7 +3,7 @@ import morgan from 'morgan';
 import { appendFileSync, existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { barsFile, appendJSONL } from '@prism-apex/data-yahoo';
-import { initAVWAP, stepAVWAP, valueAVWAP } from '@prism-apex/data-yahoo';
+import { stepAVWAP, valueAVWAP } from '@prism-apex/data-yahoo';
 import { planLongOnlyRetest } from '@prism-apex/strategy-apx-ddb01';
 import { canAfford, addRisk, resetIfNewDay } from '@prism-apex/risk-state';
 

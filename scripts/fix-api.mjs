@@ -103,7 +103,7 @@ async function patchServer(){
 
   // Remove any prior injected guard blobs / stray line
   s = s.replace(/\/\/\s*---\s*jobs guard[\s\S]*?(?=^\S|$)/gm, '');
-  s = s.replace(/^[ \t]*app\.\-zshRoute\);\r?\n?/m, '');
+  s = s.replace(/^[ \t]*app.-zshRoute\);\r?\n?/m, '');
 
   // 6) switch any dynamic app.register(import('./jobs/boot.js')) to static jobsBoot
   s = s.replace(/app\.register\(\s*import\('\.\/jobs\/boot\.js'\)\s*\)\s*;?/g, '');

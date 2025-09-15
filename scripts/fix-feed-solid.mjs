@@ -39,7 +39,7 @@ s = s.replace(/^\s*const\s+loginUrl\s*=\s*tvUrl\([^)]*\)\s*;\s*$/mg, '');
 //    b) remove ALL 'const hasAuth = ...' lines (we'll insert a clean one)
 s = s.replace(/^\s*const\s+hasAuth\s*=\s*.*;\s*$/mg, '');
 //    c) remove ALL 'const clientEnv ... = { ... }' blocks (we'll insert a clean one)
-s = s.replace(/^\s*const\s+clientEnv\s*[:\w\s<>\[\],]*=\s*\{\s*[\s\S]*?\}\s*;\s*$/mg, '');
+s = s.replace(/^\s*const\s+clientEnv\s*[^=]*=\s*\{\s*[\s\S]*?\}\s*;\s*$/mg, '');
 
 // 4) Ensure there is one cfg declaration. If missing, insert just after imports.
 if (!/\bconst\s+cfg\s*=\s*getConfig\(\)/.test(s)) {

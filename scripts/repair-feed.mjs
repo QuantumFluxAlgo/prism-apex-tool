@@ -21,7 +21,7 @@ s = s.replace(/^\s*const\s+loginUrl\s*=\s*tvUrl\([^)]*\)\s*;\s*$/m, '');
 // (3) Drop any duplicate cfg/hasAuth/clientEnv so we can reinsert cleanly
 s = s.replace(/^\s*const\s+cfg\s*=\s*getConfig\(\)\s*;\s*$/mg, '');
 s = s.replace(/^\s*const\s+hasAuth\s*=\s*.*;\s*$/mg, '');
-s = s.replace(/^\s*const\s+clientEnv\s*[:\w\s<>\[\],]*=\s*\{\s*[\s\S]*?\}\s*;\s*$/mg, '');
+s = s.replace(/^\s*const\s+clientEnv\s*[^=]*=\s*\{\s*[\s\S]*?\}\s*;\s*$/mg, '');
 
 // (4) Ensure exactly one cfg after imports
 if (!/\bconst\s+cfg\s*=\s*getConfig\(\)/.test(s)) {
