@@ -1,5 +1,3 @@
-import React from 'react';
-
 type Props = { netLiq: number | null; ddLine: number | null };
 
 export function EquityDrawdownGauge({ netLiq, ddLine }: Props) {

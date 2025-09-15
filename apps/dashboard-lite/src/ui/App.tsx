@@ -1,5 +1,3 @@
-import React from 'react'
-
 export function App() {
   return (
     <div style={{ fontFamily: 'Inter, system-ui, Arial', padding: 16 }}>
