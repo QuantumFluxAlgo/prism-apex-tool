@@ -119,7 +119,6 @@ describe('cap by plan & minQty', () => {
 
 describe('error isolation', () => {
   it('continues after broker error', async () => {
-    const accounts = mockAccounts as AccountRecord[];
     guard.mockReset();
     guard.mockReturnValue({ allow: true, ticket: { qty: 2 } });
     const placeOrder = vi
