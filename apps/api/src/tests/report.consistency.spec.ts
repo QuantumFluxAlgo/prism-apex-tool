@@ -1,9 +1,17 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
+import { jobManager, resetJobsForTests } from '../jobs/jobManager.js';
 
 let buildServer: typeof import('../server.js').buildServer;
 
 beforeEach(async () => {
+  jobManager.resetForTests();
+  resetJobsForTests();
   ({ buildServer } = await import('../server.js'));
+});
+
+afterEach(() => {
+  resetJobsForTests();
+  jobManager.resetForTests();
 });
 
 describe('report consistency API', () => {
