@@ -9,10 +9,5 @@
     "baseUrl": "./web/src",
     "paths": {}
   },
-  "include": ["web/src/**/*", "web/test/**/*"],
-  "references": [
-    {
-      "path": "../../tsconfig.paths.json"
-    }
-  ]
+  "include": ["web/src/**/*", "web/test/**/*"]
 }
