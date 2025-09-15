@@ -3,7 +3,8 @@ import { jobManager } from '../lib/jobManager.js';
 import { applyGuardWithSizing } from '@prism-apex/rules-apex';
 import { loadRegistry } from '@prism-apex/config';
 import { getConfig } from '../config/env.js';
-import type { Ticket } from '../schemas/ticket.js';
+import { TICKET_STRATEGIES } from '../schemas/ticket.js';
+import type { Ticket, TicketStrategy } from '../schemas/ticket.js';
 import { saveTicket, getRecentTicketSizes } from '../store/tickets.js';
 import { getAccount as getTelemetryAccount } from '../store/telemetry.js';
 
@@ -21,6 +22,12 @@ function buildConsistencyNotes(phase: 'eval' | 'funded'): string {
   return notes;
 }
 
+const makeStrategyCounter = (): Record<TicketStrategy, number> =>
+  Object.fromEntries(TICKET_STRATEGIES.map((strategy) => [strategy, 0])) as Record<
+    TicketStrategy,
+    number
+  >;
+
 export type Suggestion = {
   symbol: string; // root symbol
   contract: string; // full contract
@@ -30,15 +37,15 @@ export type Suggestion = {
   target: number;
   qty?: number;
   timestampUtc: string;
-  meta: { strategy: 'VWAP_FT' | 'OSB' };
+  meta: { strategy: TicketStrategy };
 };
 
 export const ticketizer = {
   running: false,
   lastSuggestionTs: '',
   lastAcceptedTs: '',
-  accepted: { VWAP_FT: 0, OSB: 0 },
-  rejected: { VWAP_FT: 0, OSB: 0 },
+  accepted: makeStrategyCounter(),
+  rejected: makeStrategyCounter(),
 };
 
 let unsub: (() => void) | null = null;
