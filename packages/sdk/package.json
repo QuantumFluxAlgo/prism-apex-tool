@@ -1,5 +1,5 @@
 {
-  "name": "@prism-apex-tool/sdk",
+  "name": "@prism-apex/sdk",
   "version": "0.1.0",
   "private": true,
   "type": "module",

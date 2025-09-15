@@ -1,5 +1,5 @@
 import { FastifyInstance, FastifyPluginCallback } from 'fastify';
-import { computeConsistency, loadDailyPnLFromDisk } from '@prism-apex-tool/metrics/consistency';
+import { computeConsistency, loadDailyPnLFromDisk } from '@prism-apex/metrics/consistency';
 
 const plugin: FastifyPluginCallback = (app: FastifyInstance, _opts, done) => {
   app.get('/report/consistency', async (req, reply) => {

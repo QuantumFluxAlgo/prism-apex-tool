@@ -1,7 +1,7 @@
 import { subscribe, publish } from '../lib/bus.js';
 import { jobManager } from '../lib/jobManager.js';
-import { applyGuardWithSizing } from '@prism-apex-tool/rules-apex';
-import { loadRegistry } from '@prism-apex-tool/config';
+import { applyGuardWithSizing } from '@prism-apex/rules-apex';
+import { loadRegistry } from '@prism-apex/config';
 import { getConfig } from '../config/env.js';
 import type { Ticket } from '../schemas/ticket.js';
 import { saveTicket, getRecentTicketSizes } from '../store/tickets.js';

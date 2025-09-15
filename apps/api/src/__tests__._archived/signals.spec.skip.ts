@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import type { Bar } from '@prism-apex-tool/signals';
+import type { Bar } from '@prism-apex/signals';
 
 let buildServer: typeof import('../server.js').buildServer;
 

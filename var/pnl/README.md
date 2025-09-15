@@ -28,11 +28,11 @@ Keep the window query between 1..15 (clamped in code).
 ====================
 RUN / VERIFY
 
-pnpm --filter @prism-apex-tool/metrics typecheck
+pnpm --filter @prism-apex/metrics typecheck
 
-pnpm --filter @prism-apex-tool/metrics test
+pnpm --filter @prism-apex/metrics test
 
-pnpm --filter @prism-apex-tool/api test
+pnpm --filter @prism-apex/api test
 
 (Optional) create var/pnl/daily.json and curl:
 curl -s "http://localhost:3000/report/consistency?window=8

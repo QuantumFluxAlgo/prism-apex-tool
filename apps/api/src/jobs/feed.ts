@@ -1,6 +1,6 @@
 import type { FastifyBaseLogger } from 'fastify';
 import { getConfig } from '../config/env.js';
-import { createTradovateDemoClient } from '@prism-apex-tool/clients-tradovate';
+import { createTradovateDemoClient } from '@prism-apex/clients-tradovate';
 
 const cfg = getConfig();
 

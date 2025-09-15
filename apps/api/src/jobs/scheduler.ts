@@ -1,4 +1,4 @@
-import { setJobBeat } from '@prism-apex-tool/runtime';
+import { setJobBeat } from '@prism-apex/runtime';
 export type JobFn = () => Promise<void> | void;
 
 export type JobMeta = {

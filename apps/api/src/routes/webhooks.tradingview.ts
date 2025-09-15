@@ -2,7 +2,7 @@ import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
 import { getConfig } from '../config/env';
 import { applyGuardWithSizing } from '../lib/guard';
-import type { TicketInput } from '@prism-apex-tool/rules-apex';
+import type { TicketInput } from '@prism-apex/rules-apex';
 import { store } from '../store';
 import { alertSchema } from '../schemas/alert';
 import type { ParseResult } from '../types';

@@ -4,7 +4,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import * as fanoutMod from '../src/fanout.js';
 
 // If fanoutAndPlace uses getAccounts() internally, we’ll stub it:
-import * as accounts from '@prism-apex-tool/accounts';
+import * as accounts from '@prism-apex/accounts';
 
 // Types (align with your code if names differ)
 type AccountMode = 'eval' | 'funded';
