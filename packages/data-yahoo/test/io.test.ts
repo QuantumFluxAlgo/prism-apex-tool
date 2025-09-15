@@ -1,12 +1,12 @@
 import { describe, it, expect } from 'vitest';
 import { barsFile, appendJSONL } from '../src/io.js';
 import { existsSync, mkdtempSync, readFileSync, rmSync } from 'node:fs';
-import { tmpdir } from 'node:os';
 import { join, dirname } from 'node:path';
+import { fileURLToPath } from 'node:url';
 
 describe('file I/O helpers', () => {
   it('builds a sanitized bars file path and ensures directory', () => {
-    const base = mkdtempSync(join(tmpdir(), 'bars-'));
+    const base = mkdtempSync(join(dirname(fileURLToPath(import.meta.url)), 'bars-'));
     const file = barsFile(base, 'BRK.B', '2024-01-01');
     expect(file).toContain('BRK_B');
     expect(file.endsWith('2024-01-01.jsonl')).toBe(true);
@@ -15,7 +15,7 @@ describe('file I/O helpers', () => {
   });
 
   it('appends objects as JSON lines', () => {
-    const base = mkdtempSync(join(tmpdir(), 'bars-'));
+    const base = mkdtempSync(join(dirname(fileURLToPath(import.meta.url)), 'bars-'));
     const file = join(base, 'sample.jsonl');
     appendJSONL(file, { a: 1 });
     appendJSONL(file, { b: 2 });
