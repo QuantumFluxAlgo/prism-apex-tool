@@ -68,7 +68,7 @@ await (async () => {
     t = t.replace(/\/\/\s*---\s*jobs guard \(auto-injected\)[\s\S]*?(?=^\S|$\n?)/gm, '');
 
     // Remove the stray broken line if present
-    t = t.replace(/^[ \t]*app\.\-zshRoute\);\r?\n?/m, '');
+    t = t.replace(/^[ \t]*app.-zshRoute\);\r?\n?/m, '');
 
     // Idempotently append the onReady guard if missing
     if (!/app\.addHook\(\s*'onReady'/.test(t)) {
