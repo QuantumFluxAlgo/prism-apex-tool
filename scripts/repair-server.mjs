@@ -38,7 +38,7 @@ if (regMatches.length === 0) {
 
 if (s !== orig) {
   fs.writeFileSync(p, s, 'utf8');
-  console.log('repair-server: cleaned and normalized server.ts');
+  console.info('repair-server: cleaned and normalized server.ts');
 } else {
-  console.log('repair-server: no changes needed');
+  console.info('repair-server: no changes needed');
 }

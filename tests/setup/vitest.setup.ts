@@ -6,6 +6,7 @@
  * - Reduce console noise (keep warn/error)
  */
 
+// eslint-disable-next-line import/no-extraneous-dependencies
 import { beforeAll, beforeEach, afterEach, vi } from 'vitest';
 
 beforeAll(() => {
@@ -21,6 +22,7 @@ beforeAll(() => {
   for (const k of ['log','info','debug','trace'] as const) {
     if (!(k in console)) continue;
     // @ts-expect-error intentional override for tests
+      // eslint-disable-next-line no-console
     console[k] = (...args: unknown[]) => {
       if (allow.has(k)) return (console as any)[k](...args);
       // swallow noise

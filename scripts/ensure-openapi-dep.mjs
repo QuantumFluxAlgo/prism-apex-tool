@@ -11,4 +11,4 @@ if (!pkg.dependencies['@asteasolutions/zod-to-openapi']) {
   pkg.dependencies['@asteasolutions/zod-to-openapi'] = '^6.0.0';
 }
 await fs.writeFile(p, JSON.stringify(pkg,null,2) + '\n');
-console.log('ensured @asteasolutions/zod-to-openapi in dependencies');
+console.info('ensured @asteasolutions/zod-to-openapi in dependencies');

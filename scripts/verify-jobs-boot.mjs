@@ -12,4 +12,4 @@ if (regCount !== 1) {
   console.error(`verify: expected exactly one app.register(jobsBoot); found ${regCount}`);
   process.exit(1);
 }
-console.log('verify: jobsBoot import/registration OK');
+console.info('verify: jobsBoot import/registration OK');

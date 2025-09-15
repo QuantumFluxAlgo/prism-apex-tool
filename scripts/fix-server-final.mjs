@@ -20,7 +20,7 @@ s = s.replace(/(\breturn\s+app;\s*\}\s*\n)\s*\}\);\s*\n?/g, '$1');
 
 if (s !== orig) {
   fs.writeFileSync(p, s, 'utf8');
-  console.log('fix-server-final: server.ts cleaned');
+  console.info('fix-server-final: server.ts cleaned');
 } else {
-  console.log('fix-server-final: no changes needed');
+  console.info('fix-server-final: no changes needed');
 }

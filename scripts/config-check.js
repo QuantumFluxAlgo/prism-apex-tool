@@ -67,7 +67,7 @@ function validateStrategyConfig(obj, strategyFile){
   if (fs.existsSync(accPath)) {
     validateAccountsConfig(readJson(accPath));
   } else {
-    console.log('INFO: configs/accounts.json not found (skip)');
+    console.info('INFO: configs/accounts.json not found (skip)');
   }
 
   // Strategies
@@ -79,8 +79,8 @@ function validateStrategyConfig(obj, strategyFile){
       validateStrategyConfig(readJson(p), `configs/strategies/${f}`);
     }
   } else {
-    console.log('INFO: configs/strategies/ not found (skip)');
+    console.info('INFO: configs/strategies/ not found (skip)');
   }
 
-  console.log('All configs valid');
+  console.info('All configs valid');
 })();
