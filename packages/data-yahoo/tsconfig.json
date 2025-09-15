@@ -11,10 +11,5 @@
     "strict": true,
     "rootDir": "."
   },
-  "include": ["src/**/*", "test/**/*"],
-  "references": [
-    {
-      "path": "../../tsconfig.paths.json"
-    }
-  ]
+  "include": ["src/**/*", "test/**/*"]
 }
