@@ -15,4 +15,11 @@ describe('weekly anchored VWAP', () => {
     const v = valueAVWAP(s);
     expect(Number.isFinite(v)).toBe(false);
   });
+
+  it('ignores non-positive volume', () => {
+    let s = initAVWAP('2025-09-08T13:30:00Z');
+    s = stepAVWAP(s, 10, 8, 9, -100);
+    const v = valueAVWAP(s);
+    expect(Number.isFinite(v)).toBe(false);
+  });
 });
