@@ -7,7 +7,7 @@
     "lint": "eslint -c .eslint/flat-merge.mjs .",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "typecheck": "pnpm run typecheck:api",
+    "typecheck": "pnpm --filter \"./packages/**\" typecheck",
     "test": "pnpm run test:api",
     "test:watch": "vitest",
     "test:api": "pnpm -r --filter @prism-apex/api test",
