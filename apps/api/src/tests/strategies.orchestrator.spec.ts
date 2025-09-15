@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import fs from 'fs';
-import { dirname, join } from 'node:path';
+import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { publish, subscribe } from '../lib/bus.js';
 import {
@@ -72,11 +72,12 @@ vi.mock('@prism-apex/strategies', () => ({
   },
 }));
 
-const __dirname = dirname(fileURLToPath(import.meta.url));
+
+const fixturesDir = fileURLToPath(new URL('../../fixtures', import.meta.url));
 
 function loadCsv(name: string): BarMessage[] {
   const lines = fs
-    .readFileSync(join(__dirname, '../../fixtures', name), 'utf8')
+    .readFileSync(join(fixturesDir, name), 'utf8')
     .trim()
     .split(/\n/)
     .slice(1);
