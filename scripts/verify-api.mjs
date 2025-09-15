@@ -28,4 +28,4 @@ if (!hasClientEnv) bad('feed.ts missing const clientEnv = …');
 if (badImports) bad('feed.ts still imports tvUrl/hasTradovateAuth/env from config');
 if (dupCfg || dupHasAuth || dupClientEnv) bad('feed.ts has duplicate cfg/hasAuth/clientEnv');
 
-console.log('VERIFY OK');
+console.info('VERIFY OK');

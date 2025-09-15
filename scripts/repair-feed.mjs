@@ -70,7 +70,7 @@ s = s.replace(/\n{3,}/g, '\n\n');
 
 if (s !== orig) {
   fs.writeFileSync(p, s, 'utf8');
-  console.log('repair-feed: updated jobs/feed.ts');
+  console.info('repair-feed: updated jobs/feed.ts');
 } else {
-  console.log('repair-feed: no changes needed');
+  console.info('repair-feed: no changes needed');
 }

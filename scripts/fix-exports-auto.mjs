@@ -34,7 +34,6 @@ async function fixRootExport(dir, pkgJson) {
 
 async function fixSubpath(dir, pkgJson, sub, fname) {
   const cjs = path.join(dir, 'dist', `${fname}.cjs`);
-  const js  = path.join(dir, 'dist', `${fname}.js`);
   const requirePath = (await fileExists(cjs)) ? `./dist/${fname}.cjs` : `./dist/${fname}.js`;
   const typesPath   = `./dist/${fname}.d.ts`;
   const importPath  = `./dist/${fname}.js`;
@@ -71,7 +70,7 @@ async function run() {
     }
 
     await writeJson(pj, pkg);
-    console.log('fixed', pkg.name);
+    console.info('fixed', pkg.name);
   }
 }
 
