@@ -5,7 +5,8 @@
     "declaration": true,
     "declarationMap": false,
     "sourceMap": false,
-    "rootDir": "."
+    "rootDir": ".",
+    "esModuleInterop": true
   },
   "include": ["src/**/*", "test/**/*"]
 }
