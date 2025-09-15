@@ -2,7 +2,14 @@
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
     "outDir": "dist",
-    "rootDir": "../..",
+    "rootDir": "src",
+    "baseUrl": ".",
+    "paths": {
+      "@prism-apex/accounts": ["types/@prism-apex/accounts/index.d.ts"],
+      "@prism-apex/accounts/*": ["types/@prism-apex/accounts/*"],
+      "@prism-apex/rules/apex.js": ["types/@prism-apex/rules/apex.d.ts"],
+      "@prism-apex/rules/*": ["types/@prism-apex/rules/*"]
+    },
     "declaration": true,
     "declarationMap": true,
     "allowImportingTsExtensions": false,
