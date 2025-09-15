@@ -1,4 +1,4 @@
-import { loadAccounts, type AccountsFile, type AccountRecord } from '@prism-apex-tool/accounts';
+import { loadAccounts, type AccountsFile, type AccountRecord } from '@prism-apex/accounts';
 import { existsSync, mkdirSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 

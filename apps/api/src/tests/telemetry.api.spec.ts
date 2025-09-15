@@ -1,6 +1,6 @@
 import { describe, it, expect, vi } from 'vitest';
 import { withJobs } from './helpers/jobs';
-import { setJobBeat } from '@prism-apex-tool/runtime';
+import { setJobBeat } from '@prism-apex/runtime';
 
 process.env.ENABLE_TELEMETRY = 'true';
 withJobs();
@@ -22,7 +22,7 @@ const sampleSnapshot = {
   bufferCleared: false,
 };
 
-vi.mock('@prism-apex-tool/clients-tradovate/telemetry', () => ({
+vi.mock('@prism-apex/clients-tradovate/telemetry', () => ({
   createTelemetryClient: () => ({
     start(cb: any) {
       cb(sampleSnapshot);

@@ -18,7 +18,7 @@ const scanImports = async (dir) => {
         await walk(p);
       } else if (/\.(ts|js|mts|cts)$/.test(e.name)) {
         const text = await fs.readFile(p, 'utf8');
-        const re = /@prism-apex-tool\/[a-z0-9-]+(?:\/[a-z0-9-]+)?/gi;
+        const re = /@prism-apex\/[a-z0-9-]+(?:\/[a-z0-9-]+)?/gi;
         let m;
         while ((m = re.exec(text))) {
           // only the package root goes into dependencies

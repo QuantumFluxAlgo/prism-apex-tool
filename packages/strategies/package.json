@@ -1,5 +1,5 @@
 {
-  "name": "@prism-apex-tool/strategies",
+  "name": "@prism-apex/strategies",
   "version": "0.1.0",
   "private": true,
   "type": "module",

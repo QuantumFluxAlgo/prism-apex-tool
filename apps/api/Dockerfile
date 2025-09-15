@@ -50,7 +50,7 @@ RUN node -e "\
 # Produce a clean runtime (only prod deps for the API)
 # pnpm deploy syntax: pnpm --filter "<pkg>" deploy <target_dir> --prod
 RUN mkdir -p /app/runtime && \
-    pnpm --filter "@prism-apex-tool/api" deploy /app/runtime --prod
+    pnpm --filter "@prism-apex/api" deploy /app/runtime --prod
 
 # Bring compiled API output & runtime data into the runtime tree
 RUN mkdir -p /app/runtime/apps/api/dist /app/runtime/apex && \
