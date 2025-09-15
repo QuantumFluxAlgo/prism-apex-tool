@@ -1,12 +1,12 @@
 import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
-import { getConfig } from '../config/env';
-import { applyGuardWithSizing } from '../lib/guard';
+import { getConfig } from '../config/env.js';
+import { applyGuardWithSizing } from '../lib/guard.js';
 import type { TicketInput } from '@prism-apex/rules-apex';
-import { store } from '../store';
-import { alertSchema } from '../schemas/alert';
-import type { ParseResult } from '../types';
-import { ctEqual } from '../lib/ctEqual';
+import { store } from '../store.js';
+import { alertSchema } from '../schemas/alert.js';
+import type { ParseResult } from '../types.js';
+import { ctEqual } from '../lib/ctEqual.js';
 
 export function normalizeSymbol(sym: string): string {
   return sym.replace(/\d+!$/, '');

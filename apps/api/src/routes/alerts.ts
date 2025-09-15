@@ -1,5 +1,5 @@
 import type { FastifyInstance } from 'fastify';
-import { store } from '../store';
+import { store } from '../store.js';
 import { z } from 'zod';
 
 export async function alertsRoutes(app: FastifyInstance) {

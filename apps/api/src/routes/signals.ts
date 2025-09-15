@@ -1,7 +1,7 @@
 import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
 import { osbSuggest, vwapFirstTouchSuggest, type Bar } from '@prism-apex/signals';
-import { applyGuardrails } from '../lib/guard';
+import { applyGuardrails } from '../lib/guard.js';
 
 export async function signalRoutes(app: FastifyInstance) {
   const BarSchema = z.object({

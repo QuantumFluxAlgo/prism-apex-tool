@@ -26,7 +26,7 @@ import jobsBoot from './jobs/boot.js';
 const cfg = getConfig();
 
 import { telemetryRoutes } from './routes/telemetry.js';
-import openapi from './routes/openapi';
+import openapi from './routes/openapi.js';
 import { jobManager } from './lib/jobManager.js';
 
 import { registerStrategiesJob } from './jobs/strategies.js';
@@ -34,10 +34,10 @@ import { registerTicketizerJob } from './jobs/ticketizer.js';
 import { registerTelemetryJob } from './jobs/telemetry.js';
 import { registerEodFlatJob } from './jobs/eodFlat.js';
 
-import { registerJob, startJobs, stopJobs } from './jobs/scheduler';
-import { jobMissingBrackets } from './jobs/missingBrackets';
-import { jobDailyLoss } from './jobs/dailyLoss';
-import { jobConsistency } from './jobs/consistency';
+import { registerJob, startJobs, stopJobs } from './jobs/scheduler.js';
+import { jobMissingBrackets } from './jobs/missingBrackets.js';
+import { jobDailyLoss } from './jobs/dailyLoss.js';
+import { jobConsistency } from './jobs/consistency.js';
 
 const DISABLE = process.env.DISABLE_JOBS === '1' || process.env.NODE_ENV === 'test';
 

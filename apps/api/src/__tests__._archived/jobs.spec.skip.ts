@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { buildServer } from '../server';
+import { buildServer } from '../server.js';
 import { startJobs } from '../jobs/scheduler.js';
-import { store } from '../store';
+import { store } from '../store.js';
 
 describe('job scheduler', () => {
   let app: ReturnType<typeof buildServer>;

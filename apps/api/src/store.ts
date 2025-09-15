@@ -1,7 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import crypto from 'node:crypto';
-import type { Ticket as StoreTicket, ParseResult } from './types';
+import type { Ticket as StoreTicket, ParseResult } from './types.js';
 export type { Ticket } from './store/tickets.js';
 export type TicketType = import('./store/tickets.js').Ticket;
 
