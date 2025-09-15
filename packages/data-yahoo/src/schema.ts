@@ -13,5 +13,5 @@ export const barSchema = {
   additionalProperties: false,
 } as const;
 
-const ajv = new Ajv.default({ allErrors: true, removeAdditional: true });
+const ajv = new Ajv({ allErrors: true, removeAdditional: true });
 export const validateBar = ajv.compile(barSchema);
