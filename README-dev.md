@@ -12,7 +12,7 @@ API (dev script, if provided): 8000 (hot-reload)
 
 Dev workflow (hot reload, if scripts exist)
 ./dev_api.sh              # API on :8000 (Fastify watch) — optional
-pnpm --filter @prism-apex*/dashboard-lite dev   # Vite dev UI on :5173 (if applicable)
+pnpm --filter @prism-apex/dashboard-lite dev   # Vite dev UI on :5173 (if applicable)
 
 Prod-like workflow (Docker)
 docker compose up -d --build
