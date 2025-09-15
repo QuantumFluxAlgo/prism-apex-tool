@@ -1,8 +1,8 @@
 import { FastifyPluginAsync } from 'fastify';
 import { z } from 'zod';
-import { applyGuardWithSizing } from '../lib/guard';
-import { store } from '../store';
-import { alertSchema } from '../schemas/alert';
+import { applyGuardWithSizing } from '../lib/guard.js';
+import { store } from '../store.js';
+import { alertSchema } from '../schemas/alert.js';
 import type { TicketInput } from '@prism-apex/rules-apex';
 
 const TicketInputSchema = z.object({

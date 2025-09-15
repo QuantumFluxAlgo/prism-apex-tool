@@ -1,6 +1,6 @@
 import { FastifyPluginAsync } from 'fastify';
-import { checkCompliance } from '../services/rules/engine';
-import { accountStateSchema } from '../schemas/accountState';
+import { checkCompliance } from '../services/rules/engine.js';
+import { accountStateSchema } from '../schemas/accountState.js';
 
 export const rulesRoutes: FastifyPluginAsync = async (app) => {
   app.post('/rules/check', async (req, reply) => {

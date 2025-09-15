@@ -1,5 +1,5 @@
-import type { JobFn } from './scheduler';
-import { store } from '../store';
+import type { JobFn } from './scheduler.js';
+import { store } from '../store.js';
 
 export const jobConsistency: JobFn = () => {
   const rc = store.getRiskContext();

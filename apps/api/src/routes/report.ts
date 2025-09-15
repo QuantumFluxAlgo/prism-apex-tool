@@ -1,6 +1,6 @@
 import { FastifyPluginAsync } from 'fastify';
 import { z } from 'zod';
-import { store } from '../store';
+import { store } from '../store.js';
 
 export const reportRoutes: FastifyPluginAsync = async (app) => {
   app.get('/report/daily', async (req, reply) => {

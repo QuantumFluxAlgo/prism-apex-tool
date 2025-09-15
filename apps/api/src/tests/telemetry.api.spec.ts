@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
-import { withJobs } from './helpers/jobs';
+import { withJobs } from './helpers/jobs.js';
 import { setJobBeat } from '@prism-apex/runtime';
 
 process.env.ENABLE_TELEMETRY = 'true';
