@@ -1,2 +1,2 @@
-export * from './apex';
-export * from './config';
+export * from './apex.js';
+export * from './config.js';

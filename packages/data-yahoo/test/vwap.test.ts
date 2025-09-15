@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { initAVWAP, stepAVWAP, valueAVWAP } from '../src/vwap';
+import { initAVWAP, stepAVWAP, valueAVWAP } from '../src/vwap.js';
 
 describe('weekly anchored VWAP', () => {
   it('accumulates over positive volume bars', () => {

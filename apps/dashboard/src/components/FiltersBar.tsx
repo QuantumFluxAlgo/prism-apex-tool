@@ -1,4 +1,4 @@
-import { SYMBOLS, STRATEGIES } from '../constants';
+import { SYMBOLS, STRATEGIES } from '../constants.js';
 
 interface Props {
   date: string;

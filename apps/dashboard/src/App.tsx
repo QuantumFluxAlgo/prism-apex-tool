@@ -1,10 +1,10 @@
 import { BrowserRouter, Routes, Route, Navigate, Link } from 'react-router-dom';
-import TicketsPage from './pages/Tickets';
-import PositionsPage from './pages/Positions';
-import { AlertsPanel } from './components/AlertsPanel';
-import { AccountStatus } from './components/AccountStatus';
-import { ReportsView } from './components/ReportsView';
-import { SystemStatus } from './components/SystemStatus';
+import TicketsPage from './pages/Tickets.js';
+import PositionsPage from './pages/Positions.js';
+import { AlertsPanel } from './components/AlertsPanel.js';
+import { AccountStatus } from './components/AccountStatus.js';
+import { ReportsView } from './components/ReportsView.js';
+import { SystemStatus } from './components/SystemStatus.js';
 
 export default function App() {
   return (

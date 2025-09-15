@@ -1,5 +1,5 @@
 import React from 'react';
-import type { ComplianceSnapshot } from '../lib/api';
+import type { ComplianceSnapshot } from '../lib/api.js';
 
 export function ComplianceStrip({ data }: { data: ComplianceSnapshot | null }) {
   const Badge = ({ ok, label }: { ok: boolean; label: string }) => (

@@ -14,7 +14,7 @@ Codify Apex Trader Funding rules into machine-enforceable checks.
 ## Example
 
 ```ts
-import { checkCompliance, AccountState } from '../../apps/api/src/services/rules/engine';
+import { checkCompliance, AccountState } from '../../apps/api/src/services/rules/engine.js';
 
 const state: AccountState = {
   phase: 'evaluation',
