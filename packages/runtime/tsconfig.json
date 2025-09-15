@@ -2,10 +2,12 @@
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
     "outDir": "dist",
+    "declaration": true,
+    "declarationMap": true,
     "types": ["vitest/globals"],
     "resolveJsonModule": true,
     "skipLibCheck": true,
-    "moduleResolution": "node"
+    "moduleResolution": "nodenext"
   },
-  "include": ["__tests__", "src", "types/**/*.d.ts"]
+  "include": ["src", "types/**/*.d.ts"]
 }
