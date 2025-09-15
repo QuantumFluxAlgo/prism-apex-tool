@@ -34,9 +34,9 @@ Absolute rule
 The codebase must never introduce broker order placement (tickets-only). CI enforces this at PR time.
 
 ### API-focused commands
-- `pnpm build:api` — build only the API workspace and its deps  
-- `pnpm typecheck:api` — typecheck API scope  
-- `pnpm test:api` — run API tests only  
+- `pnpm build:api` — build only the API workspace and its deps
+- `pnpm typecheck:api` — typecheck API scope
+- `pnpm test:api` — run API tests only
 
 ### API bundling
 - Runtime artifact is **CommonJS**: `apps/api/dist/server.cjs` (bundled by **tsup**).
@@ -44,6 +44,7 @@ The codebase must never introduce broker order placement (tickets-only). CI enfo
 - If your entry file is not `src/server.ts`, update `apps/api/tsup.config.ts`.
 
 ### Path aliases
-- TS path aliases are defined in `tsconfig.base.json` (e.g. `@api/*` → `apps/api/src/*`).
-- Vitest honors these via `vite-tsconfig-paths` and `tsconfig-paths/register` (`apps/api/test.setup.ts`).
+- TS path aliases are maintained in `tsconfig.paths.json`, which is extended by `tsconfig.base.json`.
+  Example: `@prism-apex/app-api/*` → `apps/api/src/*`.
+- Vitest uses `vite-tsconfig-paths` and `tsconfig-paths/register` to resolve these aliases (`apps/api/test.setup.ts`).
 - If you change folder layout, update the `paths` map accordingly.
