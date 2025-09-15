@@ -6,7 +6,7 @@
     "declaration": true,
     "declarationMap": true,
     "emitDeclarationOnly": false,
-    "types": ["vitest/globals"]
+    "types": ["vitest/globals", "../../types/global"]
   },
   "include": ["src", "types/**/*.d.ts"]
 }
