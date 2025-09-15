@@ -1,10 +1,42 @@
 import { TradovateClientError } from './types.js';
 
+export interface TradovateQuotePayload {
+  fullSymbol: string;
+  ts?: number | string;
+  last?: number | string;
+  bid?: number | string;
+  ask?: number | string;
+  volume?: number | string;
+  [key: string]: unknown;
+}
+
+export interface TradovateSubscriptionAck {
+  type: 'subscription' | 'unsubscription' | 'subscriptionStatus';
+  success?: boolean;
+  symbol?: string;
+  requestId?: number;
+  [key: string]: unknown;
+}
+
+export interface TradovateErrorPayload {
+  type: 'error';
+  code?: number | string;
+  message?: string;
+  [key: string]: unknown;
+}
+
+export type TradovateStructuredMessage =
+  | TradovateQuotePayload
+  | TradovateSubscriptionAck
+  | TradovateErrorPayload;
+
+export type TradovateMessage = string | ArrayBufferLike | TradovateStructuredMessage;
+
 interface WsLike {
   onopen: (() => void) | null;
   onclose: (() => void) | null;
-  onmessage: ((ev: { data: any }) => void) | null;
-  send(data: any): void;
+  onmessage: ((ev: { data: TradovateMessage }) => void) | null;
+  send(data: string | ArrayBufferLike): void;
   close(): void;
 }
 
@@ -12,7 +44,7 @@ export interface WSConfig {
   url: string;
   token: string;
   WebSocketCtor?: new (url: string) => WsLike;
-  onMessage?: (data: any) => void;
+  onMessage?: (data: TradovateMessage) => void;
 }
 
 export class MarketDataWS {
