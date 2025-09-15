@@ -1,5 +1,5 @@
 import { describe, expect, it, vi, beforeEach, afterEach } from 'vitest';
-import { setJobBeat, __resetHealth } from '@prism-apex-tool/runtime';
+import { setJobBeat, __resetHealth } from '@prism-apex/runtime';
 import { buildServer } from '../server.js';
 
 describe('/ready', () => {

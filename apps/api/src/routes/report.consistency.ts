@@ -1,6 +1,6 @@
 import type { FastifyPluginAsync } from 'fastify';
 import { z } from 'zod';
-import { computeConsistency } from '@prism-apex-tool/consistency';
+import { computeConsistency } from '@prism-apex/consistency';
 import { createMockPnlProvider } from '../services/consistency/mockProvider.js';
 import { createTelemetryPnlProvider } from '../services/consistency/provider.telemetry.js';
 

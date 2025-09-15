@@ -1,5 +1,5 @@
 {
-  "name": "@prism-apex-tool/accounts",
+  "name": "@prism-apex/accounts",
   "version": "0.1.0",
   "private": true,
   "type": "commonjs",

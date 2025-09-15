@@ -1,4 +1,4 @@
-declare module '@prism-apex-tool/reporting' {
+declare module '@prism-apex/reporting' {
   export interface DailyTicketRow {
     when: string;
     symbol: string;

@@ -1,6 +1,6 @@
-import { getAccounts } from '@prism-apex-tool/accounts';
-import type { AccountRecord } from '@prism-apex-tool/accounts';
-import { guardApexFundingRules } from '@prism-apex-tool/rules/apex.js';
+import { getAccounts } from '@prism-apex/accounts';
+import type { AccountRecord } from '@prism-apex/accounts';
+import { guardApexFundingRules } from '@prism-apex/rules/apex.js';
 
 export interface TicketIntent {
   symbol: string;

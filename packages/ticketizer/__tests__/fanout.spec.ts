@@ -24,9 +24,9 @@ const mockAccounts = vi.hoisted(() => [
     baseSize: 2,
   },
 ]);
-vi.mock('@prism-apex-tool/accounts', () => ({ getAccounts: () => mockAccounts }));
+vi.mock('@prism-apex/accounts', () => ({ getAccounts: () => mockAccounts }));
 const guard = vi.hoisted(() => vi.fn());
-vi.mock('@prism-apex-tool/rules/apex.js', () => ({ guardApexFundingRules: guard }));
+vi.mock('@prism-apex/rules/apex.js', () => ({ guardApexFundingRules: guard }));
 
 interface AccountRecord {
   name: string;

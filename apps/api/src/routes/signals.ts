@@ -1,6 +1,6 @@
 import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
-import { osbSuggest, vwapFirstTouchSuggest, type Bar } from '@prism-apex-tool/signals';
+import { osbSuggest, vwapFirstTouchSuggest, type Bar } from '@prism-apex/signals';
 import { applyGuardrails } from '../lib/guard';
 
 export async function signalRoutes(app: FastifyInstance) {

@@ -1,4 +1,4 @@
-declare module '@prism-apex-tool/runtime' {
+declare module '@prism-apex/runtime' {
   export function setJobBeat(jobName: string, nowTs?: number): void;
   export function getHealth(nowTs?: number): {
     jobs: Record<string, { lastBeatIso: string; healthy: boolean }>;
