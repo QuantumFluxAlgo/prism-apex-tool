@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { validateStrategyConfig } from '../src/config/schema';
+import { validateStrategyConfig } from '../src/config/schema.js';
 
 describe('strategy schema (generic)', () => {
   it('accepts numeric params and time fields', () => {

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Market, type Position, type Order } from '../lib/api';
+import { Market, type Position, type Order } from '../lib/api.js';
 
 export function PositionsOrders() {
   const [positions, setPositions] = useState<Position[]>([]);

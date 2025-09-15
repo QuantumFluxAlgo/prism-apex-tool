@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import Fastify from 'fastify';
-import readyRoute from '../src/routes/ready';
+import readyRoute from '../src/routes/ready.js';
 import { setJobBeat } from '@prism-apex/runtime/health';
 
 describe('GET /ready', () => {

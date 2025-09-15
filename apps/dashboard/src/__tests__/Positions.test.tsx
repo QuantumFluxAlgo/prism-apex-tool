@@ -1,7 +1,7 @@
 import '@testing-library/jest-dom';
 import { render, screen } from '@testing-library/react';
 import { describe, it, expect, vi } from 'vitest';
-import PositionsPage from '../pages/Positions';
+import PositionsPage from '../pages/Positions.js';
 
 const positions = [{ contract: 'ESZ4', symbolRoot: 'ES', qty: 1, avgPrice: 100, unrealizedPnL: 2 }];
 

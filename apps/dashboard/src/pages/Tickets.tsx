@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
-import { FiltersBar } from '../components/FiltersBar';
-import { TicketsTable, Ticket } from '../components/TicketsTable';
-import { api } from '../lib/api';
+import { FiltersBar } from '../components/FiltersBar.js';
+import { TicketsTable, Ticket } from '../components/TicketsTable.js';
+import { api } from '../lib/api.js';
 
 export default function TicketsPage() {
   const today = new Date().toISOString().slice(0, 10);

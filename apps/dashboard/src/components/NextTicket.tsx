@@ -1,5 +1,5 @@
 import React from 'react';
-import type { Ticket } from '../lib/api';
+import type { Ticket } from '../lib/api.js';
 
 function toText(t: Ticket) {
   return `${t.symbol} ${t.contract} ${t.side} x${t.qty} @ ${t.order.entry} | SL ${t.order.stop} | TP ${t.order.targets.join(', ')} | TIF ${t.order.tif}`;
