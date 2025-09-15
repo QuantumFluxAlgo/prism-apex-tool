@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { barsFile, appendJSONL } from '../src/io';
+import { barsFile, appendJSONL } from '../src/io.js';
 import { existsSync, mkdtempSync, readFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, dirname } from 'node:path';

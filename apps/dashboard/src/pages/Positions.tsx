@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
-import PositionsTable from '../components/PositionsTable';
-import { fetchPositions, fetchAccount } from '../lib/telemetry';
+import PositionsTable from '../components/PositionsTable.js';
+import { fetchPositions, fetchAccount } from '../lib/telemetry.js';
 
 export default function PositionsPage() {
   const accountId = 'A1';

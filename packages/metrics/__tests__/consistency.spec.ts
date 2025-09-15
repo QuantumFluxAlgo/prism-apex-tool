@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { computeConsistency, type DailyPnL } from '../src/consistency';
+import { computeConsistency, type DailyPnL } from '../src/consistency.js';
 
 describe('computeConsistency', () => {
   it('eligible when total>0, >=5 profit days, bestDayShare<=0.30', () => {
