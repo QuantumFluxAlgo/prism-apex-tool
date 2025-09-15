@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { planLongOnlyRetest } from '../src/selector';
+import { planLongOnlyRetest } from '../src/selector.js';
 
 describe('planLongOnlyRetest', () => {
   const tick = 0.25;

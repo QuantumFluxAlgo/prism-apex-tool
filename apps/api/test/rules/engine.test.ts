@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { checkCompliance, AccountState } from '../../src/services/rules/engine';
+import { checkCompliance, AccountState } from '../../src/services/rules/engine.js';
 
 describe('Compliance Rule Engine', () => {
   const base: AccountState = {
