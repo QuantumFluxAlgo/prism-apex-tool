@@ -3,7 +3,7 @@ import path from 'node:path';
 
 const p = path.resolve('apps/api/src/jobs/feed.ts');
 if (!fs.existsSync(p)) {
-  console.log('fix-feed: file not found, skipping', p);
+  console.info('fix-feed: file not found, skipping', p);
   process.exit(0);
 }
 let s = fs.readFileSync(p, 'utf8');
@@ -68,7 +68,7 @@ s = s.replace(
 
 if (s !== orig) {
   fs.writeFileSync(p, s, 'utf8');
-  console.log('fix-feed: updated', p);
+  console.info('fix-feed: updated', p);
 } else {
-  console.log('fix-feed: no changes', p);
+  console.info('fix-feed: no changes', p);
 }

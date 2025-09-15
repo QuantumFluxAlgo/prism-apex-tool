@@ -50,7 +50,7 @@ const run = async () => {
   }
 
   await writeJson(apiPkgPath, apiPkg);
-  console.log('API dependencies updated:', imports.join(', '));
+  console.info('API dependencies updated:', imports.join(', '));
 };
 
 run().catch((e) => {

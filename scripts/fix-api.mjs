@@ -80,11 +80,11 @@ async function patchServer(){
   if (!/\bconst\s+cfg\s*=\s*getConfig\(\)/.test(s)) {
     s = s.replace(
       /(const\s+app\s*=\s*fastify\([\s\S]*?\);\s*)/,
-      (m)=> `${m}\nconst cfg = getConfig();\n`
+      (_m)=> `${m}\nconst cfg = getConfig();\n`
     );
     if (!/\bconst\s+cfg\s*=\s*getConfig\(\)/.test(s)) {
       // fallback: put after import section
-      s = s.replace(/^((?:import[^\n]*\n)+)/m, (m)=> `${m}\nconst cfg = getConfig();\n`);
+      s = s.replace(/^((?:import[^\n]*\n)+)/m, (_m)=> `${m}\nconst cfg = getConfig();\n`);
     }
   }
 
@@ -110,7 +110,7 @@ async function patchServer(){
 
   // Ensure exactly one static jobsBoot registration
   let count = 0;
-  s = s.replace(/\s*app\.register\(\s*jobsBoot\s*\);\s*/g, (m)=> {
+  s = s.replace(/\s*app\.register\(\s*jobsBoot\s*\);\s*/g, (_m)=> {
     count += 1;
     return '\n'; // strip all, we’ll reinsert one
   });
@@ -140,7 +140,7 @@ async function patchServer(){
 async function main(){
   await patchFeed();
   await patchServer();
-  console.log('API patches applied ✔');
+  console.info('API patches applied ✔');
 }
 
 main().catch((e) => {

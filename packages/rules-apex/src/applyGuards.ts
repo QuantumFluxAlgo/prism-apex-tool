@@ -1,10 +1,4 @@
 /* type-only: guardrails decisions */
-import type { ApexGuardrailReason } from '../../../types/global/apex-types.js';
-
-type GuardrailDecision = {
-  accepted: boolean;
-  reasons: ApexGuardrailReason[];
-};
 
 import { getPhasePolicy } from './config.js';
 import { guardRR, computeRR } from './guards/rr.js';
