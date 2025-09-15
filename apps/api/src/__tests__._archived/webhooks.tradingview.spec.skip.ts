@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import { normalizeSymbol } from '../routes/webhooks.tradingview';
+import { normalizeSymbol } from '../routes/webhooks.tradingview.js';
 
 let buildServer: typeof import('../server.js').buildServer;
 let Accounts: typeof import('../lib/accounts.js').Accounts;

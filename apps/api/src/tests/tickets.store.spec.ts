@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import type { Ticket } from '../store';
+import type { Ticket } from '../store.js';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
