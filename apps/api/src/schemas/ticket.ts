@@ -1,5 +1,7 @@
 import { z } from 'zod';
 
+export const TICKET_STRATEGIES = ['VWAP_FT', 'OSB', 'APX-DDB-01'] as const;
+
 export const TicketSchema = z.object({
   symbol: z.string(),
   side: z.enum(['BUY', 'SELL']),
@@ -10,7 +12,7 @@ export const TicketSchema = z.object({
   accountId: z.string(),
   timestampUtc: z.string(),
   meta: z.object({
-    strategy: z.enum(['VWAP_FT', 'OSB']),
+    strategy: z.enum(TICKET_STRATEGIES),
     rr: z.number(),
     guardrails: z.array(z.string()),
     sizingHint: z.string().optional(),
@@ -21,3 +23,4 @@ export const TicketSchema = z.object({
 });
 
 export type Ticket = z.infer<typeof TicketSchema>;
+export type TicketStrategy = (typeof TICKET_STRATEGIES)[number];
