@@ -5,9 +5,7 @@
     "outDir": "dist",
     "rootDir": ".",
     "types": ["vite/client", "vitest/globals"],
-    "moduleResolution": "bundler",
     "verbatimModuleSyntax": false,
-    "module": "ESNext",
     "resolveJsonModule": true,
     "skipLibCheck": true
   },
