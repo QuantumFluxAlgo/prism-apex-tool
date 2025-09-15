@@ -1,17 +1,18 @@
 import { describe, expect, it, vi } from 'vitest';
 import { MarketDataWS } from '../ws.js';
+import type { TradovateMessage } from '../ws.js';
 
 class FakeWebSocket {
   static instances: FakeWebSocket[] = [];
   onopen: (() => void) | null = null;
   onclose: (() => void) | null = null;
-  onmessage: ((ev: { data: any }) => void) | null = null;
-  sent: any[] = [];
+  onmessage: ((ev: { data: TradovateMessage }) => void) | null = null;
+  sent: Array<string | ArrayBufferLike> = [];
   constructor(public url: string) {
     FakeWebSocket.instances.push(this);
     setTimeout(() => this.onopen && this.onopen(), 0);
   }
-  send(data: any) {
+  send(data: string | ArrayBufferLike) {
     this.sent.push(data);
   }
   close() {
