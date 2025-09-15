@@ -1,9 +1,0 @@
-declare module '@prism-apex/runtime' {
-  export function setJobBeat(jobName: string, nowTs?: number): void;
-  export function getHealth(nowTs?: number): {
-    jobs: Record<string, { lastBeatIso: string; healthy: boolean }>;
-    overall: 'healthy' | 'degraded';
-  };
-  // test-only
-  export function __resetHealth(): void;
-}
