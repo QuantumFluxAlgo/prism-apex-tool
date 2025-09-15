@@ -10,7 +10,13 @@ import {
 } from '../jobs/strategies.js';
 
 vi.mock('@prism-apex/strategies', () => ({
-  vwapFirstTouch: (symbol: string, bars: any[], _vwap: number[], _atr: number[], _tick: any) => {
+  vwapFirstTouch: (
+    symbol: string,
+    bars: any[],
+    _vwap: number[],
+    _atr: number[],
+    _tick: any,
+  ) => {
     const last = bars[bars.length - 1];
     if (last.close === 101) {
       return [
@@ -40,7 +46,12 @@ vi.mock('@prism-apex/strategies', () => ({
     }
     return [];
   },
-  openingSwingBreakout: (symbol: string, bars: any[], _atr: number[], _tick: any) => {
+  openingSwingBreakout: (
+    symbol: string,
+    bars: any[],
+    _atr: number[],
+    _tick: any,
+  ) => {
     const last = bars[bars.length - 1];
     if (last.close === 102) {
       return [
@@ -72,8 +83,8 @@ vi.mock('@prism-apex/strategies', () => ({
   },
 }));
 
-
 const fixturesDir = fileURLToPath(new URL('../../fixtures', import.meta.url));
+const configPath = join(fixturesDir, 'strategies.config.json');
 
 function loadCsv(name: string): BarMessage[] {
   const lines = fs
@@ -82,7 +93,8 @@ function loadCsv(name: string): BarMessage[] {
     .split(/\n/)
     .slice(1);
   return lines.map((l) => {
-    const [symbol, contract, ts, open, high, low, close, volume, session] = l.split(',');
+    const [symbol, contract, ts, open, high, low, close, volume, session] =
+      l.split(',');
     return {
       symbol,
       contract,
@@ -102,6 +114,7 @@ describe('strategy orchestrator', () => {
   let unsub: () => void;
 
   beforeAll(async () => {
+    process.env.STRATEGIES_CONFIG_PATH = configPath;
     await startStrategies();
     unsub = subscribe('suggestion', (s) => suggestions.push(s));
   });
@@ -116,7 +129,17 @@ describe('strategy orchestrator', () => {
     for (const b of a) publish('bars.1m', b);
     const b = loadCsv('session_b.csv');
     for (const bar of b) publish('bars.1m', bar);
-    expect(suggestions.map((s) => s.meta.strategy)).toEqual(['OSB', 'VWAP_FT', 'OSB', 'VWAP_FT']);
-    expect(suggestions.map((s) => s.side)).toEqual(['BUY', 'BUY', 'SELL', 'SELL']);
+    expect(suggestions.map((s) => s.meta.strategy)).toEqual([
+      'OSB',
+      'VWAP_FT',
+      'OSB',
+      'VWAP_FT',
+    ]);
+    expect(suggestions.map((s) => s.side)).toEqual([
+      'BUY',
+      'BUY',
+      'SELL',
+      'SELL',
+    ]);
   });
 });
