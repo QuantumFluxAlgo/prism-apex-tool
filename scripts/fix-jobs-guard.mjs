@@ -1,14 +1,13 @@
 import { promises as fs } from 'fs';
-import path from 'path';
 
 async function patchFile(p, transform) {
   const s = await fs.readFile(p, 'utf8');
   const t = transform(s);
   if (t !== s) {
     await fs.writeFile(p, t, 'utf8');
-    console.log('patched', p);
+    console.info('patched', p);
   } else {
-    console.log('no change', p);
+    console.info('no change', p);
   }
 }
 
@@ -28,9 +27,9 @@ export function getConfig(): any {
 }
 `;
       await fs.writeFile(p, s + add, 'utf8');
-      console.log('appended getConfig() shim to', p);
+      console.info('appended getConfig() shim to', p);
     } else {
-      console.log('getConfig() already present in', p);
+      console.info('getConfig() already present in', p);
     }
   } catch (e) {
     console.warn('env.ts not found or unreadable, skipping shim:', e?.message || e);
@@ -95,4 +94,4 @@ app.addHook('onReady', async () => {
   });
 })();
 
-console.log('All patches applied.');
+console.info('All patches applied.');

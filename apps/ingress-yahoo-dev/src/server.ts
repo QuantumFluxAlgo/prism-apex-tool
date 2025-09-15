@@ -219,7 +219,6 @@ function isNewsBlackout(_iso: string): boolean {
 }
 function computeExpiry(iso: string, root: string): string {
   try {
-    const tz = sessions?.tz || 'America/Chicago';
     const r = sessions?.roots?.[root];
     const flatBy = r?.flat_by || '15:00:00';
     // Naive computation: same day flat_by; operator SOP still enforces manual flat
@@ -234,7 +233,7 @@ const port = Number(process.env.PORT || 8080);
 app.get('/health', (_, _res) => _res.json({ ok: true, service: 'ingress-yahoo-dev' }));
 if (process.env.NODE_ENV !== 'test') {
   app.listen(port, () => {
-    console.log(
+    console.info(
       JSON.stringify({ level: 'info', msg: `ingress listening on ${port}`, enable: ENABLE }),
     );
   });

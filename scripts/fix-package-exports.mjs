@@ -67,7 +67,7 @@ const run = async () => {
     ensureDistExports(pkg);
     addSubpathExportsIfNeeded(pkg.name, pkg);
     await writeJson(pj, pkg);
-    console.log('updated', pkg.name);
+    console.info('updated', pkg.name);
   }
 };
 

@@ -1,5 +1,5 @@
 // Programmatic depcheck runner that respects .depcheckrc.json
-/* eslint-disable import/no-extraneous-dependencies, no-console */
+/* eslint-disable import/no-extraneous-dependencies */
 import fs from 'node:fs';
 import { dirname, resolve, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -39,5 +39,5 @@ fs.writeFileSync(outPath, JSON.stringify(result, null, 2), 'utf8');
 
 // Print a tiny summary for DX
 const unused = [...(result.dependencies ?? []), ...(result.devDependencies ?? [])];
-console.log(`depcheck: ${unused.length} unused deps (see reports/depcheck.json)`);
+console.info(`depcheck: ${unused.length} unused deps (see reports/depcheck.json)`);
 process.exit(0);
