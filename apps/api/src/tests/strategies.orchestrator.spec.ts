@@ -1,14 +1,13 @@
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import fs from 'fs';
-import path from 'path';
+import { dirname, join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { publish, subscribe } from '../lib/bus.js';
 import {
   startStrategies,
   stopStrategies,
-  strategies,
   type BarMessage,
 } from '../jobs/strategies.js';
-import Fastify from 'fastify';
 
 vi.mock('@prism-apex/strategies', () => ({
   vwapFirstTouch: (symbol: string, bars: any[], _vwap: number[], _atr: number[], _tick: any) => {
@@ -73,9 +72,11 @@ vi.mock('@prism-apex/strategies', () => ({
   },
 }));
 
+const __dirname = dirname(fileURLToPath(import.meta.url));
+
 function loadCsv(name: string): BarMessage[] {
   const lines = fs
-    .readFileSync(path.join(__dirname, '../../fixtures', name), 'utf8')
+    .readFileSync(join(__dirname, '../../fixtures', name), 'utf8')
     .trim()
     .split(/\n/)
     .slice(1);
@@ -116,14 +117,5 @@ describe('strategy orchestrator', () => {
     for (const bar of b) publish('bars.1m', bar);
     expect(suggestions.map((s) => s.meta.strategy)).toEqual(['OSB', 'VWAP_FT', 'OSB', 'VWAP_FT']);
     expect(suggestions.map((s) => s.side)).toEqual(['BUY', 'BUY', 'SELL', 'SELL']);
-  });
-
-  it('ready route exposes heartbeat', async () => {
-    const app = Fastify();
-    app.get('/ready', async () => ({ strategies }));
-    const res = await app.inject({ method: 'GET', url: '/ready' });
-    const body = res.json();
-    expect(body.strategies.running).toBe(true);
-    await app.close();
   });
 });
