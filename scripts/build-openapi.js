@@ -3,7 +3,7 @@ const specPath = '/runtime/apps/api/dist/openapi/spec.js';
 (async () => {
   let mod;
   try { mod = require(specPath); }
-  catch { console.log('OpenAPI: spec module not found, skipping.'); process.exit(0); }
+  catch { console.info('OpenAPI: spec module not found, skipping.'); process.exit(0); }
 
   const fns = [
     mod.buildOpenApi,
@@ -21,8 +21,8 @@ const specPath = '/runtime/apps/api/dist/openapi/spec.js';
     const objs = [mod.default, mod.openapi, mod.document, mod.spec].filter(v => v && typeof v === 'object');
     if (objs[0]) doc = objs[0];
   }
-  if (!doc) { console.log('OpenAPI: no doc produced; skipping.'); process.exit(0); }
+  if (!doc) { console.info('OpenAPI: no doc produced; skipping.'); process.exit(0); }
 
   fs.writeFileSync('/runtime/apps/api/dist/openapi.json', JSON.stringify(doc, null, 2));
-  console.log('OpenAPI: wrote /runtime/apps/api/dist/openapi.json');
+  console.info('OpenAPI: wrote /runtime/apps/api/dist/openapi.json');
 })();
