@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { planLongOnlyRetest } from '../src/selector';
 
-describe('APX-DDB-01 long-only selector', () => {
+describe('planLongOnlyRetest', () => {
   const tick = 0.25;
   it('returns a plan when price >= weekly VWAP', () => {
     const p = planLongOnlyRetest({
@@ -44,6 +44,7 @@ describe('APX-DDB-01 long-only selector', () => {
     });
     expect(p).not.toBeNull();
     expect(p!.rr).toBeGreaterThanOrEqual(2);
+    expect(p!.entry).toBe(5400);
     expect(Number.isInteger(p!.entry / tick)).toBe(true);
   });
 });
