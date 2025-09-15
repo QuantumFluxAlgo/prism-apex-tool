@@ -1,14 +1,17 @@
 import { readFileSync } from 'fs';
-import { join } from 'path';
+import { join, dirname } from 'path';
+import { fileURLToPath } from 'url';
 import { describe, it, expect } from 'vitest';
 import { vwapSessionSeries, updateVwap, initialVwapState } from '../src/vwap.js';
 import type { Bar1m } from '../src/types.js';
 
 function loadBars(symbol: string): Bar1m[] {
-  const lines = readFileSync(join(__dirname, 'golden', `${symbol}_1m_sample.csv`), 'utf-8')
-    .trim()
-    .split('\n')
-    .slice(1);
+  const filePath = join(
+    dirname(fileURLToPath(import.meta.url)),
+    'golden',
+    `${symbol}_1m_sample.csv`,
+  );
+  const lines = readFileSync(filePath, 'utf-8').trim().split('\n').slice(1);
   return lines.map((line) => {
     const [ts, open, high, low, close, volume] = line.split(',');
     return { ts, open: +open, high: +high, low: +low, close: +close, volume: +volume };
