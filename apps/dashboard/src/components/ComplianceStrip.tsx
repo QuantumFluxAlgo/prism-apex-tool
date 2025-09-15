@@ -1,4 +1,3 @@
-import React from 'react';
 import type { ComplianceSnapshot } from '../lib/api.js';
 
 export function ComplianceStrip({ data }: { data: ComplianceSnapshot | null }) {

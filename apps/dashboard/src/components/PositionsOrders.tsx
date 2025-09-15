@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Market, type Position, type Order } from '../lib/api.js';
 
 export function PositionsOrders() {
