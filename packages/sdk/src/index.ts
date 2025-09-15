@@ -15,13 +15,13 @@ export class PrismApexClient {
   async getSymbols(): Promise<SymbolsResponse> {
     const r = await this.fetchImpl(new URL('/market/symbols', this.baseUrl));
     if (!r.ok) throw new Error(`GET /market/symbols ${r.status}`);
-    return r.json();
+    return r.json() as Promise<SymbolsResponse>;
   }
 
   async getSessions(): Promise<SessionsResponse> {
     const r = await this.fetchImpl(new URL('/market/sessions', this.baseUrl));
     if (!r.ok) throw new Error(`GET /market/sessions ${r.status}`);
-    return r.json();
+    return r.json() as Promise<SessionsResponse>;
   }
 
   async osb(input: OSBInput): Promise<SuggestionResult> {
@@ -31,7 +31,7 @@ export class PrismApexClient {
       body: JSON.stringify(input),
     });
     if (!r.ok) throw new Error(`POST /signals/osb ${r.status}`);
-    return r.json();
+    return r.json() as Promise<SuggestionResult>;
   }
 
   async vwapFirstTouch(input: VWAPInput): Promise<SuggestionResult> {
@@ -41,7 +41,7 @@ export class PrismApexClient {
       body: JSON.stringify(input),
     });
     if (!r.ok) throw new Error(`POST /signals/vwap-first-touch ${r.status}`);
-    return r.json();
+    return r.json() as Promise<SuggestionResult>;
   }
 }
 
@@ -55,4 +55,4 @@ export type {
 } from './types.js';
 
 // public type surface
-export type { ApexTicket, ApexTicketMeta, ApexStrategyId, ApexGuardrailReason } from './types';
+export type { ApexTicket, ApexTicketMeta, ApexStrategyId, ApexGuardrailReason } from './types.js';
