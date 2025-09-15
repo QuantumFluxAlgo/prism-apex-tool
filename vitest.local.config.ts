@@ -1,10 +1,11 @@
 import { defineConfig, defineProject, configDefaults } from 'vitest/config';
-import path from 'node:path';
+import tsconfigPaths from 'vite-tsconfig-paths';
 
 export default defineConfig({
   projects: [
     // Dashboard / web UI tests (DOM needed)
     defineProject({
+      plugins: [tsconfigPaths()],
       test: {
         name: 'web',
         environment: 'jsdom',
@@ -26,11 +27,11 @@ export default defineConfig({
         minThreads: 1,
         testTimeout: 12000,
         hookTimeout: 12000,
-        alias: { '@': path.resolve(__dirname, './') },
       },
     }),
     // Everything else (packages, services): Node
     defineProject({
+      plugins: [tsconfigPaths()],
       test: {
         name: 'node',
         environment: 'node',
@@ -53,7 +54,6 @@ export default defineConfig({
         minThreads: 1,
         testTimeout: 10000,
         hookTimeout: 10000,
-        alias: { '@': path.resolve(__dirname, './') },
       },
     }),
   ],
