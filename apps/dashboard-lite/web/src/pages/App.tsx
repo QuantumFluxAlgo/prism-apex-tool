@@ -15,7 +15,6 @@ type Ticket = {
   notes?: string;
 };
 
-const strategies = ["APX-DDB-01","(other)"];
 
 function ymdTodayUTC() {
   return new Date().toISOString().slice(0,10);

@@ -1,6 +1,7 @@
 // Minimal flat ESLint config for apps/api (ESLint v9)
 import js from '@eslint/js';
 import tseslint from 'typescript-eslint';
+// eslint-disable-next-line import/no-extraneous-dependencies
 import globals from 'globals';
 
 export default [

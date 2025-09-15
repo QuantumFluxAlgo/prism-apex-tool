@@ -3,7 +3,7 @@ import path from 'node:path';
 
 const p = path.resolve('apps/api/src/server.ts');
 if (!fs.existsSync(p)) {
-  console.log('fix-server: file not found, skipping', p);
+  console.info('fix-server: file not found, skipping', p);
   process.exit(0);
 }
 
@@ -70,7 +70,7 @@ s = s.replace(/const\s+cfg\s*=\s*getConfig\(\);\s*const\s+cfg\s*=\s*getConfig\(\
 
 if (s !== orig) {
   fs.writeFileSync(p, s, 'utf8');
-  console.log('fix-server: updated', p);
+  console.info('fix-server: updated', p);
 } else {
-  console.log('fix-server: no changes', p);
+  console.info('fix-server: no changes', p);
 }

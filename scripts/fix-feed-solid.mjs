@@ -92,7 +92,7 @@ s = s.replace(/\n{3,}/g, '\n\n');
 
 if (s !== orig) {
   fs.writeFileSync(p, s, 'utf8');
-  console.log('fix-feed-solid: feed.ts patched');
+  console.info('fix-feed-solid: feed.ts patched');
 } else {
-  console.log('fix-feed-solid: no changes needed');
+  console.info('fix-feed-solid: no changes needed');
 }

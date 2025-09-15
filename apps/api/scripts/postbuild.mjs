@@ -32,7 +32,9 @@ ensureDir(path.join(DIST, 'plugins'));
 
 if (fs.existsSync(SRC)) {
   walk(SRC, SRC);
-  console.log('✅ postbuild: ensured dist/routes & dist/plugins and copied non-TS files.');
+  // eslint-disable-next-line no-console
+  console.info('✅ postbuild: ensured dist/routes & dist/plugins and copied non-TS files.');
 } else {
-  console.log('ℹ️ postbuild: no src/ found to copy from.');
+  // eslint-disable-next-line no-console
+  console.info('ℹ️ postbuild: no src/ found to copy from.');
 }

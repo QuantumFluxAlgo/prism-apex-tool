@@ -97,5 +97,5 @@ function seed(): DataShape {
   ensureDir();
   const demo = seed();
   fs.writeFileSync(DATA_FILE, JSON.stringify(demo, null, 2));
-  console.log(`[SEED] Wrote ${DATA_FILE}`);
+  console.info(`[SEED] Wrote ${DATA_FILE}`);
 })();

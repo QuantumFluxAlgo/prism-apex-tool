@@ -48,7 +48,7 @@ if (DEV) {
 app.get('/health', (_req, res) => res.json({ ok: true, app: 'dashboard-lite' }));
 
 app.listen(PORT, () => {
-  console.log(
+  console.info(
     JSON.stringify({
       level: 'info',
       msg: `dashboard-lite listening on ${PORT}`,
