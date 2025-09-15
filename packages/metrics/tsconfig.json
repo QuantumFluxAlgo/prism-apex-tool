@@ -1,16 +1,12 @@
 {
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
-    "module": "NodeNext",
     "outDir": "dist",
     "rootDir": "src",
     "declaration": true,
     "declarationMap": true,
     "emitDeclarationOnly": false,
-    "types": ["vitest/globals"],
-    "resolveJsonModule": true,
-    "skipLibCheck": true,
-    "moduleResolution": "node"
+    "types": ["vitest/globals"]
   },
   "include": ["src", "types/**/*.d.ts"]
 }
