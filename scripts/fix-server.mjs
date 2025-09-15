@@ -63,7 +63,7 @@ if (!/app\.register\(\s*jobsBoot\s*\)/.test(s)) {
 
 // I) Remove previously injected “jobs guard” and any stray bogus line
 s = s.replace(/\/\/\s*---\s*jobs guard[\s\S]*?(?=^\S|$)/gm, '');
-s = s.replace(/^[ \t]*app\.\-zshRoute\);\r?\n?/m, '');
+s = s.replace(/^[ \t]*app.-zshRoute\);\r?\n?/m, '');
 
 // J) Final sanity trim of accidental duplicated cfg lines (rare)
 s = s.replace(/const\s+cfg\s*=\s*getConfig\(\);\s*const\s+cfg\s*=\s*getConfig\(\);/g, 'const cfg = getConfig();');
