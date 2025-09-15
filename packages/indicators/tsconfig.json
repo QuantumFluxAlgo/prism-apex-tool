@@ -12,10 +12,5 @@
     "moduleResolution": "node"
   },
   "include": ["src/**/*", "types/**/*.d.ts"],
-  "exclude": ["dist", "__tests__"],
-  "references": [
-    {
-      "path": "../../tsconfig.paths.json"
-    }
-  ]
+  "exclude": ["dist", "__tests__"]
 }
