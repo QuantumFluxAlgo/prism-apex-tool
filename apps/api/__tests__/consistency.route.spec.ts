@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import fs from 'node:fs';
 import path from 'node:path';
 import Fastify from 'fastify';
-import consistencyRoute from '../src/routes/consistency';
+import consistencyRoute from '../src/routes/consistency.js';
 
 const VAR_DIR = path.resolve(process.cwd(), 'var', 'pnl');
 const FILE = path.join(VAR_DIR, 'daily.json');

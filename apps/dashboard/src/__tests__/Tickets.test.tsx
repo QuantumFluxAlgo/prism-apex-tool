@@ -36,7 +36,7 @@ const fetchMock = vi.fn().mockResolvedValue({
 });
 vi.stubGlobal('fetch', fetchMock);
 
-import TicketsPage from '../pages/Tickets';
+import TicketsPage from '../pages/Tickets.js';
 
 describe('TicketsPage', () => {
   it('toggles accepted/rejected filters', async () => {

@@ -1,4 +1,4 @@
-import { copyText } from '../lib/copy';
+import { copyText } from '../lib/copy.js';
 
 export interface Ticket {
   symbol: string;

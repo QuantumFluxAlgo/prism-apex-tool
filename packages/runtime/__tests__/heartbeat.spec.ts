@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { createHeartbeat } from '../src/heartbeat';
+import { createHeartbeat } from '../src/heartbeat.js';
 
 describe('heartbeat + stale detection', () => {
   let now = 0;

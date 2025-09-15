@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { trackEvent, trackError, meter, createAnalyticsScope } from '../src';
+import { trackEvent, trackError, meter, createAnalyticsScope } from '../src/index.js';
 
 describe('@prism-apex/analytics stub', () => {
   it('exports no-op functions without throwing', () => {
