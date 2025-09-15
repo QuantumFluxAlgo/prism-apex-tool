@@ -15,7 +15,7 @@ function parseArgs(argv: string[]): Record<string, string> {
 }
 
 function help(): void {
-  console.log(`Usage: prism-accounts <command> [options]
+  console.info(`Usage: prism-accounts <command> [options]
 
 Commands:
   list
@@ -40,7 +40,7 @@ async function main(): Promise<void> {
     switch (cmd) {
       case 'list': {
         const accounts = await listAccounts(dataDir);
-        console.log(JSON.stringify(accounts, null, 2));
+        console.info(JSON.stringify(accounts, null, 2));
         break;
       }
       case 'add': {
@@ -54,7 +54,7 @@ async function main(): Promise<void> {
           bufferCleared: cleared,
           notes: opts['notes'],
         });
-        console.log(JSON.stringify(acct, null, 2));
+        console.info(JSON.stringify(acct, null, 2));
         break;
       }
       case 'set': {
@@ -67,7 +67,7 @@ async function main(): Promise<void> {
           bufferCleared: cleared,
           notes: opts['notes'],
         });
-        console.log(JSON.stringify(acct, null, 2));
+        console.info(JSON.stringify(acct, null, 2));
         break;
       }
       case 'get': {
@@ -75,7 +75,7 @@ async function main(): Promise<void> {
         if (!id) throw new Error('id required');
         const acct = await readAccount(dataDir, id);
         if (!acct) throw new Error('not found');
-        console.log(JSON.stringify(acct, null, 2));
+        console.info(JSON.stringify(acct, null, 2));
         break;
       }
       default:
