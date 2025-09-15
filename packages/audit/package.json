@@ -1,5 +1,5 @@
 {
-  "name": "@prism-apex-tool/audit",
+  "name": "@prism-apex/audit",
   "version": "0.1.0",
   "private": true,
   "type": "module",

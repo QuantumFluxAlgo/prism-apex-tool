@@ -1,5 +1,5 @@
 {
-  "name": "@prism-apex-tool/indicators",
+  "name": "@prism-apex/indicators",
   "version": "0.1.0",
   "private": true,
   "type": "module",

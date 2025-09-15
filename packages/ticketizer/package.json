@@ -1,5 +1,5 @@
 {
-  "name": "@prism-apex-tool/ticketizer",
+  "name": "@prism-apex/ticketizer",
   "version": "0.1.0",
   "private": true,
   "type": "module",
@@ -24,8 +24,8 @@
     "format": "prettier -w ."
   },
   "dependencies": {
-    "@prism-apex-tool/accounts": "workspace:*",
-    "@prism-apex-tool/rules": "workspace:*"
+    "@prism-apex/accounts": "workspace:*",
+    "@prism-apex/rules": "workspace:*"
   },
   "devDependencies": {
     "@eslint/js": "^9.10.0",

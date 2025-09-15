@@ -10,7 +10,7 @@ import {
 } from '../jobs/strategies.js';
 import Fastify from 'fastify';
 
-vi.mock('@prism-apex-tool/strategies', () => ({
+vi.mock('@prism-apex/strategies', () => ({
   vwapFirstTouch: (symbol: string, bars: any[], _vwap: number[], _atr: number[], _tick: any) => {
     const last = bars[bars.length - 1];
     if (last.close === 101) {

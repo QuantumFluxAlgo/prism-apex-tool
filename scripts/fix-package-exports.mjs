@@ -62,7 +62,7 @@ const run = async () => {
     }
     const pkg = await readJson(pj);
     // only touch your scoped internal packages
-    if (!pkg.name || !pkg.name.startsWith('@prism-apex-tool/')) continue;
+    if (!pkg.name || !pkg.name.startsWith('@prism-apex/')) continue;
 
     ensureDistExports(pkg);
     addSubpathExportsIfNeeded(pkg.name, pkg);

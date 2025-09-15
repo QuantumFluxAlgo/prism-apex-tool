@@ -1,4 +1,4 @@
-import { getHealth } from '@prism-apex-tool/runtime';
+import { getHealth } from '@prism-apex/runtime';
 import { FastifyInstance, FastifyPluginCallback } from 'fastify';
 
 type JobStatus = { lastBeatIso: string; healthy: boolean };
