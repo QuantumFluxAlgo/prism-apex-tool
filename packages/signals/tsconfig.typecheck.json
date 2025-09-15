@@ -5,7 +5,6 @@
   "compilerOptions": {
     "types": ["vitest/globals"],
     "resolveJsonModule": true,
-    "skipLibCheck": true,
-    "moduleResolution": "node"
+    "skipLibCheck": true
   }
 }
