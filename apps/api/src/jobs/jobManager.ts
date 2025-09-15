@@ -1,9 +1,9 @@
-import { jobManager } from '../lib/jobManager';
+import { jobManager } from '../lib/jobManager.js';
 import {
   startJobs as schedulerStartJobs,
   stopJobs as schedulerStopJobs,
   resetJobsForTests,
-} from './scheduler';
+} from './scheduler.js';
 
 export async function startJobs() {
   await jobManager.startAll();
