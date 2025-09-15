@@ -1,5 +1,3 @@
-import React from 'react';
-
 type Position = {
   contract: string;
   symbolRoot: string;

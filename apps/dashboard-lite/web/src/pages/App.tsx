@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 type Ticket = {
   id: string;
@@ -15,9 +15,8 @@ type Ticket = {
   notes?: string;
 };
 
-
 function ymdTodayUTC() {
-  return new Date().toISOString().slice(0,10);
+  return new Date().toISOString().slice(0, 10);
 }
 
 export default function App() {
@@ -35,8 +34,8 @@ export default function App() {
   useEffect(() => {
     setLoading(true);
     fetch(`/api/tickets?${qs}`)
-      .then(r => r.json())
-      .then(j => setTickets(Array.isArray(j) ? j : []))
+      .then((r) => r.json())
+      .then((j) => setTickets(Array.isArray(j) ? j : []))
       .catch(() => setTickets([]))
       .finally(() => setLoading(false));
   }, [qs]);
@@ -45,12 +44,24 @@ export default function App() {
     <div style={{ fontFamily: "Inter, system-ui, Arial", padding: 16 }}>
       <h1 style={{ marginBottom: 8 }}>Prism-Apex — Tickets (Lite)</h1>
       <div style={{ display: "flex", gap: 16, alignItems: "center", marginBottom: 16 }}>
-        <label>Date (UTC): <input type="date" value={date} onChange={e => setDate(e.target.value)} /></label>
-        <label><input type="checkbox" checked={onlyDdb01} onChange={e => setOnlyDdb01(e.target.checked)} /> Show only APX-DDB-01</label>
+        <label>
+          Date (UTC):
+          <input type="date" value={date} onChange={(e) => setDate(e.target.value)} />
+        </label>
+        <label>
+          <input
+            type="checkbox"
+            checked={onlyDdb01}
+            onChange={(e) => setOnlyDdb01(e.target.checked)}
+          />
+          Show only APX-DDB-01
+        </label>
         <span style={{ color: "#666" }}>{loading ? "Loading…" : `${tickets.length} tickets`}</span>
       </div>
       <div style={{ display: "grid", gap: 12, gridTemplateColumns: "repeat(auto-fill, minmax(360px, 1fr))" }}>
-        {tickets.map(t => <TicketCard key={t.id} t={t} />)}
+        {tickets.map((t) => (
+          <TicketCard key={t.id} t={t} />
+        ))}
       </div>
     </div>
   );
@@ -58,13 +69,29 @@ export default function App() {
 
 function TicketCard({ t }: { t: Ticket }) {
   return (
-    <div style={{ border: "1px solid #e4e4e7", borderRadius: 12, padding: 12, boxShadow: "0 1px 2px rgba(0,0,0,0.04)" }}>
+    <div
+      style={{
+        border: "1px solid #e4e4e7",
+        borderRadius: 12,
+        padding: 12,
+        boxShadow: "0 1px 2px rgba(0,0,0,0.04)",
+      }}
+    >
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
         <div>
           <div style={{ fontWeight: 700 }}>{t.symbol} — {t.side} × {t.qty}</div>
           <div style={{ fontSize: 12, color: "#666" }}>{new Date(t.ts).toISOString()}</div>
         </div>
-        <div style={{ background: "#eef2ff", color: "#3730a3", borderRadius: 999, padding: "2px 8px", fontSize: 12, fontWeight: 600 }}>
+        <div
+          style={{
+            background: "#eef2ff",
+            color: "#3730a3",
+            borderRadius: 999,
+            padding: "2px 8px",
+            fontSize: 12,
+            fontWeight: 600,
+          }}
+        >
           {t.strategy || "—"}
         </div>
       </div>
@@ -81,7 +108,7 @@ function TicketCard({ t }: { t: Ticket }) {
   );
 }
 
-function KV({k, v}:{k:string; v:string}) {
+function KV({ k, v }: { k: string; v: string }) {
   return (
     <div>
       <div style={{ color: "#64748b", fontSize: 11, textTransform: "uppercase", letterSpacing: 0.3 }}>{k}</div>
@@ -91,5 +118,5 @@ function KV({k, v}:{k:string; v:string}) {
 }
 
 function fmtPx(n?: number) {
-  return (typeof n === "number" && Number.isFinite(n)) ? n.toFixed(2) : "—";
+  return typeof n === "number" && Number.isFinite(n) ? n.toFixed(2) : "—";
 }
