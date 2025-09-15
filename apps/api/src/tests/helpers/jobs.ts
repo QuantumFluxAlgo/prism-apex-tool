@@ -1,4 +1,4 @@
-import { startJobs, stopAllJobs } from '../../jobs/jobManager';
+import { startJobs, stopAllJobs } from '../../jobs/jobManager.js';
 
 export function withJobs() {
   import('vitest').then(({ beforeAll, afterAll }) => {
