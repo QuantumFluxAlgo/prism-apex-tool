@@ -1,17 +1,17 @@
 // Programmatic depcheck runner that respects .depcheckrc.json
 /* eslint-disable import/no-extraneous-dependencies, no-console */
 import fs from 'node:fs';
-import path from 'node:path';
+import { dirname, resolve, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import depcheck from 'depcheck';
 
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const repoRoot = path.resolve(__dirname, '..');
+const __dirname = dirname(fileURLToPath(import.meta.url));
+const repoRoot = resolve(__dirname, '..');
 
-const cfgPath = path.join(repoRoot, '.depcheckrc.json');
+const cfgPath = join(repoRoot, '.depcheckrc.json');
 // Output directory and file for depcheck results
-const outDir = path.join(repoRoot, 'reports');
-const outPath = path.join(outDir, 'depcheck.json');
+const outDir = join(repoRoot, 'reports');
+const outPath = join(outDir, 'depcheck.json');
 
 const cfg = JSON.parse(fs.readFileSync(cfgPath, 'utf8'));
 const options = {
