@@ -1,13 +1,17 @@
-import { startJobs, stopAllJobs } from '../../jobs/jobManager.js';
+import { startJobs, stopAllJobs, jobManager, resetJobsForTests } from '../../jobs/jobManager.js';
 
 export function withJobs() {
-  import('vitest').then(({ beforeAll, afterAll }) => {
-    beforeAll(async () => {
+  import('vitest').then(({ beforeEach, afterEach }) => {
+    beforeEach(async () => {
+      jobManager.resetForTests();
+      resetJobsForTests();
       process.env.DISABLE_JOBS = '0';
       await startJobs();
     });
-    afterAll(async () => {
+    afterEach(async () => {
       await stopAllJobs();
+      resetJobsForTests();
+      jobManager.resetForTests();
       process.env.DISABLE_JOBS = '1';
     });
   });

@@ -1,4 +1,5 @@
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach } from 'vitest';
+import { jobManager, resetJobsForTests } from '../jobs/jobManager.js';
 import type { Ticket } from '../store.js';
 import fs from 'node:fs';
 import os from 'node:os';
@@ -8,10 +9,17 @@ let buildServer: typeof import('../server.js').buildServer;
 let store: typeof import('../store/tickets.js');
 
 beforeEach(async () => {
+  jobManager.resetForTests();
+  resetJobsForTests();
   process.env.DATA_DIR = fs.mkdtempSync(path.join(os.tmpdir(), 'tickets-'));
   ({ buildServer } = await import('../server.js'));
   store = await import('../store/tickets.js');
   store._clear();
+});
+
+afterEach(() => {
+  resetJobsForTests();
+  jobManager.resetForTests();
 });
 
 describe('ticket store', () => {
