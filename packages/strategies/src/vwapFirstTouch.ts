@@ -1,4 +1,6 @@
 /* type-only: strategy IO contracts */
+import type { ApexStrategyId } from '../../../types/global/apex-types.js';
+
 interface Bar {
   time: number;
   open: number;
@@ -9,11 +11,12 @@ interface Bar {
 }
 interface Signal {
   symbol: string;
-  side: ApexStrategyId extends never ? 'BUY' | 'SELL' : 'BUY' | 'SELL';
+  side: 'BUY' | 'SELL';
   entry: number;
   stop: number;
   target: number;
   rr?: number;
+  strategy: ApexStrategyId;
 }
 
 import { Candle, Suggestion } from './types.js';
