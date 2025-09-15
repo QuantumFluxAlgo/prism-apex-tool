@@ -4,10 +4,7 @@
     "outDir": "dist",
     "declaration": true,
     "declarationMap": true,
-    "types": ["vitest/globals"],
-    "resolveJsonModule": true,
-    "skipLibCheck": true,
-    "moduleResolution": "nodenext"
+    "types": ["vitest/globals"]
   },
   "include": ["src", "types/**/*.d.ts"]
 }

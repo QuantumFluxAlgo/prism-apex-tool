@@ -5,10 +5,7 @@
     "rootDir": ".",
     "declaration": true,
     "declarationMap": true,
-    "types": ["vitest/globals"],
-    "resolveJsonModule": true,
-    "skipLibCheck": true,
-    "moduleResolution": "node"
+    "types": ["vitest/globals"]
   },
-  "include": ["src", "types/**/*.d.ts", "vitest.config.ts"]
+  "include": ["src", "types/**/*.d.ts", "../../types/global/contracts.d.ts", "vitest.config.ts"]
 }
