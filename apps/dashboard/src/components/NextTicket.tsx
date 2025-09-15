@@ -1,4 +1,3 @@
-import React from 'react';
 import type { Ticket } from '../lib/api.js';
 
 function toText(t: Ticket) {
