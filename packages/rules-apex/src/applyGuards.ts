@@ -1,4 +1,6 @@
 /* type-only: guardrails decisions */
+import type { ApexGuardrailReason } from '../../../types/global/apex-types.js';
+
 type GuardrailDecision = {
   accepted: boolean;
   reasons: ApexGuardrailReason[];
@@ -27,7 +29,7 @@ export function applyGuardWithSizing(
 
   const policy = getPhasePolicy(ctx.phase);
 
-  const guardrails = [`phase:${ctx.phase}`] as const;
+  const guardrails = [`phase:${ctx.phase}`];
   guardrails.push(policy.requireStop ? 'stop-required' : 'stop-optional');
   guardrails.push('rr-clamp');
   if (policy.halfSizeUntilBuffer) guardrails.push('half-size-until-buffer');
