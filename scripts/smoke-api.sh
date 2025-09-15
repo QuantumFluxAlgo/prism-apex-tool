@@ -6,7 +6,7 @@ docker compose build --no-cache api
 docker compose up -d api
 
 echo "== fastify path (inside container) =="
-docker compose exec -T api node -e "console.log('fastify ->', require.resolve('fastify'))"
+docker compose exec -T api node -e "console.info('fastify ->', require.resolve('fastify'))"
 
 echo "== wait for /health =="
 attempt=0; code=000

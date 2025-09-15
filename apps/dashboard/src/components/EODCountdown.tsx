@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
 function nextCutoff2059GMT(now: Date) {
   const d = new Date(
@@ -48,8 +48,7 @@ export function EODCountdown({
               <strong>flat</strong> to continue.
             </p>
             <label className="flex items-center gap-2 mt-3 text-sm">
-              <input type="checkbox" checked={ack} onChange={(e) => setAck(e.target.checked)} />I am
-              flat
+              <input type="checkbox" checked={ack} onChange={(e) => setAck(e.target.checked)} />I am flat
             </label>
             {!ack && (
               <div className="mt-2 text-xs text-gray-600">Check the box to clear the modal.</div>

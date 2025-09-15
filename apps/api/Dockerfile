@@ -44,7 +44,7 @@ RUN node -e "\
   } \
   const out=path.join('/app/apps/api/dist','openapi.json');\
   fs.writeFileSync(out, JSON.stringify(doc,null,2));\
-  console.log('Wrote', out);\
+  console.info('Wrote', out);\
 "
 
 # Produce a clean runtime (only prod deps for the API)
