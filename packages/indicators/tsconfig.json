@@ -6,10 +6,7 @@
     "declaration": true,
     "declarationDir": "dist",
     "emitDeclarationOnly": false,
-    "types": ["vitest/globals"],
-    "resolveJsonModule": true,
-    "skipLibCheck": true,
-    "moduleResolution": "node"
+    "types": ["vitest/globals"]
   },
   "include": ["src/**/*", "types/**/*.d.ts"],
   "exclude": ["dist", "__tests__"]
