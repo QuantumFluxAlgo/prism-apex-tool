@@ -1,24 +1,3 @@
-/* type-only: strategy IO contracts */
-import type { ApexStrategyId } from '../../../types/global/apex-types.js';
-
-interface Bar {
-  time: number;
-  open: number;
-  high: number;
-  low: number;
-  close: number;
-  volume: number;
-}
-interface Signal {
-  symbol: string;
-  side: 'BUY' | 'SELL';
-  entry: number;
-  stop: number;
-  target: number;
-  rr?: number;
-  strategy: ApexStrategyId;
-}
-
 import { Candle, Suggestion } from './types.js';
 import { AtrSeries, TickSpec } from './inputs.js';
 import { clamp, pricePlusTicks, rMultiple, ticksBetween } from './util.js';

@@ -26,6 +26,6 @@ for (const b of arr) {
   av = stepAVWAP(av, Number(b.high), Number(b.low), Number(b.close), Number(b.volume));
 }
 const v = valueAVWAP(av);
-console.log(
+console.info(
   JSON.stringify({ weeklyVWAP: Number.isFinite(v) ? Number(v.toFixed(4)) : null }, null, 2),
 );
