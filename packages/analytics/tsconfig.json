@@ -3,10 +3,7 @@
   "compilerOptions": {
     "outDir": "dist",
     "rootDir": "src",
-    "types": ["vitest/globals"],
-    "resolveJsonModule": true,
-    "skipLibCheck": true,
-    "moduleResolution": "node"
+    "types": ["vitest/globals"]
   },
   "include": ["src", "src/**/*.d.ts", "src/**/*.ts", "types/**/*.d.ts"]
 }

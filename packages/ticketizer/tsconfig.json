@@ -9,9 +9,7 @@
     "allowImportingTsExtensions": false,
     "emitDeclarationOnly": false,
     "types": ["node", "vitest/globals"],
-    "moduleResolution": "Bundler",
-    "resolveJsonModule": true,
-    "skipLibCheck": true
+    "moduleResolution": "Bundler"
   },
   "include": ["src", "types/**/*.d.ts"]
 }
