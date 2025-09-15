@@ -6,13 +6,13 @@ import {
   atrWilderSeries,
   swings,
   type VwapState,
-} from '@prism-apex-tool/indicators';
+} from '@prism-apex/indicators';
 import {
   vwapFirstTouch,
   openingSwingBreakout,
   type Suggestion as StratSuggestion,
-} from '@prism-apex-tool/strategies';
-import { trackEvent } from '@prism-apex-tool/analytics';
+} from '@prism-apex/strategies';
+import { trackEvent } from '@prism-apex/analytics';
 import fs from 'fs';
 import path from 'path';
 

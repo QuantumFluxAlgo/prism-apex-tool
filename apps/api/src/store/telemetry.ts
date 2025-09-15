@@ -1,4 +1,4 @@
-import type { TelemetrySnapshot } from '@prism-apex-tool/clients-tradovate/telemetry';
+import type { TelemetrySnapshot } from '@prism-apex/clients-tradovate/telemetry';
 
 interface AccountInfo {
   balance: number;

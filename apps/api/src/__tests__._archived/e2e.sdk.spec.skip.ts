@@ -3,8 +3,8 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { buildServer } from '../server.js';
-import { PrismApexClient } from '@prism-apex-tool/sdk';
-import type { Bar } from '@prism-apex-tool/sdk';
+import { PrismApexClient } from '@prism-apex/sdk';
+import type { Bar } from '@prism-apex/sdk';
 
 describe('E2E SDK→API smoke', () => {
   let app: ReturnType<typeof buildServer>;

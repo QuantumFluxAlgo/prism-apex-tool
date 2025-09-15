@@ -1,8 +1,8 @@
 import { beforeEach, afterEach, describe, expect, it, vi } from 'vitest';
 
 let buildServer: typeof import('../server.js').buildServer;
-let setJobBeat: typeof import('@prism-apex-tool/runtime').setJobBeat;
-let __resetHealth: typeof import('@prism-apex-tool/runtime').__resetHealth;
+let setJobBeat: typeof import('@prism-apex/runtime').setJobBeat;
+let __resetHealth: typeof import('@prism-apex/runtime').__resetHealth;
 
 beforeEach(async () => {
   vi.resetModules();
@@ -15,7 +15,7 @@ beforeEach(async () => {
   delete process.env.BEARER_TOKEN;
 
   ({ buildServer } = await import('../server.js'));
-  ({ setJobBeat, __resetHealth } = await import('@prism-apex-tool/runtime'));
+  ({ setJobBeat, __resetHealth } = await import('@prism-apex/runtime'));
   __resetHealth();
 });
 

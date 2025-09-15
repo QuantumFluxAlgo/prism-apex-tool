@@ -10,7 +10,7 @@ COPY pnpm-workspace.yaml package.json pnpm-lock.yaml ./
 COPY . .
 # Install deps and build all packages/apps
 RUN pnpm install --frozen-lockfile
-RUN pnpm -r --filter @prism-apex-tool/api... build
+RUN pnpm -r --filter @prism-apex/api... build
 
 # ==== runtime stage for API ====
 FROM node:20-alpine AS api

@@ -1,5 +1,5 @@
 import type { FastifyInstance } from 'fastify';
-import { trackEvent } from '@prism-apex-tool/analytics';
+import { trackEvent } from '@prism-apex/analytics';
 
 interface PayoutStatus {
   cumulativePnL: number;

@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import Fastify from 'fastify';
 import readyRoute from '../src/routes/ready';
-import { setJobBeat } from '@prism-apex-tool/runtime/health';
+import { setJobBeat } from '@prism-apex/runtime/health';
 
 describe('GET /ready', () => {
   it('reports healthy when recent beats exist, otherwise degraded', async () => {

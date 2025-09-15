@@ -2,7 +2,7 @@ import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
 import { listTickets, exportTickets } from '../store/tickets.js';
 import { guardSuggestion } from '../jobs/ticketizer.js';
-import { loadRegistry } from '@prism-apex-tool/config';
+import { loadRegistry } from '@prism-apex/config';
 import { getConfig } from '../config/env.js';
 
 export async function ticketsRoutes(app: FastifyInstance) {

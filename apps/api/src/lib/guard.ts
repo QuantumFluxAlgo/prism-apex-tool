@@ -4,7 +4,7 @@ import {
   withinSuppressionWindow,
   TicketInput,
   suggestPercent,
-} from '@prism-apex-tool/rules-apex';
+} from '@prism-apex/rules-apex';
 import { Accounts } from './accounts';
 
 export type GuardSizing = {

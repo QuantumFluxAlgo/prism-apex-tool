@@ -57,7 +57,7 @@ async function run() {
     try { await fs.access(pj); } catch { continue; }
 
     const pkg = await readJson(pj);
-    if (!pkg.name || !pkg.name.startsWith('@prism-apex-tool/')) continue;
+    if (!pkg.name || !pkg.name.startsWith('@prism-apex/')) continue;
 
     ensureBaseFields(pkg);
     await fixRootExport(dir, pkg);

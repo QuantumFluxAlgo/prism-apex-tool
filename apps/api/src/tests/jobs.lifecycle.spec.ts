@@ -1,6 +1,6 @@
 import { describe, it, expect, vi } from 'vitest';
 import { buildServer } from '../server.js';
-import { setJobBeat } from '@prism-apex-tool/runtime';
+import { setJobBeat } from '@prism-apex/runtime';
 
 describe('job lifecycle', () => {
   it('reflects job running state in /ready', async () => {

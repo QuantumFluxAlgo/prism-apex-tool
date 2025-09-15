@@ -10,7 +10,7 @@
     "typecheck": "pnpm run typecheck:api",
     "test": "pnpm run test:api",
     "test:watch": "vitest",
-    "test:api": "pnpm -r --filter @prism-apex-tool/api test",
+    "test:api": "pnpm -r --filter @prism-apex/api test",
     "coverage": "pnpm --filter ./apps/api test -- --coverage",
     "build": "pnpm run build:api",
     "prepare": "husky install",
@@ -25,7 +25,7 @@
     "docker:build": "docker build -t prism-apex-api:latest .",
     "docker:run": "docker run --rm -p 3000:3000 -e LOG_LEVEL=info -e TRUST_PROXY=true -v api-data:/data prism-apex-api:latest",
     "config:check": "node scripts/config-check.js",
-    "build:api": "pnpm -r --filter @prism-apex-tool/api build",
+    "build:api": "pnpm -r --filter @prism-apex/api build",
     "services:start": "echo \"Use: docker compose up -d (API at http://localhost:3000). This script is a no-op for CI.\"",
     "test:unit:local": "vitest --config vitest.local.config.ts --run",
     "test:unit": "vitest --config ./vitest.local.config.ts --run",
@@ -36,7 +36,7 @@
     "compose:full": "docker compose -f docker-compose.yml -f docker-compose.dashboard-full.yml up -d --build",
     "scan:dead:deps": "depcheck || true",
     "scan:dead:symbols": "ts-prune -p tsconfig.json || ts-prune -p tsconfig.build.json || true",
-    "typecheck:api": "pnpm -r --filter @prism-apex-tool/api typecheck",
+    "typecheck:api": "pnpm -r --filter @prism-apex/api typecheck",
     "lint:api": "eslint apps/api"
   },
   "engines": {
