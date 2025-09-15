@@ -28,8 +28,8 @@ COPY --from=build /app/configs /app/configs
 COPY --from=build /app/apex /app/apex
 # Install production deps (respect lockfile)
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
-RUN corepack enable && corepack prepare pnpm@9.0.0 --activate \
- && pnpm install --frozen-lockfile --prod
+COPY --from=build /usr/local/bin/pnpm /usr/local/bin/
+RUN pnpm install --frozen-lockfile --prod
 
 EXPOSE 3000
 VOLUME ["/data"]
