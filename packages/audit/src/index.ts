@@ -1,1 +1,1 @@
-export * from './audit.js';
+export { lastAudit, readEventsFromLines } from './audit.js';
