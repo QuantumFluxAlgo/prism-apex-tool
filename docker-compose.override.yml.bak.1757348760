@@ -1,4 +1,0 @@
-services:
-  api:
-    # Force the container to run the built API entrypoint
-    command: ["node", "/app/apps/api/dist/index.js"]
