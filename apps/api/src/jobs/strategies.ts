@@ -15,6 +15,8 @@ import {
 import { trackEvent } from '@prism-apex/analytics';
 import fs from 'fs';
 import path from 'path';
+import { TICKET_STRATEGIES } from '../schemas/ticket.js';
+import type { TicketStrategy } from '../schemas/ticket.js';
 
 export interface BarMessage {
   symbol: string; // root e.g., ES
@@ -64,16 +66,23 @@ const TICK_SPECS: Record<string, { tickSize: number }> = {
 
 const MAX_BARS = 300;
 
+const makeStrategyCounter = (): Record<TicketStrategy, number> =>
+  Object.fromEntries(TICKET_STRATEGIES.map((strategy) => [strategy, 0])) as Record<
+    TicketStrategy,
+    number
+  >;
+
 export const strategies = {
   running: false,
   lastBarTs: '',
   lastSuggestionTs: '',
-  counts: { VWAP_FT: 0, OSB: 0 },
+  counts: makeStrategyCounter(),
 };
 
 interface Config {
   VWAP_FT: Record<string, any>;
   OSB: Record<string, any>;
+  'APX-DDB-01'?: Record<string, any>;
 }
 
 let cfg: Config = { VWAP_FT: {}, OSB: {} };
@@ -207,7 +216,8 @@ function onBar(bar: BarMessage): void {
 
 function emitSuggestion(s: Suggestion): void {
   strategies.lastSuggestionTs = s.timestampUtc;
-  strategies.counts[s.meta.strategy as 'VWAP_FT' | 'OSB']++;
+  const strategy: TicketStrategy = s.meta.strategy;
+  strategies.counts[strategy] += 1;
   publish<Suggestion>('suggestion', s);
   trackEvent('strategies.suggestion', { strategy: s.meta.strategy, contract: s.contract });
 }
