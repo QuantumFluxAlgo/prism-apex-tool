@@ -3,13 +3,13 @@ import os from 'node:os';
 import path from 'node:path';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-let buildServer: typeof import('../server.js').buildServer;
+let buildServer: typeof import('@prism-apex/app-api/server.js').buildServer;
 
 beforeEach(async () => {
   vi.resetModules();
   process.env.DATA_DIR = fs.mkdtempSync(path.join(os.tmpdir(), 'pat-'));
   process.env.ACCOUNT_PHASE = 'eval';
-  ({ buildServer } = await import('../server.js'));
+  ({ buildServer } = await import('@prism-apex/app-api/server.js'));
 });
 
 describe.skip('/tickets/promote', () => {
