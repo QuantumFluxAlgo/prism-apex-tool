@@ -29,7 +29,7 @@ export default [
     },
     rules: {
       // Keep noise low but catch obvious foot-guns (WARN ONLY)
-      'no-console': 'warn',
+      'no-console': ['warn', { allow: ['info', 'warn', 'error'] }],
       'no-empty': ['warn', { allowEmptyCatch: true }],
       'no-undef': 'off',
       eqeqeq: ['warn', 'smart'],
@@ -53,6 +53,8 @@ export default [
           devDependencies: [
             '**/*.spec.*',
             '**/__tests__/**',
+            '**/test/**',
+            '**/tests/**',
             '**/vitest.config.*',
             '**/*.config.*',
             '**/src/tests/**',
