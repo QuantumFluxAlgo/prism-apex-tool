@@ -1,0 +1,13 @@
+Final Quality Check Log
+=======================
+
+Command: pnpm lint
+Status: Completed with warnings
+Warnings:
+  - ESLintIgnoreWarning: The ".eslintignore" file is no longer supported. Switch to using the "ignores" property in "eslint.config.js".
+
+Command: pnpm typecheck
+Status: Passed without warnings
+
+Command: pnpm test
+Status: Passed without warnings
