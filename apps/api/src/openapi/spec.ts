@@ -6,6 +6,7 @@ import {
 import { z } from 'zod';
 import { OSBInput, VWAPInput, SuggestionResultSchema } from '../schemas/signals.js';
 import { PromoteInput } from '../schemas/ticketsPromote.js';
+import { TICKET_STRATEGIES } from '../schemas/ticket.js';
 
 extendZodWithOpenApi(z);
 
@@ -179,7 +180,7 @@ registry.registerPath({
       date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
       cursor: z.string().optional(),
       limit: z.string().optional(),
-      strategy: z.string().optional(),
+      strategy: z.enum(TICKET_STRATEGIES).optional(),
     }),
   },
   responses: {
