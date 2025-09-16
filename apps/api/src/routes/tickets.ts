@@ -4,6 +4,7 @@ import { listTickets, exportTickets } from '../store/tickets.js';
 import { guardSuggestion } from '../jobs/ticketizer.js';
 import { loadRegistry } from '@prism-apex/config';
 import { getConfig } from '../config/env.js';
+import { TICKET_STRATEGIES } from '../schemas/ticket.js';
 
 export async function ticketsRoutes(app: FastifyInstance) {
   app.get('/tickets', async (req, reply) => {
@@ -12,7 +13,7 @@ export async function ticketsRoutes(app: FastifyInstance) {
         date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
         cursor: z.coerce.number().optional(),
         limit: z.coerce.number().optional(),
-        strategy: z.string().optional(),
+        strategy: z.enum(TICKET_STRATEGIES).optional(),
       })
       .safeParse(req.query);
     if (!q.success) return reply.code(400).send({ error: 'Invalid query' });
