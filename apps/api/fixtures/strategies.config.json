@@ -1,4 +1,10 @@
 {
   "VWAP_FT": {},
-  "OSB": { "orMinutes": 5 }
+  "OSB": { "orMinutes": 5 },
+  "APX-DDB-01": {
+    "bufferTicks": 2,
+    "minStopTicks": { "ES": 12 },
+    "rr": 3,
+    "guardrails": ["WEEKLY_VWAP_BIAS"]
+  }
 }
