@@ -1,12 +1,17 @@
 import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
-import { dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { dirname, join } from 'node:path';
+
 const __dirname = dirname(fileURLToPath(import.meta.url));
-const dist = (p) => `${__dirname}/../dist/${p}`;
-mkdirSync(dist(''), { recursive: true });
+const distDir = join(__dirname, '..', 'dist');
+
+mkdirSync(distDir, { recursive: true });
+
 for (const base of ['index', 'schema', 'io', 'vwap', 'replay-yahoo-bars']) {
-  const code = readFileSync(`${dist(base)}.js`, 'utf8')
+  const inputPath = join(distDir, `${base}.js`);
+  const code = readFileSync(inputPath, 'utf8')
     .replaceAll('export {', 'module.exports = {')
     .replaceAll('export default', 'module.exports.default =');
-  writeFileSync(`${dist(base)}.cjs`, code);
+  const outputPath = join(distDir, `${base}.cjs`);
+  writeFileSync(outputPath, code);
 }
