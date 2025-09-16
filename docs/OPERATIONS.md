@@ -19,7 +19,7 @@ UI loads (5178 for Lite, 8080 for Full)
 
 Confirm tickets path
 
-API writes to /data/tickets/YYYY-MM-DD/*.json (volume api-data)
+API writes to /data/tickets/YYYY-MM-DD/*.json (volume api-data); tickets-sync keeps /data/tickets.jsonl aggregated
 
 Copy tickets to broker
 

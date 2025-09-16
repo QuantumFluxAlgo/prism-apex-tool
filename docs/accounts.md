@@ -1,6 +1,6 @@
 # Accounts Registry API
 
-The accounts registry stores account metadata on disk under `DATA_DIR/accounts`. Each account is saved as a JSON file and has the shape:
+The accounts registry stores account metadata on disk under `DATA_DIR/accounts` (falls back to `APEX_DATA_DIR` when set). Each account is saved as a JSON file and has the shape:
 
 ```json
 {
