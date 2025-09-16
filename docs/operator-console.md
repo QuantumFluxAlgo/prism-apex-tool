@@ -7,7 +7,7 @@ You don’t need to code. Follow these steps exactly. Prism-Apex never places or
 
 Open the local dashboard (or call the API):
 
-GET /tickets?date=YYYY-MM-DD → list of today’s tickets
+GET /tickets?date=YYYY-MM-DD[&strategy=STRATEGY] → list of today’s tickets (optionally filter by strategy)
 
 GET /export/tickets?date=YYYY-MM-DD → CSV export
 
