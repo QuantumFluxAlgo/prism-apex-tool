@@ -1,7 +1,7 @@
-import { FastifyInstance } from 'fastify';
-import { readFileSync } from 'fs';
-import { dirname, join } from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { FastifyInstance } from "fastify";
+import { readFileSync } from "fs";
+import { fileURLToPath } from "node:url";
+import { dirname, join } from "node:path";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
