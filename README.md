@@ -29,11 +29,13 @@ Data & volumes
 
 API persists state under Docker volume api-data mounted at /data (e.g., /data/tickets/YYYY-MM-DD/*.json).
 
+A companion `tickets-sync` service continuously imports per-ticket JSON into `/data/tickets.jsonl` for the API.
+
 UIs mount the same volume read-only to display tickets.
 
 Environment (safe defaults)
 
-NODE_ENV=production, LOG_LEVEL=info, APEX_DATA_DIR=/data
+NODE_ENV=production, LOG_LEVEL=info, DATA_DIR=/data, TICKETS_DIR=/data/tickets (APEX_DATA_DIR still honored)
 
 TRADOVATE_BASE_URL=http://localhost/disabled (market-data OFF by default)
 

@@ -10,7 +10,9 @@ services:
     environment:
       NODE_ENV: production
       LOG_LEVEL: info
+      DATA_DIR: /data
       APEX_DATA_DIR: /data
+      TICKETS_DIR: /data/tickets
       # Safe defaults; provide real values via env/.env if needed
       TRADOVATE_BASE_URL: "http://localhost/disabled"
       TRADINGVIEW_WEBHOOK_SECRET: ""
@@ -22,6 +24,26 @@ services:
       timeout: 3s
       start_period: 20s
       retries: 5
+    restart: unless-stopped
+
+  tickets-sync:
+    build:
+      context: .
+      target: api
+    image: prism-apex/api:local
+    container_name: prism-apex-tickets-sync
+    depends_on:
+      api:
+        condition: service_started
+    environment:
+      NODE_ENV: production
+      LOG_LEVEL: info
+      DATA_DIR: /data
+      APEX_DATA_DIR: /data
+      TICKETS_DIR: /data/tickets
+    command: ['node', '/app/apps/api/dist/scripts/syncTickets.js', '--watch', '--interval=15000']
+    volumes:
+      - api-data:/data
     restart: unless-stopped
 
 volumes:
