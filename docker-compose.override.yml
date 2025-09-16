@@ -1,0 +1,32 @@
+services:
+  # Ensure API still uses the named volume for /data
+  api:
+    volumes:
+      - api-data:/data
+
+  # Tickets sync watches the same /data/tickets
+  tickets-sync:
+    volumes:
+      - api-data:/data
+
+  # Yahoo ingress: write tickets into the SAME place the API reads from
+  ingress-yahoo:
+    environment:
+      - APEX_TICKETS_OUTDIR=/data/tickets
+      - APEX_ENABLE_YAHOO_INGRESS=true
+    volumes:
+      - api-data:/data
+
+  # Prefer the lite dashboard during local bring-up to avoid port conflicts
+  dashboard-lite:
+    environment:
+      - API_BASE_URL=http://api:3000
+      - APEX_TICKETS_DIR=/data/tickets
+    depends_on:
+      - api
+    volumes:
+      - api-data:/data:ro
+
+volumes:
+  api-data:
+    external: false
