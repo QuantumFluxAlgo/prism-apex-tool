@@ -1,6 +1,6 @@
 import { readFileSync } from 'node:fs';
-import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { dirname, join } from 'node:path';
 
 export type StrategyKey = 'vwap-first-touch' | 'opening-session-breakout';
 
@@ -35,7 +35,7 @@ export type OpeningSessionBreakoutParams = {
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
 export function loadStrategyConfig<T>(key: StrategyKey): T {
-  const filePath = join(__dirname, '../../../../configs/strategies', `${key}.json`);
+  const filePath = join(__dirname, '..', '..', '..', '..', 'configs', 'strategies', `${key}.json`);
   try {
     const raw = readFileSync(filePath, 'utf8');
     return JSON.parse(raw) as T;
