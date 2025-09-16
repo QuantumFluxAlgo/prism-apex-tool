@@ -1,9 +1,10 @@
 import { loadAccounts, type AccountsFile, type AccountRecord } from '@prism-apex/accounts';
 import { existsSync, mkdirSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
+import { resolveDataDir } from '../utils/dirs.js';
 
 function dataDir(): string {
-  return process.env.DATA_DIR ?? path.resolve(process.cwd(), 'data');
+  return resolveDataDir();
 }
 function filePath(): string {
   return path.join(dataDir(), 'accounts.json');

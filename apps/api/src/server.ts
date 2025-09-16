@@ -38,6 +38,7 @@ import { registerJob, startJobs, stopJobs } from './jobs/scheduler.js';
 import { jobMissingBrackets } from './jobs/missingBrackets.js';
 import { jobDailyLoss } from './jobs/dailyLoss.js';
 import { jobConsistency } from './jobs/consistency.js';
+import { runTicketsDiskSyncJob } from './jobs/ticketsDiskSync.js';
 
 const DISABLE = process.env.DISABLE_JOBS === '1' || process.env.NODE_ENV === 'test';
 
@@ -108,8 +109,8 @@ export function buildServer() {
   app.register(ticketsRoutes);
   app.register(telemetryRoutes);
   app.register(tradingviewWebhookRoutes, { prefix: '/webhooks' });
-app.register(jobsBoot);
-// ---- Jobs ----
+  app.register(jobsBoot);
+  // ---- Jobs ----
   registerStrategiesJob();
   registerTicketizerJob();
   registerTelemetryJob();
@@ -117,6 +118,7 @@ app.register(jobsBoot);
   registerJob('MISSING_BRACKETS', 15_000, jobMissingBrackets);
   registerJob('DAILY_LOSS', 60_000, jobDailyLoss);
   registerJob('CONSISTENCY', 300_000, jobConsistency);
+  registerJob('DISK_TICKETS_SYNC', 30_000, () => runTicketsDiskSyncJob(app.log));
 
   if (!DISABLE) {
     jobManager.startAll().catch((err) => app.log.error({ err }, 'job start failed'));
@@ -126,7 +128,7 @@ app.register(jobsBoot);
     stopJobs();
     await jobManager.stopAll();
   });
-app.register(openapi);
+  app.register(openapi);
 
   return app;
 }

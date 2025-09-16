@@ -2,10 +2,11 @@ import fs from 'node:fs';
 import path from 'node:path';
 import crypto from 'node:crypto';
 import type { Ticket as StoreTicket, ParseResult } from './types.js';
+import { resolveDataDir } from './utils/dirs.js';
 export type { Ticket } from './store/tickets.js';
 export type TicketType = import('./store/tickets.js').Ticket;
 
-const DATA_DIR = process.env.DATA_DIR || '/var/lib/prism-apex-tool';
+const DATA_DIR = resolveDataDir();
 const DATA_FILE = path.join(DATA_DIR, 'data.json');
 
 type TicketEntry = { when: string; ticket: StoreTicket; reasons: string[] };
