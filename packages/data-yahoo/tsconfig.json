@@ -5,8 +5,9 @@
     "declaration": true,
     "declarationMap": false,
     "sourceMap": false,
-    "rootDir": ".",
+    "rootDir": "src",
     "esModuleInterop": true
   },
-  "include": ["src/**/*", "test/**/*"]
+  "include": ["src", "types/**/*.d.ts"],
+  "exclude": ["test", "scripts", "vitest.config.ts"]
 }

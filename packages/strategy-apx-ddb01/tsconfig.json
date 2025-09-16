@@ -5,7 +5,8 @@
     "declaration": true,
     "declarationMap": false,
     "sourceMap": false,
-    "rootDir": "."
+    "rootDir": "src"
   },
-  "include": ["src/**/*", "test/**/*"]
+  "include": ["src"],
+  "exclude": ["test", "vitest.config.ts"]
 }
