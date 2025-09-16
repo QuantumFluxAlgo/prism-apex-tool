@@ -2,12 +2,12 @@ import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import fs from 'fs';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { publish, subscribe } from '../lib/bus.js';
+import { publish, subscribe } from '@prism-apex/app-api/lib/bus.js';
 import {
   startStrategies,
   stopStrategies,
   type BarMessage,
-} from '../jobs/strategies.js';
+} from '@prism-apex/app-api/jobs/strategies.js';
 
 vi.mock('@prism-apex/strategies', () => ({
   vwapFirstTouch: (

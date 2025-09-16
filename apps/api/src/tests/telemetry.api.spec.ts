@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
-import { withJobs } from './helpers/jobs.js';
+import { withJobs } from '@prism-apex/app-api/tests/helpers/jobs.js';
 import { setJobBeat } from '@prism-apex/runtime';
 
 process.env.ENABLE_TELEMETRY = 'true';
@@ -33,7 +33,7 @@ vi.mock('@prism-apex/clients-tradovate/telemetry', () => ({
 
 describe.skip('telemetry API', () => {
   it('exposes telemetry via routes and provider', async () => {
-    const { buildServer } = await import('../server.js');
+    const { buildServer } = await import('@prism-apex/app-api/server.js');
     const app = buildServer();
     setJobBeat('telemetry');
     await new Promise((r) => setImmediate(r));

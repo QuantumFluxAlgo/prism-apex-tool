@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
-import { buildServer } from '../server.js';
+import { buildServer } from '@prism-apex/app-api/server.js';
 import { setJobBeat } from '@prism-apex/runtime';
 
 describe('job lifecycle', () => {

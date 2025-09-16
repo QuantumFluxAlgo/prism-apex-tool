@@ -1,20 +1,20 @@
 import { beforeEach, afterEach, describe, expect, it, vi } from 'vitest';
 
-let buildServer: typeof import('../server.js').buildServer;
+let buildServer: typeof import('@prism-apex/app-api/server.js').buildServer;
 let setJobBeat: typeof import('@prism-apex/runtime').setJobBeat;
 let __resetHealth: typeof import('@prism-apex/runtime').__resetHealth;
 
 beforeEach(async () => {
   vi.resetModules();
   vi.useFakeTimers();
-  vi.setSystemTime(new Date("2024-01-01T00:00:00Z"));
+  vi.setSystemTime(new Date('2024-01-01T00:00:00Z'));
 
   process.env.RATE_LIMIT_MAX = '2';
   process.env.RATE_LIMIT_WINDOW_MS = '60000';
   process.env.RATE_LIMIT_MAX_BUCKETS = '10';
   delete process.env.BEARER_TOKEN;
 
-  ({ buildServer } = await import('../server.js'));
+  ({ buildServer } = await import('@prism-apex/app-api/server.js'));
   ({ setJobBeat, __resetHealth } = await import('@prism-apex/runtime'));
   __resetHealth();
 });

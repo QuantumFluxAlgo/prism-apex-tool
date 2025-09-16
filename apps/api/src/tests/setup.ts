@@ -1,7 +1,7 @@
 import { afterEach, beforeEach } from 'vitest';
-import { resetBusForTests } from '../lib/bus.js';
-import { jobManager as JobManager } from '../lib/jobManager.js';
-import { resetSchedulerForTests } from '../jobs/scheduler.js';
+import { resetBusForTests } from '@prism-apex/app-api/lib/bus.js';
+import { jobManager as JobManager } from '@prism-apex/app-api/lib/jobManager.js';
+import { resetSchedulerForTests } from '@prism-apex/app-api/jobs/scheduler.js';
 
 // Stop all jobs & clear listeners around tests to avoid cross-suite bleed.
 beforeEach(() => {
