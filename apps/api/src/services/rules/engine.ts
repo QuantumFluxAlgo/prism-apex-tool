@@ -1,4 +1,4 @@
-import rules from '../../../../../apex/rules.json';
+import rules from '../../../../../apex/rules.json' with { type: 'json' };
 
 export type Phase = 'evaluation' | 'funded' | 'payout';
 
