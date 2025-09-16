@@ -1,24 +1,25 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
-import { jobManager, resetJobsForTests } from '../jobs/jobManager.js';
-import type { Ticket } from '../store.js';
+import { jobManager } from '@prism-apex/app-api/jobs/jobManager.js';
+import { resetSchedulerForTests } from '@prism-apex/app-api/jobs/scheduler.js';
+import type { Ticket } from '@prism-apex/app-api/store.js';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 
-let buildServer: typeof import('../server.js').buildServer;
-let store: typeof import('../store/tickets.js');
+let buildServer: typeof import('@prism-apex/app-api/server.js').buildServer;
+let store: typeof import('@prism-apex/app-api/store/tickets.js');
 
 beforeEach(async () => {
   jobManager.resetForTests();
-  resetJobsForTests();
+  resetSchedulerForTests();
   process.env.DATA_DIR = fs.mkdtempSync(path.join(os.tmpdir(), 'tickets-'));
-  ({ buildServer } = await import('../server.js'));
-  store = await import('../store/tickets.js');
+  ({ buildServer } = await import('@prism-apex/app-api/server.js'));
+  store = await import('@prism-apex/app-api/store/tickets.js');
   store._clear();
 });
 
 afterEach(() => {
-  resetJobsForTests();
+  resetSchedulerForTests();
   jobManager.resetForTests();
 });
 
