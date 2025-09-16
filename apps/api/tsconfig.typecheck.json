@@ -4,8 +4,7 @@
     "rootDir": "../..",
     "types": ["vitest/globals"],
     "resolveJsonModule": true,
-    "skipLibCheck": true,
-    "moduleResolution": "nodenext"
+    "skipLibCheck": true
   },
   "include": ["src", "types/**/*.d.ts"],
   "exclude": ["src/__tests__/**", "src/tests/**", "**/*.spec.ts", "vitest.config.ts"]
