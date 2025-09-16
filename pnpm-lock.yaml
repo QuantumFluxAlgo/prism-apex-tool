@@ -143,6 +143,9 @@ importers:
       '@prism-apex/strategies':
         specifier: workspace:*
         version: link:../../packages/strategies
+      '@prism-apex/strategy-apx-ddb01':
+        specifier: workspace:*
+        version: link:../../packages/strategy-apx-ddb01
       fastify:
         specifier: 5.5.0
         version: 5.5.0
