@@ -44,7 +44,9 @@ The codebase must never introduce broker order placement (tickets-only). CI enfo
 - If your entry file is not `src/server.ts`, update `apps/api/tsup.config.ts`.
 
 ### Path aliases
-- TS path aliases are maintained in `tsconfig.paths.json`, which is extended by `tsconfig.base.json`.
-  Example: `@prism-apex/app-api/*` → `apps/api/src/*`.
-- Vitest uses `vite-tsconfig-paths` and `tsconfig-paths/register` to resolve these aliases (`apps/api/test.setup.ts`).
-- If you change folder layout, update the `paths` map accordingly.
+- Source of truth: `tsconfig.paths.json`. `tsconfig.base.json` extends it so every workspace inherits the same `paths` map.
+- Use the `@prism-apex/<workspace>` pattern when importing. Examples:
+  - `@prism-apex/app-api/*` → `apps/api/src/*`
+  - `@prism-apex/rules-apex/*` → `packages/rules-apex/src/*`
+- Vitest pulls in the map via the `vite-tsconfig-paths` plugin (see the shared `vitest.config.ts` family), and Node-based setups/scripts load `tsconfig-paths/register` (e.g., `apps/api/test.setup.ts`).
+- Update `tsconfig.paths.json` whenever folders move; the rest follows automatically.
