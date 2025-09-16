@@ -134,12 +134,14 @@ describe('strategy orchestrator', () => {
       'VWAP_FT',
       'OSB',
       'VWAP_FT',
+      'APX-DDB-01',
     ]);
     expect(suggestions.map((s) => s.side)).toEqual([
       'BUY',
       'BUY',
       'SELL',
       'SELL',
+      'BUY',
     ]);
   });
 });
