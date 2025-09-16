@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { TicketSchema } from '../schemas/ticket.js';
+import { TicketSchema } from '@prism-apex/app-api/schemas/ticket.js';
 
 describe('ticket schema', () => {
   it('accepts APX-DDB-01 strategy', () => {

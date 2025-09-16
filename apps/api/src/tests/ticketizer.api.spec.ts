@@ -1,8 +1,8 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { setJobBeat } from '@prism-apex/runtime';
-import { buildServer } from '../server.js';
-import { _clear, saveTicket } from '../store/tickets.js';
-import { withJobs } from './helpers/jobs.js';
+import { buildServer } from '@prism-apex/app-api/server.js';
+import { _clear, saveTicket } from '@prism-apex/app-api/store/tickets.js';
+import { withJobs } from '@prism-apex/app-api/tests/helpers/jobs.js';
 
 withJobs();
 

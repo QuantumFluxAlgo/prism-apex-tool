@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { guardSuggestion, Suggestion } from '../jobs/ticketizer.js';
+import { guardSuggestion, Suggestion } from '@prism-apex/app-api/jobs/ticketizer.js';
 
 const base: Suggestion = {
   symbol: 'ES',
