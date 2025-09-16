@@ -125,7 +125,7 @@ Dashboard displays an EOD countdown to flat window start.
 
 7) Endpoints (read-only)
 
-GET /tickets?date=YYYY-MM-DD — JSONL aggregation for the day.
+GET /tickets?date=YYYY-MM-DD[&strategy=STRATEGY] — JSONL aggregation for the day (optional strategy filter).
 
 GET /export/tickets?date=YYYY-MM-DD — CSV snapshot.
 

@@ -179,6 +179,7 @@ registry.registerPath({
       date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
       cursor: z.string().optional(),
       limit: z.string().optional(),
+      strategy: z.string().optional(),
     }),
   },
   responses: {

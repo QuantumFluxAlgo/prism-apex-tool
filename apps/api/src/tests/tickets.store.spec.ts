@@ -74,6 +74,37 @@ describe('ticket store', () => {
     await app.close();
   });
 
+  it('filters tickets by strategy when provided', async () => {
+    const base: Ticket = {
+      symbol: 'ESZ4',
+      side: 'BUY',
+      entry: 100,
+      stop: 99,
+      target: 102,
+      qty: 1,
+      accountId: 'A1',
+      timestampUtc: '2024-01-01T10:00:00Z',
+      meta: { strategy: 'VWAP_FT', rr: 2, guardrails: [] },
+      accepted: true,
+    };
+    await store.saveTicket(base);
+    await store.saveTicket({
+      ...base,
+      timestampUtc: '2024-01-01T11:00:00Z',
+      meta: { ...base.meta, strategy: 'OSB' },
+    });
+    const app = buildServer();
+    const res = await app.inject({
+      method: 'GET',
+      url: '/tickets?date=2024-01-01&strategy=OSB',
+    });
+    const body = res.json();
+    expect(body.tickets).toHaveLength(1);
+    expect(body.tickets[0].meta.strategy).toBe('OSB');
+    expect(body.nextCursor).toBeNull();
+    await app.close();
+  });
+
   it('exports CSV with strategy column', async () => {
     const t: Ticket = {
       symbol: 'ESZ4',
