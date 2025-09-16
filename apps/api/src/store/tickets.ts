@@ -64,13 +64,18 @@ export function listTickets(
   date: string,
   cursor = 0,
   limit = 50,
+  strategy?: string,
 ): {
   items: Ticket[];
   nextCursor?: number;
 } {
   const day = days.get(date) ?? [];
-  const slice = day.slice(cursor, cursor + limit).map(({ hash: _hash, ...t }) => t);
-  const nextCursor = cursor + limit < day.length ? cursor + limit : undefined;
+  const strategyFilter = strategy?.trim();
+  const filtered = strategyFilter
+    ? day.filter((ticket) => ticket.meta.strategy === strategyFilter)
+    : day;
+  const slice = filtered.slice(cursor, cursor + limit).map(({ hash: _hash, ...t }) => t);
+  const nextCursor = cursor + limit < filtered.length ? cursor + limit : undefined;
   return { items: slice, nextCursor };
 }
 

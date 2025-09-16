@@ -12,11 +12,12 @@ export async function ticketsRoutes(app: FastifyInstance) {
         date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
         cursor: z.coerce.number().optional(),
         limit: z.coerce.number().optional(),
+        strategy: z.string().optional(),
       })
       .safeParse(req.query);
     if (!q.success) return reply.code(400).send({ error: 'Invalid query' });
     const limit = Math.min(Math.max(q.data.limit ?? 50, 1), 200);
-    const { items, nextCursor } = listTickets(q.data.date, q.data.cursor, limit);
+    const { items, nextCursor } = listTickets(q.data.date, q.data.cursor, limit, q.data.strategy);
     return { tickets: items, nextCursor: nextCursor ?? null };
   });
 
