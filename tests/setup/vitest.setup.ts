@@ -6,7 +6,6 @@
  * - Reduce console noise (keep warn/error)
  */
 
-// eslint-disable-next-line import/no-extraneous-dependencies
 import { beforeAll, beforeEach, afterEach, vi } from 'vitest';
 
 beforeAll(() => {
