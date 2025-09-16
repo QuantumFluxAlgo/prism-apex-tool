@@ -1,16 +1,17 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import { jobManager, resetJobsForTests } from '../jobs/jobManager.js';
+import { jobManager } from '@prism-apex/app-api/jobs/jobManager.js';
+import { resetSchedulerForTests } from '@prism-apex/app-api/jobs/scheduler.js';
 
-let buildServer: typeof import('../server.js').buildServer;
+let buildServer: typeof import('@prism-apex/app-api/server.js').buildServer;
 
 beforeEach(async () => {
   jobManager.resetForTests();
-  resetJobsForTests();
-  ({ buildServer } = await import('../server.js'));
+  resetSchedulerForTests();
+  ({ buildServer } = await import('@prism-apex/app-api/server.js'));
 });
 
 afterEach(() => {
-  resetJobsForTests();
+  resetSchedulerForTests();
   jobManager.resetForTests();
 });
 

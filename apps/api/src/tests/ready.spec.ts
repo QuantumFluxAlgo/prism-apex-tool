@@ -1,11 +1,11 @@
-import { describe, expect, it, vi, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { setJobBeat, __resetHealth } from '@prism-apex/runtime';
-import { buildServer } from '../server.js';
+import { buildServer } from '@prism-apex/app-api/server.js';
 
 describe('/ready', () => {
   beforeEach(() => {
     vi.useFakeTimers();
-    vi.setSystemTime(new Date("2024-01-01T00:00:00Z"));
+    vi.setSystemTime(new Date('2024-01-01T00:00:00Z'));
     __resetHealth();
   });
   afterEach(() => {
