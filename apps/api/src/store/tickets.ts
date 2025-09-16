@@ -3,8 +3,9 @@ import path from 'node:path';
 import crypto from 'node:crypto';
 import type { Ticket } from '../schemas/ticket.js';
 export type { Ticket } from '../schemas/ticket.js';
+import { resolveDataDir } from '../utils/dirs.js';
 
-const DATA_DIR = process.env.DATA_DIR || '/var/lib/prism-apex-tool';
+const DATA_DIR = resolveDataDir();
 const FILE = path.join(DATA_DIR, 'tickets.jsonl');
 
 type Stored = Ticket & { hash: string };
