@@ -49,6 +49,7 @@
     "@prism-apex/rules-apex": "workspace:*",
     "@prism-apex/signals": "workspace:*",
     "@prism-apex/strategies": "workspace:*",
+    "@prism-apex/strategy-apx-ddb01": "workspace:*",
     "@prism-apex/runtime": "workspace:*",
     "fastify": "5.5.0",
     "fastify-plugin": "5.0.1",
