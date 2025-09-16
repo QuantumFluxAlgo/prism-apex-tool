@@ -9,7 +9,7 @@ export interface Ticket {
   qty: number;
   accountId: string;
   timestampUtc: string;
-  meta: { strategy: 'VWAP_FT' | 'OSB'; rr: number; guardrails: string[] };
+  meta: { strategy: 'VWAP_FT' | 'OSB' | 'APX-DDB-01'; rr: number; guardrails: string[] };
   accepted: boolean;
   reasons?: string[];
 }
