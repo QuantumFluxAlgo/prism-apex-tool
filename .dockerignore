@@ -15,3 +15,9 @@ docker-compose.*.yml
 *.zip
 *.bak
 *.old
+
+# BEGIN ingress-yahoo-dev src include
+!apps/ingress-yahoo-dev/package.json
+!apps/ingress-yahoo-dev/tsconfig.json
+!apps/ingress-yahoo-dev/src/**
+# END ingress-yahoo-dev src include
