@@ -1,9 +1,11 @@
 services:
-  api:
-    command: ["node","apps/api/start-runtime.cjs"]
+  dashboard:
+    environment:
+      - CI=1
+    command: >
+      sh -lc "corepack enable && corepack prepare pnpm@9.0.0 --activate &&
+      pnpm install --no-frozen-lockfile &&
+      pnpm -C apps/dashboard dev --host 0.0.0.0 --port 5180"
   dashboard-lite:
-    build:
-      context: .
-      dockerfile: apps/dashboard-lite/Dockerfile
     ports:
       - "5179:80"
