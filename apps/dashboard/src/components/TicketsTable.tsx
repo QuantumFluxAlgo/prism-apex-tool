@@ -69,7 +69,7 @@ export function TicketsTable({ tickets, hasMore, onLoadMore }: Props) {
               <td>{t.target}</td>
               <td>{t.meta.rr.toFixed(2)}</td>
               <td>{t.qty}</td>
-              <td>{t.meta.strategy}</td>
+              <td>{(STRATEGY_LABELS[t.meta.strategy] ?? t.meta.strategy)}</td>
               <td title={t.accepted ? '' : (t.reasons || []).join(', ')}>
                 {t.accepted ? '✓' : '✗'}
               </td>
