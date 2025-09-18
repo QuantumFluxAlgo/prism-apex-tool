@@ -22,6 +22,7 @@ import { tradingviewWebhookRoutes } from './routes/webhooks.tradingview.js';
 import readyRoute from './routes/ready.js';
 import { getConfig } from './config/env.js';
 import jobsBoot from './jobs/boot.js';
+import strategyAlias from './plugins/strategy-alias.js';
 
 const cfg = getConfig();
 
@@ -64,7 +65,7 @@ export function buildServer() {
     trustProxy,
   });
   // Normalize strategy aliases (e.g., ORR -> APX-DDB-01)
-  app.register(require('./plugins/strategy-alias').default);
+  app.register(strategyAlias);
   app.log.info(
     {
       config: {
