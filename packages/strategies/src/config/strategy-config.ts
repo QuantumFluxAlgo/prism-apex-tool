@@ -32,10 +32,26 @@ export type OpeningSessionBreakoutParams = {
   postOrBars: number;
 };
 
-const __dirname = dirname(fileURLToPath(import.meta.url));
+let moduleDirname: string;
+
+if (typeof __dirname === 'string') {
+  moduleDirname = __dirname;
+} else {
+  const moduleUrl = typeof import.meta !== 'undefined' ? import.meta.url : undefined;
+  moduleDirname = moduleUrl ? dirname(fileURLToPath(moduleUrl)) : process.cwd();
+}
 
 export function loadStrategyConfig<T>(key: StrategyKey): T {
-  const filePath = join(__dirname, '..', '..', '..', '..', 'configs', 'strategies', `${key}.json`);
+  const filePath = join(
+    moduleDirname,
+    '..',
+    '..',
+    '..',
+    '..',
+    'configs',
+    'strategies',
+    `${key}.json`,
+  );
   try {
     const raw = readFileSync(filePath, 'utf8');
     return JSON.parse(raw) as T;
