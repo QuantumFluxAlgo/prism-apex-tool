@@ -21,18 +21,19 @@
     "sync:tickets": "tsx src/scripts/syncTickets.ts"
   },
   "devDependencies": {
+    "@eslint/js": "^9.10.0",
     "@types/node": "^20.19.11",
     "@vitest/coverage-v8": "^2.0.0",
+    "eslint": "^9.10.0",
+    "globals": "^15.15.0",
+    "prettier": "^3.3.3",
     "tsup": "8.5.0",
     "tsx": "4.20.4",
     "typescript": "^5.9.2",
-    "vitest": "^2.0.0",
-    "eslint": "^9.10.0",
-    "@eslint/js": "^9.10.0",
     "typescript-eslint": "^8.7.0",
-    "prettier": "^3.3.3",
     "vite": "latest",
-    "vite-tsconfig-paths": "4.3.2"
+    "vite-tsconfig-paths": "4.3.2",
+    "vitest": "^2.0.0"
   },
   "dependencies": {
     "@fastify/autoload": "6.3.1",
