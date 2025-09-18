@@ -51,7 +51,7 @@ export default function App() {
   }, []);
 
   const [date, setDate] = useState<string>(defaultDate);
-  const [strategy, setStrategy] = useState<string>("ORR");
+  const [strategy, setStrategy] = useState<string>("APX-DDB-01");
   const [tickets, setTickets] = useState<Ticket[] | null>(null);
   const [loading, setLoading] = useState(false);
   const [err, setErr] = useState<string | null>(null);
@@ -121,7 +121,7 @@ export default function App() {
             value={strategy}
             onChange={(e: any) => setStrategy(e.target.value)}
           >
-            <option value="ORR">Open Range Retest (ORR)</option>
+            <option value="APX-DDB-01">Open Range Retest (ORR)</option>
           </select>
         </label>
         <button
