@@ -1,0 +1,10 @@
+services:
+  api:
+    environment:
+      - APEX_TICKETS_DIR=/data/tickets
+    volumes:
+      - api-data:/data:ro
+volumes:
+  api-data:
+    external: true
+    name: prismapex_api-data
