@@ -26,7 +26,7 @@ import jobsBoot from './jobs/boot.js';
 const cfg = getConfig();
 
 import { telemetryRoutes } from './routes/telemetry.js';
-import openapi from './routes/openapi.js';
+import { openapiRoutes } from './routes/openapi.js';
 import { jobManager } from './lib/jobManager.js';
 
 import { registerStrategiesJob } from './jobs/strategies.js';
@@ -128,8 +128,7 @@ export function buildServer() {
     stopJobs();
     await jobManager.stopAll();
   });
-  app.register(openapi);
+  app.register(openapiRoutes);
 
   return app;
 }
-
