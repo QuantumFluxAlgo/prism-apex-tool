@@ -1,122 +1,140 @@
 import { useEffect, useMemo, useState } from "react";
 
 type Ticket = {
-  id: string;
-  ts: string;
-  strategy?: string;
   symbol: string;
-  side: "Buy" | "Sell";
+  side: "BUY" | "SELL" | string;
+  entry: number;
+  stop: number;
+  target: number;
   qty: number;
-  entry: { type: string; price: number };
-  stop: { type: string; price: number; ticks?: number };
-  targets: { type: string; price: number; ticks?: number; qty?: number }[];
-  rr?: number;
-  expiry?: string;
-  notes?: string;
+  accountId: string;
+  timestampUtc: string;
+  meta?: { strategy?: string; rr?: number; guardrails?: unknown[] };
+  accepted?: boolean;
+  reasons?: string[];
+  hash?: string;
 };
 
-function ymdTodayUTC() {
-  return new Date().toISOString().slice(0, 10);
+function yyyyMmDd(d: Date) {
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${d.getUTCFullYear()}-${pad(d.getUTCMonth() + 1)}-${pad(d.getUTCDate())}`;
 }
 
 export default function App() {
-  const [date, setDate] = useState(ymdTodayUTC());
-  const [onlyDdb01, setOnlyDdb01] = useState(true);
-  const [tickets, setTickets] = useState<Ticket[]>([]);
+  // default to yesterday (UTC) so it matches the seeded file
+  const yesterday = useMemo(() => {
+    const d = new Date();
+    d.setUTCDate(d.getUTCDate() - 1);
+    return yyyyMmDd(d);
+  }, []);
+
+  const [date, setDate] = useState<string>(yesterday);
+  const [strategy, setStrategy] = useState<string>("APX-DDB-01");
+  const [tickets, setTickets] = useState<Ticket[] | null>(null);
   const [loading, setLoading] = useState(false);
+  const [err, setErr] = useState<string | null>(null);
 
-  const qs = useMemo(() => {
-    const p = new URLSearchParams({ date });
-    if (onlyDdb01) p.set("strategy", "APX-DDB-01");
-    return p.toString();
-  }, [date, onlyDdb01]);
-
-  useEffect(() => {
+  async function fetchTickets() {
     setLoading(true);
-    fetch(`/api/tickets?${qs}`)
-      .then((r) => r.json())
-      .then((j) => setTickets(Array.isArray(j) ? j : []))
-      .catch(() => setTickets([]))
-      .finally(() => setLoading(false));
-  }, [qs]);
+    setErr(null);
+    setTickets(null);
+    try {
+      // nginx in the dashboard-lite container proxies these to the API container
+      const q = new URLSearchParams({ date, strategy });
+      const res = await fetch(`/tickets?${q.toString()}`, { headers: { accept: "application/json" } });
+      if (!res.ok) {
+        const txt = await res.text();
+        throw new Error(`HTTP ${res.status}: ${txt}`);
+      }
+      const json = await res.json();
+      if (!Array.isArray(json)) {
+        throw new Error("Unexpected response (not an array)");
+      }
+      setTickets(json as Ticket[]);
+    } catch (e: any) {
+      setErr(e?.message ?? String(e));
+    } finally {
+      setLoading(false);
+    }
+  }
 
-  return (
-    <div style={{ fontFamily: "Inter, system-ui, Arial", padding: 16 }}>
-      <h1 style={{ marginBottom: 8 }}>Prism-Apex — Tickets (Lite)</h1>
-      <div style={{ display: "flex", gap: 16, alignItems: "center", marginBottom: 16 }}>
-        <label>
-          Date (UTC):
-          <input type="date" value={date} onChange={(e) => setDate(e.target.value)} />
-        </label>
-        <label>
-          <input
-            type="checkbox"
-            checked={onlyDdb01}
-            onChange={(e) => setOnlyDdb01(e.target.checked)}
-          />
-          Show only APX-DDB-01
-        </label>
-        <span style={{ color: "#666" }}>{loading ? "Loading…" : `${tickets.length} tickets`}</span>
-      </div>
-      <div style={{ display: "grid", gap: 12, gridTemplateColumns: "repeat(auto-fill, minmax(360px, 1fr))" }}>
-        {tickets.map((t) => (
-          <TicketCard key={t.id} t={t} />
-        ))}
-      </div>
-    </div>
-  );
-}
+  // auto-load on first render
+  useEffect(() => {
+    fetchTickets();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
-function TicketCard({ t }: { t: Ticket }) {
   return (
     <div
       style={{
-        border: "1px solid #e4e4e7",
-        borderRadius: 12,
-        padding: 12,
-        boxShadow: "0 1px 2px rgba(0,0,0,0.04)",
+        padding: "24px",
+        fontFamily:
+          'system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif',
       }}
     >
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
-        <div>
-          <div style={{ fontWeight: 700 }}>{t.symbol} — {t.side} × {t.qty}</div>
-          <div style={{ fontSize: 12, color: "#666" }}>{new Date(t.ts).toISOString()}</div>
-        </div>
-        <div
-          style={{
-            background: "#eef2ff",
-            color: "#3730a3",
-            borderRadius: 999,
-            padding: "2px 8px",
-            fontSize: 12,
-            fontWeight: 600,
-          }}
-        >
-          {t.strategy || "—"}
-        </div>
+      <h1 style={{ fontSize: 40, margin: 0, marginBottom: 8 }}>Prism-Apex — Dashboard Lite</h1>
+      <p style={{ color: "#333", marginTop: 0 }}>
+        Read-only tickets feed. Use the date picker and strategy toggle to filter.
+      </p>
+
+      <div style={{ display: "flex", gap: 12, alignItems: "center", marginBottom: 16 }}>
+        <label>
+          Date:&nbsp;
+          <input
+            type="date"
+            value={date}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setDate(e.target.value)}
+          />
+        </label>
+        <label>
+          Strategy:&nbsp;
+          <select
+            value={strategy}
+            onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setStrategy(e.target.value)}
+          >
+            <option value="APX-DDB-01">APX-DDB-01</option>
+            {/* add more strategies here when available */}
+          </select>
+        </label>
+        <button onClick={fetchTickets} disabled={loading} style={{ padding: "6px 12px", cursor: "pointer" }}>
+          {loading ? "Loading…" : "Refresh"}
+        </button>
       </div>
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8, fontSize: 14 }}>
-        <KV k="Entry" v={fmtPx(t.entry?.price)} />
-        <KV k="Stop" v={fmtPx(t.stop?.price)} />
-        <KV k="Target" v={fmtPx(t.targets?.[0]?.price)} />
-        <KV k="RR" v={t.rr != null ? String(t.rr) : "—"} />
-        <KV k="Expiry" v={t.expiry ? new Date(t.expiry).toISOString() : "—"} />
-        <KV k="ID" v={t.id} />
-      </div>
-      {t.notes && <div style={{ marginTop: 8, fontSize: 12, color: "#334155" }}>{t.notes}</div>}
+
+      {err && (
+        <div style={{ color: "#b00020", marginBottom: 12 }}>Error: {err}</div>
+      )}
+
+      {tickets?.length ? (
+        <table style={{ width: "100%", borderCollapse: "collapse" }}>
+          <thead>
+            <tr>
+              {["Time (UTC)", "Symbol", "Side", "Qty", "Entry", "Stop", "Target", "RR", "Accepted"].map((header) => (
+                <th key={header} style={{ textAlign: "left", borderBottom: "1px solid #ddd", padding: "8px 6px" }}>
+                  {header}
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {tickets.map((t) => (
+              <tr key={t.hash ?? `${t.symbol}-${t.timestampUtc}-${t.side}-${t.entry}`}>
+                <td style={{ padding: "6px" }}>{t.timestampUtc}</td>
+                <td style={{ padding: "6px" }}>{t.symbol}</td>
+                <td style={{ padding: "6px" }}>{t.side}</td>
+                <td style={{ padding: "6px" }}>{t.qty}</td>
+                <td style={{ padding: "6px" }}>{t.entry}</td>
+                <td style={{ padding: "6px" }}>{t.stop}</td>
+                <td style={{ padding: "6px" }}>{t.target}</td>
+                <td style={{ padding: "6px" }}>{t.meta?.rr ?? ""}</td>
+                <td style={{ padding: "6px" }}>{t.accepted ? "✓" : ""}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      ) : (
+        !loading && !err && <div>No tickets found for {date} / {strategy}.</div>
+      )}
     </div>
   );
-}
-
-function KV({ k, v }: { k: string; v: string }) {
-  return (
-    <div>
-      <div style={{ color: "#64748b", fontSize: 11, textTransform: "uppercase", letterSpacing: 0.3 }}>{k}</div>
-      <div style={{ fontWeight: 600 }}>{v}</div>
-    </div>
-  );
-}
-
-function fmtPx(n?: number) {
-  return typeof n === "number" && Number.isFinite(n) ? n.toFixed(2) : "—";
 }
