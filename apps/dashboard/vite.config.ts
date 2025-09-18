@@ -19,7 +19,7 @@ export default defineConfig({
 
       // direct API passthroughs
       '/compat': { target: API, changeOrigin: true },
-      '/tickets': { target: API, changeOrigin: true },
+      '/api': { target: API, changeOrigin: true, rewrite: (p) => p.replace(/^\/api/, '') },
       '/telemetry': { target: API, changeOrigin: true },
       '/ready': { target: API, changeOrigin: true },
       '/export': { target: API, changeOrigin: true },
