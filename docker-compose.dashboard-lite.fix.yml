@@ -1,0 +1,5 @@
+services:
+  dashboard-lite:
+    build:
+      context: .
+      dockerfile: apps/dashboard-lite/Dockerfile
