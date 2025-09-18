@@ -1,25 +1,23 @@
-# syntax=docker/dockerfile:1
-FROM node:20-alpine AS deps
-WORKDIR /app
-RUN npm i -g pnpm@9
-COPY package.json pnpm-lock.yaml* ./
-RUN pnpm fetch || true
-
+# syntax=docker/dockerfile:1.6
 FROM node:20-alpine AS build
 WORKDIR /app
-RUN npm i -g pnpm@9
-COPY . .
-# Build web (vite) and server (tsc)
-pnpm -w -C apps/dashboard-lite build || true
-# Copy web dist for serving
-pnpm -w -C apps/dashboard-lite --silent exec bash .ci/postbuild.sh || true
+ENV HUSKY=0
+RUN corepack enable && corepack prepare pnpm@9.0.0 --activate
 
-FROM node:20-alpine
-WORKDIR /app
-RUN npm i -g pnpm@9
-COPY --from=build /app .
-ENV NODE_ENV=production
-ENV DASHBOARD_LITE_PORT=5178
-ENV APEX_TICKETS_DIR=/app/tickets
-EXPOSE 5178
-CMD ["pnpm","-C","apps/dashboard-lite","start"]
+# Copy workspace (keep it lean but sufficient for build)
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+COPY apps apps
+COPY packages packages
+COPY configs configs
+
+# Install and build dashboard-lite
+RUN pnpm install --frozen-lockfile
+RUN pnpm -w -C apps/dashboard-lite build
+# Optional postbuild (best-effort)
+RUN pnpm -w -C apps/dashboard-lite --silent exec bash .ci/postbuild.sh || true
+
+# Runtime: nginx serving built assets
+FROM nginx:alpine
+COPY --from=build /app/apps/dashboard-lite/web/dist /usr/share/nginx/html
+EXPOSE 80
+CMD ["nginx", "-g", "daemon off;"]
