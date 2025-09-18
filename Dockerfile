@@ -20,6 +20,14 @@ RUN pnpm install --frozen-lockfile
 
 # Build just the API and any local deps it needs
 RUN pnpm -r --filter "@prism-apex/api" --filter "./packages/*" build
+# Build the tickets sync script into the API dist
+RUN pnpm dlx typescript tsc \
+  --target ES2020 \
+  --module commonjs \
+  --esModuleInterop \
+  --skipLibCheck \
+  --outDir apps/api/dist/scripts \
+  apps/api/src/scripts/syncTickets.ts
 
 # Produce a deployable, pruned copy of the API package
 RUN pnpm -r deploy --filter "@prism-apex/api" --prod /opt/app
