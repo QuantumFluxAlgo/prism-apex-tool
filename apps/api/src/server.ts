@@ -13,7 +13,7 @@ import { notifyRoutes } from './routes/notify.js';
 import { jobsRoutes } from './routes/jobs.js';
 import { compatRoutes } from './routes/compat.js';
 import healthRoute from './routes/health.js';
-import { versionRoutes } from './routes/version.js';
+import versionRoute from './routes/version.js';
 import { analyticsRoutes } from './routes/analytics.js';
 import { auditRoutes } from './routes/audit.js';
 import { accountsRoutes } from './routes/accounts.js';
@@ -91,7 +91,7 @@ export function buildServer() {
 
   app.register(readyRoute);
   app.register(healthRoute);
-  app.register(versionRoutes);
+  app.register(versionRoute);
   app.register(analyticsRoutes);
   app.register(auditRoutes);
   app.register(accountsRoutes);
