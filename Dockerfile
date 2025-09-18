@@ -12,6 +12,7 @@ COPY tsconfig*.json ./
 COPY apps apps
 COPY packages packages
 COPY configs configs
+COPY types types
 COPY apex apex
 
 # Install all deps once for the workspace
