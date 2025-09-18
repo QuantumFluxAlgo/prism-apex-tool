@@ -22,6 +22,27 @@ function yyyyMmDd(d: Date) {
 
 const REFRESH_MS = 10000;
 
+function coerceTickets(payload: unknown): Ticket[] | null {
+  if (Array.isArray(payload)) return payload as Ticket[];
+  if (payload && typeof payload === "object") {
+    const obj = payload as any;
+    if (Array.isArray(obj.tickets)) return obj.tickets as Ticket[];
+    if (Array.isArray(obj.items)) return obj.items as Ticket[];
+    if (Array.isArray(obj.data)) return obj.data as Ticket[];
+  }
+  return null;
+}
+
+async function getJson(res: Response) {
+  const text = await res.text();
+  try {
+    return JSON.parse(text);
+  } catch {
+    console.error("[dashboard-lite] Non-JSON response:", text.slice(0, 400));
+    throw new Error(`Bad JSON (content-type: ${res.headers.get("content-type") || "unknown"})`);
+  }
+}
+
 export default function App() {
   const defaultDate = useMemo(() => {
     const d = new Date();
@@ -47,11 +68,12 @@ export default function App() {
         signal,
       });
       if (!res.ok) throw new Error(`HTTP ${res.status}: ${await res.text()}`);
-      const json = await res.json();
-      if (!Array.isArray(json)) throw new Error("Unexpected response (not an array)");
-      setTickets(json as Ticket[]);
+      const raw = await getJson(res);
+      console.log("[dashboard-lite] /tickets payload:", raw);
+      const arr = coerceTickets(raw);
+      if (!arr) throw new Error("Unexpected response (not an array)");
+      setTickets(arr);
       setLast(new Date().toLocaleTimeString());
-      console.log("[dashboard-lite] fetched", json.length, "tickets for", date, strategy);
     } catch (e: any) {
       if (e?.name !== "AbortError") setErr(e?.message ?? String(e));
     } finally {
@@ -74,12 +96,12 @@ export default function App() {
   return (
     <div
       style={{
-        padding: "24px",
+        padding: 24,
         fontFamily:
           'system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif',
       }}
     >
-      <h1 style={{ fontSize: 40, margin: 0, marginBottom: 8 }}>Prism-Apex — Dashboard Lite</h1>
+      <h1 style={{ fontSize: 40, margin: "0 0 8px 0" }}>Prism-Apex — Dashboard Lite</h1>
       <p style={{ color: "#333", marginTop: 0 }}>
         Read-only tickets feed. Use the date picker and strategy toggle to filter.
       </p>
@@ -102,11 +124,19 @@ export default function App() {
             <option value="APX-DDB-01">APX-DDB-01</option>
           </select>
         </label>
-        <button onClick={() => fetchTickets()} disabled={loading} style={{ padding: "6px 12px", cursor: "pointer" }}>
+        <button
+          onClick={() => fetchTickets()}
+          disabled={loading}
+          style={{ padding: "6px 12px", cursor: "pointer" }}
+        >
           {loading ? "Loading…" : "Refresh"}
         </button>
         <label style={{ marginLeft: 8 }}>
-          <input type="checkbox" checked={auto} onChange={(e) => setAuto(e.currentTarget.checked)} />
+          <input
+            type="checkbox"
+            checked={auto}
+            onChange={(e) => setAuto(e.currentTarget.checked)}
+          />
           &nbsp;Auto refresh (10s)
         </label>
         <span style={{ opacity: 0.7, marginLeft: 8 }}>{last && `Last update: ${last}`}</span>
