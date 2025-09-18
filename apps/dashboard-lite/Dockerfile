@@ -22,6 +22,6 @@ RUN pnpm -C apps/dashboard-lite --silent exec bash .ci/postbuild.sh || true
 
 # Runtime: serve static assets via nginx
 FROM nginx:alpine
-COPY --from=build /app/apps/dashboard-lite/web/dist /usr/share/nginx/html
+COPY --from=build /app/apps/dashboard-lite/dist /usr/share/nginx/html
 EXPOSE 80
 CMD ["nginx", "-g", "daemon off;"]
