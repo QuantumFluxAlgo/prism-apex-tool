@@ -3,7 +3,6 @@ import path from 'node:path';
 import crypto from 'node:crypto';
 import yahooFinance from 'yahoo-finance2';
 
-// Keep this local to avoid coupling builds to internal types
 type Ticket = {
   symbol: string;
   side: 'BUY'|'SELL'|string;
@@ -13,11 +12,40 @@ type Ticket = {
   qty: number;
   accountId: string;
   timestampUtc: string;
-  meta: { strategy: 'APX-DDB-01'; rr: number; guardrails: string[]; sizingHint?: string };
-  accepted: boolean;
-  reasons: string[];
-  hash: string;
+  meta?: { strategy?: string; rr?: number; guardrails?: unknown[] };
+  accepted?: boolean;
+  reasons?: string[];
+  hash?: string;
 };
+
+function buildOrrTicket(symbol: string, price: number, previousClose: number, whenIso: string): Ticket {
+  const diff = price - previousClose;
+  const side = diff >= 0 ? 'BUY' : 'SELL';
+  const entry = price;
+  const stop  = side === 'BUY' ? Math.max(0, price - Math.abs(diff) * 0.5) : price + Math.abs(diff) * 0.5;
+  const target= side === 'BUY' ? price + Math.abs(diff) : Math.max(0, price - Math.abs(diff));
+  const rr    = Math.abs((target - entry) / Math.max(0.01, (entry - stop)));
+
+  const base = {
+    symbol,
+    side,
+    entry: Number(entry.toFixed(2)),
+    stop: Number(stop.toFixed(2)),
+    target: Number(target.toFixed(2)),
+    qty: 1,
+    accountId: 'YF-DELAYED',
+    timestampUtc: whenIso,
+    meta: { strategy: 'APX-DDB-01', rr: Number(rr.toFixed(2)), guardrails: [] as unknown[] },
+    accepted: true,
+    reasons: [] as string[],
+  } as const;
+
+  const hash = crypto.createHash('sha256')
+    .update([base.symbol, base.timestampUtc, base.side, base.entry].join('|'))
+    .digest('hex');
+
+  return { ...base, hash };
+}
 
 function parseArgs() {
   const args = new Map<string,string>();
@@ -28,8 +56,7 @@ function parseArgs() {
     args.set(k.slice(2), v);
   }
   return {
-    symbols: (args.get('symbols') ?? 'AAPL,MSFT,TSLA')
-      .split(',').map(s=>s.trim()).filter(Boolean),
+    symbols: (args.get('symbols') ?? 'AAPL,MSFT,TSLA').split(',').map(s=>s.trim()).filter(Boolean),
     intervalSec: Number(args.get('interval') ?? '60'),
     once: args.get('once') === '1'
   };
@@ -42,41 +69,6 @@ function toISODateUTC(d = new Date()): string {
   return `${yyyy}-${mm}-${dd}`;
 }
 
-// Minimal, deterministic hash so dup cycles don't spam file
-function hashTicket(t: Omit<Ticket,'hash'>): string {
-  const key = [t.symbol, t.timestampUtc, t.side, t.entry].join('|');
-  return crypto.createHash('sha256').update(key).digest('hex');
-}
-
-// Toy ORR-ish placeholder: compares price vs previous close, builds RR, bounded stops/targets.
-// Replace with your fuller ORR logic when ready (weekly vwap + prior RTH high, etc).
-function buildOrrTicket(symbol: string, price: number, previousClose: number, whenIso: string): Ticket {
-  const diff = price - previousClose;
-  const side = diff >= 0 ? 'BUY' : 'SELL';
-  const entry = price;
-  const stop  = side === 'BUY' ? Math.max(0, price - Math.max(0.01, Math.abs(diff) * 0.5))
-                               :              price + Math.max(0.01, Math.abs(diff) * 0.5);
-  const target= side === 'BUY' ? price + Math.max(0.02, Math.abs(diff))
-                               : Math.max(0.01, price - Math.max(0.02, Math.abs(diff)));
-  const rr    = Math.abs((target - entry) / Math.max(0.01, (entry - stop)));
-
-  const base = {
-    symbol,
-    side,
-    entry: Number(entry.toFixed(2)),
-    stop: Number(stop.toFixed(2)),
-    target: Number(target.toFixed(2)),
-    qty: 1,
-    accountId: 'YF-DELAYED',
-    timestampUtc: whenIso,
-    meta: { strategy: 'APX-DDB-01', rr: Number(rr.toFixed(2)), guardrails: [] as string[] },
-    accepted: true,
-    reasons: [] as string[],
-  } as const;
-
-  return { ...base, hash: hashTicket(base as any) };
-}
-
 function appendJSONL(filePath: string, rows: Ticket[]) {
   if (!rows.length) return;
   fs.mkdirSync(path.dirname(filePath), { recursive: true });
@@ -86,7 +78,7 @@ function appendJSONL(filePath: string, rows: Ticket[]) {
 
 async function runOnce(outFile: string, symbols: string[]) {
   const dateIso = toISODateUTC();
-  const when = `${dateIso}T15:59:00Z`; // near official close; dashboard filters by date
+  const when = `${dateIso}T15:59:00Z`;
   const out: Ticket[] = [];
 
   for (const symbol of symbols) {
@@ -95,7 +87,7 @@ async function runOnce(outFile: string, symbols: string[]) {
       const price = Number(q?.regularMarketPrice ?? NaN);
       const prev  = Number(q?.regularMarketPreviousClose ?? NaN);
       if (!Number.isFinite(price) || !Number.isFinite(prev)) {
-        console.error('[orr] skip symbol (no price/prev):', symbol);
+        console.error('[orr] skip (no price/prev):', symbol);
         continue;
       }
       out.push(buildOrrTicket(symbol, price, prev, when));
@@ -105,7 +97,7 @@ async function runOnce(outFile: string, symbols: string[]) {
   }
 
   appendJSONL(outFile, out);
-  console.log(`[orr] ${out.length} tickets appended to ${outFile}`);
+  console.log(`[orr] appended ${out.length} tickets -> ${outFile}`);
 }
 
 async function main() {
@@ -125,7 +117,7 @@ async function main() {
   }
 }
 
-main().catch((err) => {
+main().catch(err => {
   console.error('[orr] fatal', err);
   process.exit(1);
 });
