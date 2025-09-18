@@ -63,6 +63,6 @@ async function request(base: string, path: string, init?: RequestInit) {
 export const api = {
   get: (path: string) => request(COMPAT_BASE, path),
   tickets: (date: string, cursor?: string) =>
-    request(DIRECT_BASE, `/tickets?date=${date}&strategy=ORR${cursor ? `&cursor=${cursor}` : ''}`),
+    request(DIRECT_BASE, `/api/tickets?date=${date}&strategy=ORR${cursor ? `&cursor=${cursor}` : ''}`),
   ready: () => request(DIRECT_BASE, '/ready'),
 };

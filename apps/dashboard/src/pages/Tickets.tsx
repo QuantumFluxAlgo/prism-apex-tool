@@ -50,7 +50,7 @@ export default function TicketsPage() {
   }, [refreshMs, date, symbols, strategies, showAccepted, showRejected]);
 
   const onExport = () => {
-    window.open(`/export/tickets?date=${date}&strategy=ORR`, '_blank');
+    window.open(`/api/export/tickets?date=${date}&strategy=ORR`, '_blank');
   };
 
   const loadMore = () => {
