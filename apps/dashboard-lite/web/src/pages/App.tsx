@@ -20,49 +20,55 @@ function yyyyMmDd(d: Date) {
   return `${d.getUTCFullYear()}-${pad(d.getUTCMonth() + 1)}-${pad(d.getUTCDate())}`;
 }
 
+const REFRESH_MS = 10000;
+
 export default function App() {
-  // default to yesterday (UTC) so it matches the seeded file
-  const yesterday = useMemo(() => {
+  const defaultDate = useMemo(() => {
     const d = new Date();
     d.setUTCDate(d.getUTCDate() - 1);
     return yyyyMmDd(d);
   }, []);
 
-  const [date, setDate] = useState<string>(yesterday);
+  const [date, setDate] = useState<string>(defaultDate);
   const [strategy, setStrategy] = useState<string>("APX-DDB-01");
   const [tickets, setTickets] = useState<Ticket[] | null>(null);
   const [loading, setLoading] = useState(false);
   const [err, setErr] = useState<string | null>(null);
+  const [auto, setAuto] = useState(true);
+  const [last, setLast] = useState<string>("");
 
-  async function fetchTickets() {
+  async function fetchTickets(signal?: AbortSignal) {
     setLoading(true);
     setErr(null);
-    setTickets(null);
     try {
-      // nginx in the dashboard-lite container proxies these to the API container
       const q = new URLSearchParams({ date, strategy });
-      const res = await fetch(`/tickets?${q.toString()}`, { headers: { accept: "application/json" } });
-      if (!res.ok) {
-        const txt = await res.text();
-        throw new Error(`HTTP ${res.status}: ${txt}`);
-      }
+      const res = await fetch(`/tickets?${q.toString()}`, {
+        headers: { accept: "application/json" },
+        signal,
+      });
+      if (!res.ok) throw new Error(`HTTP ${res.status}: ${await res.text()}`);
       const json = await res.json();
-      if (!Array.isArray(json)) {
-        throw new Error("Unexpected response (not an array)");
-      }
+      if (!Array.isArray(json)) throw new Error("Unexpected response (not an array)");
       setTickets(json as Ticket[]);
+      setLast(new Date().toLocaleTimeString());
     } catch (e: any) {
-      setErr(e?.message ?? String(e));
+      if (e?.name !== "AbortError") setErr(e?.message ?? String(e));
     } finally {
       setLoading(false);
     }
   }
 
-  // auto-load on first render
   useEffect(() => {
-    fetchTickets();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+    const ac = new AbortController();
+    fetchTickets(ac.signal);
+    return () => ac.abort();
+  }, [date, strategy]);
+
+  useEffect(() => {
+    if (!auto) return;
+    const id = setInterval(() => fetchTickets(), REFRESH_MS);
+    return () => clearInterval(id);
+  }, [auto, date, strategy]);
 
   return (
     <div
@@ -93,25 +99,27 @@ export default function App() {
             onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setStrategy(e.target.value)}
           >
             <option value="APX-DDB-01">APX-DDB-01</option>
-            {/* add more strategies here when available */}
           </select>
         </label>
-        <button onClick={fetchTickets} disabled={loading} style={{ padding: "6px 12px", cursor: "pointer" }}>
+        <button onClick={() => fetchTickets()} disabled={loading} style={{ padding: "6px 12px", cursor: "pointer" }}>
           {loading ? "Loading…" : "Refresh"}
         </button>
+        <label style={{ marginLeft: 8 }}>
+          <input type="checkbox" checked={auto} onChange={(e) => setAuto(e.currentTarget.checked)} />
+          &nbsp;Auto refresh (10s)
+        </label>
+        <span style={{ opacity: 0.7, marginLeft: 8 }}>{last && `Last update: ${last}`}</span>
       </div>
 
-      {err && (
-        <div style={{ color: "#b00020", marginBottom: 12 }}>Error: {err}</div>
-      )}
+      {err && <div style={{ color: "#b00020", marginBottom: 12 }}>Error: {err}</div>}
 
       {tickets?.length ? (
         <table style={{ width: "100%", borderCollapse: "collapse" }}>
           <thead>
             <tr>
-              {["Time (UTC)", "Symbol", "Side", "Qty", "Entry", "Stop", "Target", "RR", "Accepted"].map((header) => (
-                <th key={header} style={{ textAlign: "left", borderBottom: "1px solid #ddd", padding: "8px 6px" }}>
-                  {header}
+              {["Time (UTC)", "Symbol", "Side", "Qty", "Entry", "Stop", "Target", "RR", "Accepted"].map((h) => (
+                <th key={h} style={{ textAlign: "left", borderBottom: "1px solid #ddd", padding: "8px 6px" }}>
+                  {h}
                 </th>
               ))}
             </tr>
