@@ -6,4 +6,4 @@ services:
       context: .
       dockerfile: apps/dashboard-lite/Dockerfile
     ports:
-      - "5178:80"
+      - "5179:80"
