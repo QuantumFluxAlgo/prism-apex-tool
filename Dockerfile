@@ -34,6 +34,8 @@ ENV NODE_ENV=production \
 
 # Copy the deployed API (includes node_modules and built files)
 COPY --from=build /opt/app /app
+# also copy built dist for start-runtime fallback
+COPY --from=build /repo/apps/api/dist /app/apps/api/dist
 
 # Our runtime entry starts Fastify from the compiled bundle
 COPY apps/api/start-runtime.cjs apps/api/start-runtime.cjs
