@@ -6,6 +6,8 @@ import { loadRegistry } from '@prism-apex/config';
 import { getConfig } from '../config/env.js';
 import { TICKET_STRATEGIES } from '../schemas/ticket.js';
 
+const displayStrategy = (s: string) => (s === 'APX-DDB-01' || s === 'ORR') ? 'ORR' : s;
+
 export async function ticketsRoutes(app: FastifyInstance) {
   app.get('/tickets', async (req, reply) => {
     const q = z
@@ -52,7 +54,7 @@ export async function ticketsRoutes(app: FastifyInstance) {
           t.qty,
           t.accountId,
           t.timestampUtc,
-          t.meta.strategy,
+          displayStrategy(t.meta.strategy),
           t.meta.rr,
           t.accepted,
           (t.reasons || []).join('|'),
