@@ -2,9 +2,9 @@ import { FastifyPluginAsync } from 'fastify';
 
 const normalize = (s: string) =>
   s.toLowerCase()
-   .replace(/\(.*?\)/g, '')      // drop parentheses e.g. "(ORR)"
-   .replace(/[^a-z0-9]+/g, '-')  // spaces, underscores -> dashes
-   .replace(/^-+|-+$/g, '');     // trim dashes
+    .replace(/\(.*?\)/g, '') // drop parentheses e.g. "(ORR)"
+    .replace(/[^a-z0-9]+/g, '-') // spaces, underscores -> dashes
+    .replace(/^-+|-+$/g, ''); // trim dashes
 
 const plugin: FastifyPluginAsync = async (app) => {
   app.addHook('preValidation', async (req) => {
@@ -20,7 +20,11 @@ const plugin: FastifyPluginAsync = async (app) => {
       key === 'apx-ddb01' ||
       key === 'apxddb01';
 
-    if (isORR) q.strategy = 'APX-DDB-01';
+    if (isORR) {
+      if (q.strategy !== 'APX-DDB-01') {
+        (req as any).query = { ...q, strategy: 'APX-DDB-01' };
+      }
+    }
   });
 };
 
