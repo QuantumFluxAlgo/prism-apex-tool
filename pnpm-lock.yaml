@@ -223,6 +223,9 @@ importers:
       '@playwright/test':
         specifier: 1.54.2
         version: 1.54.2
+      '@rollup/rollup-linux-x64-musl':
+        specifier: 4.47.1
+        version: 4.47.1
       '@tailwindcss/postcss':
         specifier: 4.1.12
         version: 4.1.12
@@ -5499,8 +5502,7 @@ snapshots:
   '@rollup/rollup-linux-x64-gnu@4.47.1':
     optional: true
 
-  '@rollup/rollup-linux-x64-musl@4.47.1':
-    optional: true
+  '@rollup/rollup-linux-x64-musl@4.47.1': {}
 
   '@rollup/rollup-win32-arm64-msvc@4.47.1':
     optional: true
