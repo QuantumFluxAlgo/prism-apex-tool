@@ -1,4 +1,5 @@
 import { copyText } from '../lib/copy.js';
+const STRATEGY_LABELS: Record<string,string> = { "APX-DDB-01":"ORR", "ORR":"ORR" };
 
 export interface Ticket {
   symbol: string;
