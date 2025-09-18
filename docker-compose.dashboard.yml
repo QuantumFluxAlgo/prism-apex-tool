@@ -1,0 +1,11 @@
+services:
+  dashboard:
+    image: node:20-alpine
+    working_dir: /repo
+    command: sh -lc "corepack enable && corepack prepare pnpm@9.0.0 --activate && pnpm -C apps/dashboard install && pnpm -C apps/dashboard dev --host 0.0.0.0 --port 5180"
+    volumes:
+      - .:/repo
+    ports:
+      - "5180:5180"
+    depends_on:
+      - api
