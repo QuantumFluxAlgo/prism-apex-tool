@@ -4,19 +4,23 @@ WORKDIR /app
 ENV HUSKY=0
 RUN corepack enable && corepack prepare pnpm@9.0.0 --activate
 
-# Copy workspace (keep it lean but sufficient for build)
+# Copy just enough of the monorepo to build dashboard-lite
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 COPY apps apps
 COPY packages packages
 COPY configs configs
+# Include apex rules so any transitive build that references them won't fail
+COPY apex apex
 
-# Install and build dashboard-lite
-RUN pnpm install --frozen-lockfile
-RUN pnpm -w -C apps/dashboard-lite build
-# Optional postbuild (best-effort)
-RUN pnpm -w -C apps/dashboard-lite --silent exec bash .ci/postbuild.sh || true
+# Install only what dashboard-lite (and its local deps) needs
+RUN pnpm install --frozen-lockfile --filter "./apps/dashboard-lite..." --filter "./packages/*"
 
-# Runtime: nginx serving built assets
+# Build the app
+RUN pnpm -C apps/dashboard-lite build
+# Optional, best-effort
+RUN pnpm -C apps/dashboard-lite --silent exec bash .ci/postbuild.sh || true
+
+# Runtime: serve static assets via nginx
 FROM nginx:alpine
 COPY --from=build /app/apps/dashboard-lite/web/dist /usr/share/nginx/html
 EXPOSE 80
