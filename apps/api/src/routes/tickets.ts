@@ -18,7 +18,7 @@ export async function ticketsRoutes(app: FastifyInstance) {
       .safeParse(req.query);
     if (!q.success) return reply.code(400).send({ error: 'Invalid query' });
     const limit = Math.min(Math.max(q.data.limit ?? 50, 1), 200);
-    const { items, nextCursor } = listTickets(q.data.date, q.data.cursor, limit, q.data.strategy);
+    const { items, nextCursor } = listTickets(q.data.date, q.data.cursor, limit, ((q.data.strategy==='ORR'||q.data.strategy==='Open Range Retest (ORR)')?'APX-DDB-01':q.data.strategy));
     return { tickets: items, nextCursor: nextCursor ?? null };
   });
 
