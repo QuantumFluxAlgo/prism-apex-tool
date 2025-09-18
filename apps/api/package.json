@@ -36,6 +36,7 @@
     "vitest": "^2.0.0"
   },
   "dependencies": {
+    "@asteasolutions/zod-to-openapi": "^7.1.0",
     "@fastify/autoload": "6.3.1",
     "@fastify/cors": "11.1.0",
     "@fastify/formbody": "8.0.2",
@@ -47,19 +48,19 @@
     "@prism-apex/config": "workspace:*",
     "@prism-apex/consistency": "workspace:*",
     "@prism-apex/indicators": "workspace:*",
+    "@prism-apex/metrics": "workspace:*",
     "@prism-apex/reporting": "workspace:*",
     "@prism-apex/rules-apex": "workspace:*",
+    "@prism-apex/runtime": "workspace:*",
+    "@prism-apex/sdk": "workspace:*",
     "@prism-apex/signals": "workspace:*",
     "@prism-apex/strategies": "workspace:*",
     "@prism-apex/strategy-apx-ddb01": "workspace:*",
-    "@prism-apex/runtime": "workspace:*",
     "fastify": "5.5.0",
     "fastify-plugin": "5.0.1",
-    "zod": "^3.23.8",
-    "@prism-apex/metrics": "workspace:*",
-    "@prism-apex/sdk": "workspace:*",
-    "@asteasolutions/zod-to-openapi": "^7.1.0",
-    "tsconfig-paths": "latest"
+    "tsconfig-paths": "latest",
+    "yahoo-finance2": "2.13.3",
+    "zod": "^3.23.8"
   },
   "type": "module",
   "main": "dist/server.cjs"
