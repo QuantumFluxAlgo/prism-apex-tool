@@ -34,6 +34,8 @@ ENV NODE_ENV=production \
 
 # Copy the deployed API (includes node_modules and built files)
 COPY --from=build /opt/app /app
+# include runtime configs required by jobs
+COPY --from=build /repo/configs /app/configs
 # also copy built dist for start-runtime fallback
 COPY --from=build /repo/apps/api/dist /app/apps/api/dist
 
