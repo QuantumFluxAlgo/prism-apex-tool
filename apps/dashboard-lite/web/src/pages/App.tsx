@@ -30,7 +30,7 @@ export default function App() {
   }, []);
 
   const [date, setDate] = useState<string>(defaultDate);
-  const [strategy, setStrategy] = useState<string>("APX-DDB-01");
+  const [strategy, setStrategy] = useState<string>("ORR");
   const [tickets, setTickets] = useState<Ticket[] | null>(null);
   const [loading, setLoading] = useState(false);
   const [err, setErr] = useState<string | null>(null);
@@ -98,7 +98,7 @@ export default function App() {
             value={strategy}
             onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setStrategy(e.target.value)}
           >
-            <option value="APX-DDB-01">APX-DDB-01</option>
+            <option value="ORR">Open Range Retest (ORR)</option>
           </select>
         </label>
         <button onClick={() => fetchTickets()} disabled={loading} style={{ padding: "6px 12px", cursor: "pointer" }}>

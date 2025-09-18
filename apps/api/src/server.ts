@@ -63,6 +63,8 @@ export function buildServer() {
     bodyLimit: cfg.bodyLimitBytes,
     trustProxy,
   });
+  // Normalize strategy aliases (e.g., ORR -> APX-DDB-01)
+  app.register(require('./plugins/strategy-alias').default);
   app.log.info(
     {
       config: {
