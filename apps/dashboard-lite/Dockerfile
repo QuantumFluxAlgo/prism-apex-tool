@@ -4,7 +4,7 @@ WORKDIR /app
 ENV HUSKY=0
 RUN corepack enable && corepack prepare pnpm@9.0.0 --activate
 
-# Copy monorepo manifest + ALL tsconfig variants required by per-package builds
+# Copy just what we need to build the web bundle
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 COPY tsconfig*.json ./
 COPY apps apps
@@ -12,16 +12,17 @@ COPY packages packages
 COPY configs configs
 COPY apex apex
 
-# Install only what dashboard-lite (and local deps) need
+# Install only deps for dashboard-lite and local packages it needs
 RUN pnpm install --frozen-lockfile --filter "./apps/dashboard-lite..." --filter "./packages/*"
 
-# Build the app
+# Build the Vite app (outputs to apps/dashboard-lite/web/dist)
 RUN pnpm -C apps/dashboard-lite build
-# Optional postbuild (best-effort, don’t fail build)
+# Optional postbuild; best-effort
 RUN pnpm -C apps/dashboard-lite --silent exec bash .ci/postbuild.sh || true
 
-# Runtime: serve static assets via nginx
+# Runtime: nginx serving the built assets
 FROM nginx:alpine
-COPY --from=build /app/apps/dashboard-lite/dist /usr/share/nginx/html
+COPY --from=build /app/apps/dashboard-lite/web/dist /usr/share/nginx/html
+COPY apps/dashboard-lite/nginx.conf /etc/nginx/conf.d/default.conf
 EXPOSE 80
 CMD ["nginx", "-g", "daemon off;"]
