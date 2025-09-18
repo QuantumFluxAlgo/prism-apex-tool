@@ -1,5 +1,18 @@
 'use strict';
-const { buildServer } = require('./dist/server.cjs');
+const path = require('node:path');
+
+function loadServerModule() {
+  // 1) Deployed image via `pnpm deploy`: module is inside node_modules
+  try { return require('@prism-apex/api/dist/server.cjs'); } catch (_) {}
+
+  // 2) Local dev fallback: relative to this file (when running from repo)
+  try { return require(path.resolve(__dirname, 'dist/server.cjs')); } catch (err) {
+    console.error('[api] Cannot locate dist/server.cjs in deployed or local paths:', err);
+    process.exit(1);
+  }
+}
+
+const { buildServer } = loadServerModule();
 
 (async () => {
   const app = buildServer();
