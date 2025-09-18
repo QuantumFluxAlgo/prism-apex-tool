@@ -1,0 +1,6 @@
+services:
+  api:
+    command: ["node","apps/api/start-runtime.cjs"]
+  dashboard-lite:
+    ports:
+      - "5178:80"
