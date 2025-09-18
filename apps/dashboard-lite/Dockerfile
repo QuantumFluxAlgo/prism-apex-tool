@@ -9,6 +9,7 @@ COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 COPY apps apps
 COPY packages packages
 COPY configs configs
+COPY tsconfig.base.json tsconfig.base.json
 # Include apex rules so any transitive build that references them won't fail
 COPY apex apex
 
