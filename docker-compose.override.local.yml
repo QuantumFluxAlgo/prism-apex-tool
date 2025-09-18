@@ -4,3 +4,8 @@ services:
   dashboard-lite:
     ports:
       - "5178:80"
+services:
+  dashboard-lite:
+    build:
+      context: .
+      dockerfile: apps/dashboard-lite/Dockerfile
