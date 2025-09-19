@@ -1,0 +1,4 @@
+services:
+  dashboard:
+    environment:
+      - CI=1
