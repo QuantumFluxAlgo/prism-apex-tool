@@ -4,24 +4,28 @@ on:
   workflow_dispatch:
     inputs:
       D:
-        description: Date (YYYY-MM-DD)
+        description: "Date (YYYY-MM-DD)"
         required: false
+        default: ""
       S:
-        description: Strategy
+        description: "Strategy"
         required: false
+        default: "default"
 
 jobs:
   run:
     runs-on: ubuntu-24.04
     env:
+      # If TICKETS_API_BASE (B) is not set, we’ll spin up the local Docker API and fallback to http://localhost:3000
       B: ${{ secrets.TICKETS_API_BASE }}
       PG_URL: ${{ secrets.PG_URL }}
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
       - name: Resolve inputs
-        id: resolve
+        id: inputs
         shell: bash
         run: |
           set -euo pipefail
@@ -39,53 +43,97 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y zsh jq
 
-      - name: Fetch tickets
-        env:
-          D: ${{ steps.resolve.outputs.date }}
-          S: ${{ steps.resolve.outputs.strategy }}
+      - name: Bring up local API (Docker fallback when no secret)
+        if: ${{ env.B == '' }}
         shell: bash
         run: |
           set -euo pipefail
-          test -n "$B" || { echo "TICKETS_API_BASE secret is required"; exit 1; }
-          curl -fsSL "$B/tickets?date=$D&strategy=$S" > "tickets_${D}_${S}.jsonl"
+          echo "::group::Docker versions"
+          docker --version || true
+          docker compose version || true
+          echo "::endgroup::"
+
+          # Bring up the stack the repo already defines (includes API + Yahoo bits).
+          # scripts/stack-up.sh echoes: API: http://localhost:3000/health
+          bash scripts/stack-up.sh
+
+          echo "⏳ waiting for API health on http://localhost:3000/health"
+          for i in {1..120}; do
+            if curl -fsS http://localhost:3000/health >/dev/null; then
+              echo "✅ API healthy"
+              break
+            fi
+            sleep 1
+            if [ "$i" -eq 120 ]; then
+              echo "❌ API did not become healthy in time" >&2
+              docker compose ps || true
+              docker compose logs --no-log-prefix api || true
+              exit 1
+            fi
+          done
+
+      - name: Fetch tickets
+        id: fetch
+        shell: bash
+        env:
+          D: ${{ steps.inputs.outputs.date }}
+          S: ${{ steps.inputs.outputs.strategy }}
+        run: |
+          set -euo pipefail
+          # Prefer secret B; if empty, use the repo’s local API base.
+          B_EFF="${B:-}"
+          if [ -z "${B_EFF}" ]; then
+            B_EFF="http://localhost:3000"
+          fi
+          echo "Using API base: ${B_EFF}"
+          # Best-effort health probe (non-fatal)
+          curl -fsS "${B_EFF}/health" >/dev/null || echo "ℹ️ health probe non-200; proceeding to /tickets"
+
+          curl -fsSL "${B_EFF}/tickets?date=${D}&strategy=${S}" > "tickets_${D}_${S}.jsonl"
           if [ ! -s "tickets_${D}_${S}.jsonl" ]; then
             echo "No tickets returned"
             exit 1
           fi
+          ls -lh "tickets_${D}_${S}.jsonl"
 
       - name: Split
-        env:
-          D: ${{ steps.resolve.outputs.date }}
-          S: ${{ steps.resolve.outputs.strategy }}
-        shell: bash
-        run: zsh ./bin/split_tickets.zsh
-
-      - name: Validate
-        env:
-          D: ${{ steps.resolve.outputs.date }}
-          S: ${{ steps.resolve.outputs.strategy }}
-        shell: bash
-        run: zsh ./bin/validate_split.zsh
-
-      - name: Load to Postgres (optional)
-        if: ${{ env.PG_URL != '' }}
-        env:
-          D: ${{ steps.resolve.outputs.date }}
-          S: ${{ steps.resolve.outputs.strategy }}
         shell: bash
         run: |
           set -euo pipefail
-          sudo apt-get update
-          sudo apt-get install -y postgresql-client
-          zsh ./bin/load_jsonl_to_pg.sh
+          zsh ./bin/split_tickets.zsh "tickets_${{ steps.inputs.outputs.date }}_${{ steps.inputs.outputs.strategy }}.jsonl"
+
+      - name: Validate
+        shell: bash
+        run: |
+          set -euo pipefail
+          zsh ./bin/validate_split.zsh "${{ steps.inputs.outputs.date }}" "${{ steps.inputs.outputs.strategy }}"
+
+      - name: Load to Postgres (optional; only if PG_URL is set)
+        if: ${{ env.PG_URL != '' }}
+        shell: bash
+        env:
+          D: ${{ steps.inputs.outputs.date }}
+          S: ${{ steps.inputs.outputs.strategy }}
+        run: |
+          set -euo pipefail
+          ALL="tickets_${D}_${S}.all.jsonl"
+          : > "$ALL"
+          [ -s "tickets_${D}_${S}.fut.jsonl" ] && cat "tickets_${D}_${S}.fut.jsonl" >> "$ALL"
+          [ -s "tickets_${D}_${S}.eq.jsonl" ]  && cat "tickets_${D}_${S}.eq.jsonl"  >> "$ALL"
+          if [ -s "$ALL" ]; then
+            echo "Loading $(wc -l < "$ALL") rows to Postgres (raw table)…"
+            PG_URL="$PG_URL" bash ./bin/load_jsonl_to_pg.sh "$ALL" "$D" "$S"
+          else
+            echo "No rows to load; skipping."
+          fi
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: tickets_${{ steps.resolve.outputs.date }}_${{ steps.resolve.outputs.strategy }}
+          name: tickets_${{ steps.inputs.outputs.date }}_${{ steps.inputs.outputs.strategy }}
           path: |
-            tickets_${{ steps.resolve.outputs.date }}_${{ steps.resolve.outputs.strategy }}.jsonl
-            tickets_${{ steps.resolve.outputs.date }}_${{ steps.resolve.outputs.strategy }}.fut.jsonl
-            tickets_${{ steps.resolve.outputs.date }}_${{ steps.resolve.outputs.strategy }}.eq.jsonl
-            tickets_${{ steps.resolve.outputs.date }}_${{ steps.resolve.outputs.strategy }}.fut.csv
-            tickets_${{ steps.resolve.outputs.date }}_${{ steps.resolve.outputs.strategy }}.eq.csv
+            tickets_${{ steps.inputs.outputs.date }}_${{ steps.inputs.outputs.strategy }}.jsonl
+            tickets_${{ steps.inputs.outputs.date }}_${{ steps.inputs.outputs.strategy }}.fut.jsonl
+            tickets_${{ steps.inputs.outputs.date }}_${{ steps.inputs.outputs.strategy }}.eq.jsonl
+            tickets_${{ steps.inputs.outputs.date }}_${{ steps.inputs.outputs.strategy }}.fut.csv
+            tickets_${{ steps.inputs.outputs.date }}_${{ steps.inputs.outputs.strategy }}.eq.csv
