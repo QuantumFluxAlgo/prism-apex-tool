@@ -1,0 +1,41 @@
+name: backfill
+on:
+  workflow_dispatch:
+    inputs:
+      DAYS:
+        description: "Days to backfill (today + previous N-1)"
+        required: false
+        default: "14"
+      S:
+        description: "Strategy"
+        required: false
+        default: "default"
+      REF:
+        description: "Branch/ref to run split-validate on"
+        required: false
+        default: "Test"
+
+jobs:
+  dispatch:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Dispatch split-validate for last N days
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const days = parseInt(core.getInput('DAYS') || '14', 10);
+            const ref  = core.getInput('REF')  || 'Test';
+            const S    = core.getInput('S')    || 'default';
+            for (let i=0; i<days; i++) {
+              const d = new Date();
+              d.setUTCDate(d.getUTCDate() - i);
+              const D = d.toISOString().slice(0,10);
+              await github.request('POST /repos/{owner}/{repo}/actions/workflows/{workflow_id}/dispatches', {
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                workflow_id: '.github/workflows/split-validate.yml',
+                ref,
+                inputs: { D, S }
+              });
+              core.info(`dispatched ${D} ${S}`);
+            }
