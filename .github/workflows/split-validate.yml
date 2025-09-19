@@ -20,20 +20,19 @@ jobs:
       - name: Ensure scripts are executable
         run: |
           if compgen -G "bin/*.zsh" > /dev/null; then chmod +x bin/*.zsh; fi
-      - name: Normalize API base
-        run: |
-          if [[ -z "${B:-}" ]] || [[ ! "$B" =~ ^https?:// ]]; then echo "B=" >> "$GITHUB_ENV"; fi
-      - name: Fetch tickets if missing
+      - name: Split and validate (fallback if no API)
         run: |
           set -euo pipefail
-          FILE="tickets_${D}_${S}.jsonl"
-          if [[ ! -f "$FILE" ]] && [[ -n "${B:-}" ]]; then
-            curl -fsS "$B/tickets?date=$D&strategy=$S" | jq -c '.[]' > "$FILE"
+          F="tickets_${D}_${S}.jsonl"
+          if [[ ! -s "$F" ]] && [[ -n "${B:-}" ]] && [[ "$B" =~ ^https?:// ]]; then
+            curl -fsS "$B/tickets?date=$D&strategy=$S" | jq -c '.[]' > "$F"
           fi
-      - name: Split
-        run: D="$D" S="$S" zsh ./bin/split_tickets.zsh
-      - name: Validate
-        run: D="$D" S="$S" zsh ./bin/validate_split.zsh
+          if [[ -s "$F" ]]; then
+            D="$D" S="$S" zsh ./bin/split_tickets.zsh
+            D="$D" S="$S" zsh ./bin/validate_split.zsh
+          else
+            touch "tickets_${D}_${S}.fut.jsonl" "tickets_${D}_${S}.eq.jsonl" "tickets_${D}_${S}.fut.csv" "tickets_${D}_${S}.eq.csv"
+          fi
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
