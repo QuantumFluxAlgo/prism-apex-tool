@@ -89,6 +89,11 @@ jobs:
           # Best-effort health probe (non-fatal)
           curl -fsS "${B_EFF}/health" >/dev/null || echo "ℹ️ health probe non-200; proceeding to /tickets"
 
+          # Normalize placeholder secret to empty so fallback works
+          B_EFF="${B:-}"
+          if [ -z "${B_EFF}" ] || [ "${B_EFF}" = "REPLACE_ME" ]; then
+            B_EFF="http://localhost:3000"
+          fi
           curl -fsSL "${B_EFF}/tickets?date=${D}&strategy=${S}" > "tickets_${D}_${S}.jsonl"
           if [ ! -s "tickets_${D}_${S}.jsonl" ]; then
             echo "No tickets returned"
