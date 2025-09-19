@@ -1,44 +1,69 @@
-name: split-validate-tickets
+name: split-validate
 on:
   workflow_dispatch:
     inputs:
-      D: { description: Date YYYY-MM-DD, required: true }
-      S: { description: Strategy code, required: true }
+      D:
+        description: Date YYYY-MM-DD
+        required: false
+      S:
+        description: Strategy
+        required: false
+permissions:
+  contents: read
+env:
+  D: ${{ inputs.D }}
+  S: ${{ inputs.S }}
+  B: ${{ secrets.TICKETS_API_BASE }}
 jobs:
   run:
-    runs-on: ubuntu-latest
-    env:
-      D: ${{ inputs.D }}
-      S: ${{ inputs.S }}
-      B: ${{ secrets.TICKETS_API_BASE }}
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
       - name: Install deps
+        run: sudo apt-get update && sudo apt-get install -y zsh jq postgresql-client
+      - name: Ensure exec
+        run: chmod +x bin/*.zsh || true
+      - name: Resolve inputs
+        shell: bash
         run: |
-          sudo apt-get update
-          sudo apt-get install -y zsh jq
-      - name: Ensure scripts are executable
+          D="${D:-$(date -I)}"
+          S="${S:-APX-DDB-01}"
+          echo "D=$D" >> "$GITHUB_ENV"
+          echo "S=$S" >> "$GITHUB_ENV"
+      - name: Fetch tickets
+        shell: bash
+        env:
+          D: ${{ env.D }}
+          S: ${{ env.S }}
+          B: ${{ env.B }}
         run: |
-          if compgen -G "bin/*.zsh" > /dev/null; then chmod +x bin/*.zsh; fi
-      - name: Split and validate (fallback if no API)
-        run: |
-          set -euo pipefail
-          F="tickets_${D}_${S}.jsonl"
-          if [[ ! -s "$F" ]] && [[ -n "${B:-}" ]] && [[ "$B" =~ ^https?:// ]]; then
-            curl -fsS "$B/tickets?date=$D&strategy=$S" | jq -c '.[]' > "$F"
-          fi
-          if [[ -s "$F" ]]; then
-            D="$D" S="$S" zsh ./bin/split_tickets.zsh
-            D="$D" S="$S" zsh ./bin/validate_split.zsh
-          else
-            touch "tickets_${D}_${S}.fut.jsonl" "tickets_${D}_${S}.eq.jsonl" "tickets_${D}_${S}.fut.csv" "tickets_${D}_${S}.eq.csv"
-          fi
+          test -n "${B:-}" || { echo "TICKETS_API_BASE missing"; exit 1; }
+          curl -fsS "$B/tickets?date=$D&strategy=$S" | jq -c '.[]' > "tickets_${D}_${S}.jsonl"
+      - name: Split
+        env:
+          D: ${{ env.D }}
+          S: ${{ env.S }}
+        run: zsh ./bin/split_tickets.zsh
+      - name: Validate
+        env:
+          D: ${{ env.D }}
+          S: ${{ env.S }}
+        run: zsh ./bin/validate_split.zsh
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: tickets_${{ inputs.D }}_${{ inputs.S }}
+          name: tickets-${{ env.D }}-${{ env.S }}
           path: |
-            tickets_${{ inputs.D }}_${{ inputs.S }}.fut.jsonl
-            tickets_${{ inputs.D }}_${{ inputs.S }}.fut.csv
-            tickets_${{ inputs.D }}_${{ inputs.S }}.eq.jsonl
-            tickets_${{ inputs.D }}_${{ inputs.S }}.eq.csv
+            tickets_${{ env.D }}_${{ env.S }}.jsonl
+            tickets_${{ env.D }}_${{ env.S }}.fut.jsonl
+            tickets_${{ env.D }}_${{ env.S }}.eq.jsonl
+            tickets_${{ env.D }}_${{ env.S }}.fut.csv
+            tickets_${{ env.D }}_${{ env.S }}.eq.csv
+          if-no-files-found: error
+      - name: Load to Postgres
+        if: ${{ secrets.PG_URL != '' }}
+        env:
+          PG_URL: ${{ secrets.PG_URL }}
+          D: ${{ env.D }}
+          S: ${{ env.S }}
+        run: ./bin/load_jsonl_to_pg.sh

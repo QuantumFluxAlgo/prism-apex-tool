@@ -1,0 +1,8 @@
+CREATE SCHEMA IF NOT EXISTS prism;
+CREATE TABLE IF NOT EXISTS prism.tickets_raw(
+  id BIGSERIAL PRIMARY KEY,
+  date TEXT NOT NULL,
+  strategy TEXT NOT NULL,
+  payload JSONB NOT NULL,
+  ingested_at TIMESTAMPTZ DEFAULT now()
+);
