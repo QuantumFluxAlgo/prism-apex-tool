@@ -1,0 +1,44 @@
+name: split-validate-tickets
+
+on:
+  workflow_dispatch:
+    inputs:
+      D:
+        description: Date YYYY-MM-DD
+        required: true
+      S:
+        description: Strategy code
+        required: true
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    env:
+      D: ${{ inputs.D }}
+      S: ${{ inputs.S }}
+      B: ${{ secrets.TICKETS_API_BASE }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install jq
+        run: sudo apt-get update && sudo apt-get install -y jq
+      - name: Ensure scripts are executable
+        run: chmod +x bin/*.zsh
+      - name: Fetch tickets if missing
+        run: |
+          FILE="tickets_${D}_${S}.jsonl"
+          if [ ! -f "$FILE" ] && [ -n "$B" ]; then
+            curl -fsS "$B/tickets?date=$D&strategy=$S" | jq -c '.[]' > "$FILE"
+          fi
+      - name: Split
+        run: D=$D S=$S ./bin/split_tickets.zsh
+      - name: Validate
+        run: D=$D S=$S ./bin/validate_split.zsh
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: tickets_${{ inputs.D }}_${{ inputs.S }}
+          path: |
+            tickets_${{ inputs.D }}_${{ inputs.S }}.fut.jsonl
+            tickets_${{ inputs.D }}_${{ inputs.S }}.fut.csv
+            tickets_${{ inputs.D }}_${{ inputs.S }}.eq.jsonl
+            tickets_${{ inputs.D }}_${{ inputs.S }}.eq.csv
