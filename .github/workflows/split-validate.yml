@@ -1,15 +1,9 @@
 name: split-validate-tickets
-
 on:
   workflow_dispatch:
     inputs:
-      D:
-        description: Date YYYY-MM-DD
-        required: true
-      S:
-        description: Strategy code
-        required: true
-
+      D: { description: Date YYYY-MM-DD, required: true }
+      S: { description: Strategy code, required: true }
 jobs:
   run:
     runs-on: ubuntu-latest
@@ -19,27 +13,27 @@ jobs:
       B: ${{ secrets.TICKETS_API_BASE }}
     steps:
       - uses: actions/checkout@v4
-
-      - name: Install deps (zsh + jq)
-        run: sudo apt-get update && sudo apt-get install -y zsh jq
-
-      - name: Ensure scripts are executable
-        run: chmod +x bin/*.zsh
-
-      - name: Fetch tickets if missing
-        shell: bash
+      - name: Install deps
         run: |
+          sudo apt-get update
+          sudo apt-get install -y zsh jq
+      - name: Ensure scripts are executable
+        run: |
+          if compgen -G "bin/*.zsh" > /dev/null; then chmod +x bin/*.zsh; fi
+      - name: Normalize API base
+        run: |
+          if [[ -z "${B:-}" ]] || [[ ! "$B" =~ ^https?:// ]]; then echo "B=" >> "$GITHUB_ENV"; fi
+      - name: Fetch tickets if missing
+        run: |
+          set -euo pipefail
           FILE="tickets_${D}_${S}.jsonl"
-          if [ ! -f "$FILE" ] && [ -n "$B" ]; then
+          if [[ ! -f "$FILE" ]] && [[ -n "${B:-}" ]]; then
             curl -fsS "$B/tickets?date=$D&strategy=$S" | jq -c '.[]' > "$FILE"
           fi
-
       - name: Split
-        run: D=$D S=$S ./bin/split_tickets.zsh
-
+        run: D="$D" S="$S" zsh ./bin/split_tickets.zsh
       - name: Validate
-        run: D=$D S=$S ./bin/validate_split.zsh
-
+        run: D="$D" S="$S" zsh ./bin/validate_split.zsh
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
