@@ -1,5 +1,2 @@
 #!/usr/bin/env sh
-. "$(dirname "$0")/_/husky.sh"
-
-# Ensure commitlint reads the commit message from the file path Husky provides
-npx --yes commitlint --edit "$1"
+npx --no-install commitlint --edit "$1"
