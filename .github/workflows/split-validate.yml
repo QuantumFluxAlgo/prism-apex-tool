@@ -19,20 +19,27 @@ jobs:
       B: ${{ secrets.TICKETS_API_BASE }}
     steps:
       - uses: actions/checkout@v4
-      - name: Install jq
-        run: sudo apt-get update && sudo apt-get install -y jq
+
+      - name: Install deps (zsh + jq)
+        run: sudo apt-get update && sudo apt-get install -y zsh jq
+
       - name: Ensure scripts are executable
         run: chmod +x bin/*.zsh
+
       - name: Fetch tickets if missing
+        shell: bash
         run: |
           FILE="tickets_${D}_${S}.jsonl"
           if [ ! -f "$FILE" ] && [ -n "$B" ]; then
             curl -fsS "$B/tickets?date=$D&strategy=$S" | jq -c '.[]' > "$FILE"
           fi
+
       - name: Split
         run: D=$D S=$S ./bin/split_tickets.zsh
+
       - name: Validate
         run: D=$D S=$S ./bin/validate_split.zsh
+
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
