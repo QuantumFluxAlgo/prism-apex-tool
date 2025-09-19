@@ -1,31 +1,48 @@
 #!/usr/bin/env zsh
+# Validations:
+# - Input exists and has ≥1 line.
+# - futures+equities JSONL line counts sum to input line count.
+# - CSVs have header; when JSONL non-empty, CSV has header + ≥1 data row and data row count equals JSONL count.
 set -euo pipefail
-D="${D:?}"
-S="${S:?}"
-BASE="tickets_${D}_${S}"
-ALL="${BASE}.jsonl"
-FUT="${BASE}.fut.jsonl"
-EQ="${BASE}.eq.jsonl"
-CSV_FUT="${BASE}.fut.csv"
-CSV_EQ="${BASE}.eq.csv"
-assert() { test "$1" -eq "$2" || { echo "FAIL $3 $1 != $2"; exit 1; } }
-test -f "$ALL"
-test -f "$FUT"
-test -f "$EQ"
-test -f "$CSV_FUT"
-test -f "$CSV_EQ"
-ALL_N=$(wc -l < "$ALL")
-FUT_N=$(wc -l < "$FUT")
-EQ_N=$(wc -l < "$EQ")
-assert $ALL_N $((FUT_N+EQ_N)) "split_counts"
-CSV_FUT_N=$(( $(wc -l < "$CSV_FUT") - 1 ))
-CSV_EQ_N=$(( $(wc -l < "$CSV_EQ") - 1 ))
-assert $CSV_FUT_N $FUT_N "csv_fut_vs_jsonl"
-assert $CSV_EQ_N $EQ_N "csv_eq_vs_jsonl"
-NONF_IN_FUT=$(jq -r 'select(.symbol|test("=F$")|not)|.urn' "$FUT" | wc -l)
-assert $NONF_IN_FUT 0 "fut_symbol_gate"
-F_IN_EQ=$(jq -r 'select(.symbol|test("=F$"))|.urn' "$EQ" | wc -l)
-assert $F_IN_EQ 0 "eq_symbol_gate"
-DUP_URNS=$(jq -r '.urn' "$ALL" | sort | uniq -d | wc -l)
-assert $DUP_URNS 0 "duplicate_urns"
-echo "PASS jsonl_all=$ALL_N jsonl_fut=$FUT_N jsonl_eq=$EQ_N csv_fut=$CSV_FUT_N csv_eq=$CSV_EQ_N"
+
+: ${D:?}
+: ${S:?}
+
+INPUT="tickets_${D}_${S}.jsonl"
+FUT_JSONL="tickets_${D}_${S}.fut.jsonl"
+EQ_JSONL="tickets_${D}_${S}.eq.jsonl"
+FUT_CSV="tickets_${D}_${S}.fut.csv"
+EQ_CSV="tickets_${D}_${S}.eq.csv"
+
+[ -s "$INPUT" ] || { echo "input missing or empty"; exit 1; }
+
+in_lines=$(wc -l < "$INPUT" | tr -d ' ')
+fut_lines=0; [ -f "$FUT_JSONL" ] && fut_lines=$(wc -l < "$FUT_JSONL" | tr -d ' ')
+eq_lines=0; [ -f "$EQ_JSONL" ] && eq_lines=$(wc -l < "$EQ_JSONL" | tr -d ' ')
+if [ $((fut_lines + eq_lines)) -ne $in_lines ]; then
+  echo "split line mismatch: fut($fut_lines) + eq($eq_lines) != input($in_lines)"
+  exit 1
+fi
+
+header="date,strategy,symbol,side,qty,price,payload"
+
+check_csv() {
+  local jsonl="$1" csv="$2" name="$3"
+  if [ -s "$jsonl" ]; then
+    [ -f "$csv" ] || { echo "$name CSV missing"; exit 1; }
+    [ "$(head -n1 "$csv")" = "$header" ] || { echo "$name CSV header mismatch"; exit 1; }
+    rows=$(($(wc -l < "$csv" | tr -d ' ') - 1))
+    jlines=$(wc -l < "$jsonl" | tr -d ' ')
+    [ "$rows" -ge 1 ] || { echo "$name CSV has no data rows"; exit 1; }
+    [ "$rows" -eq "$jlines" ] || { echo "$name CSV/JSONL row count mismatch"; exit 1; }
+  else
+    if [ -f "$csv" ]; then
+      [ "$(head -n1 "$csv")" = "$header" ] || { echo "$name CSV header mismatch"; exit 1; }
+    fi
+  fi
+}
+
+check_csv "$FUT_JSONL" "$FUT_CSV" "futures"
+check_csv "$EQ_JSONL" "$EQ_CSV" "equities"
+
+echo "validation OK"

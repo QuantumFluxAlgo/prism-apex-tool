@@ -1,22 +1,31 @@
 #!/usr/bin/env zsh
+# Assumptions:
+# - Input JSONL: tickets_${D}_${S}.jsonl, one JSON object per line with at least: symbol, instrumentType (string or null).
+# - Futures classification: instrumentType == "futures" (case-insensitive) OR symbol contains a month code [FGHJKMNQUVXZ] followed by two-digit year (e.g., ESZ25).
+# - CSV columns: date,strategy,symbol,side,qty,price,payload. payload is compact JSON string.
 set -euo pipefail
-D="${D:?}"
-S="${S:?}"
-OUT="tickets_${D}_${S}.jsonl"
-CSVOUT="${OUT%.jsonl}.csv"
-OUT_FUT="${OUT%.jsonl}.fut.jsonl"
-CSVOUT_FUT="${OUT%.jsonl}.fut.csv"
-OUT_EQ="${OUT%.jsonl}.eq.jsonl"
-CSVOUT_EQ="${OUT%.jsonl}.eq.csv"
-test -f "$OUT"
-jq -c 'select(.symbol|test("=F$"))' "$OUT" > "$OUT_FUT"
-jq -c 'select(.symbol|test("=F$")|not)' "$OUT" > "$OUT_EQ"
-jq -nr '["id","urn","symbol","timestamp_utc","side","entry_price","stop_price","target_price","qty","strategy_code","strategy_label","account_id","accepted","reasons","compliance_snapshot","decision_snapshot_id","meta","created_at"]|@csv' > "$CSVOUT_FUT"
-jq -r '[.id,.urn,.symbol,.timestamp_utc,.side,.entry_price,.stop_price,.target_price,.qty,.strategy_code,.strategy_label,.account_id,.accepted, (.reasons|tostring), .compliance_snapshot, .decision_snapshot_id, (.meta|tostring), .created_at] | @csv' "$OUT_FUT" >> "$CSVOUT_FUT"
-jq -nr '["id","urn","symbol","timestamp_utc","side","entry_price","stop_price","target_price","qty","strategy_code","strategy_label","account_id","accepted","reasons","compliance_snapshot","decision_snapshot_id","meta","created_at"]|@csv' > "$CSVOUT_EQ"
-jq -r '[.id,.urn,.symbol,.timestamp_utc,.side,.entry_price,.stop_price,.target_price,.qty,.strategy_code,.strategy_label,.account_id,.accepted, (.reasons|tostring), .compliance_snapshot, .decision_snapshot_id, (.meta|tostring), .created_at] | @csv' "$OUT_EQ" >> "$CSVOUT_EQ"
-ALL=$(wc -l < "$OUT")
-FUT=$(wc -l < "$OUT_FUT")
-EQ=$(wc -l < "$OUT_EQ")
-echo "jsonl_all=$ALL jsonl_fut=$FUT jsonl_eq=$EQ"
-echo "csv_fut=$(( $(wc -l < "$CSVOUT_FUT") - 1 )) csv_eq=$(( $(wc -l < "$CSVOUT_EQ") - 1 ))"
+
+: ${D:?}
+: ${S:?}
+
+INPUT="tickets_${D}_${S}.jsonl"
+FUT_JSONL="tickets_${D}_${S}.fut.jsonl"
+EQ_JSONL="tickets_${D}_${S}.eq.jsonl"
+FUT_CSV="tickets_${D}_${S}.fut.csv"
+EQ_CSV="tickets_${D}_${S}.eq.csv"
+
+[ -s "$INPUT" ] || { echo "missing or empty $INPUT"; exit 1; }
+command -v jq >/dev/null 2>&1 || { echo "jq is required"; exit 1; }
+
+jq -c 'select((.instrumentType // "" | ascii_downcase) == "futures" or ((.symbol // "") | test("[FGHJKMNQUVXZ][0-9]{2}"; "i")) )' "$INPUT" > "$FUT_JSONL" || true
+jq -c 'select(((.instrumentType // "" | ascii_downcase) != "futures") and (((.symbol // "") | test("[FGHJKMNQUVXZ][0-9]{2}"; "i")) | not))' "$INPUT" > "$EQ_JSONL" || true
+
+print -r -- "date,strategy,symbol,side,qty,price,payload" > "$FUT_CSV"
+if [ -s "$FUT_JSONL" ]; then
+  jq -r --arg d "$D" --arg s "$S" '[ $d, $s, (.symbol // ""), (.side // ""), ((.qty // 0)|tostring), ((.price // 0)|tostring), (tostring) ] | @csv' "$FUT_JSONL" >> "$FUT_CSV"
+fi
+
+print -r -- "date,strategy,symbol,side,qty,price,payload" > "$EQ_CSV"
+if [ -s "$EQ_JSONL" ]; then
+  jq -r --arg d "$D" --arg s "$S" '[ $d, $s, (.symbol // ""), (.side // ""), ((.qty // 0)|tostring), ((.price // 0)|tostring), (tostring) ] | @csv' "$EQ_JSONL" >> "$EQ_CSV"
+fi
