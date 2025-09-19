@@ -1,44 +1,91 @@
-name: split-validate-tickets
+name: split-validate
+
 on:
   workflow_dispatch:
     inputs:
-      D: { description: Date YYYY-MM-DD, required: true }
-      S: { description: Strategy code, required: true }
+      D:
+        description: Date (YYYY-MM-DD)
+        required: false
+      S:
+        description: Strategy
+        required: false
+
 jobs:
   run:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     env:
-      D: ${{ inputs.D }}
-      S: ${{ inputs.S }}
       B: ${{ secrets.TICKETS_API_BASE }}
+      PG_URL: ${{ secrets.PG_URL }}
     steps:
-      - uses: actions/checkout@v4
-      - name: Install deps
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y zsh jq
-      - name: Ensure scripts are executable
-        run: |
-          if compgen -G "bin/*.zsh" > /dev/null; then chmod +x bin/*.zsh; fi
-      - name: Split and validate (fallback if no API)
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Resolve inputs
+        id: resolve
+        shell: bash
         run: |
           set -euo pipefail
-          F="tickets_${D}_${S}.jsonl"
-          if [[ ! -s "$F" ]] && [[ -n "${B:-}" ]] && [[ "$B" =~ ^https?:// ]]; then
-            curl -fsS "$B/tickets?date=$D&strategy=$S" | jq -c '.[]' > "$F"
+          D_IN="${{ github.event.inputs.D }}"
+          S_IN="${{ github.event.inputs.S }}"
+          if [ -z "${D_IN}" ]; then D_IN="$(date -u +%F)"; fi
+          if [ -z "${S_IN}" ]; then S_IN="default"; fi
+          echo "date=${D_IN}" >> "$GITHUB_OUTPUT"
+          echo "strategy=${S_IN}" >> "$GITHUB_OUTPUT"
+
+      - name: Install zsh and jq
+        shell: bash
+        run: |
+          set -euo pipefail
+          sudo apt-get update
+          sudo apt-get install -y zsh jq
+
+      - name: Fetch tickets
+        env:
+          D: ${{ steps.resolve.outputs.date }}
+          S: ${{ steps.resolve.outputs.strategy }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -n "$B" || { echo "TICKETS_API_BASE secret is required"; exit 1; }
+          curl -fsSL "$B/tickets?date=$D&strategy=$S" > "tickets_${D}_${S}.jsonl"
+          if [ ! -s "tickets_${D}_${S}.jsonl" ]; then
+            echo "No tickets returned"
+            exit 1
           fi
-          if [[ -s "$F" ]]; then
-            D="$D" S="$S" zsh ./bin/split_tickets.zsh
-            D="$D" S="$S" zsh ./bin/validate_split.zsh
-          else
-            touch "tickets_${D}_${S}.fut.jsonl" "tickets_${D}_${S}.eq.jsonl" "tickets_${D}_${S}.fut.csv" "tickets_${D}_${S}.eq.csv"
-          fi
+
+      - name: Split
+        env:
+          D: ${{ steps.resolve.outputs.date }}
+          S: ${{ steps.resolve.outputs.strategy }}
+        shell: bash
+        run: zsh ./bin/split_tickets.zsh
+
+      - name: Validate
+        env:
+          D: ${{ steps.resolve.outputs.date }}
+          S: ${{ steps.resolve.outputs.strategy }}
+        shell: bash
+        run: zsh ./bin/validate_split.zsh
+
+      - name: Load to Postgres (optional)
+        if: ${{ env.PG_URL != '' }}
+        env:
+          D: ${{ steps.resolve.outputs.date }}
+          S: ${{ steps.resolve.outputs.strategy }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          sudo apt-get update
+          sudo apt-get install -y postgresql-client
+          zsh ./bin/load_jsonl_to_pg.sh
+
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: tickets_${{ inputs.D }}_${{ inputs.S }}
+          name: tickets_${{ steps.resolve.outputs.date }}_${{ steps.resolve.outputs.strategy }}
           path: |
-            tickets_${{ inputs.D }}_${{ inputs.S }}.fut.jsonl
-            tickets_${{ inputs.D }}_${{ inputs.S }}.fut.csv
-            tickets_${{ inputs.D }}_${{ inputs.S }}.eq.jsonl
-            tickets_${{ inputs.D }}_${{ inputs.S }}.eq.csv
+            tickets_${{ steps.resolve.outputs.date }}_${{ steps.resolve.outputs.strategy }}.jsonl
+            tickets_${{ steps.resolve.outputs.date }}_${{ steps.resolve.outputs.strategy }}.fut.jsonl
+            tickets_${{ steps.resolve.outputs.date }}_${{ steps.resolve.outputs.strategy }}.eq.jsonl
+            tickets_${{ steps.resolve.outputs.date }}_${{ steps.resolve.outputs.strategy }}.fut.csv
+            tickets_${{ steps.resolve.outputs.date }}_${{ steps.resolve.outputs.strategy }}.eq.csv
