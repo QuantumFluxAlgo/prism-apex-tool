@@ -1,0 +1,13 @@
+services:
+  orr-sync:
+    image: prism-apex/api:local
+    restart: unless-stopped
+    command: ["node","/app/apps/api/dist/scripts/syncTickets.mjs","--interval","60","--symbols","ES=F,NQ=F,MES=F,MNQ=F"]
+    environment:
+      TICKETS_FILE: /data/tickets.jsonl
+      TICKETS_DIR: /data/tickets
+    volumes:
+      - ./apps/api/dist/scripts/syncTickets.mjs:/app/apps/api/dist/scripts/syncTickets.mjs:ro
+      - api-data:/data
+    depends_on:
+      - api
