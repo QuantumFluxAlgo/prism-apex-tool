@@ -36,3 +36,15 @@ docker compose down        # keep the Postgres volume
 - Tickets-only posture is enforced: `TICKETS_ONLY=true`, `ORDERS_DISABLED=true`
 - Generated artifacts under `data/` (e.g., `tickets.jsonl`) are now ignored by Git
 - If port 55433 conflicts, override `POSTGRES_PORT` when invoking `docker compose`
+
+## Cleanup (SAFE / dry-run)
+Preview what would be removed (no deletions):
+```bash
+tools/cleanup_yahoo_data.sh --dry-run
+# or set DRY_RUN=1 tools/cleanup_yahoo_data.sh
+```
+Perform the real cleanup (creates a backups/yahoo-data-*.tar.gz archive first):
+```bash
+tools/cleanup_yahoo_data.sh
+```
+Reports land in `docs/YAHOO_DATA_CLEANUP.md`.
