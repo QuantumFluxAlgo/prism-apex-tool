@@ -1,8 +1,9 @@
 # Yahoo Data Cleanup (SAFE: untracked-only)
-- UTC: 2025-09-29 20:17:16
-- Backup (untracked set): `backups/yahoo-data-20250929201711.tar.gz`
+- UTC: 2025-09-29 21:06:39
+- Mode: DRY-RUN
+- Backup (untracked set): `backups/yahoo-data-20250929210634.tar.gz`
 
-## Untracked candidates (backed up + removed)
+## Untracked candidates (preview)
 _None_
 
 ## Tracked candidates (reported only; NOT removed)
