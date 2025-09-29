@@ -29,6 +29,11 @@ reports/
 .env.*
 !.env.example
 !.env.local.example
+!.env.example.local
+
+# Generated local data
+data/*.json
+data/*.jsonl
 
 # Misc
 .DS_Store

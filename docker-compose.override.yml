@@ -1,32 +1,70 @@
+# Dev-only override: CJS runtime for tickets-sync, local Postgres, tickets-only guards,
+# Node-based API healthcheck (no curl), and dual mounts for tickets visibility.
 services:
-  # Ensure API still uses the named volume for /data
   api:
-    volumes:
-      - api-data:/data
-
-  # Tickets sync watches the same /data/tickets
-  tickets-sync:
-    volumes:
-      - api-data:/data
-
-  # Yahoo ingress: write tickets into the SAME place the API reads from
-  ingress-yahoo:
     environment:
-      - APEX_TICKETS_OUTDIR=/data/tickets
-      - APEX_ENABLE_YAHOO_INGRESS=true
-    volumes:
-      - api-data:/data
-
-  # Prefer the lite dashboard during local bring-up to avoid port conflicts
-  dashboard-lite:
-    environment:
-      - API_BASE_URL=http://api:3000
-      - APEX_TICKETS_DIR=/data/tickets
+      TICKETS_ONLY: "${TICKETS_ONLY:-true}"
+      ORDERS_DISABLED: "${ORDERS_DISABLED:-true}"
+      DATABASE_URL: "${DATABASE_URL:-postgresql://apex:apex@db:5432/prismapex?schema=public}"
+      NODE_ENV: "${NODE_ENV:-development}"
+      LOG_LEVEL: "${LOG_LEVEL:-info}"
+    ports:
+      - "${API_PORT:-3000}:3000"
     depends_on:
-      - api
+      db:
+        condition: service_healthy
+    healthcheck:
+      test: [
+        "CMD-SHELL",
+        "node -e \"const http=require('http');const paths=['/health','/'];const tryNext=()=>{if(!paths.length)return process.exit(1);const path=paths.shift();http.get({host:'127.0.0.1',port:3000,path},res=>{if(res.statusCode===200)process.exit(0);tryNext();}).on('error',tryNext);};tryNext();setTimeout(()=>process.exit(1),5000);\""
+      ]
+      interval: 5s
+      timeout: 5s
+      retries: 20
     volumes:
-      - api-data:/data:ro
+      - ./data:/app/data
+      - ./data:/data
+
+  tickets-sync:
+    # Force CommonJS execution of syncTickets by copying .js -> .cjs then running it.
+    command: >
+      sh -lc "
+        set -e;
+        TS_JS=/app/apps/api/dist/scripts/syncTickets.js;
+        TS_CJS=/app/apps/api/dist/scripts/syncTickets.cjs;
+        if [ -f \"$$TS_JS\" ]; then cp \"$$TS_JS\" \"$$TS_CJS\"; fi;
+        node \"$$TS_CJS\"
+      "
+    environment:
+      TICKETS_ONLY: "${TICKETS_ONLY:-true}"
+      ORDERS_DISABLED: "${ORDERS_DISABLED:-true}"
+      DATABASE_URL: "${DATABASE_URL:-postgresql://apex:apex@db:5432/prismapex?schema=public}"
+      NODE_ENV: "${NODE_ENV:-development}"
+      LOG_LEVEL: "${LOG_LEVEL:-info}"
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      - ./data:/app/data
+      - ./data:/data
+
+  db:
+    image: postgres:16-alpine
+    container_name: prism-apex-db
+    environment:
+      POSTGRES_USER: "${POSTGRES_USER:-apex}"
+      POSTGRES_PASSWORD: "${POSTGRES_PASSWORD:-apex}"
+      POSTGRES_DB: "${POSTGRES_DB:-prismapex}"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-apex} -d ${POSTGRES_DB:-prismapex}"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    ports:
+      - "${POSTGRES_PORT:-55433}:5432"
+    volumes:
+      - prismapex_db_data:/var/lib/postgresql/data
 
 volumes:
-  api-data:
-    external: false
+  prismapex_db_data:
+    driver: local
