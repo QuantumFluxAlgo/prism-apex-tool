@@ -6,6 +6,5 @@ services:
       sh -lc "corepack enable && corepack prepare pnpm@9.0.0 --activate &&
       pnpm install --no-frozen-lockfile &&
       pnpm -C apps/dashboard dev --host 0.0.0.0 --port 5180"
-  dashboard-lite:
     ports:
       - "5179:80"
