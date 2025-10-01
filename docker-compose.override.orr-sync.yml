@@ -1,13 +1,25 @@
 services:
+  tickets-sync:
+    command:
+      - /app/apps/api/scripts/run-node-script.sh
+      - /app/apps/api/dist/scripts/syncTickets.js
+      - --watch
+      - --interval=15000
+
   orr-sync:
     image: prism-apex/api:local
     restart: unless-stopped
-    command: ["node","/app/apps/api/dist/scripts/syncTickets.mjs","--interval","60","--symbols","ES=F,NQ=F,MES=F,MNQ=F"]
+    command:
+      - /app/apps/api/scripts/run-node-script.sh
+      - /app/apps/api/dist/scripts/generateOrrTickets.js
+      - --interval
+      - "60"
+      - --symbols
+      - "ES=F,NQ=F,MES=F,MNQ=F"
     environment:
       TICKETS_FILE: /data/tickets.jsonl
       TICKETS_DIR: /data/tickets
     volumes:
-      - ./apps/api/dist/scripts/syncTickets.mjs:/app/apps/api/dist/scripts/syncTickets.mjs:ro
       - api-data:/data
     depends_on:
       - api
