@@ -26,6 +26,8 @@ A **safe-by-default** helper that removes **only untracked files** within a tigh
 - [Platform Notes & Shell Equivalents](#platform-notes--shell-equivalents)
 - [Operator Integration (Makefile / Justfile)](#operator-integration-makefile--justfile)
 - [Contributing (Docs/Tooling)](#contributing-docstooling)
+- [What Good Looks Like](#what-good-looks-like)
+- [Maintenance & Ownership](#maintenance--ownership)
 
 ## Quick Start
 Preview (no deletions):
@@ -263,6 +265,54 @@ clean-safe:
 - Keep PRs focused and small; scope to docs/tooling improvements.
 - Never add automated order placement, liquidation logic, or other trading automation in this path.
 - Target the `Test` branch (never main) and note operator impact in the PR description.
+
+### What Good Looks Like
+
+**Dry-run (expected):**
+```text
+=== SAFE CLEANUP (UNTRACKED ONLY) ===
+Git root: /…/prism-apex-tool-Test
+Dry run: 1
+
+-- Files to delete (untracked, in allow-listed dirs): 0
+  (none)
+
+-- Directories to delete recursively (build caches): 2
+  - .next
+  - .turbo
+(auto-continue: dry-run or AUTO_YES set or non-interactive)
+[DRY-RUN] No deletions performed.
+```
+
+**Execute with AUTO_YES (expected when there are candidates):**
+```text
+=== SAFE CLEANUP (UNTRACKED ONLY) ===
+Git root: /…/prism-apex-tool-Test
+Dry run: 0
+
+-- Files to delete (untracked, in allow-listed dirs): 3
+  - tmp/sim.log
+  - data/snap/cache.bin
+  - .cache/test.idx
+
+-- Directories to delete recursively (build caches): 1
+  - .turbo
+
+removed dir .turbo
+deleted tmp/sim.log
+deleted data/snap/cache.bin
+deleted .cache/test.idx
+rmdir tmp (empty)
+Done.
+```
+
+> If the output lists tracked files or non-allow-listed paths, **stop and investigate** before proceeding.
+
+### Maintenance & Ownership
+- **Owners**: Tooling/Docs maintainers (this path is docs/tooling-only).
+- **Scope**: Do **not** introduce order placement, liquidation logic, or strategy changes here.
+- **How to contribute**: Open a small PR to `Test` with operator impact noted; keep edits scoped to docs/tooling.
+- **Operating posture**: Tickets-only remains in force—operators still copy tickets into Tradovate OCO manually.
 <!-- END: SAFE_CLEANUP_DOC -->
 
 
