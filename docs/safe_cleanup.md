@@ -22,8 +22,10 @@ A **safe-by-default** helper that removes **only untracked files** within a tigh
 - [Troubleshooting](#troubleshooting)
 - [Glossary](#glossary)
 - [Tickets-Only Posture Reminder](#tickets-only-posture-reminder)
-
 ---
+- [Platform Notes & Shell Equivalents](#platform-notes--shell-equivalents)
+- [Operator Integration (Makefile / Justfile)](#operator-integration-makefile--justfile)
+- [Contributing (Docs/Tooling)](#contributing-docstooling)
 
 ## Quick Start
 Preview (no deletions):
@@ -204,6 +206,63 @@ Use `--no-verify` only for documentation-only changes.
 
 ## Tickets-Only Posture Reminder
 Local maintenance only — no order placement and no strategy changes. Continue the operator flow: tidy → run Docker stack → manually copy tickets into Tradovate OCO orders.
+
+### Platform Notes & Shell Equivalents
+**macOS/Linux (POSIX shells like bash/zsh):**
+```bash
+./safe_cleanup.sh                # dry-run (default)
+DRY_RUN=0 ./safe_cleanup.sh      # execute with prompt
+AUTO_YES=1 DRY_RUN=0 ./safe_cleanup.sh | tee cleanup_real.log
+```
+
+**Windows PowerShell:**
+```powershell
+# Dry-run
+./safe_cleanup.sh
+
+# Execute with auto-yes and capture log
+$env:AUTO_YES = "1"
+$env:DRY_RUN  = "0"
+./safe_cleanup.sh | Tee-Object -FilePath cleanup_real.log
+
+# Optional cleanup
+Remove-Item Env:AUTO_YES, Env:DRY_RUN -ErrorAction SilentlyContinue
+```
+
+**Windows Subsystem for Linux (WSL):**
+Use the POSIX examples inside WSL. If the repo lives on the Windows filesystem, prefer a WSL path (e.g., `/home/...`) to avoid permission quirks.
+
+---
+
+## Operator Integration (Makefile / Justfile)
+**Makefile**
+```make
+.PHONY: clean:safe
+clean:safe:
+	@AUTO_YES?=0 DRY_RUN?=1 bash -lc './safe_cleanup.sh'
+# Examples:
+#   make clean:safe                         # dry-run
+#   make clean:safe DRY_RUN=0               # execute with prompt
+#   make clean:safe DRY_RUN=0 AUTO_YES=1    # execute no prompt
+```
+
+**Justfile**
+```just
+# just clean-safe
+clean-safe:
+    AUTO_YES={{AUTO_YES | default("0")}} DRY_RUN={{DRY_RUN | default("1")}} ./safe_cleanup.sh
+# Examples:
+#   just clean-safe
+#   just clean-safe DRY_RUN=0
+#   just clean-safe AUTO_YES=1 DRY_RUN=0
+```
+
+---
+
+## Contributing (Docs/Tooling)
+- Keep PRs focused and small; scope to docs/tooling improvements.
+- Never add automated order placement, liquidation logic, or other trading automation in this path.
+- Target the `Test` branch (never main) and note operator impact in the PR description.
 <!-- END: SAFE_CLEANUP_DOC -->
 
 
