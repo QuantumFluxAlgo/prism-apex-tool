@@ -1,6 +1,15 @@
 <!-- BEGIN: SAFE_CLEANUP_DOC -->
 # Safe Cleanup Script (`safe_cleanup.sh`)
 
+
+> **TL;DR**
+> - Preview (dry-run): `./safe_cleanup.sh`
+> - Execute locally (prompted): `DRY_RUN=0 ./safe_cleanup.sh`
+> - CI/scripted (no prompt, logged): `AUTO_YES=1 DRY_RUN=0 ./safe_cleanup.sh | tee cleanup_real.log`
+
+_Last updated: 2025-10-01_
+
+
 A **safe-by-default** helper that removes **only untracked files** within a tight allow-list of cache/scratch locations. It runs from the repo root, defaults to **dry-run**, prints a plan, and appends a timestamped summary to `docs/YAHOO_DATA_CLEANUP.md`.
 
 ---
@@ -326,6 +335,8 @@ Done.
 |----------|:-------:|------------------|--------|
 | `DRY_RUN` | `1` | Set `DRY_RUN=0` to perform deletions. | Toggle between preview and actual cleanup. |
 | `AUTO_YES` | `0` | Set `AUTO_YES=1` for non-interactive runs (CI/scripts). | Skips the confirmation prompt when `DRY_RUN=0`. |
+
+[↩︎ Back to top](#safe-cleanup-script-safe_cleanupsh)
 <!-- END: SAFE_CLEANUP_DOC -->
 
 
