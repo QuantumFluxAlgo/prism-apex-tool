@@ -28,6 +28,8 @@ A **safe-by-default** helper that removes **only untracked files** within a tigh
 - [Contributing (Docs/Tooling)](#contributing-docstooling)
 - [What Good Looks Like](#what-good-looks-like)
 - [Maintenance & Ownership](#maintenance--ownership)
+- [Prerequisites & Compatibility](#prerequisites--compatibility)
+- [Env Vars Quick Reference](#env-vars-quick-reference)
 
 ## Quick Start
 Preview (no deletions):
@@ -313,6 +315,17 @@ Done.
 - **Scope**: Do **not** introduce order placement, liquidation logic, or strategy changes here.
 - **How to contribute**: Open a small PR to `Test` with operator impact noted; keep edits scoped to docs/tooling.
 - **Operating posture**: Tickets-only remains in force—operators still copy tickets into Tradovate OCO manually.
+
+### Prerequisites & Compatibility
+- **Git** installed with the repository cloned locally (script runs from repo root).
+- **Shell**: POSIX-compatible (bash/zsh); supported on **macOS**, **Linux**, and **WSL**. PowerShell users can use `$env:` syntax from the Platform Notes section.
+- **Docker** (optional): required only if you run the follow-up compose smoke checks; the cleanup itself has no Docker dependency.
+
+### Env Vars Quick Reference
+| Variable | Default | When to override | Effect |
+|----------|:-------:|------------------|--------|
+| `DRY_RUN` | `1` | Set `DRY_RUN=0` to perform deletions. | Toggle between preview and actual cleanup. |
+| `AUTO_YES` | `0` | Set `AUTO_YES=1` for non-interactive runs (CI/scripts). | Skips the confirmation prompt when `DRY_RUN=0`. |
 <!-- END: SAFE_CLEANUP_DOC -->
 
 
