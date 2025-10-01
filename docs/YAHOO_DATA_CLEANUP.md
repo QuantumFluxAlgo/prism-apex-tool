@@ -17,3 +17,51 @@ _None_
 | 4.0K | 2025-09-29 19:57:04 | `data/sample_bars/ES_1m.csv` |
 | 4.0K | 2025-09-29 19:57:04 | `data/sample_bars/NQ_1m.csv` |
 | 4.0K | 2025-09-29 19:57:04 | `data/strategy_schedule.sample.json` |
+## 2025-10-01T14:49:40+01:00
+=== SAFE CLEANUP (UNTRACKED ONLY) ===
+Git root: /Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test
+Dry run: 1
+
+-- Files to delete (untracked, in allow-listed dirs): 0
+  (none)
+
+-- Directories to delete recursively (build caches): 0
+  (none)
+
+## 2025-10-01T14:49:46+01:00
+=== SAFE CLEANUP (UNTRACKED ONLY) ===
+Git root: /Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test
+Dry run: 1
+
+-- Files to delete (untracked, in allow-listed dirs): 0
+  (none)
+
+-- Directories to delete recursively (build caches): 0
+  (none)
+
+## 2025-10-01T14:51:31+01:00
+=== SAFE CLEANUP (UNTRACKED ONLY) ===
+Git root: /Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test
+Dry run: 1
+
+-- Files to delete (untracked, in allow-listed dirs): 0
+  (none)
+
+-- Directories to delete recursively (build caches): 0
+  (none)
+(auto-continue: dry-run or AUTO_YES set or non-interactive)
+[DRY-RUN] No deletions performed.
+
+## 2025-10-01T15:03:13+01:00
+=== SAFE CLEANUP (UNTRACKED ONLY) ===
+Git root: /Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test
+Dry run: 0
+
+-- Files to delete (untracked, in allow-listed dirs): 0
+  (none)
+
+-- Directories to delete recursively (build caches): 0
+  (none)
+(auto-continue: dry-run or AUTO_YES set or non-interactive)
+Done.
+
