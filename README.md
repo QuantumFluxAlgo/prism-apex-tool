@@ -52,3 +52,7 @@ What this is (and isn’t)
 ❌ No emergency liquidation via API
 
 See README-dev.md for development workflow and docs/OPERATIONS.md for operator checklist.
+
+## Cleanup
+
+Use `./safe_cleanup.sh` to clear untracked cache/scratch files safely. The script defaults to a dry run and appends a summary to `docs/YAHOO_DATA_CLEANUP.md`. See `docs/safe_cleanup.md` for details and additional usage examples.
