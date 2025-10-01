@@ -1,3 +1,5 @@
+[![Cleanup Guide](https://img.shields.io/badge/cleanup-guide-blue)](docs/safe_cleanup.md)
+
 # Prism-Apex Tool — Operator-Assisted Trading (Tickets Only)
 
 > **Non-negotiable:** This app **never places orders via API**. It only emits **tickets** (entry/stop/target) that a human operator copies into Tradovate as an OCO. Local, Docker-first.
@@ -52,3 +54,7 @@ What this is (and isn’t)
 ❌ No emergency liquidation via API
 
 See README-dev.md for development workflow and docs/OPERATIONS.md for operator checklist.
+
+## Cleanup
+
+Use `./safe_cleanup.sh` to clear untracked cache/scratch files safely. The script defaults to a dry run and appends a summary to `docs/YAHOO_DATA_CLEANUP.md`. See `docs/safe_cleanup.md` for details and additional usage examples.
