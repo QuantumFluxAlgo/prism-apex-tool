@@ -20,6 +20,7 @@ RUN pnpm install --frozen-lockfile
 
 # Build just the API and any local deps it needs
 RUN pnpm -r --filter "@prism-apex/api" --filter "./packages/*" build
+RUN pnpm build:cjs:api
 # Build the tickets sync script into the API dist
 RUN pnpm --package=typescript dlx tsc \
   --target ES2020 \
@@ -46,6 +47,7 @@ COPY --from=build /opt/app /app
 COPY --from=build /repo/configs /app/configs
 # also copy built dist for start-runtime fallback
 COPY --from=build /repo/apps/api/dist /app/apps/api/dist
+COPY --from=build /repo/apps/api/dist-cjs /app/apps/api/dist-cjs
 
 # Our runtime entry starts Fastify from the compiled bundle
 COPY apps/api/start-runtime.cjs apps/api/start-runtime.cjs
@@ -53,3 +55,7 @@ COPY apps/api/start-runtime.cjs apps/api/start-runtime.cjs
 EXPOSE 3000
 VOLUME ["/data"]
 CMD ["node","apps/api/start-runtime.cjs"]
+# --- ensure API helper scripts are available in the runtime image ---
+# If your build uses a different workdir, keep the target path consistent with /app
+COPY apps/api/scripts /app/apps/api/scripts
+RUN chmod +x /app/apps/api/scripts/run-node-script.sh

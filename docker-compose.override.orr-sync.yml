@@ -2,7 +2,7 @@ services:
   tickets-sync:
     command:
       - /app/apps/api/scripts/run-node-script.sh
-      - /app/apps/api/dist/scripts/syncTickets.js
+      - /app/apps/api/dist-cjs/scripts/syncTickets.js
       - --watch
       - --interval=15000
 
@@ -11,7 +11,7 @@ services:
     restart: unless-stopped
     command:
       - /app/apps/api/scripts/run-node-script.sh
-      - /app/apps/api/dist/scripts/generateOrrTickets.js
+      - /app/apps/api/dist-cjs/scripts/syncTickets.js
       - --interval
       - "60"
       - --symbols
