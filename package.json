@@ -37,7 +37,8 @@
     "scan:dead:deps": "depcheck || true",
     "scan:dead:symbols": "ts-prune -p tsconfig.json || ts-prune -p tsconfig.build.json || true",
     "typecheck:api": "pnpm -r --filter @prism-apex/api typecheck",
-    "lint:api": "eslint apps/api"
+    "lint:api": "eslint apps/api",
+    "build:cjs:api": "tsc --module commonjs --target ES2020 --moduleResolution node --esModuleInterop --resolveJsonModule --outDir apps/api/dist-cjs/scripts apps/api/src/scripts/syncTickets.ts"
   },
   "engines": {
     "node": ">=20 <21"
