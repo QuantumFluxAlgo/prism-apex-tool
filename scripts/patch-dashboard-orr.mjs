@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 import fs from 'fs';
 
 function patchApi() {
@@ -26,7 +27,7 @@ function patchConstants() {
   const p = 'apps/dashboard/src/constants.ts';
   if (!fs.existsSync(p)) { console.log('constants.ts: not found (skipped)'); return; }
   let s = fs.readFileSync(p, 'utf8');
-  if (!/\'ORR\'/.test(s)) {
+  if (!/'ORR'/.test(s)) {
     s = s.replace(/export const STRATEGIES\s*=\s*\[[^\]]*\];/m, "export const STRATEGIES = ['ORR','VWAP_FT','OSB','APX-DDB-01'];");
     fs.writeFileSync(p, s);
     console.log('constants.ts: OK');
