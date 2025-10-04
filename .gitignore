@@ -88,8 +88,12 @@ Thumbs.db
 *.code-workspace
 *.py[cod]
 *.pyo
+*.tmp
+*.csv
+docker-compose.*.override.yml
 node_modules/
 .pnpm-debug.log
+.pnpm-store/
 dist/
 .tmp/
 .ipynb_checkpoints/
@@ -97,7 +101,9 @@ logs/
 **/logs/
 dump/
 dumps/
+**/cache/
 temp/
+*.parquet
 *.sqlite
 *.db
 *.pid
