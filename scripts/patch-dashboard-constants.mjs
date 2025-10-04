@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 import fs from 'fs';
 const p = 'apps/dashboard/src/constants.ts';
 let s = fs.readFileSync(p, 'utf8');

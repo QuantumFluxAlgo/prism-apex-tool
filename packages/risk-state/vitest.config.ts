@@ -1,8 +1,10 @@
 import { defineConfig } from 'vitest/config';
 // eslint-disable-next-line import/no-extraneous-dependencies
-import tsconfigPaths from 'vite-tsconfig-paths';
 
-export default defineConfig({
-  plugins: [tsconfigPaths()],
-  test: { include: ['test/**/*.test.ts'], watch: false, passWithNoTests: false },
+export default defineConfig(async () => {
+  const { default: tsconfigPaths } = await import('vite-tsconfig-paths');
+  return {
+    plugins: [tsconfigPaths()],
+    test: { include: ['test/**/*.test.ts'], watch: false, passWithNoTests: false },
+  };
 });
