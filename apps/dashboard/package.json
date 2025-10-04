@@ -31,10 +31,5 @@
     "typescript": "^5.9.2",
     "vite": "^5.3.5",
     "vitest": "^2.0.0"
-  },
-  "pnpm": {
-    "overrides": {
-      "@rollup/rollup-linux-x64-musl": "4.47.1"
-    }
   }
 }

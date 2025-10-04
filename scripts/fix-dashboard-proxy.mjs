@@ -17,7 +17,7 @@ function patchVite() {
 function patchApiTs() {
   const p = 'apps/dashboard/src/lib/api.ts';
   if (!fs.existsSync(p)) return console.log('api.ts: missing');
-  let s = fs.readFileSync(p, 'utf8');
+  const s = fs.readFileSync(p, 'utf8');
   const t = s.replace(/\/tickets\?/g, '/api/tickets?');
   if (t !== s) { fs.writeFileSync(p, t); console.log('api.ts: OK'); }
   else { console.log('api.ts: already patched'); }
@@ -26,7 +26,7 @@ function patchApiTs() {
 function patchExport() {
   const p = 'apps/dashboard/src/pages/Tickets.tsx';
   if (!fs.existsSync(p)) return console.log('Tickets.tsx: missing');
-  let s = fs.readFileSync(p, 'utf8');
+  const s = fs.readFileSync(p, 'utf8');
   const t = s.replace(/\/export\/tickets\?/g, '/api/export/tickets?');
   if (t !== s) { fs.writeFileSync(p, t); console.log('Tickets.tsx: OK'); }
   else { console.log('Tickets.tsx: already patched'); }
