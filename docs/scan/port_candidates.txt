@@ -1,0 +1,776 @@
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docker-compose.dashboard-lite.yml:8:      DASHBOARD_LITE_PORT: "5178"
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docker-compose.dashboard-lite.yml:10:      API_BASE_URL: "http://api:3000"
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docker-compose.dashboard-lite.yml:14:      - "5178:5178"
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/README-Docker.md:12:curl -fsS http://localhost:3000/health
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/README-Docker.md:13:curl -fsS http://localhost:3000/openapi.json | head -n 20
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/README-Docker.md:14:curl -fsS http://localhost:3000/ready
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/README-Docker.md:15:curl -fsS http://localhost:3000/version
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/README-Docker.md:27:For server deploys, docker-compose.prod.yml may map port 80 (via 80:${PORT:-8000}); local quickstart uses port 3000.
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/vitest.local.config.ts:28:        testTimeout: 12000,
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/vitest.local.config.ts:29:        hookTimeout: 12000,
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/vitest.local.config.ts:55:        testTimeout: 10000,
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/vitest.local.config.ts:56:        hookTimeout: 10000,
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docker-compose.yml:9:      - "3000:3000"
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docker-compose.yml:22:      test: ["CMD-SHELL","curl -fsS http://127.0.0.1:3000/health | grep -q '\"ok\":true'"]
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docker-compose.yml:44:    command: ['node', '/app/apps/api/dist/scripts/syncTickets.js', '--watch', '--interval=15000']
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/README.md:10:# API → http://localhost:3000
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/README.md:11:# Health: curl -fsS http://localhost:3000/health   # expect {"ok":true}
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/README.md:12:# Ready:  curl -fsS http://localhost:3000/ready
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/README.md:19:# UI → http://localhost:5178
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/README.md:25:# UI → http://localhost:8080
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/README-dev.md:5:API (prod-like via compose): 3000
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/README-dev.md:7:Dashboard-Lite (compose): 5178
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/README-dev.md:9:Full Dashboard (compose): 8080
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/README-dev.md:11:API (dev script, if provided): 8000 (hot-reload)
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/README-dev.md:14:./dev_api.sh              # API on :8000 (Fastify watch) — optional
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/README-dev.md:15:pnpm --filter @prism-apex/dashboard-lite dev   # Vite dev UI on :5173 (if applicable)
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/README-dev.md:23:curl -fsS http://localhost:3000/health
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/README-dev.md:24:curl -fsS http://localhost:3000/ready
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docker-compose.override.yml:8:      DATABASE_URL: "${DATABASE_URL:-postgresql://apex:apex@db:5432/prismapex?schema=public}"
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docker-compose.override.yml:12:      - "${API_PORT:-3000}:3000"
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docker-compose.override.yml:19:        "node -e \"const http=require('http');const paths=['/health','/'];const tryNext=()=>{if(!paths.length)return process.exit(1);const path=paths.shift();http.get({host:'127.0.0.1',port:3000,path},res=>{if(res.statusCode===200)process.exit(0);tryNext();}).on('error',tryNext);};tryNext();setTimeout(()=>process.exit(1),5000);\""
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docker-compose.override.yml:41:      DATABASE_URL: "${DATABASE_URL:-postgresql://apex:apex@db:5432/prismapex?schema=public}"
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docker-compose.override.yml:64:      - "${POSTGRES_PORT:-55433}:5432"
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docker-compose.prod.yml:4:      - '80:${PORT:-8000}'
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/.env.example:12:RATE_LIMIT_WINDOW_MS=60000
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/.env.example:18:RATE_LIMIT_MAX_BUCKETS=50000
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/.env.example:73:TELEMETRY_POLL_MS=5000
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/.env.example:74:BUFFER_CLEAR_THRESHOLD=2500
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docker-compose.dashboard.yml:5:    command: sh -lc "corepack enable && corepack prepare pnpm@9.0.0 --activate && pnpm -C apps/dashboard install && pnpm -C apps/dashboard dev --host 0.0.0.0 --port 5180"
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docker-compose.dashboard.yml:9:      - "5180:5180"
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/apps/ingress-yahoo-dev/src/server.ts:238:const port = Number(process.env.PORT || 8080);
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/apps/api/.env.local.example:5:PORT=8000
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/infra/README-DEPLOY.md:7:- **API** on port **8000**
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/infra/README-DEPLOY.md:35:- <http://<server-ip>:8000/health> (API)
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/apps/dashboard/playwright.config.ts:7:    port: 5173,
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/apps/dashboard/playwright.config.ts:12:    baseURL: 'http://localhost:5173',
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/apps/e2e/playwright.config.ts:3:const DASH = process.env.BASE_DASHBOARD_URL ?? 'http://localhost:3000';
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/apps/e2e/playwright.config.ts:4:const API = process.env.BASE_API_URL ?? 'http://localhost:8000';
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/apps/e2e/playwright.config.ts:7:  timeout: 30000,
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/infra/.env.prod.example:5:PORT=8080
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/infra/.env.prod.example:35:DAILY_LOSS_CAP_USD=1000
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/apps/dashboard/src/pages/Tickets.tsx:13:  const [refreshMs, setRefreshMs] = useState(5000);
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/apps/dashboard/src/__tests__/Tickets.test.tsx:9:    entry: 4800,
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/apps/dashboard/src/__tests__/Tickets.test.tsx:10:    stop: 4798,
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/apps/dashboard/src/__tests__/Tickets.test.tsx:11:    target: 4804,
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/apps/dashboard/src/__tests__/Tickets.test.tsx:21:    entry: 15000,
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/apps/dashboard/src/__tests__/Tickets.test.tsx:22:    stop: 15010,
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/apps/dashboard/src/__tests__/Tickets.test.tsx:23:    target: 14980,
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/apps/dashboard/src/__tests__/Tickets.test.tsx:64:    expect(writeText).toHaveBeenCalledWith('4800');
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/infra/nginx/README.md:6:- Prism Apex API running via systemd on `127.0.0.1:8000`
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/infra/nginx/README.md:24:- Proxies to http://127.0.0.1:8000
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/apps/dashboard/tests/e2e/eod-block.spec.ts:34:              entry: 5000,
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/apps/dashboard/tests/e2e/eod-block.spec.ts:35:              stop: 4995,
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/apps/dashboard/tests/e2e/eod-block.spec.ts:36:              targets: [5005],
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/apps/dashboard/tests/e2e/eod-block.spec.ts:62:          netLiq: 52000,
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/apps/dashboard/tests/e2e/eod-block.spec.ts:63:          cash: 52000,
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/apps/ingress-yahoo-dev/test/ingress.test.ts:52:        ts: '2025-09-12T14:31:00Z',
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/apps/ingress-yahoo-dev/test/ingress.test.ts:68:        ts: '2025-09-11T14:31:00Z',
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/apps/ingress-yahoo-dev/test/ingress.test.ts:69:        high: 5334.75,
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/apps/ingress-yahoo-dev/test/ingress.test.ts:70:        low: 5330.25,
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/apps/ingress-yahoo-dev/test/ingress.test.ts:71:        close: 5332.0,
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/apps/ingress-yahoo-dev/test/ingress.test.ts:72:        volume: 1000,
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/apps/ingress-yahoo-dev/test/ingress.test.ts:79:        ts: '2025-09-12T14:31:00Z',
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/apps/ingress-yahoo-dev/test/ingress.test.ts:80:        high: 5335.0,
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/apps/ingress-yahoo-dev/test/ingress.test.ts:81:        low: 5331.0,
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/apps/ingress-yahoo-dev/test/ingress.test.ts:82:        close: 5333.0,
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/apps/ingress-yahoo-dev/test/ingress.test.ts:83:        volume: 1200,
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/apps/dashboard/src/pages/Positions.tsx:11:  const [intervalMs, setIntervalMs] = useState(5000);
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/apps/dashboard/src/pages/Positions.tsx:45:            <option value={3000}>3s</option>
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/apps/dashboard/src/pages/Positions.tsx:46:            <option value={5000}>5s</option>
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/apps/dashboard/src/pages/Positions.tsx:47:            <option value={10000}>10s</option>
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/apps/dashboard/src/__tests__/Positions.test.tsx:15:        json: async () => ({ balance: 1000, bufferCleared: false }),
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/apps/e2e/tests/smoke.spec.ts:3:const DASH = process.env.BASE_DASHBOARD_URL ?? 'http://localhost:3000';
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/apps/e2e/tests/smoke.spec.ts:4:const API = process.env.BASE_API_URL ?? 'http://localhost:8000';
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/apps/dashboard/vite.config.ts:5:const API = process.env.VITE_API_BASE || 'http://127.0.0.1:3000';
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/apps/dashboard/vite.config.ts:10:    port: Number(process.env.PORT) || 5173,
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/apps/dashboard-lite/src/App.tsx:23:const REFRESH_MS = 10000;
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/apps/api/src/store.ts:66:        netLiqHigh: 52000,
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/apps/api/src/store.ts:67:        ddAmount: 3000,
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/apps/api/src/store.ts:157:    const dayAgo = Date.now() - 24 * 60 * 60 * 1000;
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/apps/dashboard/src/components/AlertsPanel.tsx:17:    }, 5000);
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/apps/dashboard/src/lib/api.ts:49:  typeof window === 'undefined' ? 'http://localhost:3000/api/compat' : '/api/compat';
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/apps/dashboard/src/lib/api.ts:52:  typeof window === 'undefined' ? 'http://localhost:3000' : window.location.origin;
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/infra/systemd/README.md:6:- Open outbound internet for npm install; inbound TCP :8000 (or reverse proxy)
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/infra/systemd/README.md:31:curl -s http://127.0.0.1:8000/health | jq .
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/infra/systemd/README.md:52:Leave service on HOST=0.0.0.0 PORT=8000
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/infra/systemd/README.md:54:Terminate TLS in Nginx/Traefik and forward to 127.0.0.1:8000
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/infra/systemd/README.md:62:sudo ufw allow 8000/tcp   # or only allow from proxy host
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/payouts/calendar.md:16:- Next payout date: 2025-09-01
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/LOCAL_DEV.md:10:## 1. Start the stack (Postgres on host **55433**)
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/LOCAL_DEV.md:16:- **api** – serves on http://localhost:3000 with a Node-based healthcheck (no curl dependency)
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/LOCAL_DEV.md:18:- **db** – postgres:16-alpine bound host 55433 → container 5432
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/LOCAL_DEV.md:38:- If port 55433 conflicts, override `POSTGRES_PORT` when invoking `docker compose`
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/apps/dashboard/src/components/FiltersBar.tsx:98:        <option value="3000">3s</option>
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/apps/dashboard/src/components/FiltersBar.tsx:99:        <option value="5000">5s</option>
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/apps/dashboard/src/components/FiltersBar.tsx:100:        <option value="10000">10s</option>
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/packages/clients-tradovate/src/auth.ts:41:    expiresAt: Date.now() + Number(data.expiresIn || data.expirationTime || 0) * 1000,
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docker-compose.ingress.yml:15:      - "8080:8080"
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/apps/api/src/services/rules/engine.ts:67:    const diffDays = Math.abs(last - prev) / (1000 * 60 * 60 * 24);
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/compliance/rule-engine.md:21:  balance: 50000,
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/compliance/rule-engine.md:22:  equityHigh: 50000,
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/compliance/rule-engine.md:26:  trailingDrawdown: 49000,
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/CLEANUP_REPORT.md:3:- UTC: 2025-09-29 20:15:34
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/apps/api/src/plugins/rateLimit.ts:62:      const retryAfterSec = Math.ceil((bucket.resetAt - now) / 1000);
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/export.md:12:    "when": "2024-08-24T12:00:00Z",
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/export.md:37:2024-08-24T12:00:00Z,ES,BUY,1,0,2,2,true,,false,20:59,2,2,false,false,false
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/apps/api/src/scripts/syncTickets.ts:115:    const sleepMs = Math.max(0, intervalSec * 1000 - elapsed);
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docker-compose.override.local.yml:8:      pnpm -C apps/dashboard dev --host 0.0.0.0 --port 5180"
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docker-compose.override.local.yml:11:      - "5179:80"
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/apps/dashboard-lite/vite.config.ts:4:// Dev: UI on 5179; proxy API to Express on 5178
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/apps/dashboard-lite/vite.config.ts:8:    port: 5179,
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/apps/dashboard-lite/vite.config.ts:11:      '/api': { target: 'http://localhost:5178', changeOrigin: true },
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/apps/dashboard-lite/vite.config.ts:14:  preview: { port: 5179, strictPort: true },
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/.env.ingress.example:19:PORT=8080
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/release/runbook-rollback.md:32:curl -fsS http://<server>:8080/health
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/packages/clients-tradovate/src/__tests__/ws.spec.ts:29:    vi.advanceTimersByTime(2500);
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/packages/clients-tradovate/src/__tests__/ws.spec.ts:43:    vi.advanceTimersByTime(1100);
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/apps/dashboard-lite/README.md:13:# open http://localhost:5179 and it will call the API on 5178
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/apps/dashboard-lite/README.md:18:# Dashboard Lite: http://localhost:5178
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/apps/dashboard-lite/README.md:19:# API: http://localhost:3000
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/apps/dashboard/src/components/EODCountdown.tsx:21:    const id = setInterval(() => setNow(new Date()), 1000);
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/apps/dashboard/src/components/EODCountdown.tsx:27:  const inBlock = force || msLeft <= 5 * 60 * 1000;
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/apps/dashboard/src/components/EODCountdown.tsx:30:  const mm = Math.max(0, Math.floor((msLeft % 3600000) / 60000));
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/apps/dashboard/src/components/EODCountdown.tsx:31:  const ss = Math.max(0, Math.floor((msLeft % 60000) / 1000));
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/packages/clients-tradovate/src/__tests__/bars.spec.ts:8:    agg.onQuote({ ts: Date.UTC(2024, 0, 1, 12, 0, 10), price: 10, volume: 1 });
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/packages/clients-tradovate/src/__tests__/bars.spec.ts:9:    agg.onQuote({ ts: Date.UTC(2024, 0, 1, 12, 0, 20), price: 12, volume: 2 });
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/packages/clients-tradovate/src/__tests__/bars.spec.ts:11:    agg.onQuote({ ts: Date.UTC(2024, 0, 1, 12, 1, 0), price: 11, volume: 3 });
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/packages/clients-tradovate/src/__tests__/bars.spec.ts:14:      ts: Date.UTC(2024, 0, 1, 12, 0, 0),
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/apps/api/vitest.config.ts:14:    testTimeout: 20000,
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/tickets.md:10:  "entry": 5550.25,
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/tickets.md:11:  "stop": 5544.25,
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/tickets.md:12:  "target": 5560.25,
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/tickets.md:15:  "timestampUtc": "2025-09-09T14:31:22Z",
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/tickets.md:73:MESZ5,BUY,5550.25,5544.25,5560.25,2,APEX-123456,2025-09-09T14:31:22Z,vwap-first-touch,1.5,true,,half-size
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/tickets.md:89:MESZ5 BUY 2 5550.25 5544.25 5560.25
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/apps/dashboard-lite/server/index.ts:10:const PORT = Number(process.env.DASHBOARD_LITE_PORT || 5178);
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/apps/dashboard-lite/server/index.ts:40:      `<html><body><p>Run <code>pnpm -w -C apps/dashboard-lite dev</code> and open <a href="http://localhost:5179">web</a>.</p></body></html>`,
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/release/go-live-checklist.md:17:- [ ] `http://<server>:8080/health` returns `{ ok: true }`.
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/apps/dashboard/src/components/PositionsOrders.tsx:22:    const id = setInterval(run, 5000);
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/packages/clients-tradovate/src/telemetry.ts:31:  const pollMs = opts?.pollMs ?? 5000;
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/apps/api/src/tests/hardening.spec.ts:10:  vi.setSystemTime(new Date('2024-01-01T00:00:00Z'));
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/apps/api/src/tests/hardening.spec.ts:13:  process.env.RATE_LIMIT_WINDOW_MS = '60000';
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/dashboard/guide.md:13:2. Open browser at `http://localhost:8000`.
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/release/uat-scenarios.md:38:- **Input:** `POST /signals/preview` with an ORB long (entry=5000, stop=4990, target=5025, size=1, mode="evaluation")
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/release/uat-scenarios.md:83:- **Input:** Set `store.setPeriodProfit(1000)` and `store.setTodayProfit(310)` (test route or script)
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/audit/guide.md:17:  "timestamp": "2025-08-17T13:45:01Z",
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/accounts.md:10:  "updatedAt": "2024-01-01T00:00:00.000Z",
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/accounts.md:13:  "lastSuggestedAt": "2024-01-01T00:00:00.000Z"
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/accounts.md:26:curl -H "authorization: Bearer $TOKEN" http://localhost:8000/accounts
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/accounts.md:35:     http://localhost:8000/accounts/PA-150K-123456
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/packages/clients-tradovate/src/ws.ts:80:    }, 2500);
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/packages/clients-tradovate/src/ws.ts:89:    const delay = Math.min(30_000, Math.pow(2, this.reconnectAttempts) * 1000);
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/config.md:34:  "entry": 5050.25,
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/config.md:35:  "stop": 5046.25,
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/config.md:36:  "target": 5055.25
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/apps/api/scripts/seed.ts:64:        entry: 5000,
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/apps/api/scripts/seed.ts:65:        stop: 4990,
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/apps/api/scripts/seed.ts:66:        target: 5010,
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/apps/api/scripts/seed.ts:74:        entry: 15800,
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/apps/api/scripts/seed.ts:75:        stop: 15820,
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/apps/api/scripts/seed.ts:76:        target: 15760,
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/apps/api/scripts/seed.ts:84:      netLiqHigh: 52000,
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/apps/api/scripts/seed.ts:85:      ddAmount: 3000,
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/apps/dashboard-lite/web/src/pages/App.tsx:23:const REFRESH_MS = 10000;
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/safe_cleanup.md:10:_Last updated: 2025-10-01_
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/safe_cleanup.md:96:## 2025-02-10T21:34:11-05:00
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/apps/api/src/routes/compat.ts:11:    { symbol: 'ES', side: 'BUY', price: 5432.25, human: 'BUY ES @ 5432.25 (OR breakout)' },
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/apps/api/src/routes/compat.ts:12:    { symbol: 'NQ', side: 'SELL', price: 18987.5, human: 'SELL NQ @ 18987.5 (VWAP first touch)' },
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/apps/api/src/routes/compat.ts:21:        entry: 5432.25,
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/apps/api/src/routes/compat.ts:22:        stop: 5426.75,
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/apps/api/src/routes/compat.ts:23:        targets: [5436.25, 5442.25],
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/apps/api/src/routes/compat.ts:29:    ddAmount: 3000,
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/apps/api/src/routes/compat.ts:44:    const balance = rc?.netLiqHigh ?? 52000;
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/RELEASE_NOTES.md:18:- Rate-limit defaults: `RATE_LIMIT_MAX=60`, `RATE_LIMIT_WINDOW_MS=60000`, `RATE_LIMIT_MAX_BUCKETS=50000`.
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/packages/clients-tradovate/src/bars.ts:17:    const minute = Math.floor(q.ts / 60000) * 60000;
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/OPERATIONS.md:16:curl -fsS http://localhost:3000/health → {"ok":true}
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/OPERATIONS.md:18:UI loads (5178 for Lite, 8080 for Full)
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/apps/api/src/tests/ready.spec.ts:8:    vi.setSystemTime(new Date('2024-01-01T00:00:00Z'));
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/UPGRADE.md:30:export RATE_LIMIT_WINDOW_MS=60000
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/UPGRADE.md:31:export RATE_LIMIT_MAX_BUCKETS=50000
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/UPGRADE.md:45:curl http://localhost:3000/health
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/UPGRADE.md:46:curl http://localhost:3000/ready
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/UPGRADE.md:47:curl http://localhost:3000/openapi.json
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/YAHOO_DATA_CLEANUP.md:2:- UTC: 2025-09-29 21:06:39
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/YAHOO_DATA_CLEANUP.md:12:| 4.0K | 2025-09-20 07:58:23 | `apps/api/data/accounts.json` |
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/YAHOO_DATA_CLEANUP.md:13:| 4.0K | 2025-09-20 07:58:23 | `apps/api/data/tickets.jsonl` |
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/YAHOO_DATA_CLEANUP.md:14:| 4.0K | 2025-09-29 19:57:04 | `data/ES_1m.sample.csv` |
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/YAHOO_DATA_CLEANUP.md:15:| 4.0K | 2025-09-29 19:57:04 | `data/ES_ticks.sample.csv` |
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/YAHOO_DATA_CLEANUP.md:16:| 4.0K | 2025-09-29 19:57:04 | `data/accounts.sample.json` |
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/YAHOO_DATA_CLEANUP.md:17:| 4.0K | 2025-09-29 19:57:04 | `data/sample_bars/ES_1m.csv` |
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/YAHOO_DATA_CLEANUP.md:18:| 4.0K | 2025-09-29 19:57:04 | `data/sample_bars/NQ_1m.csv` |
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/YAHOO_DATA_CLEANUP.md:19:| 4.0K | 2025-09-29 19:57:04 | `data/strategy_schedule.sample.json` |
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/YAHOO_DATA_CLEANUP.md:20:## 2025-10-01T14:49:40+01:00
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/YAHOO_DATA_CLEANUP.md:31:## 2025-10-01T14:49:46+01:00
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/YAHOO_DATA_CLEANUP.md:42:## 2025-10-01T14:51:31+01:00
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/YAHOO_DATA_CLEANUP.md:55:## 2025-10-01T15:03:13+01:00
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/apps/dashboard-lite/web/src/App.tsx:23:const REFRESH_MS = 10000;
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/telemetry.md:11:TELEMETRY_POLL_MS=5000
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/telemetry.md:20:BUFFER_CLEAR_THRESHOLD=2500
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/apps/api/src/tests/ticketizer.unit.spec.ts:12:  timestampUtc: '2024-01-01T10:00:00Z',
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/apps/api/src/tests/ticketizer.unit.spec.ts:56:    const s = { ...base, timestampUtc: '2024-01-01T20:55:30Z' };
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/apps/api/Dockerfile:68:EXPOSE 3000
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/apps/api/src/routes/analytics.ts:11:const PAYOUT_THRESHOLD = 2500;
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/apps/api/src/routes/analytics.ts:59:      { pnl: 1000, fees: 50, type: 'TRADE' },
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/apps/api/src/routes/analytics.ts:63:    return generateSummary(events, new Date('2025-01-02'));
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/apps/api/__tests__/consistency.route.spec.ts:34:      { date: '2025-08-12', pnl: -80 },
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/apps/api/__tests__/consistency.route.spec.ts:35:      { date: '2025-08-13', pnl: 250 },
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/apps/api/__tests__/consistency.route.spec.ts:36:      { date: '2025-08-14', pnl: 180 },
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/apps/api/__tests__/consistency.route.spec.ts:37:      { date: '2025-08-15', pnl: 90 },
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/apps/api/__tests__/consistency.route.spec.ts:38:      { date: '2025-08-18', pnl: 410 },
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/apps/api/__tests__/consistency.route.spec.ts:39:      { date: '2025-08-19', pnl: 95 },
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/apps/api/__tests__/consistency.route.spec.ts:40:      { date: '2025-08-20', pnl: 200 },
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/apps/api/__tests__/consistency.route.spec.ts:41:      { date: '2025-08-21', pnl: 275 },
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/apps/api/__tests__/consistency.route.spec.ts:49:    expect(body.totalPnL).toBe(1420);
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/apps/api/__tests__/consistency.route.spec.ts:51:    expect(body.bestDayShare).toBeCloseTo(410 / 1420, 6);
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/apps/dashboard-lite/web/vite.config.ts:6:  server: { port: 5179 },
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/packages/clients-tradovate/__tests__/telemetry.spec.ts:9:    expiresAt: Date.now() + 60000,
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/packages/clients-tradovate/__tests__/telemetry.spec.ts:22:  bufferThreshold: 2500,
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/packages/clients-tradovate/__tests__/telemetry.spec.ts:43:      accounts: [{ id: 'A1', balance: 1000 }],
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/packages/clients-tradovate/__tests__/telemetry.spec.ts:52:          timestamp: '2024-01-01T10:00:00Z',
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/packages/clients-tradovate/__tests__/telemetry.spec.ts:60:          timestamp: '2024-01-01T11:00:00Z',
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/packages/clients-tradovate/__tests__/telemetry.spec.ts:65:    const client = createTelemetryClient(env, { pollMs: 1000 });
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/packages/clients-tradovate/__tests__/telemetry.spec.ts:72:    expect(s.accounts[0].balance).toBe(1000);
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/packages/clients-tradovate/__tests__/telemetry.spec.ts:79:      accounts: [{ id: 'A1', balance: 1000 }],
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/packages/clients-tradovate/__tests__/telemetry.spec.ts:87:          price: 3000,
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/packages/clients-tradovate/__tests__/telemetry.spec.ts:88:          timestamp: '2024-01-01T10:00:00Z',
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/packages/clients-tradovate/__tests__/telemetry.spec.ts:93:    const client = createTelemetryClient(env, { pollMs: 1000 });
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/packages/clients-tradovate/__tests__/telemetry.spec.ts:104:    const client = createTelemetryClient(env, { pollMs: 1000 });
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/apps/api/src/tests/report.consistency.spec.ts:20:    vi.setSystemTime(new Date('2024-01-08T00:00:00Z'));
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/apps/api/src/tests/report.consistency.spec.ts:23:    const base = new Date('2024-01-08');
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/apps/api/src/tests/report.consistency.spec.ts:43:    vi.setSystemTime(new Date('2024-01-08T00:00:00Z'));
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/apps/api/src/tests/report.consistency.spec.ts:46:    const base = new Date('2024-01-08');
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/apps/api/src/tests/report.consistency.spec.ts:68:    vi.setSystemTime(new Date('2024-01-08T00:00:00Z'));
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/apps/api/src/tests/report.consistency.spec.ts:71:    const base = new Date('2024-01-08');
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/apps/api/test/rules/engine.test.ts:7:    balance: 10000,
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/apps/api/test/rules/engine.test.ts:8:    equityHigh: 10000,
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/apps/api/test/rules/engine.test.ts:12:    trailingDrawdown: 9000,
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/apps/api/test/rules/engine.test.ts:21:      const state = { ...base, balance: 13000 };
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/apps/api/test/rules/engine.test.ts:26:      const state = { ...base, balance: 1000 };
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/apps/api/test/rules/engine.test.ts:35:      const state = { ...base, balance: 9500 };
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/apps/api/test/rules/engine.test.ts:40:      const state = { ...base, balance: 8000 };
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/apps/api/test/rules/engine.test.ts:145:      const dayPnL = { a: 1000, b: 100, c: 90, d: 80, e: 70 };
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/apps/api/test/rules/engine.test.ts:156:      const state = { ...fundedBase, trailingDrawdown: 6000 };
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/apps/api/test/rules/engine.test.ts:161:      const state = { ...fundedBase, trailingDrawdown: 4000 };
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/apps/api/test/rules/engine.test.ts:187:      const state = { ...payoutBase, balance: 2000 };
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/apps/api/test/rules/engine.test.ts:202:      const history = ['2025-01-01', '2025-01-10'];
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/apps/api/test/rules/engine.test.ts:208:      const history = ['2025-01-01', '2025-01-05'];
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/apps/api/src/tests/telemetry.api.spec.ts:9:  accounts: [{ accountId: 'A1', balance: 1000 }],
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/apps/api/src/tests/telemetry.api.spec.ts:45:    expect(acct.json().balance).toBe(1000);
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/adr/ADR-2025-09-09-operator-assisted-architecture.md:2:ADR 2025-09-09 — Operator-Assisted Architecture (Tickets-Only, No API Orders)
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/adr/ADR-2025-09-09-operator-assisted-architecture.md:5:Accepted (2025-09-09)
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/apps/api/dist-cjs/scripts/syncTickets.js:98:        const sleepMs = Math.max(0, intervalSec * 1000 - elapsed);
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/apps/api/src/tests/tickets.store.spec.ts:36:      timestampUtc: '2024-01-01T10:00:00Z',
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/apps/api/src/tests/tickets.store.spec.ts:42:    const { items } = store.listTickets('2024-01-01');
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/apps/api/src/tests/tickets.store.spec.ts:55:      timestampUtc: '2024-01-01T10:00:00Z',
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/apps/api/src/tests/tickets.store.spec.ts:60:      await store.saveTicket({ ...base, timestampUtc: `2024-01-01T10:0${i}:00Z` });
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/apps/api/src/tests/tickets.store.spec.ts:63:    const page1 = await app.inject({ method: 'GET', url: '/tickets?date=2024-01-01&limit=2' });
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/apps/api/src/tests/tickets.store.spec.ts:69:      url: '/tickets?date=2024-01-01&cursor=2&limit=2',
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/apps/api/src/tests/tickets.store.spec.ts:86:      timestampUtc: '2024-01-01T10:00:00Z',
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/apps/api/src/tests/tickets.store.spec.ts:93:      timestampUtc: '2024-01-01T11:00:00Z',
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/apps/api/src/tests/tickets.store.spec.ts:99:      url: '/tickets?date=2024-01-01&strategy=OSB',
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/apps/api/src/tests/tickets.store.spec.ts:117:      timestampUtc: '2024-01-01T10:00:00Z',
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/apps/api/src/tests/tickets.store.spec.ts:123:    const res = await app.inject({ method: 'GET', url: '/export/tickets?date=2024-01-01' });
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/adr/ADR-2025-09-09-docker-api-only.md:1:ADR: Docker compose is API-only (2025-09-09)
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/adr/ADR-2025-09-09-docker-api-only.md:12:Clarify docs and fix stale references (/readiness → /ready, local API port 3000).
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/packages/audit/src/__tests__/readers.spec.ts:22:      '{"event_type":"TRADE","details":{"pnl":250,"fees":5},"timestamp":"2025-02-01T00:00:00Z"}',
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/packages/audit/src/__tests__/readers.spec.ts:30:      timestamp: '2025-02-01T00:00:00Z',
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/packages/rules/src/apex.ts:37:  const current = hour * 3600 + minute * 60 + second;
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/packages/rules/src/apex.ts:38:  const cutoffSec = h * 3600 + m * 60 + s;
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/apps/api/src/tests/ticket.schema.spec.ts:14:      timestampUtc: '2024-01-01T10:00:00Z',
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/apps/api/src/jobs/ticketizer.ts:58:  return diff <= 5 * 60 * 1000 && diff >= 0;
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/apps/api/src/tests/ticketizer.api.spec.ts:21:  timestampUtc: '2024-01-01T10:00:00Z',
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/apps/api/src/tests/ticketizer.api.spec.ts:33:  timestampUtc: '2024-01-01T10:05:00Z',
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/apps/api/src/tests/ticketizer.api.spec.ts:55:    const date = '2024-01-01';
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/POST_MERGE_VERIFY.md:2:- UTC: 2025-09-29 21:07:36
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/apps/api/src/tests/tickets.api.spec.ts:8:  const date = '2024-01-01';
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/operator-console.md:25:MESZ5 BUY 2 5550.25 5544.25 5560.25
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/operator-console.md:122:{"symbol":"MESZ5","side":"BUY","entry":5550.25,"stop":5544.25,"target":5560.25,"qty":2,"accountId":"APEX-123456","timestampUtc":"2025-09-09T14:31:22Z","meta":{"strategy":"vwap-first-touch","rr":1.5,"guardrails":["stopSideOk","rrInRange"],"sizingHint":"half-size"},"accepted":true,"reasons":[]}
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/Dockerfile:40:    PORT=3000 \
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/Dockerfile:53:EXPOSE 3000
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/apps/api/src/index.ts:3:const port = Number(process.env.PORT ?? 3000);
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/packages/ticketizer/__tests__/guard.integration.spec.ts:59:    startingBalance: 50000,
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/packages/ticketizer/__tests__/guard.integration.spec.ts:60:    currentBalance: 50000,
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/packages/ticketizer/__tests__/guard.integration.spec.ts:61:    trailingDrawdown: 2500,
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/packages/ticketizer/__tests__/guard.integration.spec.ts:65:    startingBalance: 50000,
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/packages/ticketizer/__tests__/guard.integration.spec.ts:66:    currentBalance: 50000,
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/packages/ticketizer/__tests__/guard.integration.spec.ts:67:    trailingDrawdown: 2500,
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/packages/ticketizer/__tests__/guard.integration.spec.ts:95:      entryPrice: 5000,
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/packages/ticketizer/__tests__/guard.integration.spec.ts:97:      takeProfit: 5010, // present just to compute RR
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/packages/ticketizer/__tests__/guard.integration.spec.ts:133:      entryPrice: 5000,
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/packages/rules/__tests__/apex.guard.spec.ts:12:    now: new Date('2023-06-01T12:00:00Z'),
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/packages/rules/__tests__/apex.guard.spec.ts:45:    const res = guardApexFundingRules(t, makeCtx({ now: new Date('2023-06-01T20:59:00Z') }));
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/pnpm-lock.yaml:2012:    engines: {node: '>= 0.8', npm: 1.2.8000 || >= 1.4.16}
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/pnpm-lock.yaml:2341:    engines: {node: '>= 0.8', npm: 1.2.8000 || >= 1.4.16}
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/REPO_SCAN_REPORT.md:3:- Timestamp: 2025-10-04T14:13:39+01:00
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/REPO_SCAN_REPORT.md:145:- `(no ext)` — files: 21858, size: 268.45 MB
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/REPO_SCAN_REPORT.md:146:- `.js` — files: 12914, size: 105.61 MB
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/REPO_SCAN_REPORT.md:147:- `.ts` — files: 3956, size: 24.38 MB
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/REPO_SCAN_REPORT.md:148:- `.map` — files: 2092, size: 20.12 MB
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/REPO_SCAN_REPORT.md:150:- `.json` — files: 2252, size: 12.16 MB
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/REPO_SCAN_REPORT.md:151:- `.md` — files: 1389, size: 8.58 MB
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/REPO_SCAN_REPORT.md:217:- `.pnpm-store/v3/files/da/c3d5cedbe6c2ec1481e9acebe9b92d72c3fedfa0de4260b6f347cc3afcaf63caab9f9f787cc66000a5556ed5cca3dc9ea391b0a3da38a2b2f1dc649ce687e3` — 1005.49 KB
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/REPO_SCAN_REPORT.md:218:- `node_modules/.pnpm/react-dom@18.3.1_react@18.2.0/node_modules/react-dom/cjs/react-dom.development.js` — 1005.49 KB
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/REPO_SCAN_REPORT.md:3186:- node_modules/.pnpm/ajv@8.17.1/node_modules/ajv/dist/2019.d.ts
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/REPO_SCAN_REPORT.md:3187:- node_modules/.pnpm/ajv@8.17.1/node_modules/ajv/dist/2019.js
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/REPO_SCAN_REPORT.md:3188:- node_modules/.pnpm/ajv@8.17.1/node_modules/ajv/dist/2019.js.map
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/REPO_SCAN_REPORT.md:3189:- node_modules/.pnpm/ajv@8.17.1/node_modules/ajv/dist/2020.d.ts
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/REPO_SCAN_REPORT.md:3190:- node_modules/.pnpm/ajv@8.17.1/node_modules/ajv/dist/2020.js
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/REPO_SCAN_REPORT.md:3191:- node_modules/.pnpm/ajv@8.17.1/node_modules/ajv/dist/2020.js.map
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/REPO_SCAN_REPORT.md:3262:- node_modules/.pnpm/ajv@8.17.1/node_modules/ajv/dist/refs/json-schema-2019-09/index.d.ts
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/REPO_SCAN_REPORT.md:3263:- node_modules/.pnpm/ajv@8.17.1/node_modules/ajv/dist/refs/json-schema-2019-09/index.js
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/REPO_SCAN_REPORT.md:3264:- node_modules/.pnpm/ajv@8.17.1/node_modules/ajv/dist/refs/json-schema-2019-09/index.js.map
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/REPO_SCAN_REPORT.md:3265:- node_modules/.pnpm/ajv@8.17.1/node_modules/ajv/dist/refs/json-schema-2019-09/meta/applicator.json
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/REPO_SCAN_REPORT.md:3266:- node_modules/.pnpm/ajv@8.17.1/node_modules/ajv/dist/refs/json-schema-2019-09/meta/content.json
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/REPO_SCAN_REPORT.md:3267:- node_modules/.pnpm/ajv@8.17.1/node_modules/ajv/dist/refs/json-schema-2019-09/meta/core.json
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/REPO_SCAN_REPORT.md:3268:- node_modules/.pnpm/ajv@8.17.1/node_modules/ajv/dist/refs/json-schema-2019-09/meta/format.json
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/REPO_SCAN_REPORT.md:3269:- node_modules/.pnpm/ajv@8.17.1/node_modules/ajv/dist/refs/json-schema-2019-09/meta/meta-data.json
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/REPO_SCAN_REPORT.md:3270:- node_modules/.pnpm/ajv@8.17.1/node_modules/ajv/dist/refs/json-schema-2019-09/meta/validation.json
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/REPO_SCAN_REPORT.md:3271:- node_modules/.pnpm/ajv@8.17.1/node_modules/ajv/dist/refs/json-schema-2019-09/schema.json
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/REPO_SCAN_REPORT.md:3272:- node_modules/.pnpm/ajv@8.17.1/node_modules/ajv/dist/refs/json-schema-2020-12/index.d.ts
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/REPO_SCAN_REPORT.md:3273:- node_modules/.pnpm/ajv@8.17.1/node_modules/ajv/dist/refs/json-schema-2020-12/index.js
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/REPO_SCAN_REPORT.md:3274:- node_modules/.pnpm/ajv@8.17.1/node_modules/ajv/dist/refs/json-schema-2020-12/index.js.map
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/REPO_SCAN_REPORT.md:3275:- node_modules/.pnpm/ajv@8.17.1/node_modules/ajv/dist/refs/json-schema-2020-12/meta/applicator.json
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/REPO_SCAN_REPORT.md:3276:- node_modules/.pnpm/ajv@8.17.1/node_modules/ajv/dist/refs/json-schema-2020-12/meta/content.json
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/REPO_SCAN_REPORT.md:3277:- node_modules/.pnpm/ajv@8.17.1/node_modules/ajv/dist/refs/json-schema-2020-12/meta/core.json
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/REPO_SCAN_REPORT.md:3278:- node_modules/.pnpm/ajv@8.17.1/node_modules/ajv/dist/refs/json-schema-2020-12/meta/format-annotation.json
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/REPO_SCAN_REPORT.md:3279:- node_modules/.pnpm/ajv@8.17.1/node_modules/ajv/dist/refs/json-schema-2020-12/meta/meta-data.json
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/REPO_SCAN_REPORT.md:3280:- node_modules/.pnpm/ajv@8.17.1/node_modules/ajv/dist/refs/json-schema-2020-12/meta/unevaluated.json
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/REPO_SCAN_REPORT.md:3281:- node_modules/.pnpm/ajv@8.17.1/node_modules/ajv/dist/refs/json-schema-2020-12/meta/validation.json
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/REPO_SCAN_REPORT.md:3282:- node_modules/.pnpm/ajv@8.17.1/node_modules/ajv/dist/refs/json-schema-2020-12/schema.json
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/REPO_SCAN_REPORT.md:6512:- /Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docker-compose.prod.yml:4:      - '80:${PORT:-8000}'
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/REPO_SCAN_REPORT.md:6513:- /Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/.env.ingress.example:19:PORT=8080
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/REPO_SCAN_REPORT.md:6514:- /Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/Dockerfile:40:    PORT=3000 \
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/REPO_SCAN_REPORT.md:6515:- /Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/Dockerfile:53:EXPOSE 3000
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/REPO_SCAN_REPORT.md:6516:- /Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/README.md:10:# API → http://localhost:3000
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/REPO_SCAN_REPORT.md:6517:- /Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/README.md:11:# Health: curl -fsS http://localhost:3000/health   # expect {"ok":true}
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/REPO_SCAN_REPORT.md:6518:- /Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/README.md:12:# Ready:  curl -fsS http://localhost:3000/ready
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/REPO_SCAN_REPORT.md:6519:- /Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/README.md:19:# UI → http://localhost:5178
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/REPO_SCAN_REPORT.md:6520:- /Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/README.md:25:# UI → http://localhost:8080
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/REPO_SCAN_REPORT.md:6521:- /Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docker-compose.ingress.yml:15:      - "8080:8080"
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/REPO_SCAN_REPORT.md:6522:- /Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/infra/systemd/README.md:6:- Open outbound internet for npm install; inbound TCP :8000 (or reverse proxy)
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/REPO_SCAN_REPORT.md:6523:- /Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/infra/systemd/README.md:31:curl -s http://127.0.0.1:8000/health | jq .
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/REPO_SCAN_REPORT.md:6524:- /Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/infra/systemd/README.md:52:Leave service on HOST=0.0.0.0 PORT=8000
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/REPO_SCAN_REPORT.md:6525:- /Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/infra/systemd/README.md:54:Terminate TLS in Nginx/Traefik and forward to 127.0.0.1:8000
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/REPO_SCAN_REPORT.md:6526:- /Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/infra/systemd/README.md:62:sudo ufw allow 8000/tcp   # or only allow from proxy host
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/REPO_SCAN_REPORT.md:6527:- /Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/infra/README-DEPLOY.md:7:- **API** on port **8000**
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/REPO_SCAN_REPORT.md:6528:- /Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/infra/README-DEPLOY.md:35:- <http://<server-ip>:8000/health> (API)
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/REPO_SCAN_REPORT.md:6529:- /Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/infra/nginx/README.md:6:- Prism Apex API running via systemd on `127.0.0.1:8000`
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/REPO_SCAN_REPORT.md:6530:- /Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/infra/nginx/README.md:24:- Proxies to http://127.0.0.1:8000
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/REPO_SCAN_REPORT.md:6531:- /Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docker-compose.dashboard-lite.yml:8:      DASHBOARD_LITE_PORT: "5178"
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/REPO_SCAN_REPORT.md:6532:- /Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docker-compose.dashboard-lite.yml:10:      API_BASE_URL: "http://api:3000"
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/REPO_SCAN_REPORT.md:6533:- /Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docker-compose.dashboard-lite.yml:14:      - "5178:5178"
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/REPO_SCAN_REPORT.md:6534:- /Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/infra/.env.prod.example:5:PORT=8080
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/REPO_SCAN_REPORT.md:6535:- /Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/infra/.env.prod.example:35:DAILY_LOSS_CAP_USD=1000
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/REPO_SCAN_REPORT.md:6536:- /Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/README-dev.md:5:API (prod-like via compose): 3000
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/REPO_SCAN_REPORT.md:6537:- /Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/README-dev.md:7:Dashboard-Lite (compose): 5178
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/REPO_SCAN_REPORT.md:6538:- /Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/README-dev.md:9:Full Dashboard (compose): 8080
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/REPO_SCAN_REPORT.md:6539:- /Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/README-dev.md:11:API (dev script, if provided): 8000 (hot-reload)
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/REPO_SCAN_REPORT.md:6540:- /Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/README-dev.md:14:./dev_api.sh              # API on :8000 (Fastify watch) — optional
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/REPO_SCAN_REPORT.md:6541:- /Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/README-dev.md:15:pnpm --filter @prism-apex/dashboard-lite dev   # Vite dev UI on :5173 (if applicable)
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/REPO_SCAN_REPORT.md:6542:- /Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/README-dev.md:23:curl -fsS http://localhost:3000/health
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/REPO_SCAN_REPORT.md:6543:- /Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/README-dev.md:24:curl -fsS http://localhost:3000/ready
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/REPO_SCAN_REPORT.md:6544:- /Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/.env.example.local:12:POSTGRES_PORT=55433
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/REPO_SCAN_REPORT.md:6545:- /Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/.env.example.local:13:DATABASE_URL=postgresql://apex:apex@localhost:55433/prismapex?schema=public
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/REPO_SCAN_REPORT.md:6546:- /Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/.env.example.local:16:API_PORT=3000
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/REPO_SCAN_REPORT.md:6547:- /Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docker-compose.yml:9:      - "3000:3000"
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/REPO_SCAN_REPORT.md:6548:- /Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docker-compose.yml:22:      test: ["CMD-SHELL","curl -fsS http://127.0.0.1:3000/health | grep -q '\"ok\":true'"]
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/REPO_SCAN_REPORT.md:6549:- /Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docker-compose.yml:44:    command: ['node', '/app/apps/api/dist/scripts/syncTickets.js', '--watch', '--interval=15000']
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/REPO_SCAN_REPORT.md:6550:- /Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docker-compose.override.local.yml:8:      pnpm -C apps/dashboard dev --host 0.0.0.0 --port 5180"
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/REPO_SCAN_REPORT.md:6551:- /Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docker-compose.override.local.yml:11:      - "5179:80"
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/REPO_SCAN_REPORT.md:6552:- /Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/PROJECT.md:63:  "entry": 5550.25,
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/REPO_SCAN_REPORT.md:6553:- /Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/PROJECT.md:64:  "stop": 5544.25,
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/REPO_SCAN_REPORT.md:6554:- /Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/PROJECT.md:65:  "target": 5560.25,
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/REPO_SCAN_REPORT.md:6555:- /Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/PROJECT.md:68:  "timestampUtc": "2025-09-09T14:31:22Z",
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/REPO_SCAN_REPORT.md:6556:- /Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/vitest.local.config.ts:28:        testTimeout: 12000,
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/REPO_SCAN_REPORT.md:6557:- /Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/vitest.local.config.ts:29:        hookTimeout: 12000,
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/REPO_SCAN_REPORT.md:6558:- /Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/vitest.local.config.ts:55:        testTimeout: 10000,
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/REPO_SCAN_REPORT.md:6559:- /Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/vitest.local.config.ts:56:        hookTimeout: 10000,
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/REPO_SCAN_REPORT.md:6560:- /Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docker-compose.dashboard-lite.override.yml:11:      - DASHBOARD_LITE_PORT=5178
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/REPO_SCAN_REPORT.md:6561:- /Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docker-compose.dashboard-lite.override.yml:16:      - "5178:5178"
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/REPO_SCAN_REPORT.md:6562:- /Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/safe_cleanup.md:10:_Last updated: 2025-10-01_
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/REPO_SCAN_REPORT.md:6563:- /Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/safe_cleanup.md:96:## 2025-02-10T21:34:11-05:00
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/REPO_SCAN_REPORT.md:6564:- /Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/OPERATIONS.md:16:curl -fsS http://localhost:3000/health → {"ok":true}
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/REPO_SCAN_REPORT.md:6565:- /Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/OPERATIONS.md:18:UI loads (5178 for Lite, 8080 for Full)
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/REPO_SCAN_REPORT.md:6566:- /Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/POST_MERGE_VERIFY.md:2:- UTC: 2025-09-29 21:07:36
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/REPO_SCAN_REPORT.md:6567:- /Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/README-Docker.md:12:curl -fsS http://localhost:3000/health
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/REPO_SCAN_REPORT.md:6568:- /Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/README-Docker.md:13:curl -fsS http://localhost:3000/openapi.json | head -n 20
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/REPO_SCAN_REPORT.md:6569:- /Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/README-Docker.md:14:curl -fsS http://localhost:3000/ready
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/REPO_SCAN_REPORT.md:6570:- /Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/README-Docker.md:15:curl -fsS http://localhost:3000/version
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/REPO_SCAN_REPORT.md:6571:- /Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/README-Docker.md:27:For server deploys, docker-compose.prod.yml may map port 80 (via 80:${PORT:-8000}); local quickstart uses port 3000.
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/REPO_SCAN_REPORT.md:6572:- /Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docker-compose.dashboard-full.yml:8:      PORT: "8080"
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/REPO_SCAN_REPORT.md:6573:- /Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docker-compose.dashboard-full.yml:10:      API_BASE_URL: "http://api:3000"
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/REPO_SCAN_REPORT.md:6574:- /Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docker-compose.dashboard-full.yml:14:      - "8080:8080"
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/REPO_SCAN_REPORT.md:6575:- /Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/YAHOO_DATA_CLEANUP.md:2:- UTC: 2025-09-29 21:06:39
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/REPO_SCAN_REPORT.md:6576:- /Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/YAHOO_DATA_CLEANUP.md:12:| 4.0K | 2025-09-20 07:58:23 | `apps/api/data/accounts.json` |
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/REPO_SCAN_REPORT.md:6577:- /Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/YAHOO_DATA_CLEANUP.md:13:| 4.0K | 2025-09-20 07:58:23 | `apps/api/data/tickets.jsonl` |
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/REPO_SCAN_REPORT.md:6578:- /Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/YAHOO_DATA_CLEANUP.md:14:| 4.0K | 2025-09-29 19:57:04 | `data/ES_1m.sample.csv` |
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/REPO_SCAN_REPORT.md:6579:- /Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/YAHOO_DATA_CLEANUP.md:15:| 4.0K | 2025-09-29 19:57:04 | `data/ES_ticks.sample.csv` |
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/REPO_SCAN_REPORT.md:6580:- /Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/YAHOO_DATA_CLEANUP.md:16:| 4.0K | 2025-09-29 19:57:04 | `data/accounts.sample.json` |
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/REPO_SCAN_REPORT.md:6581:- /Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/YAHOO_DATA_CLEANUP.md:17:| 4.0K | 2025-09-29 19:57:04 | `data/sample_bars/ES_1m.csv` |
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/REPO_SCAN_REPORT.md:6582:- /Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/YAHOO_DATA_CLEANUP.md:18:| 4.0K | 2025-09-29 19:57:04 | `data/sample_bars/NQ_1m.csv` |
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/REPO_SCAN_REPORT.md:6583:- /Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/YAHOO_DATA_CLEANUP.md:19:| 4.0K | 2025-09-29 19:57:04 | `data/strategy_schedule.sample.json` |
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/REPO_SCAN_REPORT.md:6584:- /Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/YAHOO_DATA_CLEANUP.md:20:## 2025-10-01T14:49:40+01:00
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/REPO_SCAN_REPORT.md:6585:- /Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/YAHOO_DATA_CLEANUP.md:31:## 2025-10-01T14:49:46+01:00
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/REPO_SCAN_REPORT.md:6586:- /Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/YAHOO_DATA_CLEANUP.md:42:## 2025-10-01T14:51:31+01:00
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/REPO_SCAN_REPORT.md:6587:- /Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/YAHOO_DATA_CLEANUP.md:55:## 2025-10-01T15:03:13+01:00
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/REPO_SCAN_REPORT.md:6588:- /Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/operator-console.md:25:MESZ5 BUY 2 5550.25 5544.25 5560.25
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/REPO_SCAN_REPORT.md:6589:- /Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/operator-console.md:122:{"symbol":"MESZ5","side":"BUY","entry":5550.25,"stop":5544.25,"target":5560.25,"qty":2,"accountId":"APEX-123456","timestampUtc":"2025-09-09T14:31:22Z","meta":{"strategy":"vwap-first-touch","rr":1.5,"guardrails":["stopSideOk","rrInRange"],"sizingHint":"half-size"},"accepted":true,"reasons":[]}
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/REPO_SCAN_REPORT.md:6590:- /Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docker-compose.override.yml:8:      DATABASE_URL: "${DATABASE_URL:-postgresql://apex:apex@db:5432/prismapex?schema=public}"
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/REPO_SCAN_REPORT.md:6591:- /Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docker-compose.override.yml:12:      - "${API_PORT:-3000}:3000"
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/REPO_SCAN_REPORT.md:6592:- /Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docker-compose.override.yml:19:        "node -e \"const http=require('http');const paths=['/health','/'];const tryNext=()=>{if(!paths.length)return process.exit(1);const path=paths.shift();http.get({host:'127.0.0.1',port:3000,path},res=>{if(res.statusCode===200)process.exit(0);tryNext();}).on('error',tryNext);};tryNext();setTimeout(()=>process.exit(1),5000);\""
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/REPO_SCAN_REPORT.md:6593:- /Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docker-compose.override.yml:41:      DATABASE_URL: "${DATABASE_URL:-postgresql://apex:apex@db:5432/prismapex?schema=public}"
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/REPO_SCAN_REPORT.md:6594:- /Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docker-compose.override.yml:64:      - "${POSTGRES_PORT:-55433}:5432"
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/REPO_SCAN_REPORT.md:6595:- /Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/adr/ADR-2025-09-09-operator-assisted-architecture.md:2:ADR 2025-09-09 — Operator-Assisted Architecture (Tickets-Only, No API Orders)
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/REPO_SCAN_REPORT.md:6596:- /Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/adr/ADR-2025-09-09-operator-assisted-architecture.md:5:Accepted (2025-09-09)
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/REPO_SCAN_REPORT.md:6597:- /Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/tickets.md:10:  "entry": 5550.25,
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/REPO_SCAN_REPORT.md:6598:- /Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/tickets.md:11:  "stop": 5544.25,
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/REPO_SCAN_REPORT.md:6599:- /Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/tickets.md:12:  "target": 5560.25,
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/REPO_SCAN_REPORT.md:6600:- /Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/tickets.md:15:  "timestampUtc": "2025-09-09T14:31:22Z",
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/REPO_SCAN_REPORT.md:6601:- /Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/tickets.md:73:MESZ5,BUY,5550.25,5544.25,5560.25,2,APEX-123456,2025-09-09T14:31:22Z,vwap-first-touch,1.5,true,,half-size
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/REPO_SCAN_REPORT.md:6602:- /Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/tickets.md:89:MESZ5 BUY 2 5550.25 5544.25 5560.25
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/REPO_SCAN_REPORT.md:6603:- /Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/payouts/calendar.md:16:- Next payout date: 2025-09-01
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/REPO_SCAN_REPORT.md:6604:- /Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docker-compose.dashboard.yml:5:    command: sh -lc "corepack enable && corepack prepare pnpm@9.0.0 --activate && pnpm -C apps/dashboard install && pnpm -C apps/dashboard dev --host 0.0.0.0 --port 5180"
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/REPO_SCAN_REPORT.md:6605:- /Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docker-compose.dashboard.yml:9:      - "5180:5180"
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/REPO_SCAN_REPORT.md:6606:- /Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/var/pnl/README.md:7:  { "date": "2025-08-18", "pnl": 320.5 },
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/REPO_SCAN_REPORT.md:6607:- /Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/var/pnl/README.md:8:  { "date": "2025-08-19", "pnl": -150.0 }
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/REPO_SCAN_REPORT.md:6608:- /Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/var/pnl/README.md:38:curl -s "http://localhost:3000/report/consistency?window=8
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/REPO_SCAN_REPORT.md:6609:- /Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/adr/ADR-2025-09-09-docker-api-only.md:1:ADR: Docker compose is API-only (2025-09-09)
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/REPO_SCAN_REPORT.md:6610:- /Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/adr/ADR-2025-09-09-docker-api-only.md:12:Clarify docs and fix stale references (/readiness → /ready, local API port 3000).
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/REPO_SCAN_REPORT.md:6611:- /Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/__tests__/helpers/ticketFixtures.ts:35:    entry: 5550.25,
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/REPO_SCAN_REPORT.md:6612:- /Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/__tests__/helpers/ticketFixtures.ts:36:    stop: 5544.25,
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/REPO_SCAN_REPORT.md:6613:- /Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/__tests__/helpers/ticketFixtures.ts:37:    target: 5560.25,
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/REPO_SCAN_REPORT.md:6614:- /Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/__tests__/helpers/ticketFixtures.ts:40:    timestampUtc: new Date(Date.UTC(2025, 0, 1, 12, 0, 0)).toISOString(),
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/REPO_SCAN_REPORT.md:6615:- /Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/compliance/rule-engine.md:21:  balance: 50000,
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/REPO_SCAN_REPORT.md:6616:- /Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/compliance/rule-engine.md:22:  equityHigh: 50000,
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/REPO_SCAN_REPORT.md:6617:- /Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/compliance/rule-engine.md:26:  trailingDrawdown: 49000,
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/REPO_SCAN_REPORT.md:6618:- /Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/audit/guide.md:17:  "timestamp": "2025-08-17T13:45:01Z",
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/REPO_SCAN_REPORT.md:6619:- /Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/__tests__/helpers/marketDataMock.ts:16:export function genBars(count: number, startPrice = 100, startTime = Date.UTC(2025, 0, 1, 0, 0, 0)): Bar[] {
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/REPO_SCAN_REPORT.md:6620:- /Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/__tests__/helpers/marketDataMock.ts:22:    const noise = ((i * 9301 + 49297) % 233280) / 233280 - 0.5; // pseudo-rand [-0.5, 0.5)
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/REPO_SCAN_REPORT.md:6621:- /Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/export.md:12:    "when": "2024-08-24T12:00:00Z",
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/REPO_SCAN_REPORT.md:6622:- /Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/export.md:37:2024-08-24T12:00:00Z,ES,BUY,1,0,2,2,true,,false,20:59,2,2,false,false,false
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/REPO_SCAN_REPORT.md:6623:- /Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/LOCAL_DEV.md:10:## 1. Start the stack (Postgres on host **55433**)
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/REPO_SCAN_REPORT.md:6624:- /Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/LOCAL_DEV.md:16:- **api** – serves on http://localhost:3000 with a Node-based healthcheck (no curl dependency)
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/REPO_SCAN_REPORT.md:6625:- /Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/LOCAL_DEV.md:18:- **db** – postgres:16-alpine bound host 55433 → container 5432
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/REPO_SCAN_REPORT.md:6626:- /Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/LOCAL_DEV.md:38:- If port 55433 conflicts, override `POSTGRES_PORT` when invoking `docker compose`
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/REPO_SCAN_REPORT.md:6627:- /Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/.env.example:12:RATE_LIMIT_WINDOW_MS=60000
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/REPO_SCAN_REPORT.md:6628:- /Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/.env.example:18:RATE_LIMIT_MAX_BUCKETS=50000
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/REPO_SCAN_REPORT.md:6629:- /Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/.env.example:73:TELEMETRY_POLL_MS=5000
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/REPO_SCAN_REPORT.md:6630:- /Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/.env.example:74:BUFFER_CLEAR_THRESHOLD=2500
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/REPO_SCAN_REPORT.md:6631:- /Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/accounts.md:10:  "updatedAt": "2024-01-01T00:00:00.000Z",
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/REPO_SCAN_REPORT.md:6632:- /Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/accounts.md:13:  "lastSuggestedAt": "2024-01-01T00:00:00.000Z"
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/REPO_SCAN_REPORT.md:6633:- /Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/accounts.md:26:curl -H "authorization: Bearer $TOKEN" http://localhost:8000/accounts
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/REPO_SCAN_REPORT.md:6634:- /Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/accounts.md:35:     http://localhost:8000/accounts/PA-150K-123456
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/REPO_SCAN_REPORT.md:6635:- /Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/RELEASE_NOTES.md:18:- Rate-limit defaults: `RATE_LIMIT_MAX=60`, `RATE_LIMIT_WINDOW_MS=60000`, `RATE_LIMIT_MAX_BUCKETS=50000`.
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/REPO_SCAN_REPORT.md:6636:- /Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/dashboard/guide.md:13:2. Open browser at `http://localhost:8000`.
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/REPO_SCAN_REPORT.md:6637:- /Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/telemetry.md:11:TELEMETRY_POLL_MS=5000
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/REPO_SCAN_REPORT.md:6638:- /Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/telemetry.md:20:BUFFER_CLEAR_THRESHOLD=2500
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/REPO_SCAN_REPORT.md:6639:- /Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/release/runbook-rollback.md:32:curl -fsS http://<server>:8080/health
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/REPO_SCAN_REPORT.md:6640:- /Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/UPGRADE.md:30:export RATE_LIMIT_WINDOW_MS=60000
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/REPO_SCAN_REPORT.md:6641:- /Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/UPGRADE.md:31:export RATE_LIMIT_MAX_BUCKETS=50000
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/REPO_SCAN_REPORT.md:6642:- /Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/UPGRADE.md:45:curl http://localhost:3000/health
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/REPO_SCAN_REPORT.md:6643:- /Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/UPGRADE.md:46:curl http://localhost:3000/ready
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/REPO_SCAN_REPORT.md:6644:- /Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/UPGRADE.md:47:curl http://localhost:3000/openapi.json
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/REPO_SCAN_REPORT.md:6645:- /Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/apps/ingress-yahoo-dev/src/server.ts:238:const port = Number(process.env.PORT || 8080);
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/REPO_SCAN_REPORT.md:6646:- /Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/config.md:34:  "entry": 5050.25,
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/REPO_SCAN_REPORT.md:6647:- /Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/config.md:35:  "stop": 5046.25,
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/REPO_SCAN_REPORT.md:6648:- /Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/config.md:36:  "target": 5055.25
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/REPO_SCAN_REPORT.md:6649:- /Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/release/go-live-checklist.md:17:- [ ] `http://<server>:8080/health` returns `{ ok: true }`.
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/REPO_SCAN_REPORT.md:6650:- /Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/packages/clients-tradovate/src/auth.ts:41:    expiresAt: Date.now() + Number(data.expiresIn || data.expirationTime || 0) * 1000,
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/REPO_SCAN_REPORT.md:6651:- /Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/release/uat-scenarios.md:38:- **Input:** `POST /signals/preview` with an ORB long (entry=5000, stop=4990, target=5025, size=1, mode="evaluation")
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/REPO_SCAN_REPORT.md:6652:- /Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/release/uat-scenarios.md:83:- **Input:** Set `store.setPeriodProfit(1000)` and `store.setTodayProfit(310)` (test route or script)
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/REPO_SCAN_REPORT.md:6653:- /Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/CLEANUP_REPORT.md:3:- UTC: 2025-09-29 20:15:34
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/REPO_SCAN_REPORT.md:6654:- /Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/apps/e2e/playwright.config.ts:3:const DASH = process.env.BASE_DASHBOARD_URL ?? 'http://localhost:3000';
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/REPO_SCAN_REPORT.md:6655:- /Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/apps/e2e/playwright.config.ts:4:const API = process.env.BASE_API_URL ?? 'http://localhost:8000';
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/REPO_SCAN_REPORT.md:6656:- /Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/apps/e2e/playwright.config.ts:7:  timeout: 30000,
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/REPO_SCAN_REPORT.md:6657:- /Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/apps/dashboard/vite.config.ts:5:const API = process.env.VITE_API_BASE || 'http://127.0.0.1:3000';
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/REPO_SCAN_REPORT.md:6658:- /Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/apps/dashboard/vite.config.ts:10:    port: Number(process.env.PORT) || 5173,
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/REPO_SCAN_REPORT.md:6659:- /Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/pnpm-lock.yaml:2012:    engines: {node: '>= 0.8', npm: 1.2.8000 || >= 1.4.16}
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/REPO_SCAN_REPORT.md:6660:- /Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/pnpm-lock.yaml:2341:    engines: {node: '>= 0.8', npm: 1.2.8000 || >= 1.4.16}
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/REPO_SCAN_REPORT.md:6661:- /Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/apps/ingress-yahoo-dev/test/ingress.test.ts:52:        ts: '2025-09-12T14:31:00Z',
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/REPO_SCAN_REPORT.md:6662:- /Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/apps/ingress-yahoo-dev/test/ingress.test.ts:68:        ts: '2025-09-11T14:31:00Z',
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/REPO_SCAN_REPORT.md:6663:- /Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/apps/ingress-yahoo-dev/test/ingress.test.ts:69:        high: 5334.75,
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/REPO_SCAN_REPORT.md:6664:- /Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/apps/ingress-yahoo-dev/test/ingress.test.ts:70:        low: 5330.25,
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/REPO_SCAN_REPORT.md:6665:- /Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/apps/ingress-yahoo-dev/test/ingress.test.ts:71:        close: 5332.0,
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/REPO_SCAN_REPORT.md:6666:- /Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/apps/ingress-yahoo-dev/test/ingress.test.ts:72:        volume: 1000,
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/REPO_SCAN_REPORT.md:6667:- /Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/apps/ingress-yahoo-dev/test/ingress.test.ts:79:        ts: '2025-09-12T14:31:00Z',
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/REPO_SCAN_REPORT.md:6668:- /Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/apps/ingress-yahoo-dev/test/ingress.test.ts:80:        high: 5335.0,
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/REPO_SCAN_REPORT.md:6669:- /Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/apps/ingress-yahoo-dev/test/ingress.test.ts:81:        low: 5331.0,
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/REPO_SCAN_REPORT.md:6670:- /Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/apps/ingress-yahoo-dev/test/ingress.test.ts:82:        close: 5333.0,
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/REPO_SCAN_REPORT.md:6671:- /Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/apps/ingress-yahoo-dev/test/ingress.test.ts:83:        volume: 1200,
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/REPO_SCAN_REPORT.md:6672:- /Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/apps/dashboard/playwright.config.ts:7:    port: 5173,
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/REPO_SCAN_REPORT.md:6673:- /Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/apps/dashboard/playwright.config.ts:12:    baseURL: 'http://localhost:5173',
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/REPO_SCAN_REPORT.md:6674:- /Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/packages/runtime/src/ws.ts:57:    this.hb = setInterval(() => this.ws?.send('[]'), 2500);
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/REPO_SCAN_REPORT.md:6675:- /Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/packages/runtime/src/ws.ts:67:      if (Date.now() - this.lastRx > 5000) {
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/REPO_SCAN_REPORT.md:6676:- /Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/packages/runtime/src/ws.ts:70:    }, 1000);
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/REPO_SCAN_REPORT.md:6677:- /Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/packages/runtime/src/ws.ts:90:      60 * 60 * 1000,
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/REPO_SCAN_REPORT.md:6678:- /Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/packages/runtime/src/ws.ts:113:      baseMs: (res.pTime || 1) * 1000,
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/REPO_SCAN_REPORT.md:6679:- /Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/packages/runtime/src/ws.ts:114:      maxMs: (res.pTime || 1) * 1000,
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/REPO_SCAN_REPORT.md:6680:- /Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/apps/e2e/tests/smoke.spec.ts:3:const DASH = process.env.BASE_DASHBOARD_URL ?? 'http://localhost:3000';
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/REPO_SCAN_REPORT.md:6681:- /Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/apps/e2e/tests/smoke.spec.ts:4:const API = process.env.BASE_API_URL ?? 'http://localhost:8000';
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/REPO_SCAN_REPORT.md:6682:- /Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/packages/strategies/tests/osbBreakout.spec.ts:16:        bars.push({ ts: `2024-01-01T00:0${i}:00.000Z`, open: 100, high: 101, low: 99, close: 100 });
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/REPO_SCAN_REPORT.md:6683:- /Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/packages/strategies/tests/osbBreakout.spec.ts:19:          ts: `2024-01-01T00:0${i}:00.000Z`,
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/REPO_SCAN_REPORT.md:6684:- /Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/packages/strategies/tests/osbBreakout.spec.ts:27:          ts: `2024-01-01T00:0${i}:00.000Z`,
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/REPO_SCAN_REPORT.md:6685:- /Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/packages/strategies/tests/osbBreakout.spec.ts:50:          ts: `2024-01-01T00:0${i}:00.000Z`,
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/REPO_SCAN_REPORT.md:6686:- /Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/packages/strategies/tests/osbBreakout.spec.ts:58:          ts: `2024-01-01T00:0${i}:00.000Z`,
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/REPO_SCAN_REPORT.md:6687:- /Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/packages/strategies/tests/osbBreakout.spec.ts:66:          ts: `2024-01-01T00:0${i}:00.000Z`,
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/REPO_SCAN_REPORT.md:6688:- /Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/packages/strategies/tests/osbBreakout.spec.ts:85:          ts: `2024-01-01T00:0${i}:00.000Z`,
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/REPO_SCAN_REPORT.md:6689:- /Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/packages/strategies/tests/osbBreakout.spec.ts:93:          ts: `2024-01-01T00:0${i}:00.000Z`,
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/REPO_SCAN_REPORT.md:6690:- /Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/packages/strategies/tests/osbBreakout.spec.ts:101:          ts: `2024-01-01T00:0${i}:00.000Z`,
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/REPO_SCAN_REPORT.md:6691:- /Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/packages/strategies/tests/osbBreakout.spec.ts:120:        bars.push({ ts: `2024-01-01T00:0${i}:00.000Z`, open: 100, high: 101, low: 99, close: 100 });
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/REPO_SCAN_REPORT.md:6692:- /Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/packages/strategies/tests/osbBreakout.spec.ts:123:          ts: `2024-01-01T00:0${i}:00.000Z`,
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/REPO_SCAN_REPORT.md:6693:- /Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/packages/strategies/tests/osbBreakout.spec.ts:131:          ts: `2024-01-01T00:0${i}:00.000Z`,
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/REPO_SCAN_REPORT.md:6694:- /Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/apps/dashboard/src/pages/Tickets.tsx:13:  const [refreshMs, setRefreshMs] = useState(5000);
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/REPO_SCAN_REPORT.md:6695:- /Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/packages/clients-tradovate/src/__tests__/ws.spec.ts:29:    vi.advanceTimersByTime(2500);
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/REPO_SCAN_REPORT.md:6696:- /Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/packages/clients-tradovate/src/__tests__/ws.spec.ts:43:    vi.advanceTimersByTime(1100);
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/REPO_SCAN_REPORT.md:6697:- /Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/apps/dashboard-lite/server/index.ts:10:const PORT = Number(process.env.DASHBOARD_LITE_PORT || 5178);
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/REPO_SCAN_REPORT.md:6698:- /Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/apps/dashboard-lite/server/index.ts:40:      `<html><body><p>Run <code>pnpm -w -C apps/dashboard-lite dev</code> and open <a href="http://localhost:5179">web</a>.</p></body></html>`,
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/REPO_SCAN_REPORT.md:6699:- /Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/packages/runtime/src/heartbeat.ts:10:  intervalMs?: number; // default 2500
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/REPO_SCAN_REPORT.md:6700:- /Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/packages/runtime/src/heartbeat.ts:11:  staleMs?: number; // default 5000
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/REPO_SCAN_REPORT.md:6701:- /Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/packages/runtime/src/heartbeat.ts:14:  const intervalMs = opts.intervalMs ?? 2500;
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/REPO_SCAN_REPORT.md:6702:- /Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/packages/runtime/src/heartbeat.ts:15:  const staleMs = opts.staleMs ?? 5000;
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/REPO_SCAN_REPORT.md:6703:- /Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/packages/strategies/tests/vwapFirstTouch.spec.ts:21:        ts: `2024-01-01T00:${String(i).padStart(2, '0')}:00.000Z`,
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/REPO_SCAN_REPORT.md:6704:- /Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/packages/clients-tradovate/src/__tests__/bars.spec.ts:8:    agg.onQuote({ ts: Date.UTC(2024, 0, 1, 12, 0, 10), price: 10, volume: 1 });
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/REPO_SCAN_REPORT.md:6705:- /Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/packages/clients-tradovate/src/__tests__/bars.spec.ts:9:    agg.onQuote({ ts: Date.UTC(2024, 0, 1, 12, 0, 20), price: 12, volume: 2 });
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/REPO_SCAN_REPORT.md:6706:- /Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/packages/clients-tradovate/src/__tests__/bars.spec.ts:11:    agg.onQuote({ ts: Date.UTC(2024, 0, 1, 12, 1, 0), price: 11, volume: 3 });
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/REPO_SCAN_REPORT.md:6707:- /Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/packages/clients-tradovate/src/__tests__/bars.spec.ts:14:      ts: Date.UTC(2024, 0, 1, 12, 0, 0),
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/REPO_SCAN_REPORT.md:6708:- /Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/apps/dashboard/tests/e2e/eod-block.spec.ts:34:              entry: 5000,
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/REPO_SCAN_REPORT.md:6709:- /Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/apps/dashboard/tests/e2e/eod-block.spec.ts:35:              stop: 4995,
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/REPO_SCAN_REPORT.md:6710:- /Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/apps/dashboard/tests/e2e/eod-block.spec.ts:36:              targets: [5005],
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/REPO_SCAN_REPORT.md:6711:- /Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/apps/dashboard/tests/e2e/eod-block.spec.ts:62:          netLiq: 52000,
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/REPO_SCAN_REPORT.md:6746:- /Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/adr/ADR-2025-09-09-operator-assisted-architecture.md:21:A human operator manually enters an OCO bracket in Tradovate using the ticket values.
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/REPO_SCAN_REPORT.md:6747:- /Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/adr/ADR-2025-09-09-operator-assisted-architecture.md:39:Slightly slower than API execution; mitigated by clear copy format and OCO templates.
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/REPO_SCAN_REPORT.md:6851:  - `docs/CI.md` — mtime: 2025-09-20 08:58:23, words: 52, headings: CI Guardrails
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/REPO_SCAN_REPORT.md:6852:  - `docs/CLEANUP_REPORT.md` — mtime: 2025-09-29 23:25:27, words: 150, headings: General Cleanup Report (SAFE — untracked only), Git status, fix/surgical-cleanup...origin/Test, Largest files/dirs (top 50 by size; informative only), Untracked files (top 200; informative only)
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/REPO_SCAN_REPORT.md:6853:  - `docs/CONTRIBUTING-scripts.md` — mtime: 2025-09-20 08:58:23, words: 22, headings: 
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/REPO_SCAN_REPORT.md:6854:  - `docs/DEPLOY-LOCAL-INGRESS.md` — mtime: 2025-09-20 08:58:23, words: 67, headings: 
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/REPO_SCAN_REPORT.md:6855:  - `docs/LOCAL_DEV.md` — mtime: 2025-09-29 22:02:13, words: 267, headings: Prism-Apex — Local Dev (tickets-only), Prerequisites, 1. Start the stack (Postgres on host **55433**), 2. Verify everything is healthy, 3. Stop the stack
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/REPO_SCAN_REPORT.md:6856:  - `docs/MAINTENANCE.md` — mtime: 2025-09-29 22:02:13, words: 62, headings: Maintenance — SAFE Data Cleanup
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/REPO_SCAN_REPORT.md:6857:  - `docs/OPERATIONS.md` — mtime: 2025-09-20 08:58:23, words: 91, headings: 
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/REPO_SCAN_REPORT.md:6858:  - `docs/PLATFORMS/tradovate.md` — mtime: 2025-09-20 08:58:23, words: 67, headings: 
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/REPO_SCAN_REPORT.md:6859:  - `docs/POST_MERGE_VERIFY.md` — mtime: 2025-10-01 18:53:33, words: 75, headings: Post-merge Verification, Git, chore/post-merge-verification...origin/Test, Cleanup (dry-run), Docker smoke
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/REPO_SCAN_REPORT.md:6860:  - `docs/README_NAV.md` — mtime: 2025-10-04 14:13:35, words: 11, headings: Documentation Index
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/REPO_SCAN_REPORT.md:6861:  - `docs/RELEASE_NOTES.md` — mtime: 2025-09-20 08:58:23, words: 180, headings: Prism Apex Tool — Release Notes, v0.1.0 (Unquarantine milestone), Highlights, Breaking / Behavioral, New Endpoints
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/REPO_SCAN_REPORT.md:6862:  - `docs/UPGRADE.md` — mtime: 2025-09-20 08:58:23, words: 134, headings: Upgrade Guide, From older snapshots to v0.1.0, or Docker:, Notes
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/REPO_SCAN_REPORT.md:6863:  - `docs/YAHOO_DATA_CLEANUP.md` — mtime: 2025-10-01 18:53:33, words: 254, headings: Yahoo Data Cleanup (SAFE: untracked-only), Untracked candidates (preview), Tracked candidates (reported only; NOT removed), 2025-10-01T14:49:40+01:00, 2025-10-01T14:49:46+01:00
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/REPO_SCAN_REPORT.md:6864:  - `docs/accounts.md` — mtime: 2025-09-20 08:58:23, words: 131, headings: Accounts Registry API, Examples
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/REPO_SCAN_REPORT.md:6865:  - `docs/adr/ADR-2025-09-09-docker-api-only.md` — mtime: 2025-09-20 08:58:23, words: 81, headings: 
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/REPO_SCAN_REPORT.md:6866:  - `docs/adr/ADR-2025-09-09-operator-assisted-architecture.md` — mtime: 2025-09-20 08:58:23, words: 208, headings: 
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/REPO_SCAN_REPORT.md:6867:  - `docs/analytics/payout_tracker.md` — mtime: 2025-09-20 08:58:23, words: 38, headings: Payout Tracker, Purpose, Rules, Usage
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/REPO_SCAN_REPORT.md:6868:  - `docs/analytics/post_trade.md` — mtime: 2025-09-20 08:58:23, words: 40, headings: Post-Trade Analytics, Purpose, Location, Usage
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/REPO_SCAN_REPORT.md:6869:  - `docs/apex/01_rules.md` — mtime: 2025-09-20 08:58:23, words: 115, headings: Apex Trader Funding – Proprietary Trading Rules, 1. Evaluation Phase Rules, What It Does, How to Use It, Config Options
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/REPO_SCAN_REPORT.md:6870:  - `docs/apex/02_funded_rules.md` — mtime: 2025-09-20 08:58:23, words: 114, headings: Apex Trader Funding – Funded (Performance) Account Rules, 1. Consistency Rules, 2. Risk Management, 3. Payout Rules, Visuals
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/REPO_SCAN_REPORT.md:6871:  - `docs/apex/03_funding_process.md` — mtime: 2025-09-20 08:58:23, words: 118, headings: Apex Trader Funding – Step-by-Step Process, 1. Purchase Evaluation Plan, 2. Platform Setup, 3. Trading the Evaluation, 4. Passing Evaluation
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/REPO_SCAN_REPORT.md:6872:  - `docs/apex/04_platforms.md` — mtime: 2025-09-20 08:58:23, words: 1033, headings: Apex Trader Funding – Platform Integration Guide, Rithmic + NinjaTrader, How the Connection Works, Difficulty Rating: 8/10, Pros
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/REPO_SCAN_REPORT.md:6873:  - `docs/apex/05_notifications.md` — mtime: 2025-09-20 08:58:23, words: 65, headings: Notifications Integration, Supported Channels, How to Use It, Visuals
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/REPO_SCAN_REPORT.md:6874:  - `docs/apex/06_knowledge_base.md` — mtime: 2025-09-20 08:58:23, words: 890, headings: Apex Trader Funding – Rules, Funding Process, and Technical Platforms, Evaluation Phase Rules, Evaluation Account Example, Funded Phase Rules, Funding Step-by-Step
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/REPO_SCAN_REPORT.md:6875:  - `docs/audit/guide.md` — mtime: 2025-09-20 08:58:23, words: 111, headings: Prism Apex Tool — Audit Trail Guide, Purpose, Log Formats, Example Entry, Retention
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/REPO_SCAN_REPORT.md:6876:  - `docs/backtest/overview.md` — mtime: 2025-09-20 08:58:23, words: 236, headings: Prism Apex Backtesting Framework, What It Does, Quick Start, Config Notes (MVP), Extend Later (Tick-Level)
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/REPO_SCAN_REPORT.md:6877:  - `docs/backtest/tick-readiness.md` — mtime: 2025-09-20 08:58:23, words: 118, headings: Tick-Level Readiness (Post-MVP), What’s Included Now, What’s Next (Not Included Yet), Usage, Tick replay (uses sample ticks)
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/REPO_SCAN_REPORT.md:6878:  - `docs/calibration/summary.md` — mtime: 2025-09-20 08:58:23, words: 135, headings: Prism Apex Tool — Risk Calibration Summary, Key Findings (Example), Metrics Recorded, Next Steps
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/REPO_SCAN_REPORT.md:6879:  - `docs/compliance/rule-engine.md` — mtime: 2025-09-20 08:58:23, words: 290, headings: Compliance Rule Engine, Purpose, How It Works, Example, Rules Covered
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/REPO_SCAN_REPORT.md:6880:  - `docs/config.md` — mtime: 2025-09-20 08:58:23, words: 230, headings: Guardrails & Sizing (Env), TradingView Webhook
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/REPO_SCAN_REPORT.md:6881:  - `docs/configs/ACCOUNTS.md` — mtime: 2025-09-20 08:58:23, words: 67, headings: accounts.json — Fields
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/REPO_SCAN_REPORT.md:6882:  - `docs/configs/README.md` — mtime: 2025-09-20 08:58:23, words: 161, headings: Configs — Accounts & Strategies, Accounts (`configs/accounts.json`), Strategies (`configs/strategies/*.json`), Validation
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/REPO_SCAN_REPORT.md:6883:  - `docs/consistency.md` — mtime: 2025-09-20 08:58:23, words: 97, headings: Consistency Metrics, API
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/REPO_SCAN_REPORT.md:6884:  - `docs/dashboard/guide.md` — mtime: 2025-09-20 08:58:23, words: 126, headings: Prism Apex Tool — Operator Dashboard Guide, What It Does, How to Use, Config Options, Visuals
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/REPO_SCAN_REPORT.md:6885:  - `docs/dashboard/overview.md` — mtime: 2025-09-20 08:58:23, words: 125, headings: Prism Apex Operator Dashboard, What It Does, How to Use, Data Sources
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/REPO_SCAN_REPORT.md:6886:  - `docs/deployment/guide.md` — mtime: 2025-09-20 08:58:23, words: 101, headings: Prism Apex Tool — Deployment Guide, Local Development, Docker, GitHub Actions, Server Deployment
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/REPO_SCAN_REPORT.md:6887:  - `docs/deployment/hardening.md` — mtime: 2025-09-20 08:58:23, words: 85, headings: Production Hardening — Prism Apex Tool, Overview, Key Safeguards, Steps
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/REPO_SCAN_REPORT.md:6888:  - `docs/dev/quickstart.md` — mtime: 2025-09-20 08:58:23, words: 230, headings: Prism Apex – Dev Quickstart, 0) Prereqs, 1) Seed the API store (safe demo state), 2) Run a sample backtest (ORB on ES 1m), 3) Full demo script
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/REPO_SCAN_REPORT.md:6889:  - `docs/export.md` — mtime: 2025-09-20 08:58:23, words: 120, headings: Ticket export, JSON example, CSV example
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/REPO_SCAN_REPORT.md:6890:  - `docs/multi-account/guide.md` — mtime: 2025-09-20 08:58:23, words: 210, headings: Multi-Account Management — Operator Guide, What This Does, Plain English Rules, How to Use, Alerts & Logs
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/REPO_SCAN_REPORT.md:6891:  - `docs/notifications/guide.md` — mtime: 2025-09-20 08:58:23, words: 96, headings: Prism Apex Tool — Notifications Guide, What It Does, How to Set Up, Test It, Notification Flow
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/REPO_SCAN_REPORT.md:6892:  - `docs/operator-console.md` — mtime: 2025-09-20 08:58:23, words: 500, headings: 
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/REPO_SCAN_REPORT.md:6893:  - `docs/operator/handbook.md` — mtime: 2025-09-20 08:58:23, words: 594, headings: Prism Apex Tool – Operator Handbook, 1. Start of Day Checklist, Step-by-step, 2. During Session, 2.1 Inputting Trades
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/REPO_SCAN_REPORT.md:6894:  - `docs/operator/quick-cards/cheat-sheet.md` — mtime: 2025-09-20 08:58:23, words: 133, headings: Cheat Sheet — Terms & Times, Terms (Plain English), Times (GMT), Quick Math, Do / Don’t
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/REPO_SCAN_REPORT.md:6895:  - `docs/operator/quick-cards/eod-flat.md` — mtime: 2025-09-20 08:58:23, words: 92, headings: Quick Card — End-of-Day Flat (21:59 GMT), Timeline (GMT), Steps, Do / Don’t
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/REPO_SCAN_REPORT.md:6896:  - `docs/operator/quick-cards/execute-ticket.md` — mtime: 2025-09-20 08:58:23, words: 139, headings: Quick Card — Execute a Ticket (Tradovate Manual Entry), Steps, Checks, Do / Don’t
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/REPO_SCAN_REPORT.md:6897:  - `docs/operator/quick-cards/incidents-&-escalation.md` — mtime: 2025-09-20 08:58:23, words: 91, headings: Quick Card — Incidents & Escalation, Common Incidents, Escalation Path, Break-Glass
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/REPO_SCAN_REPORT.md:6898:  - `docs/operator/quick-cards/monitor-&-alerts.md` — mtime: 2025-09-20 08:58:23, words: 103, headings: Quick Card — Monitor & Alerts, Alert Types, What To Do, Tools
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/REPO_SCAN_REPORT.md:6899:  - `docs/operator/quick-cards/sod-checklist.md` — mtime: 2025-09-20 08:58:23, words: 102, headings: Quick Card — Start of Day (SOD), Checklist, Do / Don’t
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/REPO_SCAN_REPORT.md:6900:  - `docs/operator/training-deck.md` — mtime: 2025-09-20 08:58:23, words: 322, headings: Prism Apex Tool — Operator Training Deck (MVP), 1) Context & Roles, 2) Daily Flow (High-Level), 3) Tickets (Plain English), 4) Alerts (What They Mean)
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/REPO_SCAN_REPORT.md:6901:  - `docs/payouts/calendar.md` — mtime: 2025-09-20 08:58:23, words: 115, headings: Prism Apex Tool — Payout Calendar, Rules Recap, Current Account Example, Mermaid Flow
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/REPO_SCAN_REPORT.md:6902:  - `docs/release/checklist.md` — mtime: 2025-09-20 08:58:23, words: 104, headings: Release Checklist — Prism Apex Tool, Preflight, Operator Signoff, PM Signoff, Release
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/REPO_SCAN_REPORT.md:6903:  - `docs/release/go-live-checklist.md` — mtime: 2025-09-20 08:58:23, words: 543, headings: Prism Apex Tool — Go-Live Master Checklist (Oct 1), 1) Infrastructure & Deploy, 2) Configuration & Secrets, 3) Notifications (at least one must work), 4) Signals & Tickets (MVP manual flow)
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/REPO_SCAN_REPORT.md:6904:  - `docs/release/operator_signoff.md` — mtime: 2025-09-20 08:58:23, words: 94, headings: Operator Release Signoff — Plain English, Why This Matters, What You Do
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/REPO_SCAN_REPORT.md:6905:  - `docs/release/runbook-rollback.md` — mtime: 2025-09-20 08:58:23, words: 220, headings: Prism Apex Tool — Rollback & Incident Runbook, 1) Immediate Actions, 2) Quick Diagnostics (5–10 min), 3) Rollback (Tag N → N-1), 4) Data Safety
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/REPO_SCAN_REPORT.md:6906:  - `docs/release/sign-off-template.md` — mtime: 2025-09-20 08:58:23, words: 161, headings: Prism Apex Tool — Executive Go-Live Sign-Off, Summary, Readiness Checklist Status, Residual Risks (Known & Accepted), Approval
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/REPO_SCAN_REPORT.md:6907:  - `docs/release/uat-scenarios.md` — mtime: 2025-09-20 08:58:23, words: 613, headings: Prism Apex Tool — UAT Scenarios & Scripts, Legend, UAT-01 Health & Deploy, UAT-02 Notifications (Slack or Email), UAT-03 Signal Preview — ORB
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/REPO_SCAN_REPORT.md:6908:  - `docs/rules/overview.md` — mtime: 2025-09-20 08:58:23, words: 299, headings: PrismOne Rules Overview, Evaluation Accounts, Funded Accounts, Operator Checklist, Technical References
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/REPO_SCAN_REPORT.md:6909:  - `docs/safe_cleanup.md` — mtime: 2025-10-01 18:53:33, words: 1664, headings: Safe Cleanup Script (`safe_cleanup.sh`), Contents, Quick Start, Behavior Matrix, Exit Codes & Return Behavior
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/REPO_SCAN_REPORT.md:6910:  - `docs/simulator/overview.md` — mtime: 2025-09-20 08:58:23, words: 120, headings: Prism Apex Risk Simulator, What It Does, How to Use, Design, Outputs
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/REPO_SCAN_REPORT.md:6911:  - `docs/strategy-switcher/guide.md` — mtime: 2025-09-20 08:58:23, words: 146, headings: Strategy Switcher — Operator Guide, What This Does, Plain English, How to Use
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/REPO_SCAN_REPORT.md:6912:  - `docs/telemetry.md` — mtime: 2025-09-20 08:58:23, words: 164, headings: Telemetry (Demo), Configuration, API, Dashboard, Buffer Cleared
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/REPO_SCAN_REPORT.md:6913:  - `docs/tickets.md` — mtime: 2025-09-20 08:58:23, words: 418, headings: 
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/apps/api/src/jobs/telemetry.ts:42:    bufferThreshold: Number(process.env.BUFFER_CLEAR_THRESHOLD ?? '2500'),
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/apps/api/src/jobs/telemetry.ts:44:  const pollMs = Number(process.env.TELEMETRY_POLL_MS ?? '5000');
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/var/pnl/README.md:7:  { "date": "2025-08-18", "pnl": 320.5 },
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/var/pnl/README.md:8:  { "date": "2025-08-19", "pnl": -150.0 }
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/var/pnl/README.md:38:curl -s "http://localhost:3000/report/consistency?window=8
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/PROJECT.md:63:  "entry": 5550.25,
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/PROJECT.md:64:  "stop": 5544.25,
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/PROJECT.md:65:  "target": 5560.25,
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/PROJECT.md:68:  "timestampUtc": "2025-09-09T14:31:22Z",
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docker-compose.dashboard-full.yml:8:      PORT: "8080"
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docker-compose.dashboard-full.yml:10:      API_BASE_URL: "http://api:3000"
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docker-compose.dashboard-full.yml:14:      - "8080:8080"
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/apps/api/src/jobs/__tests__/strategies.apx-ddb01.spec.ts:37:    const mondayOpen = new Date('2024-06-03T13:30:00.000Z');
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/apps/api/src/jobs/__tests__/strategies.apx-ddb01.spec.ts:39:      { high: 5310, low: 5298, close: 5305, volume: 1000 },
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/apps/api/src/jobs/__tests__/strategies.apx-ddb01.spec.ts:40:      { high: 5320, low: 5305, close: 5315, volume: 1000 },
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/apps/api/src/jobs/__tests__/strategies.apx-ddb01.spec.ts:41:      { high: 5330, low: 5315, close: 5325, volume: 1000 },
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/apps/api/src/jobs/__tests__/strategies.apx-ddb01.spec.ts:42:      { high: 5332, low: 5320, close: 5328, volume: 1000 },
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/apps/api/src/jobs/__tests__/strategies.apx-ddb01.spec.ts:43:      { high: 5334.75, low: 5325, close: 5330, volume: 1000 },
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/apps/api/src/jobs/__tests__/strategies.apx-ddb01.spec.ts:63:    const tuesdayOpen = new Date('2024-06-04T13:30:00.000Z');
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/apps/api/src/jobs/__tests__/strategies.apx-ddb01.spec.ts:65:      { high: 5336, low: 5330, close: 5335, volume: 1200 },
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/apps/api/src/jobs/__tests__/strategies.apx-ddb01.spec.ts:66:      { high: 5338, low: 5332, close: 5336, volume: 1100 },
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/apps/api/src/jobs/__tests__/strategies.apx-ddb01.spec.ts:87:    expect(suggestion.entry).toBeCloseTo(5334.25, 5);
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/apps/api/src/jobs/__tests__/strategies.apx-ddb01.spec.ts:88:    expect(suggestion.stop).toBeCloseTo(5331.25, 5);
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/apps/api/src/jobs/__tests__/strategies.apx-ddb01.spec.ts:89:    expect(suggestion.target).toBeCloseTo(5343.25, 5);
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/apps/api/src/jobs/__tests__/strategies.apx-ddb01.spec.ts:92:    expect(suggestion.meta.priorHigh).toBeCloseTo(5334.75, 5);
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/apps/api/src/jobs/__tests__/strategies.apx-ddb01.spec.ts:102:      open: 5335,
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/apps/api/src/jobs/__tests__/strategies.apx-ddb01.spec.ts:103:      high: 5337,
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/apps/api/src/jobs/__tests__/strategies.apx-ddb01.spec.ts:104:      low: 5333,
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/apps/api/src/jobs/__tests__/strategies.apx-ddb01.spec.ts:105:      close: 5334,
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/apps/api/src/jobs/__tests__/strategies.apx-ddb01.spec.ts:106:      volume: 1000,
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docker-compose.dashboard-lite.override.yml:11:      - DASHBOARD_LITE_PORT=5178
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docker-compose.dashboard-lite.override.yml:16:      - "5178:5178"
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/apps/api/src/jobs/__tests__/ticketsDiskSync.spec.ts:9:  entry: 5550.25,
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/apps/api/src/jobs/__tests__/ticketsDiskSync.spec.ts:10:  stop: 5544.25,
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/apps/api/src/jobs/__tests__/ticketsDiskSync.spec.ts:11:  target: 5560.25,
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/apps/api/src/jobs/__tests__/ticketsDiskSync.spec.ts:14:  timestampUtc: '2025-09-09T14:31:22Z',
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/packages/consistency/__tests__/compute.spec.ts:8:      { date: '2024-01-01', net: 100 },
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/packages/consistency/__tests__/compute.spec.ts:9:      { date: '2024-01-02', net: 80 },
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/packages/consistency/__tests__/compute.spec.ts:10:      { date: '2024-01-03', net: 70 },
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/packages/consistency/__tests__/compute.spec.ts:11:      { date: '2024-01-04', net: 60 },
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/packages/consistency/__tests__/compute.spec.ts:12:      { date: '2024-01-05', net: 55 },
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/packages/consistency/__tests__/compute.spec.ts:13:      { date: '2024-01-06', net: 50 },
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/packages/consistency/__tests__/compute.spec.ts:14:      { date: '2024-01-07', net: 40 },
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/packages/consistency/__tests__/compute.spec.ts:15:      { date: '2024-01-08', net: 30 },
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/packages/consistency/__tests__/compute.spec.ts:24:      { date: '2024-01-01', net: 200 },
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/packages/consistency/__tests__/compute.spec.ts:25:      { date: '2024-01-02', net: 50 },
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/packages/consistency/__tests__/compute.spec.ts:26:      { date: '2024-01-03', net: 50 },
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/packages/consistency/__tests__/compute.spec.ts:27:      { date: '2024-01-04', net: 50 },
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/packages/consistency/__tests__/compute.spec.ts:28:      { date: '2024-01-05', net: 50 },
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/packages/consistency/__tests__/compute.spec.ts:29:      { date: '2024-01-06', net: 50 },
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/packages/consistency/__tests__/compute.spec.ts:30:      { date: '2024-01-07', net: 50 },
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/packages/consistency/__tests__/compute.spec.ts:31:      { date: '2024-01-08', net: 50 },
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/packages/consistency/__tests__/compute.spec.ts:40:      { date: '2024-01-01', net: 100 },
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/packages/consistency/__tests__/compute.spec.ts:41:      { date: '2024-01-02', net: 80 },
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/packages/consistency/__tests__/compute.spec.ts:42:      { date: '2024-01-03', net: 70 },
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/packages/consistency/__tests__/compute.spec.ts:43:      { date: '2024-01-04', net: 60 },
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/packages/consistency/__tests__/compute.spec.ts:53:      { date: '2024-01-01', net: -10 },
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/packages/consistency/__tests__/compute.spec.ts:54:      { date: '2024-01-02', net: -20 },
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/packages/consistency/__tests__/compute.spec.ts:55:      { date: '2024-01-03', net: -30 },
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/packages/consistency/__tests__/compute.spec.ts:56:      { date: '2024-01-04', net: -40 },
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/packages/consistency/__tests__/compute.spec.ts:57:      { date: '2024-01-05', net: -50 },
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/packages/consistency/__tests__/compute.spec.ts:58:      { date: '2024-01-06', net: -60 },
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/packages/consistency/__tests__/compute.spec.ts:59:      { date: '2024-01-07', net: -70 },
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/packages/consistency/__tests__/compute.spec.ts:60:      { date: '2024-01-08', net: -80 },
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/.env.example.local:12:POSTGRES_PORT=55433
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/.env.example.local:13:DATABASE_URL=postgresql://apex:apex@localhost:55433/prismapex?schema=public
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/.env.example.local:16:API_PORT=3000
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/packages/reporting/src/__tests__/basic.spec.ts:10:        date: '2025-08-17',
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/packages/reporting/src/__tests__/basic.spec.ts:15:        pnl: { realized: 1, unrealized: 0, netLiq: 1000 },
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/packages/reporting/src/__tests__/basic.spec.ts:19:          when: '2025-08-17T14:00:00.000Z',
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/packages/reporting/src/__tests__/basic.spec.ts:23:          entry: 5000,
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/packages/reporting/src/__tests__/basic.spec.ts:24:          stop: 4995,
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/packages/reporting/src/__tests__/basic.spec.ts:25:          targets: [5005],
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/__tests__/helpers/marketDataMock.ts:16:export function genBars(count: number, startPrice = 100, startTime = Date.UTC(2025, 0, 1, 0, 0, 0)): Bar[] {
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/__tests__/helpers/marketDataMock.ts:22:    const noise = ((i * 9301 + 49297) % 233280) / 233280 - 0.5; // pseudo-rand [-0.5, 0.5)
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/__tests__/helpers/ticketFixtures.ts:35:    entry: 5550.25,
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/__tests__/helpers/ticketFixtures.ts:36:    stop: 5544.25,
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/__tests__/helpers/ticketFixtures.ts:37:    target: 5560.25,
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/__tests__/helpers/ticketFixtures.ts:40:    timestampUtc: new Date(Date.UTC(2025, 0, 1, 12, 0, 0)).toISOString(),
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/packages/metrics/__tests__/consistency.spec.ts:7:      { date: '2025-08-12', pnl: -80 },
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/packages/metrics/__tests__/consistency.spec.ts:8:      { date: '2025-08-13', pnl: 250 },
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/packages/metrics/__tests__/consistency.spec.ts:9:      { date: '2025-08-14', pnl: 180 },
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/packages/metrics/__tests__/consistency.spec.ts:10:      { date: '2025-08-15', pnl: 90 },
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/packages/metrics/__tests__/consistency.spec.ts:11:      { date: '2025-08-18', pnl: 410 }, // best day
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/packages/metrics/__tests__/consistency.spec.ts:12:      { date: '2025-08-19', pnl: 95 },
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/packages/metrics/__tests__/consistency.spec.ts:13:      { date: '2025-08-20', pnl: 200 },
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/packages/metrics/__tests__/consistency.spec.ts:14:      { date: '2025-08-21', pnl: 275 },
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/packages/metrics/__tests__/consistency.spec.ts:17:    expect(r.totalPnL).toBe(1420);
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/packages/metrics/__tests__/consistency.spec.ts:19:    expect(r.bestDayShare).toBeCloseTo(410 / 1420, 6);
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/packages/metrics/__tests__/consistency.spec.ts:26:      { date: '2025-08-12', pnl: -80 },
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/packages/metrics/__tests__/consistency.spec.ts:27:      { date: '2025-08-13', pnl: -50 },
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/packages/metrics/__tests__/consistency.spec.ts:37:      { date: '2025-08-12', pnl: 10 },
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/packages/metrics/__tests__/consistency.spec.ts:38:      { date: '2025-08-13', pnl: 10 },
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/packages/metrics/__tests__/consistency.spec.ts:39:      { date: '2025-08-14', pnl: 10 },
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/packages/metrics/__tests__/consistency.spec.ts:40:      { date: '2025-08-15', pnl: 10 },
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/packages/metrics/__tests__/consistency.spec.ts:41:      { date: '2025-08-18', pnl: 200 }, // best day dominates
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/packages/metrics/__tests__/consistency.spec.ts:42:      { date: '2025-08-19', pnl: 10 },
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/packages/metrics/__tests__/consistency.spec.ts:43:      { date: '2025-08-20', pnl: 10 },
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/packages/metrics/__tests__/consistency.spec.ts:44:      { date: '2025-08-21', pnl: 10 },
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/packages/runtime/src/ws.ts:57:    this.hb = setInterval(() => this.ws?.send('[]'), 2500);
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/packages/runtime/src/ws.ts:67:      if (Date.now() - this.lastRx > 5000) {
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/packages/runtime/src/ws.ts:70:    }, 1000);
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/packages/runtime/src/ws.ts:90:      60 * 60 * 1000,
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/packages/runtime/src/ws.ts:113:      baseMs: (res.pTime || 1) * 1000,
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/packages/runtime/src/ws.ts:114:      maxMs: (res.pTime || 1) * 1000,
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/packages/strategy-apx-ddb01/test/planLongOnlyRetest.test.ts:9:      currentPrice: 5332.0,
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/packages/strategy-apx-ddb01/test/planLongOnlyRetest.test.ts:10:      weeklyVwap: 5320.0,
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/packages/strategy-apx-ddb01/test/planLongOnlyRetest.test.ts:11:      priorHigh: 5334.75,
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/packages/strategy-apx-ddb01/test/planLongOnlyRetest.test.ts:19:    expect(p!.entry).toBeCloseTo(5334.25, 5);
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/packages/strategy-apx-ddb01/test/planLongOnlyRetest.test.ts:25:      currentPrice: 5318.0,
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/packages/strategy-apx-ddb01/test/planLongOnlyRetest.test.ts:26:      weeklyVwap: 5320.0,
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/packages/strategy-apx-ddb01/test/planLongOnlyRetest.test.ts:27:      priorHigh: 5334.75,
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/packages/strategy-apx-ddb01/test/planLongOnlyRetest.test.ts:38:      currentPrice: 5400.01,
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/packages/strategy-apx-ddb01/test/planLongOnlyRetest.test.ts:39:      weeklyVwap: 5300.0,
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/packages/strategy-apx-ddb01/test/planLongOnlyRetest.test.ts:40:      priorHigh: 5400.13,
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/packages/strategy-apx-ddb01/test/planLongOnlyRetest.test.ts:47:    expect(p!.entry).toBe(5400);
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/packages/runtime/__tests__/ws.resilience.spec.ts:33:    await vi.advanceTimersByTimeAsync(6000);
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/packages/runtime/__tests__/ws.resilience.spec.ts:51:    await vi.advanceTimersByTimeAsync(5000);
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/packages/runtime/src/heartbeat.ts:10:  intervalMs?: number; // default 2500
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/packages/runtime/src/heartbeat.ts:11:  staleMs?: number; // default 5000
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/packages/runtime/src/heartbeat.ts:14:  const intervalMs = opts.intervalMs ?? 2500;
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/packages/runtime/src/heartbeat.ts:15:  const staleMs = opts.staleMs ?? 5000;
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/packages/runtime/__tests__/heartbeat.spec.ts:25:      intervalMs: 1000,
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/packages/runtime/__tests__/heartbeat.spec.ts:26:      staleMs: 5000,
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/packages/runtime/__tests__/heartbeat.spec.ts:35:    advance(1000);
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/packages/runtime/__tests__/heartbeat.spec.ts:44:      intervalMs: 1000,
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/packages/runtime/__tests__/heartbeat.spec.ts:45:      staleMs: 3000,
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/packages/runtime/__tests__/heartbeat.spec.ts:51:    advance(2999);
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/packages/runtime/__tests__/heartbeat.spec.ts:57:    advance(2500);
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/packages/indicators/__tests__/swings.spec.ts:18:    const base = Date.parse('2024-01-01T00:00:00Z');
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/packages/indicators/__tests__/swings.spec.ts:21:    const bars: Bar1m[] = highs.map((h, i) => makeBar(base + i * 60000, h, lows[i]));
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/packages/indicators/__tests__/swings.spec.ts:34:    const base = Date.parse('2024-01-01T00:00:00Z');
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/packages/indicators/__tests__/swings.spec.ts:37:    const bars: Bar1m[] = highs.map((h, i) => makeBar(base + i * 60000, h, lows[i]));
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/packages/indicators/src/types.ts:11:// Returns a session key (e.g., "2025-08-25-RTH") for the given timestamp.
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/packages/data-yahoo/src/schema.ts:1:import Ajv from 'ajv/dist/2020.js';
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/packages/data-yahoo/test/io.test.ts:10:    const file = barsFile(base, 'BRK.B', '2024-01-01');
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/packages/data-yahoo/test/io.test.ts:12:    expect(file.endsWith('2024-01-01.jsonl')).toBe(true);
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/packages/data-yahoo/src/fetch.ts:1:const DAY_IN_MS = 24 * 60 * 60 * 1000;
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/packages/data-yahoo/src/fetch.ts:2:const SECOND_IN_MS = 1000;
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/packages/data-yahoo/test/fetch.test.ts:21:    const startMs = Date.UTC(2024, 0, 1);
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/packages/data-yahoo/test/fetch.test.ts:22:    const timestamps = [0, 1, 2].map((i) => Math.floor((startMs + i * 24 * 60 * 60 * 1000) / 1000));
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/packages/data-yahoo/test/fetch.test.ts:51:    const to = new Date(startMs + 2 * 24 * 60 * 60 * 1000);
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/packages/data-yahoo/test/fetch.test.ts:59:    expect(parsed.searchParams.get('period1')).toBe(String(Math.floor(startMs / 1000)));
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/packages/data-yahoo/test/fetch.test.ts:61:      String(Math.floor((to.getTime() + 24 * 60 * 60 * 1000 - 1) / 1000)),
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/packages/data-yahoo/test/fetch.test.ts:67:      ts: new Date(timestamps[0] * 1000).toISOString(),
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/packages/data-yahoo/test/fetch.test.ts:77:    const startMs = Date.UTC(2024, 0, 1);
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/packages/data-yahoo/test/fetch.test.ts:78:    const timestamps = [0, 1].map((i) => Math.floor((startMs + i * 24 * 60 * 60 * 1000) / 1000));
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/packages/data-yahoo/test/fetch.test.ts:109:      new Date(startMs + 24 * 60 * 60 * 1000),
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/packages/data-yahoo/test/fetch.test.ts:119:      const firstDayPath = barsFile(tmp, 'MSFT', '2024-01-01');
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/packages/data-yahoo/test/fetch.test.ts:120:      const secondDayPath = barsFile(tmp, 'MSFT', '2024-01-02');
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/packages/signals/src/__tests__/core.spec.ts:8:      { ts: '2020-01-01T00:00:00Z', open: 0, high: 1, low: 0, close: 1, volume: 1 },
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/packages/signals/src/__tests__/core.spec.ts:9:      { ts: '2020-01-01T00:01:00Z', open: 1, high: 2, low: 1, close: 2, volume: 1 },
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/packages/strategies/tests/osbBreakout.spec.ts:16:        bars.push({ ts: `2024-01-01T00:0${i}:00.000Z`, open: 100, high: 101, low: 99, close: 100 });
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/packages/strategies/tests/osbBreakout.spec.ts:19:          ts: `2024-01-01T00:0${i}:00.000Z`,
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/packages/strategies/tests/osbBreakout.spec.ts:27:          ts: `2024-01-01T00:0${i}:00.000Z`,
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/packages/strategies/tests/osbBreakout.spec.ts:50:          ts: `2024-01-01T00:0${i}:00.000Z`,
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/packages/strategies/tests/osbBreakout.spec.ts:58:          ts: `2024-01-01T00:0${i}:00.000Z`,
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/packages/strategies/tests/osbBreakout.spec.ts:66:          ts: `2024-01-01T00:0${i}:00.000Z`,
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/packages/strategies/tests/osbBreakout.spec.ts:85:          ts: `2024-01-01T00:0${i}:00.000Z`,
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/packages/strategies/tests/osbBreakout.spec.ts:93:          ts: `2024-01-01T00:0${i}:00.000Z`,
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/packages/strategies/tests/osbBreakout.spec.ts:101:          ts: `2024-01-01T00:0${i}:00.000Z`,
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/packages/strategies/tests/osbBreakout.spec.ts:120:        bars.push({ ts: `2024-01-01T00:0${i}:00.000Z`, open: 100, high: 101, low: 99, close: 100 });
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/packages/strategies/tests/osbBreakout.spec.ts:123:          ts: `2024-01-01T00:0${i}:00.000Z`,
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/packages/strategies/tests/osbBreakout.spec.ts:131:          ts: `2024-01-01T00:0${i}:00.000Z`,
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/packages/data-yahoo/test/vwap.test.ts:6:    let s = initAVWAP('2025-09-08T13:30:00Z');
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/packages/data-yahoo/test/vwap.test.ts:14:    const s = initAVWAP('2025-09-08T13:30:00Z');
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/packages/data-yahoo/test/vwap.test.ts:20:    let s = initAVWAP('2025-09-08T13:30:00Z');
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/packages/strategies/tests/vwapFirstTouch.spec.ts:21:        ts: `2024-01-01T00:${String(i).padStart(2, '0')}:00.000Z`,
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/packages/data-yahoo/types/ajv-dist-2020.d.ts:1:declare module 'ajv/dist/2020.js' {
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/packages/data-yahoo/types/ajv-dist-2020.d.ts:2:  import Ajv2020 from 'ajv/dist/2020';
+/Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/packages/data-yahoo/types/ajv-dist-2020.d.ts:5:  export * from 'ajv/dist/2020';
