@@ -3,6 +3,7 @@
 from datetime import datetime, timedelta
 from api.strategy_switch import load_schedule
 
+
 def simulate_day():
     sched = load_schedule()
     t = datetime.strptime("00:00", "%H:%M")
@@ -22,6 +23,7 @@ def simulate_day():
                     break
         print(f"{time_str}: {strategy}")
         t += step
+
 
 if __name__ == "__main__":
     simulate_day()
