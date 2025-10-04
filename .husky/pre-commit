@@ -1,2 +1,7 @@
-#!/usr/bin/env sh
-npx --no-install lint-staged
+#!/usr/bin/env bash
+set -euo pipefail
+if command -v pnpm >/dev/null 2>&1 && pnpm exec --silent which lint-staged >/dev/null 2>&1; then
+  pnpm exec lint-staged
+else
+  echo "[husky] lint-staged not installed; skipping pre-commit lint stage"
+fi

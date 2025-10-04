@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 import fs from 'fs';
 const file = 'apps/api/src/routes/tickets.ts';
 let s = fs.readFileSync(file, 'utf8');

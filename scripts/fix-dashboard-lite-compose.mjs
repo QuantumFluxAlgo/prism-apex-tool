@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 import fs from 'fs'
 const f = 'docker-compose.dashboard-lite.yml'
 let s = fs.readFileSync(f, 'utf8')
