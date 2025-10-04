@@ -50,3 +50,6 @@ The codebase must never introduce broker order placement (tickets-only). CI enfo
   - `@prism-apex/rules-apex/*` → `packages/rules-apex/src/*`
 - Vitest pulls in the map via the `vite-tsconfig-paths` plugin (see the shared `vitest.config.ts` family), and Node-based setups/scripts load `tsconfig-paths/register` (e.g., `apps/api/test.setup.ts`).
 - Update `tsconfig.paths.json` whenever folders move; the rest follows automatically.
+
+## Ports & Env
+See [docs/ports-and-env.md](docs/ports-and-env.md) for guidance on API and dashboard port variables.
