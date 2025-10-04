@@ -4,13 +4,13 @@ Prism-Apex is the **brain** for operator-assisted trading on Apex Trader Funding
 
 ---
 
-## Core Flow
-1. **Market data ingestion** (WS/REST) feeds derived metrics (VWAP, ATR, bias) into the runtime.
-2. **Strategies** (`packages/strategies`, `packages/rules-apex`, jobs in `apps/api/src/jobs`) evaluate signals and produce trade ideas.
-3. **Guardrails and sizing** (`packages/rules`, configurations under `configs/` & `config/`) enforce Apex program constraints.
-4. **Ticketizer** writes append-only JSONL tickets to `tickets/*.jsonl` — this is the operator’s source of truth.
-5. **Dashboards** (`apps/dashboard`, `apps/dashboard-lite`) surface telemetry and ticket status. They may query Tradovate for balances/positions but remain read-only.
-6. **Operator action** — copy the ticket into Tradovate as an OCO. Execution stays manual by design.
+## Core Flow (Yahoo → DB → ORR → Tickets → Dashboard)
+1. **Yahoo delayed feed → DB** — background jobs pull ≈15-minute delayed data from the Yahoo Finance API and load it into Postgres.
+2. **Derived series in DB** — ORR and its namesake strategies read bar/VWAP/ATR series stored in the DB (no direct market-side API required).
+3. **Guardrails & sizing** — logic in `packages/rules` / `packages/rules-apex` plus configs under `configs/` enforce Apex program rules before a ticket is emitted.
+4. **Ticket emission** — strategies append structured tickets to `tickets/*.jsonl`; these JSONL files are the operator’s source of truth.
+5. **Dashboard visualisation** — `apps/dashboard*` projects read tickets and telemetry so operators can review intent.
+6. **Manual execution** — the operator copies the ticket into Tradovate as an OCO. Prism-Apex never places orders or liquidates via API.
 
 ---
 
