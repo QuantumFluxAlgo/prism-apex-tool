@@ -7,3 +7,5 @@
 - **Architecture Overview:** `docs/ARCHITECTURE_OVERVIEW.md`
 - **Cleanup Policy:** `docs/REPO_CLEANUP_POLICY.md`
 - **Latest Cleanup Report:** `docs/CLEANUP_REPORT.md`
+
+- **Ports & Env:** `docs/ports-and-env.md`
