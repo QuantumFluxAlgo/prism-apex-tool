@@ -1,0 +1,7 @@
+[
+  "cleanup_dryrun.log",
+  "cleanup_real.log",
+  "logs/final-check.txt",
+  "node_modules/.pnpm/nwsapi@2.2.21/node_modules/nwsapi/dist/lint.log",
+  "reports/removals/round1/20250909-133034/removals.log"
+]

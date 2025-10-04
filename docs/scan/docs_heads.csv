@@ -1,0 +1,66 @@
+path,mtime,words,heading_1,heading_2,heading_3,heading_4,heading_5
+docs/CI.md,2025-09-20 08:58:23,52,CI Guardrails,,,,
+docs/CLEANUP_REPORT.md,2025-09-29 23:25:27,150,General Cleanup Report (SAFE — untracked only),Git status,fix/surgical-cleanup...origin/Test,Largest files/dirs (top 50 by size; informative only),Untracked files (top 200; informative only)
+docs/CONTRIBUTING-scripts.md,2025-09-20 08:58:23,22,,,,,
+docs/DEPLOY-LOCAL-INGRESS.md,2025-09-20 08:58:23,67,,,,,
+docs/LOCAL_DEV.md,2025-09-29 22:02:13,267,Prism-Apex — Local Dev (tickets-only),Prerequisites,1. Start the stack (Postgres on host **55433**),2. Verify everything is healthy,3. Stop the stack
+docs/MAINTENANCE.md,2025-09-29 22:02:13,62,Maintenance — SAFE Data Cleanup,,,,
+docs/OPERATIONS.md,2025-09-20 08:58:23,91,,,,,
+docs/PLATFORMS/tradovate.md,2025-09-20 08:58:23,67,,,,,
+docs/POST_MERGE_VERIFY.md,2025-10-01 18:53:33,75,Post-merge Verification,Git,chore/post-merge-verification...origin/Test,Cleanup (dry-run),Docker smoke
+docs/README_NAV.md,2025-10-04 14:13:35,11,Documentation Index,,,,
+docs/RELEASE_NOTES.md,2025-09-20 08:58:23,180,Prism Apex Tool — Release Notes,v0.1.0 (Unquarantine milestone),Highlights,Breaking / Behavioral,New Endpoints
+docs/REPO_SCAN_QUESTIONS.md,2025-10-04 14:13:45,131,Follow-up Questions (Please answer in chat),,,,
+docs/REPO_SCAN_REPORT.md,2025-10-04 14:13:45,17091,Repository Scan Report,Top-level Structure,Key Manifests & Tooling,Extension Stats (Top 30 by size),Large Files (>1MB)
+docs/UPGRADE.md,2025-09-20 08:58:23,134,Upgrade Guide,From older snapshots to v0.1.0,or Docker:,Notes,
+docs/YAHOO_DATA_CLEANUP.md,2025-10-01 18:53:33,254,Yahoo Data Cleanup (SAFE: untracked-only),Untracked candidates (preview),Tracked candidates (reported only; NOT removed),2025-10-01T14:49:40+01:00,2025-10-01T14:49:46+01:00
+docs/accounts.md,2025-09-20 08:58:23,131,Accounts Registry API,Examples,,,
+docs/adr/ADR-2025-09-09-docker-api-only.md,2025-09-20 08:58:23,81,,,,,
+docs/adr/ADR-2025-09-09-operator-assisted-architecture.md,2025-09-20 08:58:23,208,,,,,
+docs/analytics/payout_tracker.md,2025-09-20 08:58:23,38,Payout Tracker,Purpose,Rules,Usage,
+docs/analytics/post_trade.md,2025-09-20 08:58:23,40,Post-Trade Analytics,Purpose,Location,Usage,
+docs/apex/01_rules.md,2025-09-20 08:58:23,115,Apex Trader Funding – Proprietary Trading Rules,1. Evaluation Phase Rules,What It Does,How to Use It,Config Options
+docs/apex/02_funded_rules.md,2025-09-20 08:58:23,114,Apex Trader Funding – Funded (Performance) Account Rules,1. Consistency Rules,2. Risk Management,3. Payout Rules,Visuals
+docs/apex/03_funding_process.md,2025-09-20 08:58:23,118,Apex Trader Funding – Step-by-Step Process,1. Purchase Evaluation Plan,2. Platform Setup,3. Trading the Evaluation,4. Passing Evaluation
+docs/apex/04_platforms.md,2025-09-20 08:58:23,1033,Apex Trader Funding – Platform Integration Guide,Rithmic + NinjaTrader,How the Connection Works,Difficulty Rating: 8/10,Pros
+docs/apex/05_notifications.md,2025-09-20 08:58:23,65,Notifications Integration,Supported Channels,How to Use It,Visuals,
+docs/apex/06_knowledge_base.md,2025-09-20 08:58:23,890,"Apex Trader Funding – Rules, Funding Process, and Technical Platforms",Evaluation Phase Rules,Evaluation Account Example,Funded Phase Rules,Funding Step-by-Step
+docs/audit/guide.md,2025-09-20 08:58:23,111,Prism Apex Tool — Audit Trail Guide,Purpose,Log Formats,Example Entry,Retention
+docs/backtest/overview.md,2025-09-20 08:58:23,236,Prism Apex Backtesting Framework,What It Does,Quick Start,Config Notes (MVP),Extend Later (Tick-Level)
+docs/backtest/tick-readiness.md,2025-09-20 08:58:23,118,Tick-Level Readiness (Post-MVP),What’s Included Now,What’s Next (Not Included Yet),Usage,Tick replay (uses sample ticks)
+docs/calibration/summary.md,2025-09-20 08:58:23,135,Prism Apex Tool — Risk Calibration Summary,Key Findings (Example),Metrics Recorded,Next Steps,
+docs/compliance/rule-engine.md,2025-09-20 08:58:23,290,Compliance Rule Engine,Purpose,How It Works,Example,Rules Covered
+docs/config.md,2025-09-20 08:58:23,230,Guardrails & Sizing (Env),TradingView Webhook,,,
+docs/configs/ACCOUNTS.md,2025-09-20 08:58:23,67,accounts.json — Fields,,,,
+docs/configs/README.md,2025-09-20 08:58:23,161,Configs — Accounts & Strategies,Accounts (`configs/accounts.json`),Strategies (`configs/strategies/*.json`),Validation,
+docs/consistency.md,2025-09-20 08:58:23,97,Consistency Metrics,API,,,
+docs/dashboard/guide.md,2025-09-20 08:58:23,126,Prism Apex Tool — Operator Dashboard Guide,What It Does,How to Use,Config Options,Visuals
+docs/dashboard/overview.md,2025-09-20 08:58:23,125,Prism Apex Operator Dashboard,What It Does,How to Use,Data Sources,
+docs/deployment/guide.md,2025-09-20 08:58:23,101,Prism Apex Tool — Deployment Guide,Local Development,Docker,GitHub Actions,Server Deployment
+docs/deployment/hardening.md,2025-09-20 08:58:23,85,Production Hardening — Prism Apex Tool,Overview,Key Safeguards,Steps,
+docs/dev/quickstart.md,2025-09-20 08:58:23,230,Prism Apex – Dev Quickstart,0) Prereqs,1) Seed the API store (safe demo state),2) Run a sample backtest (ORB on ES 1m),3) Full demo script
+docs/export.md,2025-09-20 08:58:23,120,Ticket export,JSON example,CSV example,,
+docs/multi-account/guide.md,2025-09-20 08:58:23,210,Multi-Account Management — Operator Guide,What This Does,Plain English Rules,How to Use,Alerts & Logs
+docs/notifications/guide.md,2025-09-20 08:58:23,96,Prism Apex Tool — Notifications Guide,What It Does,How to Set Up,Test It,Notification Flow
+docs/operator-console.md,2025-09-20 08:58:23,500,,,,,
+docs/operator/handbook.md,2025-09-20 08:58:23,594,Prism Apex Tool – Operator Handbook,1. Start of Day Checklist,Step-by-step,2. During Session,2.1 Inputting Trades
+docs/operator/quick-cards/cheat-sheet.md,2025-09-20 08:58:23,133,Cheat Sheet — Terms & Times,Terms (Plain English),Times (GMT),Quick Math,Do / Don’t
+docs/operator/quick-cards/eod-flat.md,2025-09-20 08:58:23,92,Quick Card — End-of-Day Flat (21:59 GMT),Timeline (GMT),Steps,Do / Don’t,
+docs/operator/quick-cards/execute-ticket.md,2025-09-20 08:58:23,139,Quick Card — Execute a Ticket (Tradovate Manual Entry),Steps,Checks,Do / Don’t,
+docs/operator/quick-cards/incidents-&-escalation.md,2025-09-20 08:58:23,91,Quick Card — Incidents & Escalation,Common Incidents,Escalation Path,Break-Glass,
+docs/operator/quick-cards/monitor-&-alerts.md,2025-09-20 08:58:23,103,Quick Card — Monitor & Alerts,Alert Types,What To Do,Tools,
+docs/operator/quick-cards/sod-checklist.md,2025-09-20 08:58:23,102,Quick Card — Start of Day (SOD),Checklist,Do / Don’t,,
+docs/operator/training-deck.md,2025-09-20 08:58:23,322,Prism Apex Tool — Operator Training Deck (MVP),1) Context & Roles,2) Daily Flow (High-Level),3) Tickets (Plain English),4) Alerts (What They Mean)
+docs/payouts/calendar.md,2025-09-20 08:58:23,115,Prism Apex Tool — Payout Calendar,Rules Recap,Current Account Example,Mermaid Flow,
+docs/release/checklist.md,2025-09-20 08:58:23,104,Release Checklist — Prism Apex Tool,Preflight,Operator Signoff,PM Signoff,Release
+docs/release/go-live-checklist.md,2025-09-20 08:58:23,543,Prism Apex Tool — Go-Live Master Checklist (Oct 1),1) Infrastructure & Deploy,2) Configuration & Secrets,3) Notifications (at least one must work),4) Signals & Tickets (MVP manual flow)
+docs/release/operator_signoff.md,2025-09-20 08:58:23,94,Operator Release Signoff — Plain English,Why This Matters,What You Do,,
+docs/release/runbook-rollback.md,2025-09-20 08:58:23,220,Prism Apex Tool — Rollback & Incident Runbook,1) Immediate Actions,2) Quick Diagnostics (5–10 min),3) Rollback (Tag N → N-1),4) Data Safety
+docs/release/sign-off-template.md,2025-09-20 08:58:23,161,Prism Apex Tool — Executive Go-Live Sign-Off,Summary,Readiness Checklist Status,Residual Risks (Known & Accepted),Approval
+docs/release/uat-scenarios.md,2025-09-20 08:58:23,613,Prism Apex Tool — UAT Scenarios & Scripts,Legend,UAT-01 Health & Deploy,UAT-02 Notifications (Slack or Email),UAT-03 Signal Preview — ORB
+docs/rules/overview.md,2025-09-20 08:58:23,299,PrismOne Rules Overview,Evaluation Accounts,Funded Accounts,Operator Checklist,Technical References
+docs/safe_cleanup.md,2025-10-01 18:53:33,1664,Safe Cleanup Script (`safe_cleanup.sh`),Contents,Quick Start,Behavior Matrix,Exit Codes & Return Behavior
+docs/simulator/overview.md,2025-09-20 08:58:23,120,Prism Apex Risk Simulator,What It Does,How to Use,Design,Outputs
+docs/strategy-switcher/guide.md,2025-09-20 08:58:23,146,Strategy Switcher — Operator Guide,What This Does,Plain English,How to Use,
+docs/telemetry.md,2025-09-20 08:58:23,164,Telemetry (Demo),Configuration,API,Dashboard,Buffer Cleared
+docs/tickets.md,2025-09-20 08:58:23,418,,,,,

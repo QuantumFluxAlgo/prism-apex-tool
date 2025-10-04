@@ -1,0 +1,7 @@
+path
+.env.docker.example
+.env.example
+.env.example.local
+.env.ingress.example
+apps/api/.env.local.example
+infra/.env.prod.example
