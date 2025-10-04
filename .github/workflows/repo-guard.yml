@@ -1,0 +1,25 @@
+name: repo-guard
+on:
+  pull_request:
+    branches: [ Test, Main, main ]
+  push:
+    branches: [ Test, Main, main ]
+jobs:
+  guard:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Block >10MB blobs in history
+        run: |
+          git rev-list --objects --all \
+          | git cat-file --batch-check='%(objecttype) %(objectname) %(objectsize) %(rest)' \
+          | awk '$1=="blob" && $3>10*1024*1024{print; bad=1} END{exit bad}'
+      - name: Block forbidden file types / paths in working tree
+        run: |
+          git ls-files -z \
+          | egrep -z -i '\\.(parquet|sqlite|csv)$' && { echo "Forbidden extensions present"; exit 1; } || true
+          # hard path checks (ignore dotfiles)
+          egrep -z -i '(^|/)\.pnpm-store/|(^|/)data/|(^|/)dump(s)?/|(^|/)cache/' < <(git ls-files -z) \
+            && { echo "Forbidden paths present"; exit 1; } || true
