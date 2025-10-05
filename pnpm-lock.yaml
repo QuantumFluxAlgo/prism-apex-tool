@@ -233,10 +233,10 @@ importers:
         specifier: 16.3.0
         version: 16.3.0(@testing-library/dom@10.4.1)(@types/react-dom@18.3.7(@types/react@18.3.23))(@types/react@18.3.23)(react-dom@18.3.1(react@18.2.0))(react@18.2.0)
       '@types/react':
-        specifier: ^18.3.3
+        specifier: ^18.3.23
         version: 18.3.23
       '@types/react-dom':
-        specifier: ^18.3.0
+        specifier: ^18.3.7
         version: 18.3.7(@types/react@18.3.23)
       '@typescript-eslint/eslint-plugin':
         specifier: ^8.3.0
@@ -257,8 +257,11 @@ importers:
         specifier: ^5.9.2
         version: 5.9.3
       vite:
-        specifier: ^5.3.5
+        specifier: ^5.4.19
         version: 5.4.19(@types/node@24.6.2)(lightningcss@1.30.2)
+      vite-tsconfig-paths:
+        specifier: ^4
+        version: 4.3.2(typescript@5.9.3)(vite@5.4.19(@types/node@24.6.2)(lightningcss@1.30.2))
       vitest:
         specifier: ^2.0.0
         version: 2.1.9(@types/node@24.6.2)(jsdom@27.0.0(postcss@8.5.6))(lightningcss@1.30.2)
@@ -4320,6 +4323,14 @@ packages:
     resolution: {integrity: sha512-EbKSKh+bh1E1IFxeO0pg1n4dvoOTt0UDiXMd/qn++r98+jPO1xtJilvXldeuQ8giIB5IkpjCgMleHMNEsGH6pg==}
     engines: {node: ^18.0.0 || ^20.0.0 || >=22.0.0}
     hasBin: true
+
+  vite-tsconfig-paths@4.3.2:
+    resolution: {integrity: sha512-0Vd/a6po6Q+86rPlntHye7F31zA2URZMbH8M3saAZ/xR9QoGN/L21bxEGfXdWmFdNkqPpRdxFT7nmNe12e9/uA==}
+    peerDependencies:
+      vite: '*'
+    peerDependenciesMeta:
+      vite:
+        optional: true
 
   vite-tsconfig-paths@5.1.4:
     resolution: {integrity: sha512-cYj0LRuLV2c2sMqhqhGpaO3LretdtMn/BVX4cPLanIZuwwrkVl+lK84E/miEXkCHWXuq65rhNN4rXsBcOB3S4w==}
@@ -8587,6 +8598,17 @@ snapshots:
       - sugarss
       - supports-color
       - terser
+
+  vite-tsconfig-paths@4.3.2(typescript@5.9.3)(vite@5.4.19(@types/node@24.6.2)(lightningcss@1.30.2)):
+    dependencies:
+      debug: 4.4.3
+      globrex: 0.1.2
+      tsconfck: 3.1.6(typescript@5.9.3)
+    optionalDependencies:
+      vite: 5.4.19(@types/node@24.6.2)(lightningcss@1.30.2)
+    transitivePeerDependencies:
+      - supports-color
+      - typescript
 
   vite-tsconfig-paths@5.1.4(typescript@5.9.3)(vite@5.4.19(@types/node@24.6.2)(lightningcss@1.30.2)):
     dependencies:

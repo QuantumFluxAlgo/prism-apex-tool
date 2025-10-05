@@ -58,3 +58,14 @@ See README-dev.md for development workflow and docs/OPERATIONS.md for operator c
 ## Cleanup
 
 Use `./safe_cleanup.sh` to clear untracked cache/scratch files safely. The script defaults to a dry run and appends a summary to `docs/YAHOO_DATA_CLEANUP.md`. See `docs/safe_cleanup.md` for details and additional usage examples.
+
+### Docker quickstart
+
+```bash
+make up
+# URLs:
+#   Dashboard: http://localhost:8080
+#   API:       http://localhost:3000/health (if implemented)
+```
+
+See DEPLOY.md for details.

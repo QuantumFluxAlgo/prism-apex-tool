@@ -1,23 +1,8 @@
 .git
-.github
+.artifacts
 node_modules
-**/node_modules
-dist
-coverage
-*.log
-Dockerfile.*
-docker-compose.*.yml
-.env
-.env.*
-.tmp
-.cache
-*.tgz
-*.zip
-*.bak
-*.old
-
-# BEGIN ingress-yahoo-dev src include
-!apps/ingress-yahoo-dev/package.json
-!apps/ingress-yahoo-dev/tsconfig.json
-!apps/ingress-yahoo-dev/src/**
-# END ingress-yahoo-dev src include
+pnpm-store
+.pnpm-store
+**/.DS_Store
+**/*.log
+**/coverage

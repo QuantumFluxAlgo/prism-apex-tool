@@ -1,50 +1,26 @@
+version: "3.9"
 services:
   api:
     build:
       context: .
       target: api
-    image: prism-apex/api:local
-    container_name: prism-apex-api
+    image: prism-apex/api:latest
+    env_file:
+      - .env
     ports:
       - "3000:3000"
-    environment:
-      NODE_ENV: production
-      LOG_LEVEL: info
-      DATA_DIR: /data
-      APEX_DATA_DIR: /data
-      TICKETS_DIR: /data/tickets
-      # Safe defaults; provide real values via env/.env if needed
-      TRADOVATE_BASE_URL: "http://localhost/disabled"
-      TRADINGVIEW_WEBHOOK_SECRET: ""
-    volumes:
-      - api-data:/data
     healthcheck:
-      test: ["CMD-SHELL","curl -fsS http://127.0.0.1:3000/health | grep -q '\"ok\":true'"]
-      interval: 15s
+      test: ["CMD","node","-e","require('http').get('http://localhost:3000/health',r=>process.exit(r.statusCode===200?0:1))"]
+      interval: 10s
       timeout: 3s
-      start_period: 20s
-      retries: 5
-    restart: unless-stopped
+      retries: 10
 
-  tickets-sync:
+  dashboard:
     build:
       context: .
-      target: api
-    image: prism-apex/api:local
-    container_name: prism-apex-tickets-sync
+      target: dashboard
+    image: prism-apex/dashboard:latest
+    ports:
+      - "8080:80"
     depends_on:
-      api:
-        condition: service_started
-    environment:
-      NODE_ENV: production
-      LOG_LEVEL: info
-      DATA_DIR: /data
-      APEX_DATA_DIR: /data
-      TICKETS_DIR: /data/tickets
-    command: ['node', '/app/apps/api/dist/scripts/syncTickets.js', '--watch', '--interval=15000']
-    volumes:
-      - api-data:/data
-    restart: unless-stopped
-
-volumes:
-  api-data:
+      - api
