@@ -37,3 +37,16 @@ services:
     command: ["node", "apps/ingest/dist/backfill.js"]
     depends_on:
       - db
+
+  gapfill-once:
+    build:
+      context: .
+      target: api
+    image: prism-apex/ingest:latest
+    environment:
+      - DATABASE_URL=${DATABASE_URL:-postgres://apex:apex@db:5432/prismapex}
+      - YAHOO_SYMBOLS=${YAHOO_SYMBOLS:-ES=F,NQ=F,GC=F,CL=F}
+      - YAHOO_INTERVAL=${YAHOO_INTERVAL:-1m}
+    command: ["node", "apps/ingest/dist/gapfill.js"]
+    depends_on:
+      - db
