@@ -22,17 +22,19 @@ services:
       TZ: ${TZ:-UTC}
     volumes:
       - ./deploy/db:/maintenance:ro
-    entrypoint: ["/bin/sh","-lc"]
-    command: |
-      set -e
-      apk add --no-cache postgresql-client tzdata >/dev/null
-      # Install crontab to run daily at 02:00 container-local time
-      crontab - <<'CRON'
-      0 2 * * * psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f /maintenance/maintenance.sql >> /var/log/cron.log 2>&1
-      CRON
-      touch /var/log/cron.log
-      echo "[db_maint] cron started (nightly VACUUM ANALYZE @ 02:00)"
-      crond -f -l 8
+    entrypoint:
+      - /bin/sh
+      - -lc
+      - |
+          set -e
+          apk add --no-cache postgresql-client tzdata >/dev/null
+          # Install crontab to run daily at 02:00 container-local time
+          crontab - <<'CRON'
+          0 2 * * * psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f /maintenance/maintenance.sql >> /var/log/cron.log 2>&1
+          CRON
+          touch /var/log/cron.log
+          echo "[db_maint] cron started (nightly VACUUM ANALYZE @ 02:00)"
+          crond -f -l 8
 
 volumes:
   db_data:
