@@ -1,61 +1,25 @@
-# syntax=docker/dockerfile:1.6
-
-########## BUILD ##########
-FROM node:20-alpine AS build
-WORKDIR /repo
-ENV HUSKY=0
-RUN corepack enable && corepack prepare pnpm@9.0.0 --activate
-
-# Workspace + configs required by builds
-COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
-COPY tsconfig*.json ./
-COPY apps apps
-COPY packages packages
-COPY configs configs
-COPY types types
-COPY apex apex
-
-# Install all deps once for the workspace
-RUN pnpm install --frozen-lockfile
-
-# Build just the API and any local deps it needs
-RUN pnpm -r --filter "@prism-apex/api" --filter "./packages/*" build
-RUN pnpm build:cjs:api
-# Build the tickets sync script into the API dist
-RUN pnpm --package=typescript dlx tsc \
-  --target ES2020 \
-  --module commonjs \
-  --esModuleInterop \
-  --skipLibCheck \
-  --outDir apps/api/dist/scripts \
-  apps/api/src/scripts/syncTickets.ts
-
-# Produce a deployable, pruned copy of the API package
-RUN pnpm -r deploy --filter "@prism-apex/api" --prod /opt/app
-
-########## RUNTIME ##########
-FROM node:20-alpine AS api
+FROM node:20-bookworm AS base
+ENV PNPM_HOME=/root/.local/share/pnpm
+ENV PATH=$PNPM_HOME:$PATH
+RUN corepack enable
 WORKDIR /app
-ENV NODE_ENV=production \
-    HUSKY=0 \
-    PORT=3000 \
-    APEX_DATA_DIR=/data
+COPY pnpm-lock.yaml pnpm-workspace.yaml package.json ./
+RUN pnpm fetch
+COPY . .
+FROM base AS build
+RUN pnpm i --offline --ignore-scripts
+RUN pnpm -w -r run build
 
-# Copy the deployed API (includes node_modules and built files)
-COPY --from=build /opt/app /app
-# include runtime configs required by jobs
-COPY --from=build /repo/configs /app/configs
-# also copy built dist for start-runtime fallback
-COPY --from=build /repo/apps/api/dist /app/apps/api/dist
-COPY --from=build /repo/apps/api/dist-cjs /app/apps/api/dist-cjs
-
-# Our runtime entry starts Fastify from the compiled bundle
-COPY apps/api/start-runtime.cjs apps/api/start-runtime.cjs
-
+FROM node:20-slim AS api
+WORKDIR /app
+ENV NODE_ENV=production
+RUN corepack enable
+COPY --from=build /app ./
+RUN pnpm -w -C apps/api i --prod --offline --ignore-scripts
 EXPOSE 3000
-VOLUME ["/data"]
-CMD ["node","apps/api/start-runtime.cjs"]
-# --- ensure API helper scripts are available in the runtime image ---
-# If your build uses a different workdir, keep the target path consistent with /app
-COPY apps/api/scripts /app/apps/api/scripts
-RUN chmod +x /app/apps/api/scripts/run-node-script.sh
+CMD ["node","apps/api/dist/index.js"]
+
+FROM nginx:1.27-alpine AS dashboard
+COPY --from=build /app/apps/dashboard/dist /usr/share/nginx/html
+COPY deploy/nginx.conf /etc/nginx/conf.d/default.conf
+EXPOSE 80

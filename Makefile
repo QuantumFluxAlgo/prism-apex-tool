@@ -1,11 +1,11 @@
-SHELL := /bin/zsh
+COMPOSE=docker compose -f docker-compose.yml
 
-.PHONY: split validate all
-
-split:
-	 D=$(D) S=$(S) ./bin/split_tickets.zsh
-
-validate:
-	 D=$(D) S=$(S) ./bin/validate_split.zsh
-
-all: split validate
+.PHONY: up down build logs
+up:
+	$(COMPOSE) up -d --build
+	down:
+	$(COMPOSE) down
+build:
+	$(COMPOSE) build --no-cache
+logs:
+	$(COMPOSE) logs -f --tail=200
