@@ -1,87 +1,49 @@
 import type { FastifyInstance } from 'fastify';
-import { z } from 'zod';
-import { listTickets, exportTickets } from '../store/tickets.js';
-import { guardSuggestion } from '../jobs/ticketizer.js';
-import { loadRegistry } from '@prism-apex/config';
-import { getConfig } from '../config/env.js';
-import { TICKET_STRATEGIES } from '../schemas/ticket.js';
+import { Client } from 'pg';
 
-const displayStrategy = (s: string) => (s === 'APX-DDB-01' || s === 'ORR') ? 'ORR' : s;
+export default async function ticketsRoute(app: FastifyInstance) {
+  app.get('/api/tickets', async (req, reply) => {
+    const url = new URL(req.protocol + '://' + req.hostname + req.url);
+    const q = url.searchParams;
+    const limit = Math.min(Number(q.get('limit') ?? '100'), 500);
+    const offset = Math.max(Number(q.get('offset') ?? '0'), 0);
+    const from = q.get('from');
+    const to = q.get('to');
 
-export async function ticketsRoutes(app: FastifyInstance) {
-  app.get('/tickets', async (req, reply) => {
-    const q = z
-      .object({
-        date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
-        cursor: z.coerce.number().optional(),
-        limit: z.coerce.number().optional(),
-        strategy: z.enum(TICKET_STRATEGIES).optional(),
-      })
-      .safeParse(req.query);
-    if (!q.success) return reply.code(400).send({ error: 'Invalid query' });
-    const limit = Math.min(Math.max(q.data.limit ?? 50, 1), 200);
-    const { items, nextCursor } = listTickets(q.data.date, q.data.cursor, limit, ((q.data.strategy==='ORR'||q.data.strategy==='Open Range Retest (ORR)')?'APX-DDB-01':q.data.strategy));
-    return { tickets: items, nextCursor: nextCursor ?? null };
-  });
+    const client = new Client({ connectionString: process.env.DATABASE_URL });
+    await client.connect();
 
-  app.get('/export/tickets', async (req, reply) => {
-    const q = z.object({ date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/) }).safeParse(req.query);
-    if (!q.success) return reply.code(400).send({ error: 'Invalid query' });
-    const rows = exportTickets(q.data.date);
-    const header = [
-      'symbol',
-      'side',
-      'entry',
-      'stop',
-      'target',
-      'qty',
-      'accountId',
-      'timestampUtc',
-      'meta.strategy',
-      'meta.rr',
-      'accepted',
-      'reasons',
-    ].join(',');
-    const csv = [
-      header,
-      ...rows.map((t) =>
-        [
-          t.symbol,
-          t.side,
-          t.entry,
-          t.stop,
-          t.target,
-          t.qty,
-          t.accountId,
-          t.timestampUtc,
-          displayStrategy(t.meta.strategy),
-          t.meta.rr,
-          t.accepted,
-          (t.reasons || []).join('|'),
-        ].join(','),
-      ),
-    ].join('\n');
-    return reply.type('text/csv').send(csv);
-  });
+    const where: string[] = [];
+    const params: any[] = [];
 
-  app.post('/tickets/debug-replay', async (req, reply) => {
-    const p = z.array(z.any()).safeParse(req.body);
-    if (!p.success) return reply.code(400).send({ error: 'Invalid payload' });
-    const registry = loadRegistry();
-    const acct = registry.accounts[0];
-    const cfg = getConfig();
-    const tickets = p.data.map((s: any) =>
-      guardSuggestion(s, {
-        accountId: acct.id,
-        phase: acct.phase as 'eval' | 'funded',
-        maxContracts: acct.maxContracts,
-        bufferCleared: acct.bufferCleared,
-        recentSizes: [],
-        flatByUtc: cfg.time.flatByUtc,
-      }),
-    );
-    return tickets;
+    if (from) {
+      params.push(from);
+      where.push(`opened_at_utc >= $${params.length}`);
+    }
+    if (to) {
+      params.push(to);
+      where.push(`opened_at_utc <= $${params.length}`);
+    }
+
+    const whereSql = where.length ? `WHERE ${where.join(' AND ')}` : '';
+
+    params.push(limit, offset);
+    const dataSql = `
+      SELECT symbol, strategy, direction, session_date_utc, opened_at_utc, closed_at_utc,
+             entry_price, exit_price, stop_price, target_price, pnl, meta
+      FROM tickets
+      ${whereSql}
+      ORDER BY opened_at_utc ASC
+      LIMIT $${params.length - 1} OFFSET $${params.length}
+    `;
+
+    const rows = (await client.query(dataSql, params)).rows;
+
+    const countSql = `SELECT COUNT(*)::int AS n FROM tickets ${whereSql}`;
+    const total = (await client.query(countSql, params.slice(0, params.length - 2))).rows[0]?.n ?? 0;
+
+    await client.end();
+
+    return reply.send({ total, rows });
   });
 }
-
-export default ticketsRoutes;

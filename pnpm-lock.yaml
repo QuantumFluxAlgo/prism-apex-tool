@@ -328,6 +328,25 @@ importers:
         specifier: ^1.6.0
         version: 1.6.1(@types/node@20.19.11)(jsdom@27.0.0(postcss@8.5.6))(lightningcss@1.30.2)
 
+  apps/tickets:
+    dependencies:
+      pg:
+        specifier: ^8.13.1
+        version: 8.16.3
+      undici:
+        specifier: ^7.3.0
+        version: 7.16.0
+    devDependencies:
+      '@types/node':
+        specifier: ^20.12.12
+        version: 20.19.11
+      '@types/pg':
+        specifier: ^8.11.6
+        version: 8.15.5
+      typescript:
+        specifier: ^5.4.5
+        version: 5.9.3
+
   packages/accounts:
     devDependencies:
       '@eslint/js':
@@ -4359,6 +4378,10 @@ packages:
   undici@6.22.0:
     resolution: {integrity: sha512-hU/10obOIu62MGYjdskASR3CUAiYaFTtC9Pa6vHyf//mAipSvSQg6od2CnJswq7fvzNS3zJhxoRkgNVaHurWKw==}
     engines: {node: '>=18.17'}
+
+  undici@7.16.0:
+    resolution: {integrity: sha512-QEg3HPMll0o3t2ourKwOeUAZ159Kn9mx5pnzHRQO8+Wixmh88YdZRiIwat0iNzNNXn0yoEtXJqFpyW7eM8BV7g==}
+    engines: {node: '>=20.18.1'}
 
   universalify@0.2.0:
     resolution: {integrity: sha512-CJ1QgKmNg3CwvAv/kOFmtnEN05f0D/cn9QntgNOQlQF9dgvVTHj3t+8JPdjqawCHk7V/KA+fbUqzZ9XWhcqPUg==}
@@ -8596,6 +8619,8 @@ snapshots:
   undici-types@7.13.0: {}
 
   undici@6.22.0: {}
+
+  undici@7.16.0: {}
 
   universalify@0.2.0: {}
 
