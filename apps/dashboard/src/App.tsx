@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 
 import ThemeProvider, { useTheme } from './ui/ThemeProvider';
+import ToastProvider from './context/ToastContext';
 import Tabs from './ui/Tabs';
 import SessionCountdown from './ui/SessionCountdown';
 import TicketsPage from './pages/Tickets';
@@ -38,25 +39,27 @@ function Header() {
 export default function App() {
   return (
     <ThemeProvider>
-      <BrowserRouter>
-        <div className="min-h-screen bg-gray-50 text-gray-900 dark:bg-zinc-950 dark:text-gray-100">
-          <div className="mx-auto w-full max-w-7xl px-4 py-6 space-y-6">
-            <Header />
-            <Tabs />
-            <main className="pt-4">
-              <Routes>
-                <Route path="/worklist" element={<Worklist />} />
-                <Route path="/tickets" element={<TicketsPage />} />
-                <Route path="/positions" element={<PositionsPage />} />
-                <Route path="/reports" element={<ReportsPage />} />
-                <Route path="/metrics" element={<MetricsPage />} />
-                <Route path="/" element={<Navigate to="/worklist" replace />} />
-                <Route path="*" element={<Navigate to="/worklist" replace />} />
-              </Routes>
-            </main>
+      <ToastProvider>
+        <BrowserRouter>
+          <div className="min-h-screen bg-gray-50 text-gray-900 dark:bg-zinc-950 dark:text-gray-100">
+            <div className="mx-auto w-full max-w-7xl px-4 py-6 space-y-6">
+              <Header />
+              <Tabs />
+              <main className="pt-4">
+                <Routes>
+                  <Route path="/worklist" element={<Worklist />} />
+                  <Route path="/tickets" element={<TicketsPage />} />
+                  <Route path="/positions" element={<PositionsPage />} />
+                  <Route path="/reports" element={<ReportsPage />} />
+                  <Route path="/metrics" element={<MetricsPage />} />
+                  <Route path="/" element={<Navigate to="/worklist" replace />} />
+                  <Route path="*" element={<Navigate to="/worklist" replace />} />
+                </Routes>
+              </main>
+            </div>
           </div>
-        </div>
-      </BrowserRouter>
+        </BrowserRouter>
+      </ToastProvider>
     </ThemeProvider>
   );
 }
