@@ -1,42 +1,38 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import Kpi from '../ui/Kpi';
 import { Card, CardBody } from '../ui/Card';
-import DataTable from '../ui/DataTable';
+import DataTable, { type DataTableColumn } from '../ui/DataTable';
+import FiltersBar from '../ui/FiltersBar';
 import Badge from '../ui/Badge';
 import Button from '../ui/Button';
-import { fetchSymbols, fetchTickets, type TicketRow } from '../lib/api';
-import { fmtUtc, num } from '../utils/time';
+import { fmtUtc } from '../utils/time';
+import { fmtPrice, fmtPnL, calcR } from '../utils/number';
+import { fetchSymbols, fetchTickets, completeTicket, type TicketRow } from '../lib/api';
 
 type Filters = {
   from?: string;
   to?: string;
-  symbol: string;
-  strategy: string;
-  status: string;
-  page: number;
-  pageSize: number;
-};
-
-const deriveStatus = (row: TicketRow): 'OPEN' | 'CLOSED' | 'COMPLETE' => {
-  if (row.status === 'COMPLETE') return 'COMPLETE';
-  if (row.status === 'OPEN') return 'OPEN';
-  if (row.status === 'CLOSED') return 'CLOSED';
-  return row.closed_at_utc ? 'CLOSED' : 'OPEN';
+  symbol?: string;
+  strategy?: string;
+  status?: string;
+  showShorts?: boolean;
 };
 
 export default function TicketsPage() {
+  const [rows, setRows] = useState<TicketRow[]>([]);
+  const [total, setTotal] = useState<number>(0);
   const [symbols, setSymbols] = useState<string[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const limit = 20;
+  const [offset, setOffset] = useState(0);
+  const [busyId, setBusyId] = useState<string | null>(null);
   const [filters, setFilters] = useState<Filters>({
     symbol: 'ALL',
     strategy: 'ALL',
-    status: 'ANY',
-    page: 1,
-    pageSize: 25,
+    status: 'ALL',
+    showShorts: true,
   });
-  const [rows, setRows] = useState<TicketRow[]>([]);
-  const [total, setTotal] = useState(0);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -52,206 +48,247 @@ export default function TicketsPage() {
     };
   }, []);
 
-  const offset = useMemo(() => (filters.page - 1) * filters.pageSize, [filters.page, filters.pageSize]);
-
   useEffect(() => {
     let cancelled = false;
+    setLoading(true);
+    setError(null);
 
-    const load = async () => {
-      setLoading(true);
-      try {
-        const response = await fetchTickets({
-          from: filters.from ? new Date(filters.from).toISOString() : undefined,
-          to: filters.to ? new Date(filters.to).toISOString() : undefined,
-          symbol: filters.symbol,
-          strategy: filters.strategy,
-          status: filters.status,
-          limit: filters.pageSize,
-          offset,
-        });
-
-        if (cancelled) return;
-        setRows(response.rows ?? []);
-        setTotal(typeof response.total === 'number' ? response.total : response.rows?.length ?? 0);
-        setError(null);
-      } catch (err) {
-        if (cancelled) return;
-        console.error(err);
-        setRows([]);
-        setTotal(0);
-        setError(err instanceof Error ? err.message : 'Failed to load tickets');
-      } finally {
-        if (!cancelled) setLoading(false);
-      }
+    const query = {
+      limit,
+      offset,
+      from: filters.from || undefined,
+      to: filters.to || undefined,
+      symbol: filters.symbol && filters.symbol !== 'ALL' ? filters.symbol : undefined,
+      strategy: filters.strategy && filters.strategy !== 'ALL' ? filters.strategy : undefined,
+      status: filters.status && filters.status !== 'ALL' ? filters.status : undefined,
     };
 
-    load();
-  }, [filters.symbol, filters.strategy, filters.status, filters.from, filters.to, filters.page, filters.pageSize, offset]);
+    fetchTickets(query)
+      .then((response) => {
+        if (cancelled) return;
+        const rawRows = response.rows ?? [];
+        const filteredRows = filters.showShorts ? rawRows : rawRows.filter((row) => row.direction === 'LONG');
+        setRows(filteredRows);
+        setTotal(typeof response.total === 'number' ? response.total : rawRows.length);
+      })
+      .catch((err) => {
+        if (cancelled) return;
+        setRows([]);
+        setError(err instanceof Error ? err.message : String(err));
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
 
-  const { open, closed, complete } = useMemo(() => {
+    return () => {
+      cancelled = true;
+    };
+  }, [limit, offset, filters.from, filters.to, filters.symbol, filters.strategy, filters.status, filters.showShorts]);
+
+  const statusCounts = useMemo(() => {
     return rows.reduce(
       (acc, row) => {
-        const status = deriveStatus(row);
-        if (status === 'OPEN') acc.open += 1;
-        else if (status === 'CLOSED') acc.closed += 1;
-        else if (status === 'COMPLETE') acc.complete += 1;
+        if (row.status === 'OPEN') acc.open += 1;
+        if (row.status === 'COMPLETE') acc.complete += 1;
         return acc;
       },
-      { open: 0, closed: 0, complete: 0 },
+      { open: 0, complete: 0 },
     );
   }, [rows]);
 
-  const nextDisabled = offset + rows.length >= total || rows.length === 0;
+  const columns: DataTableColumn<TicketRow>[] = [
+    {
+      key: 'opened_at_utc',
+      header: 'Opened (UTC/GMT)',
+      render: (row) => fmtUtc(row.opened_at_utc),
+    },
+    {
+      key: 'symbol',
+      header: 'Symbol',
+      render: (row) => row.symbol,
+    },
+    {
+      key: 'strategy',
+      header: 'Strat',
+      render: (row) => row.strategy,
+    },
+    {
+      key: 'direction',
+      header: 'Dir',
+      render: (row) => (
+        <Badge
+          tone={row.direction === 'LONG' ? 'green' : 'gray'}
+          title={row.direction === 'LONG' ? 'Long (actionable)' : 'Short (view only)'}
+        >
+          {row.direction}
+        </Badge>
+      ),
+    },
+    {
+      key: 'entry_price',
+      header: 'Entry',
+      align: 'right',
+      render: (row) => fmtPrice(row.entry_price),
+    },
+    {
+      key: 'stop_price',
+      header: 'Stop',
+      align: 'right',
+      render: (row) => fmtPrice(row.stop_price),
+    },
+    {
+      key: 'target_price',
+      header: 'Target',
+      align: 'right',
+      render: (row) => fmtPrice(row.target_price),
+    },
+    {
+      key: 'rr',
+      header: 'R',
+      align: 'right',
+      render: (row) => {
+        const value = calcR(row.entry_price, row.stop_price, row.target_price);
+        return value === null ? '—' : value.toFixed(2);
+      },
+    },
+    {
+      key: 'pnl',
+      header: 'PnL',
+      align: 'right',
+      render: (row) => (
+        <Badge
+          tone={row.pnl !== null && row.pnl !== undefined ? (row.pnl > 0 ? 'green' : row.pnl < 0 ? 'red' : 'neutral') : 'neutral'}
+        >
+          {fmtPnL(row.pnl)}
+        </Badge>
+      ),
+    },
+    {
+      key: 'status',
+      header: 'Status',
+      render: (row) => <Badge tone={row.status === 'COMPLETE' ? 'blue' : 'amber'}>{row.status ?? '—'}</Badge>,
+    },
+    {
+      key: 'actions',
+      header: '',
+      className: 'text-right',
+      render: (row) => {
+        const id = row.id ? String(row.id) : undefined;
+        const disabled = !id || row.status === 'COMPLETE' || row.direction === 'SHORT' || busyId === id;
+        return (
+          <div className="flex justify-end gap-2">
+            <Button
+              size="sm"
+              variant="primary"
+              title={row.direction === 'SHORT' ? 'Short tickets are view-only right now' : 'Mark as complete'}
+              disabled={disabled}
+              onClick={async () => {
+                if (!id) return;
+                try {
+                  setBusyId(id);
+                  const updated = await completeTicket(id, { user: 'operator' });
+                  setRows((prev) => prev.map((entry) => (entry.id === id ? { ...entry, ...updated } : entry)));
+                } catch (err) {
+                  setError(err instanceof Error ? err.message : String(err));
+                } finally {
+                  setBusyId(null);
+                }
+              }}
+            >
+              Mark complete
+            </Button>
+          </div>
+        );
+      },
+    },
+  ];
+
+  const nextDisabled = rows.length < limit;
 
   return (
-    <div className="space-y-4">
-      {/* Filters bar (wired locally for now) */}
-      <div className="flex flex-wrap items-center gap-2 border-b border-gray-200 p-3 dark:border-zinc-800">
-        <span className="text-xs text-gray-500">UTC (GMT)</span>
-        <input
-          type="date"
-          value={filters.from ?? ''}
-          onChange={(event) => setFilters((prev) => ({ ...prev, from: event.target.value || undefined, page: 1 }))}
-          className="rounded border border-gray-300 bg-white px-2 py-1 dark:border-zinc-700 dark:bg-zinc-900"
-        />
-        <input
-          type="date"
-          value={filters.to ?? ''}
-          onChange={(event) => setFilters((prev) => ({ ...prev, to: event.target.value || undefined, page: 1 }))}
-          className="rounded border border-gray-300 bg-white px-2 py-1 dark:border-zinc-700 dark:bg-zinc-900"
-        />
-        <select
-          value={filters.symbol}
-          onChange={(event) => setFilters((prev) => ({ ...prev, symbol: event.target.value, page: 1 }))}
-          className="rounded border border-gray-300 bg-white px-2 py-1 dark:border-zinc-700 dark:bg-zinc-900"
-        >
-          <option value="ALL">All Symbols</option>
-          {symbols.map((symbol) => (
-            <option key={symbol} value={symbol}>
-              {symbol}
-            </option>
-          ))}
-        </select>
-        <select
-          value={filters.strategy}
-          onChange={(event) => setFilters((prev) => ({ ...prev, strategy: event.target.value, page: 1 }))}
-          className="rounded border border-gray-300 bg-white px-2 py-1 dark:border-zinc-700 dark:bg-zinc-900"
-        >
-          <option value="ALL">All Strategies</option>
-          <option value="ORR">ORR</option>
-        </select>
-        <select
-          value={filters.status}
-          onChange={(event) => setFilters((prev) => ({ ...prev, status: event.target.value, page: 1 }))}
-          className="rounded border border-gray-300 bg-white px-2 py-1 dark:border-zinc-700 dark:bg-zinc-900"
-        >
-          <option value="ANY">Any Status</option>
-          <option value="OPEN">OPEN</option>
-          <option value="CLOSED">CLOSED</option>
-          <option value="COMPLETE">COMPLETE</option>
-        </select>
+    <div className="space-y-4 p-4">
+      <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
+        <Kpi label="Tickets (open)" value={statusCounts.open} />
+        <Kpi label="Tickets (complete)" value={statusCounts.complete} />
+        <Kpi label="Page size" value={limit} />
+        <Kpi label="Total (all filters)" value={total} />
       </div>
 
-      {/* KPIs */}
-      <div className="grid grid-cols-2 gap-3 md:grid-cols-5">
-        <Kpi label="Total tickets (page)" value={rows.length} />
-        <Kpi label="Open" value={open} />
-        <Kpi label="Closed" value={closed} />
-        <Kpi label="Complete" value={complete} />
-        <Kpi label="Total (all)" value={total} />
-      </div>
-
-      {/* Table */}
       <Card>
         <CardBody>
+          <FiltersBar
+            dateRange={{
+              from: filters.from,
+              to: filters.to,
+              onChange: (from, to) => {
+                setOffset(0);
+                setFilters((prev) => ({ ...prev, from, to }));
+              },
+            }}
+            selects={[
+              {
+                label: 'Symbol',
+                value: filters.symbol ?? 'ALL',
+                options: ['ALL', ...symbols],
+                onChange: (value) => {
+                  setOffset(0);
+                  setFilters((prev) => ({ ...prev, symbol: value }));
+                },
+              },
+              {
+                label: 'Strategy',
+                value: filters.strategy ?? 'ALL',
+                options: ['ALL', 'ORR'],
+                onChange: (value) => {
+                  setOffset(0);
+                  setFilters((prev) => ({ ...prev, strategy: value }));
+                },
+              },
+              {
+                label: 'Status',
+                value: filters.status ?? 'ALL',
+                options: ['ALL', 'OPEN', 'COMPLETE'],
+                onChange: (value) => {
+                  setOffset(0);
+                  setFilters((prev) => ({ ...prev, status: value }));
+                },
+              },
+            ]}
+            toggles={[
+              {
+                label: 'Show SHORTs (view-only)',
+                checked: Boolean(filters.showShorts),
+                onChange: (checked) => {
+                  setOffset(0);
+                  setFilters((prev) => ({ ...prev, showShorts: checked }));
+                },
+              },
+            ]}
+          />
+        </CardBody>
+      </Card>
+
+      <Card>
+        <CardBody>
+          {error && <div className="mb-2 text-sm text-red-400">{error}</div>}
           <DataTable
-            headers={
-              <tr>
-                <th className="px-3 py-2">Symbol</th>
-                <th className="px-3 py-2">Strategy</th>
-                <th className="px-3 py-2">Dir</th>
-                <th className="px-3 py-2">Opened (UTC / GMT)</th>
-                <th className="px-3 py-2">Closed</th>
-                <th className="px-3 py-2">Entry</th>
-                <th className="px-3 py-2">Exit</th>
-                <th className="px-3 py-2">PnL</th>
-                <th className="px-3 py-2">Status</th>
-                <th className="px-3 py-2">Action</th>
-              </tr>
-            }
-          >
-            {loading ? (
-              <tr>
-                <td className="px-3 py-3" colSpan={10}>
-                  Loading…
-                </td>
-              </tr>
-            ) : rows.length === 0 ? (
-              <tr>
-                <td className="px-3 py-3" colSpan={10}>
-                  {error ?? 'No tickets'}
-                </td>
-              </tr>
-            ) : (
-              rows.map((row, index) => {
-                const status = deriveStatus(row);
-                const statusTone = status === 'OPEN' ? 'blue' : status === 'COMPLETE' ? 'green' : 'yellow';
-
-                return (
-                  <tr key={row.id ?? `${row.symbol}-${row.opened_at_utc ?? index}`}> 
-                    <td className="px-3 py-2">{row.symbol}</td>
-                    <td className="px-3 py-2">{row.strategy}</td>
-                    <td className="px-3 py-2">{row.direction}</td>
-                    <td className="px-3 py-2">{fmtUtc(row.opened_at_utc)}</td>
-                    <td className="px-3 py-2">{fmtUtc(row.closed_at_utc)}</td>
-                    <td className="px-3 py-2">{num(row.entry_price)}</td>
-                    <td className="px-3 py-2">{num(row.exit_price)}</td>
-                    <td className="px-3 py-2">{num(row.pnl)}</td>
-                    <td className="px-3 py-2">
-                      <Badge tone={statusTone}>{status}</Badge>
-                    </td>
-                    <td className="px-3 py-2">
-                      <Button disabled>Mark Complete</Button>
-                    </td>
-                  </tr>
-                );
-              })
-            )}
-          </DataTable>
-
-          {/* Pagination */}
+            columns={columns}
+            rows={rows}
+            loading={loading}
+            emptyMessage="No tickets match your filters."
+            rowKey={(row, index) => (row.id ? String(row.id) : index)}
+          />
           <div className="mt-3 flex items-center justify-between">
-            <div className="text-xs text-gray-500">
-              Page {filters.page} · {filters.pageSize} per page · {total} total
+            <div className="text-xs text-gray-400">
+              Entry/Stop/Target and R are ORR-derived. SHORTs are visible but not actionable.
             </div>
-            <div className="flex items-center gap-2">
-              <button
-                type="button"
-                className="rounded border border-gray-200 px-2 py-1 disabled:opacity-50 dark:border-zinc-800"
-                disabled={filters.page <= 1}
-                onClick={() => setFilters((prev) => ({ ...prev, page: Math.max(1, prev.page - 1) }))}
-              >
+            <div className="flex gap-2">
+              <Button size="sm" disabled={offset === 0} onClick={() => setOffset(Math.max(0, offset - limit))}>
                 Prev
-              </button>
-              <button
-                type="button"
-                className="rounded border border-gray-200 px-2 py-1 disabled:opacity-50 dark:border-zinc-800"
-                disabled={nextDisabled}
-                onClick={() => setFilters((prev) => ({ ...prev, page: prev.page + 1 }))}
-              >
+              </Button>
+              <Button size="sm" disabled={nextDisabled} onClick={() => setOffset(offset + limit)}>
                 Next
-              </button>
-              <select
-                value={filters.pageSize}
-                onChange={(event) =>
-                  setFilters((prev) => ({ ...prev, pageSize: Number(event.target.value), page: 1 }))
-                }
-                className="rounded border border-gray-200 bg-white px-2 py-1 dark:border-zinc-800 dark:bg-zinc-900"
-              >
-                <option value={25}>25</option>
-                <option value={50}>50</option>
-                <option value={100}>100</option>
-              </select>
+              </Button>
             </div>
           </div>
         </CardBody>
