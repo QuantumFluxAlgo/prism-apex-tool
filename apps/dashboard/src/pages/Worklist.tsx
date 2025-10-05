@@ -11,6 +11,7 @@ import { fmtPrice } from '../utils/number';
 type ActionableRow = TicketRow & {
   rr?: number | null;
   actionable?: boolean | null;
+  reason?: string | null;
 };
 
 export default function Worklist() {
@@ -19,21 +20,41 @@ export default function Worklist() {
   const [error, setError] = useState<string | null>(null);
 
   const load = useCallback(async () => {
+    let ok = false;
     try {
       setLoading(true);
       setError(null);
       const res = await fetchTickets({ scope: 'actionable', status: 'OPEN', direction: 'LONG', limit: 200 });
       setRows(res.rows ?? []);
+      ok = true;
     } catch (err) {
-      setError(err instanceof Error ? err.message : String(err));
       setRows([]);
+      setError(err instanceof Error ? err.message : String(err));
     } finally {
       setLoading(false);
     }
+    return ok;
   }, []);
 
   useEffect(() => {
-    void load();
+    let cancelled = false;
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    let delay = 5000;
+
+    const tick = async () => {
+      if (cancelled) return;
+      const ok = await load();
+      delay = ok ? 5000 : Math.min(60000, delay * 2);
+      if (cancelled) return;
+      timer = setTimeout(tick, delay);
+    };
+
+    void tick();
+
+    return () => {
+      cancelled = true;
+      if (timer) clearTimeout(timer);
+    };
   }, [load]);
 
   const symbolCount = useMemo(() => new Set(rows.map((row) => row.symbol)).size, [rows]);
@@ -113,7 +134,7 @@ export default function Worklist() {
       <FiltersBar>
         <div className="flex w-full items-center justify-between">
           <div className="text-sm font-medium text-gray-700 dark:text-gray-200">Actionable Worklist</div>
-          <Button size="sm" variant="ghost" onClick={() => void load()}>
+          <Button size="sm" variant="ghost" onClick={() => { void load(); }}>
             Refresh
           </Button>
         </div>

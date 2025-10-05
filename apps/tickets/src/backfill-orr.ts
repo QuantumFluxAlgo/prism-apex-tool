@@ -184,11 +184,24 @@ function simulateOrrTicket(sessionBars: Bar[]): {
 async function insertTicket(pg: Client, symbol: string, sessionDate: string, ticket: ReturnType<typeof simulateOrrTicket>) {
   if (!ticket) return;
   const pnl = ticket.direction === 'LONG' ? ticket.exit - ticket.entry : ticket.entry - ticket.exit;
+  const rrRaw = ticket.entry === ticket.stop ? null : Math.abs((ticket.target - ticket.entry) / (ticket.entry - ticket.stop));
+  const rr = Number.isFinite(rrRaw ?? NaN) ? rrRaw : null;
+  const actionable = ticket.direction === 'LONG' && rr !== null && rr >= 2.0 && rr <= 4.5;
+  let reason: string | null = null;
+  if (!actionable) {
+    if (ticket.direction !== 'LONG') reason = 'SHORT is view-only';
+    else if (rr === null) reason = 'Missing R:R';
+    else if (rr < 2.0) reason = 'R:R below 2.0';
+    else if (rr > 4.5) reason = 'R:R above 4.5';
+  }
   await pg.query(`
     INSERT INTO tickets (
       symbol, strategy, direction, session_date_utc,
       opened_at_utc, closed_at_utc, entry_price, exit_price,
-     stop_price, target_price, pnl, meta
+     stop_price, target_price, pnl,
+    rr,
+    actionable,
+    reason, rr, actionable, non_actionable_reason, meta
     ) VALUES (
       $1,'ORR',$2,$3::date,$4,$5,$6,$7,$8,$9,$10,
       jsonb_build_object(
@@ -198,7 +211,16 @@ async function insertTicket(pg: Client, symbol: string, sessionDate: string, tic
         'reversalWindowMinutes',$14::int
       )
     )
-    ON CONFLICT (symbol, strategy, direction, opened_at_utc) DO NOTHING
+    ON CONFLICT (symbol, strategy, direction, opened_at_utc) DO UPDATE SET
+      entry_price = EXCLUDED.entry_price,
+      exit_price = EXCLUDED.exit_price,
+      stop_price = EXCLUDED.stop_price,
+      target_price = EXCLUDED.target_price,
+      pnl = EXCLUDED.pnl,
+      rr = EXCLUDED.rr,
+      actionable = EXCLUDED.actionable,
+      non_actionable_reason = EXCLUDED.non_actionable_reason,
+      meta = EXCLUDED.meta
   `, [
     symbol,
     ticket.direction,
