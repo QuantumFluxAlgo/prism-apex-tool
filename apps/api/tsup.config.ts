@@ -4,7 +4,10 @@ import { defineConfig } from 'tsup';
  * If your API entry is not src/server.ts, change the "entry" below.
  */
 export default defineConfig({
-  entry: ['src/server.ts'],
+  entry: {
+    index: 'src/index.ts',
+    server: 'src/server.ts'
+  },
   outDir: 'dist',
   clean: true,
   sourcemap: true,
