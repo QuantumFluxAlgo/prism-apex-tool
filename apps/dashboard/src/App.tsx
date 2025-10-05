@@ -1,3 +1,4 @@
+import MetricsPage from './pages/Metrics';
 import { BrowserRouter, Routes, Route, Navigate, Link } from 'react-router-dom';
 import TicketsPage from './pages/Tickets.js';
 import PositionsPage from './pages/Positions.js';
@@ -25,12 +26,16 @@ export default function App() {
             <Link to="/reports" className="px-3 py-1 bg-gray-200 text-gray-800 rounded">
               Reports
             </Link>
+            <Link to="/metrics" className="px-3 py-1 bg-gray-200 text-gray-800 rounded">
+              Metrics
+            </Link>
           </nav>
         </header>
 
         <main className="grid grid-cols-4 gap-4">
           <section className="col-span-4 md:col-span-3">
             <Routes>
+              <Route path="/metrics" element={<MetricsPage />} />
               <Route path="/" element={<Navigate to="/tickets" replace />} />
               <Route path="/tickets" element={<TicketsPage />} />
               <Route path="/positions" element={<PositionsPage />} />

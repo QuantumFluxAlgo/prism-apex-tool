@@ -9,7 +9,7 @@ type Metrics = {
 };
 
 export default async function metricsRoute(app: FastifyInstance) {
-  app.get('/api/metrics', async (_req, _reply) => {
+  const handler = async () => {
     const res: Metrics = {
       bars: {},
       tickets: { total: null, today: null },
@@ -66,7 +66,9 @@ export default async function metricsRoute(app: FastifyInstance) {
         /* ignore */
       }
     }
-
     return res;
-  });
+  };
+
+  app.get('/metrics', handler);
+  app.get('/api/metrics', handler);
 }
