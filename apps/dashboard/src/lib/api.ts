@@ -37,6 +37,16 @@ export type TicketRow = {
   stop_price?: number | null;
   target_price?: number | null;
   meta?: Record<string, unknown>;
+  rr?: number | null;
+  actionable?: boolean | null;
+  meets_strategy_params?: boolean | null;
+  meets_apex_rules?: boolean | null;
+  is_duplicate?: boolean | null;
+  reasons?: string[] | null;
+  strategy_version?: string | null;
+  completed_at_utc?: string | null;
+  completed_by?: string | null;
+  completed_note?: string | null;
 };
 
 export type TicketsResponse = {
@@ -109,6 +119,8 @@ export async function fetchTickets(params: {
   symbol?: string;
   strategy?: string;
   status?: string;
+  scope?: string;
+  direction?: string;
   limit?: number;
   offset?: number;
 }): Promise<TicketsResponse> {
@@ -121,6 +133,8 @@ export async function fetchTickets(params: {
   if (params.symbol && params.symbol !== 'ALL') search.set('symbol', params.symbol);
   if (params.strategy && params.strategy !== 'ALL') search.set('strategy', params.strategy);
   if (params.status && params.status !== 'ANY' && params.status !== 'ALL') search.set('status', params.status);
+  if (params.scope && params.scope !== 'all' && params.scope !== 'ALL') search.set('scope', params.scope);
+  if (params.direction && params.direction !== 'ALL') search.set('direction', params.direction);
 
   search.set('limit', String(params.limit ?? 25));
   search.set('offset', String(params.offset ?? 0));

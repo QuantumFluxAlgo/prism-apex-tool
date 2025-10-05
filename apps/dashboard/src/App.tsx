@@ -6,6 +6,7 @@ import TicketsPage from './pages/Tickets';
 import PositionsPage from './pages/Positions';
 import ReportsPage from './pages/Reports';
 import MetricsPage from './pages/Metrics';
+import Worklist from './pages/Worklist';
 
 function Header() {
   const { mode, setMode } = useTheme();
@@ -44,6 +45,7 @@ export default function App() {
                 <Route path="/positions" element={<PositionsPage />} />
                 <Route path="/reports" element={<ReportsPage />} />
                 <Route path="/metrics" element={<MetricsPage />} />
+                <Route path="/worklist" element={<Worklist />} />
                 <Route path="/tickets" element={<Navigate to="/" replace />} />
                 <Route path="*" element={<Navigate to="/" replace />} />
               </Routes>
