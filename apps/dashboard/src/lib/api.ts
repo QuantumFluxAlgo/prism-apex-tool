@@ -43,6 +43,7 @@ export type TicketRow = {
   meets_apex_rules?: boolean | null;
   is_duplicate?: boolean | null;
   reasons?: string[] | null;
+  reason?: string | null;
   strategy_version?: string | null;
   completed_at_utc?: string | null;
   completed_by?: string | null;

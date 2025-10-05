@@ -2,11 +2,11 @@ import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 
 const items = [
-  { path: '/', label: 'Tickets' },
+  { path: '/worklist', label: 'Worklist' },
+  { path: '/tickets', label: 'Tickets' },
   { path: '/positions', label: 'Positions' },
   { path: '/reports', label: 'Reports' },
   { path: '/metrics', label: 'Metrics' },
-  { path: '/worklist', label: 'Worklist' },
 ];
 
 export default function Tabs() {

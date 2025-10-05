@@ -45,13 +45,13 @@ export default function App() {
             <Tabs />
             <main className="pt-4">
               <Routes>
-                <Route path="/" element={<TicketsPage />} />
+                <Route path="/worklist" element={<Worklist />} />
+                <Route path="/tickets" element={<TicketsPage />} />
                 <Route path="/positions" element={<PositionsPage />} />
                 <Route path="/reports" element={<ReportsPage />} />
                 <Route path="/metrics" element={<MetricsPage />} />
-                <Route path="/worklist" element={<Worklist />} />
-                <Route path="/tickets" element={<Navigate to="/" replace />} />
-                <Route path="*" element={<Navigate to="/" replace />} />
+                <Route path="/" element={<Navigate to="/worklist" replace />} />
+                <Route path="*" element={<Navigate to="/worklist" replace />} />
               </Routes>
             </main>
           </div>
