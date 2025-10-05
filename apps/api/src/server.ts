@@ -24,6 +24,7 @@ import { getConfig } from './config/env.js';
 import jobsBoot from './jobs/boot.js';
 import strategyAlias from './plugins/strategy-alias.js';
 import metricsRoute from './routes/metrics.js';
+import symbolsRoute from './routes/symbols.js';
 
 const cfg = getConfig();
 
@@ -115,6 +116,7 @@ export function buildServer() {
   app.register(telemetryRoutes);
   app.register(tradingviewWebhookRoutes, { prefix: '/webhooks' });
   app.register(jobsBoot);
+  app.register(symbolsRoute);
   // ---- Jobs ----
   registerStrategiesJob();
   registerTicketizerJob();
