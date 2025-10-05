@@ -1,0 +1,38 @@
+services:
+  # Local Postgres (for dev/staging laptop use).
+  # Uses credentials referenced by .env (DATABASE_URL).
+  db:
+    image: postgres:16
+    environment:
+      POSTGRES_USER: ${PGUSER:-apex}
+      POSTGRES_PASSWORD: ${PGPASSWORD:-apex}
+      POSTGRES_DB: ${PGDATABASE:-prismapex}
+    ports:
+      - "${PGHOSTPORT:-55433}:5432"
+    volumes:
+      - db_data:/var/lib/postgresql/data
+
+  # Nightly VACUUM(ANALYZE) using cron + psql
+  db_maint:
+    image: alpine:3.20
+    depends_on:
+      - db
+    environment:
+      DATABASE_URL: ${DATABASE_URL:-postgres://apex:apex@db:5432/prismapex}
+      TZ: ${TZ:-UTC}
+    volumes:
+      - ./deploy/db:/maintenance:ro
+    entrypoint: ["/bin/sh","-lc"]
+    command: |
+      set -e
+      apk add --no-cache postgresql-client tzdata >/dev/null
+      # Install crontab to run daily at 02:00 container-local time
+      crontab - <<'CRON'
+      0 2 * * * psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f /maintenance/maintenance.sql >> /var/log/cron.log 2>&1
+      CRON
+      touch /var/log/cron.log
+      echo "[db_maint] cron started (nightly VACUUM ANALYZE @ 02:00)"
+      crond -f -l 8
+
+volumes:
+  db_data:
