@@ -1,80 +1,44 @@
-import { useEffect, useState } from 'react';
-import { FiltersBar } from '../components/FiltersBar.js';
-import { TicketsTable, Ticket } from '../components/TicketsTable.js';
-import { api } from '../lib/api.js';
+import React from 'react';
+import FiltersBar from '../ui/FiltersBar';
+import Kpi from '../ui/Kpi';
+import { Card, CardBody } from '../ui/Card';
+import DataTable from '../ui/DataTable';
 
 export default function TicketsPage() {
-  const today = new Date().toISOString().slice(0, 10);
-  const [date, setDate] = useState(today);
-  const [symbols, setSymbols] = useState<string[]>([]);
-  const [strategies, setStrategies] = useState<string[]>([]);
-  const [showAccepted, setShowAccepted] = useState(true);
-  const [showRejected, setShowRejected] = useState(true);
-  const [refreshMs, setRefreshMs] = useState(5000);
-  const [tickets, setTickets] = useState<Ticket[]>([]);
-  const [nextCursor, setNextCursor] = useState<string | null>(null);
-
-  const applyFilters = (rows: Ticket[]) =>
-    rows.filter((t) => {
-      if (symbols.length && !symbols.some((s) => t.symbol.startsWith(s))) {
-        return false;
-      }
-      if (strategies.length && !strategies.includes(t.meta.strategy)) {
-        return false;
-      }
-      if (!showAccepted && t.accepted) return false;
-      if (!showRejected && !t.accepted) return false;
-      return true;
-    });
-
-  async function fetchTickets(cursor?: string, append = false) {
-    try {
-      const res: any = await api.tickets(date, cursor);
-      const filtered = applyFilters(res.tickets as Ticket[]);
-      setNextCursor(res.nextCursor);
-      setTickets((prev) => (append ? [...prev, ...filtered] : filtered));
-    } catch (err) {
-      console.error(err);
-    }
-  }
-
-  useEffect(() => {
-    fetchTickets();
-  }, [date, symbols, strategies, showAccepted, showRejected]);
-
-  useEffect(() => {
-    if (refreshMs > 0) {
-      const id = setInterval(() => fetchTickets(), refreshMs);
-      return () => clearInterval(id);
-    }
-  }, [refreshMs, date, symbols, strategies, showAccepted, showRejected]);
-
-  const onExport = () => {
-    window.open(`/api/export/tickets?date=${date}&strategy=ORR`, '_blank');
-  };
-
-  const loadMore = () => {
-    if (nextCursor) fetchTickets(nextCursor, true);
-  };
-
   return (
-    <div>
-      <FiltersBar
-        date={date}
-        setDate={setDate}
-        symbols={symbols}
-        setSymbols={setSymbols}
-        strategies={strategies}
-        setStrategies={setStrategies}
-        showAccepted={showAccepted}
-        setShowAccepted={setShowAccepted}
-        showRejected={showRejected}
-        setShowRejected={setShowRejected}
-        refreshMs={refreshMs}
-        setRefreshMs={setRefreshMs}
-        onExport={onExport}
-      />
-      <TicketsTable tickets={tickets} hasMore={!!nextCursor} onLoadMore={loadMore} />
+    <div className="space-y-4">
+      <FiltersBar />
+      <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+        <Kpi label="Total tickets" value="—" />
+        <Kpi label="Open" value="—" />
+        <Kpi label="Closed" value="—" />
+        <Kpi label="Complete" value="—" />
+        <Kpi label="Win rate" value="—" hint="%" />
+      </div>
+      <Card>
+        <CardBody>
+          <DataTable
+            headers={
+              <tr>
+                <th className="px-3 py-2">Symbol</th>
+                <th className="px-3 py-2">Strategy</th>
+                <th className="px-3 py-2">Dir</th>
+                <th className="px-3 py-2">Opened (UTC / GMT)</th>
+                <th className="px-3 py-2">Closed</th>
+                <th className="px-3 py-2">PnL</th>
+                <th className="px-3 py-2">Status</th>
+                <th className="px-3 py-2">Action</th>
+              </tr>
+            }
+          >
+            <tr>
+              <td className="px-3 py-2" colSpan={8}>
+                Loading…
+              </td>
+            </tr>
+          </DataTable>
+        </CardBody>
+      </Card>
     </div>
   );
 }

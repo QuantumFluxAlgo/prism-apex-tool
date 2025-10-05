@@ -1,53 +1,56 @@
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+
+import ThemeProvider, { useTheme } from './ui/ThemeProvider';
+import Tabs from './ui/Tabs';
+import TicketsPage from './pages/Tickets';
+import PositionsPage from './pages/Positions';
+import ReportsPage from './pages/Reports';
 import MetricsPage from './pages/Metrics';
-import { BrowserRouter, Routes, Route, Navigate, Link } from 'react-router-dom';
-import TicketsPage from './pages/Tickets.js';
-import PositionsPage from './pages/Positions.js';
-import { AlertsPanel } from './components/AlertsPanel.js';
-import { AccountStatus } from './components/AccountStatus.js';
-import { ReportsView } from './components/ReportsView.js';
-import { SystemStatus } from './components/SystemStatus.js';
+
+function Header() {
+  const { mode, setMode } = useTheme();
+  const isDark = mode === 'dark';
+
+  return (
+    <header className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+      <div>
+        <h1 className="text-2xl font-semibold text-gray-900 dark:text-white">Prism Apex Operator Dashboard</h1>
+        <p className="text-sm text-gray-600 dark:text-gray-400">
+          Shared shell for tickets, positions, reports, and metrics.
+        </p>
+      </div>
+      <button
+        type="button"
+        onClick={() => setMode(isDark ? 'light' : 'dark')}
+        className="self-start rounded-full border border-gray-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-4 py-2 text-sm text-gray-700 dark:text-gray-200 shadow-sm"
+      >
+        {isDark ? 'Switch to light' : 'Switch to dark'}
+      </button>
+    </header>
+  );
+}
 
 export default function App() {
   return (
-    <BrowserRouter>
-      <div className="min-h-screen bg-gray-50 p-4">
-        <header className="flex items-center justify-between mb-6">
-          <div>
-            <h1 className="text-2xl font-bold">Prism Apex Operator Dashboard</h1>
-            <SystemStatus />
+    <ThemeProvider>
+      <BrowserRouter>
+        <div className="min-h-screen bg-gray-50 text-gray-900 dark:bg-zinc-950 dark:text-gray-100">
+          <div className="mx-auto w-full max-w-7xl px-4 py-6 space-y-6">
+            <Header />
+            <Tabs />
+            <main className="pt-4">
+              <Routes>
+                <Route path="/" element={<TicketsPage />} />
+                <Route path="/positions" element={<PositionsPage />} />
+                <Route path="/reports" element={<ReportsPage />} />
+                <Route path="/metrics" element={<MetricsPage />} />
+                <Route path="/tickets" element={<Navigate to="/" replace />} />
+                <Route path="*" element={<Navigate to="/" replace />} />
+              </Routes>
+            </main>
           </div>
-          <nav className="space-x-4">
-            <Link to="/tickets" className="px-3 py-1 bg-blue-600 text-white rounded">
-              Tickets
-            </Link>
-            <Link to="/positions" className="px-3 py-1 bg-gray-200 text-gray-800 rounded">
-              Positions
-            </Link>
-            <Link to="/reports" className="px-3 py-1 bg-gray-200 text-gray-800 rounded">
-              Reports
-            </Link>
-            <Link to="/metrics" className="px-3 py-1 bg-gray-200 text-gray-800 rounded">
-              Metrics
-            </Link>
-          </nav>
-        </header>
-
-        <main className="grid grid-cols-4 gap-4">
-          <section className="col-span-4 md:col-span-3">
-            <Routes>
-              <Route path="/metrics" element={<MetricsPage />} />
-              <Route path="/" element={<Navigate to="/tickets" replace />} />
-              <Route path="/tickets" element={<TicketsPage />} />
-              <Route path="/positions" element={<PositionsPage />} />
-              <Route path="/reports" element={<ReportsView />} />
-            </Routes>
-          </section>
-          <aside className="col-span-4 md:col-span-1 space-y-4">
-            <AccountStatus />
-            <AlertsPanel />
-          </aside>
-        </main>
-      </div>
-    </BrowserRouter>
+        </div>
+      </BrowserRouter>
+    </ThemeProvider>
   );
 }
