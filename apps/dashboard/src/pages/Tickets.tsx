@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import Kpi from '../ui/Kpi';
+import CopyOcoButton from '../components/CopyOcoButton';
 import { Card, CardBody } from '../ui/Card';
 import DataTable, { type DataTableColumn } from '../ui/DataTable';
 import FiltersBar from '../ui/FiltersBar';
@@ -7,7 +8,9 @@ import Badge from '../ui/Badge';
 import Button from '../ui/Button';
 import { fmtUtc } from '../utils/time';
 import { fmtPrice, fmtR, fmtPnlUSD } from '../utils/number';
+import { tooltipPnL, tooltipDist } from '../utils/ticks';
 import { fetchSymbols, fetchTickets, completeTicket, type TicketRow } from '../lib/api';
+import { useToast } from '../context/ToastContext';
 
 type Filters = {
   from?: string;
@@ -18,7 +21,18 @@ type Filters = {
   showShorts?: boolean;
 };
 
+const deriveR = (row: TicketRow) => {
+  if (row.rr !== null && row.rr !== undefined && !Number.isNaN(row.rr)) return row.rr;
+  const entry = row.entry_price;
+  const stop = row.stop_price;
+  const target = row.target_price;
+  if (entry === null || entry === undefined || stop === null || stop === undefined || target === null || target === undefined) return null;
+  if (entry === stop) return null;
+  return Math.abs((target - entry) / (entry - stop));
+};
+
 export default function TicketsPage() {
+  const { toast } = useToast();
   const [rows, setRows] = useState<TicketRow[]>([]);
   const [total, setTotal] = useState<number>(0);
   const [symbols, setSymbols] = useState<string[]>([]);
@@ -134,19 +148,27 @@ export default function TicketsPage() {
       key: 'stop_price',
       header: 'Stop',
       align: 'right',
-      render: (row) => fmtPrice(row.stop_price),
+      render: (row) => (
+        <span title={tooltipDist(row.symbol, row.entry_price ?? null, row.stop_price ?? null, 'Stop Δ')}>
+          {fmtPrice(row.stop_price)}
+        </span>
+      ),
     },
     {
       key: 'target_price',
       header: 'Target',
       align: 'right',
-      render: (row) => fmtPrice(row.target_price),
+      render: (row) => (
+        <span title={tooltipDist(row.symbol, row.entry_price ?? null, row.target_price ?? null, 'Target Δ')}>
+          {fmtPrice(row.target_price)}
+        </span>
+      ),
     },
     {
       key: 'rr',
       header: 'R',
       align: 'right',
-      render: (row) => fmtR(row.rr),
+      render: (row) => fmtR(deriveR(row)),
     },
     {
       key: 'pnl',
@@ -155,7 +177,11 @@ export default function TicketsPage() {
       render: (row) => {
         const pnl = row.pnl ?? null;
         const tone = pnl === null ? 'neutral' : pnl > 0 ? 'green' : pnl < 0 ? 'red' : 'neutral';
-        return <Badge tone={tone}>{fmtPnlUSD(pnl)}</Badge>;
+        return (
+          <Badge tone={tone} title={tooltipPnL(row.symbol, row.entry_price ?? null, row.exit_price ?? null)}>
+            {fmtPnlUSD(pnl)}
+          </Badge>
+        );
       },
     },
     {
@@ -165,7 +191,7 @@ export default function TicketsPage() {
         <div className="flex flex-col gap-1">
           <Badge tone={row.status === 'COMPLETE' ? 'blue' : row.actionable ? 'green' : 'amber'}>{row.status ?? '—'}</Badge>
           {!row.actionable && row.reason ? (
-            <span className="text-[11px] text-amber-600 dark:text-amber-300">{row.reason}</span>
+            <Badge tone="amber">{row.reason}</Badge>
           ) : null}
         </div>
       ),
@@ -179,6 +205,15 @@ export default function TicketsPage() {
         const disabled = !id || row.direction !== 'LONG' || row.status !== 'OPEN' || !row.actionable || busyId === id;
         return (
           <div className="flex justify-end gap-2">
+            <CopyOcoButton
+              symbol={row.symbol}
+              direction={row.direction as 'LONG' | 'SHORT'}
+              entry={row.entry_price}
+              stop={row.stop_price}
+              target={row.target_price}
+              rr={deriveR(row) ?? undefined}
+              disabled={row.direction !== 'LONG'}
+            />
             <Button
               size="sm"
               variant="primary"
@@ -189,6 +224,7 @@ export default function TicketsPage() {
                 try {
                   setBusyId(id);
                   const updated = await completeTicket(id, { user: 'operator' });
+                  toast('Ticket marked complete');
                   setRows((prev) => prev.map((entry) => (entry.id === id ? { ...entry, ...updated } : entry)));
                 } catch (err) {
                   setError(err instanceof Error ? err.message : String(err));

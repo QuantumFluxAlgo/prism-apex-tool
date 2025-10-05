@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 
 import ThemeProvider, { useTheme } from './ui/ThemeProvider';
+import ToastProvider from './context/ToastContext';
 import Tabs from './ui/Tabs';
 import SessionCountdown from './ui/SessionCountdown';
 import TicketsPage from './pages/Tickets';
@@ -38,10 +39,11 @@ function Header() {
 export default function App() {
   return (
     <ThemeProvider>
-      <BrowserRouter>
-        <div className="min-h-screen bg-gray-50 text-gray-900 dark:bg-zinc-950 dark:text-gray-100">
-          <div className="mx-auto w-full max-w-7xl px-4 py-6 space-y-6">
-            <Header />
+      <ToastProvider>
+        <BrowserRouter>
+          <div className="min-h-screen bg-gray-50 text-gray-900 dark:bg-zinc-950 dark:text-gray-100">
+            <div className="mx-auto w-full max-w-7xl px-4 py-6 space-y-6">
+              <Header />
             <Tabs />
             <main className="pt-4">
               <Routes>
@@ -56,7 +58,8 @@ export default function App() {
             </main>
           </div>
         </div>
-      </BrowserRouter>
+        </BrowserRouter>
+      </ToastProvider>
     </ThemeProvider>
   );
 }

@@ -61,18 +61,34 @@ export default async function ticketsRoute(app: FastifyInstance) {
 
     const whereSql = where.length ? `WHERE ${where.join(' AND ')}` : '';
 
-    const rowsSql = `
-      SELECT id, symbol, strategy, direction, status,
-             opened_at_utc, closed_at_utc,
-             entry_price, stop_price, target_price, pnl, rr,
-             actionable, non_actionable_reason AS reason,
-             completed_by, completed_note, completed_at_utc
-        FROM tickets
-        ${whereSql}
-        ORDER BY opened_at_utc DESC
-        LIMIT ${limit} OFFSET ${offset}
+    const baseDistinct = `
+      SELECT DISTINCT ON (symbol, strategy, direction, opened_at_utc)
+        id, symbol, strategy, direction, status,
+        opened_at_utc, closed_at_utc,
+        entry_price, stop_price, target_price, pnl, rr,
+        actionable, non_actionable_reason AS reason,
+        completed_by, completed_note, completed_at_utc
+      FROM tickets
+      ${whereSql}
+      ORDER BY symbol, strategy, direction, opened_at_utc DESC, completed_at_utc DESC NULLS LAST, id DESC
     `;
-    const countSql = `SELECT COUNT(*)::int AS n FROM tickets ${whereSql}`;
+
+    const rowsSql = `
+      WITH ranked AS (
+        ${baseDistinct}
+      )
+      SELECT *
+      FROM ranked
+      ORDER BY opened_at_utc DESC, completed_at_utc DESC NULLS LAST, id DESC
+      LIMIT ${limit} OFFSET ${offset}
+    `;
+
+    const countSql = `
+      SELECT COUNT(*)::int AS n
+      FROM (
+        ${baseDistinct}
+      ) AS distinct_rows
+    `;
 
     const client = new Client({ connectionString: process.env.DATABASE_URL });
     await client.connect();
