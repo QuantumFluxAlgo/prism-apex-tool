@@ -18,6 +18,7 @@ import { analyticsRoutes } from './routes/analytics.js';
 import { auditRoutes } from './routes/audit.js';
 import { accountsRoutes } from './routes/accounts.js';
 import ticketsRoute from './routes/tickets.js';
+import ticketCompleteRoute from './routes/ticket.complete.js';
 import { tradingviewWebhookRoutes } from './routes/webhooks.tradingview.js';
 import readyRoute from './routes/ready.js';
 import { getConfig } from './config/env.js';
@@ -98,6 +99,7 @@ export function buildServer() {
   app.register(healthRoute);
   
   app.register(ticketsRoute);
+  app.register(ticketCompleteRoute);
   app.register(metricsRoute);
   app.register(analyticsRoutes);
   app.register(auditRoutes);
