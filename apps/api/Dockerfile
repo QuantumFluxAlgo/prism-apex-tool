@@ -8,6 +8,7 @@ RUN apk add --no-cache python3 make g++ curl && corepack enable
 # Workspace manifests (cache-friendly)
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 COPY tsconfig.base.json tsconfig.base.json
+COPY tsconfig.paths.json tsconfig.paths.json
 
 # Source
 COPY packages packages
@@ -15,6 +16,7 @@ COPY apps apps
 COPY sdks sdks
 COPY tests tests
 COPY apex apex
+COPY types types
 
 # Install all workspace deps (dev deps OK in build stage)
 RUN pnpm install --frozen-lockfile=false
@@ -26,11 +28,16 @@ RUN pnpm -r build
 RUN pnpm -C apps/api build
 
 # --- Build the OpenAPI JSON once (uses build-time deps only) ---
-# This tries common export shapes so we don't have to change your spec module.
+# Skip silently if the dist openapi module is absent
 RUN node -e "\
   const fs=require('fs');\
   const path=require('path');\
-  const specMod=require('/app/apps/api/dist/openapi/spec.js');\
+  const specPath='/app/apps/api/dist/openapi/spec.js';\
+  if(!fs.existsSync(specPath)){\
+    console.info('openapi/spec.js not found, skipping openapi.json generation');\
+    process.exit(0);\
+  }\
+  const specMod=require(specPath);\
   const choose=(m)=> m.buildOpenAPIDocument?.() \
                  ?? m.buildOpenApiDocument?.() \
                  ?? m.buildOpenApi?.() \
@@ -61,9 +68,12 @@ RUN mkdir -p /app/runtime/apps/api/dist /app/runtime/apex && \
 FROM node:20-alpine AS runtime
 WORKDIR /app
 ENV NODE_ENV=production
+RUN apk add --no-cache wget
 
 # Copy the prepared runtime (node_modules + API dist + apex) as a unit
 COPY --from=build /app/runtime/ /app/
+COPY configs /configs
+COPY README.md /app/README.md
 
 EXPOSE 3000
-CMD ["node", "/app/apps/api/dist/index.js"]
+CMD ["node", "/app/apps/api/dist/index.cjs"]

@@ -13,6 +13,8 @@ COPY packages packages
 COPY sdks sdks
 COPY tests tests
 COPY tsconfig.base.json tsconfig.base.json
+COPY tsconfig.paths.json tsconfig.paths.json
+COPY types types
 
 # Install deps (dev deps included because PNPM_CONFIG_PROD=false)
 RUN pnpm install --frozen-lockfile=false
@@ -35,4 +37,3 @@ COPY apps/dashboard/nginx.conf /etc/nginx/conf.d/default.conf
 
 EXPOSE 80
 CMD ["nginx", "-g", "daemon off;"]
-
