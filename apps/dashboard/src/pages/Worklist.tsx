@@ -6,7 +6,7 @@ import Button from '../ui/Button';
 import Badge from '../ui/Badge';
 import { fetchTickets, completeTicket, type TicketRow } from '../lib/api';
 import { fmtUtc } from '../utils/time';
-import { fmtPrice } from '../utils/number';
+import { fmtPrice, fmtR, fmtPnlUSD } from '../utils/number';
 
 type ActionableRow = TicketRow & {
   rr?: number | null;
@@ -97,13 +97,18 @@ export default function Worklist() {
       key: 'rr',
       header: 'R',
       align: 'right',
-      render: (row) => (row.rr !== null && row.rr !== undefined ? row.rr.toFixed(2) : '—'),
+      render: (row) => fmtR(row.rr),
     },
     {
       key: 'pnl',
       header: 'PnL',
       align: 'right',
-      render: (row) => fmtPrice(row.pnl ?? undefined),
+      render: (row) => fmtPnlUSD(row.pnl),
+    },
+    {
+      key: 'reason',
+      header: 'Warning',
+      render: (row) => (row.reason ? <span className="text-xs text-amber-600 dark:text-amber-300">{row.reason}</span> : '—'),
     },
     {
       key: 'action',
@@ -113,6 +118,7 @@ export default function Worklist() {
         <Button
           size="sm"
           variant="primary"
+          disabled={!row.actionable || row.direction !== 'LONG' || row.status !== 'OPEN'}
           onClick={async () => {
             if (!row.id) return;
             try {

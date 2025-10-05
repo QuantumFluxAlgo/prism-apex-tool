@@ -6,7 +6,7 @@ import FiltersBar from '../ui/FiltersBar';
 import Badge from '../ui/Badge';
 import Button from '../ui/Button';
 import { fmtUtc } from '../utils/time';
-import { fmtPrice, fmtPnL, calcR } from '../utils/number';
+import { fmtPrice, fmtR, fmtPnlUSD } from '../utils/number';
 import { fetchSymbols, fetchTickets, completeTicket, type TicketRow } from '../lib/api';
 
 type Filters = {
@@ -146,27 +146,29 @@ export default function TicketsPage() {
       key: 'rr',
       header: 'R',
       align: 'right',
-      render: (row) => {
-        const value = calcR(row.entry_price, row.stop_price, row.target_price);
-        return value === null ? '—' : value.toFixed(2);
-      },
+      render: (row) => fmtR(row.rr),
     },
     {
       key: 'pnl',
       header: 'PnL',
       align: 'right',
-      render: (row) => (
-        <Badge
-          tone={row.pnl !== null && row.pnl !== undefined ? (row.pnl > 0 ? 'green' : row.pnl < 0 ? 'red' : 'neutral') : 'neutral'}
-        >
-          {fmtPnL(row.pnl)}
-        </Badge>
-      ),
+      render: (row) => {
+        const pnl = row.pnl ?? null;
+        const tone = pnl === null ? 'neutral' : pnl > 0 ? 'green' : pnl < 0 ? 'red' : 'neutral';
+        return <Badge tone={tone}>{fmtPnlUSD(pnl)}</Badge>;
+      },
     },
     {
       key: 'status',
       header: 'Status',
-      render: (row) => <Badge tone={row.status === 'COMPLETE' ? 'blue' : 'amber'}>{row.status ?? '—'}</Badge>,
+      render: (row) => (
+        <div className="flex flex-col gap-1">
+          <Badge tone={row.status === 'COMPLETE' ? 'blue' : row.actionable ? 'green' : 'amber'}>{row.status ?? '—'}</Badge>
+          {!row.actionable && row.reason ? (
+            <span className="text-[11px] text-amber-600 dark:text-amber-300">{row.reason}</span>
+          ) : null}
+        </div>
+      ),
     },
     {
       key: 'actions',
@@ -174,7 +176,7 @@ export default function TicketsPage() {
       className: 'text-right',
       render: (row) => {
         const id = row.id ? String(row.id) : undefined;
-        const disabled = !id || row.status === 'COMPLETE' || row.direction === 'SHORT' || busyId === id;
+        const disabled = !id || row.direction !== 'LONG' || row.status !== 'OPEN' || !row.actionable || busyId === id;
         return (
           <div className="flex justify-end gap-2">
             <Button
