@@ -50,3 +50,20 @@ services:
     command: ["node", "apps/ingest/dist/gapfill.js"]
     depends_on:
       - db
+
+  tickets-once:
+    build:
+      context: .
+      target: api
+    image: prism-apex/tickets:latest
+    environment:
+      - DATABASE_URL=${DATABASE_URL:-postgres://apex:apex@db:5432/prismapex}
+      - YAHOO_SYMBOLS=${YAHOO_SYMBOLS:-ES=F,NQ=F,GC=F,CL=F}
+      - TICKETS_DAYS=${TICKETS_DAYS:-30}
+      - ORR_OR_MIN=${ORR_OR_MIN:-5}
+      - ORR_WINDOW_MIN=${ORR_WINDOW_MIN:-60}
+      - SESSION_OPEN_UTC=${SESSION_OPEN_UTC:-23:05}
+      - SESSION_CLOSE_UTC=${SESSION_CLOSE_UTC:-21:55}
+    command: ["node","apps/tickets/dist/backfill-orr.js"]
+    depends_on:
+      - db
