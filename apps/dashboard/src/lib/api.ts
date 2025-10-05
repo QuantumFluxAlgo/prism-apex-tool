@@ -21,6 +21,29 @@ export type Ticket = {
   };
   reasons?: string[];
 };
+
+export type TicketRow = {
+  id?: string | number;
+  symbol: string;
+  strategy: string;
+  direction: 'LONG' | 'SHORT' | string;
+  status?: 'OPEN' | 'CLOSED' | 'COMPLETE';
+  session_date_utc?: string | null;
+  opened_at_utc: string | null;
+  closed_at_utc: string | null;
+  entry_price: number | null;
+  exit_price: number | null;
+  pnl: number | null;
+  stop_price?: number | null;
+  target_price?: number | null;
+  meta?: Record<string, unknown>;
+};
+
+export type TicketsResponse = {
+  total?: number;
+  rows?: TicketRow[];
+};
+
 export const Market: {
   positions: () => Promise<Position[]>;
   orders: () => Promise<Order[]>;
@@ -28,12 +51,14 @@ export const Market: {
   positions: async () => [],
   orders: async () => [],
 };
+
 export type Position = {
   symbol: string;
   qty: number;
   avgPrice?: number;
   unrealizedPnl?: number;
 };
+
 export type Order = {
   id: number | string;
   symbol: string;
@@ -63,6 +88,52 @@ async function request(base: string, path: string, init?: RequestInit) {
 export const api = {
   get: (path: string) => request(COMPAT_BASE, path),
   tickets: (date: string, cursor?: string) =>
-    request(DIRECT_BASE, `/api/tickets?date=${date}&strategy=ORR${cursor ? `&cursor=${cursor}` : ''}`),
+    request(
+      DIRECT_BASE,
+      `/api/tickets?date=${date}&strategy=ORR${cursor ? `&cursor=${cursor}` : ''}`,
+    ),
   ready: () => request(DIRECT_BASE, '/ready'),
 };
+
+export async function fetchSymbols(): Promise<string[]> {
+  const res = await request(DIRECT_BASE, '/api/symbols');
+  if (Array.isArray((res as any).symbols)) {
+    return (res as any).symbols as string[];
+  }
+  return [];
+}
+
+export async function fetchTickets(params: {
+  from?: string;
+  to?: string;
+  symbol?: string;
+  strategy?: string;
+  status?: string;
+  limit?: number;
+  offset?: number;
+}): Promise<TicketsResponse> {
+  const base = typeof window === 'undefined' ? 'http://localhost:3000' : window.location.origin;
+  const url = new URL('/api/tickets', base);
+  const search = url.searchParams;
+
+  if (params.from) search.set('from', params.from);
+  if (params.to) search.set('to', params.to);
+  if (params.symbol && params.symbol !== 'ALL') search.set('symbol', params.symbol);
+  if (params.strategy && params.strategy !== 'ALL') search.set('strategy', params.strategy);
+  if (params.status && params.status !== 'ANY') search.set('status', params.status);
+
+  search.set('limit', String(params.limit ?? 25));
+  search.set('offset', String(params.offset ?? 0));
+
+  const response = await fetch(url.toString());
+  if (!response.ok) {
+    const text = await response.text().catch(() => '');
+    throw new Error(`Failed tickets: ${response.status}${text ? ` ${text}` : ''}`);
+  }
+
+  const data = (await response.json()) as TicketsResponse;
+  return {
+    total: typeof data.total === 'number' ? data.total : data.rows?.length ?? 0,
+    rows: Array.isArray(data.rows) ? data.rows : [],
+  };
+}
