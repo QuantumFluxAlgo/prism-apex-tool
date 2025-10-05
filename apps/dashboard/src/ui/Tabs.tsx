@@ -6,6 +6,7 @@ const items = [
   { path: '/positions', label: 'Positions' },
   { path: '/reports', label: 'Reports' },
   { path: '/metrics', label: 'Metrics' },
+  { path: '/worklist', label: 'Worklist' },
 ];
 
 export default function Tabs() {
