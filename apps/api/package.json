@@ -58,6 +58,7 @@
     "@prism-apex/strategy-apx-ddb01": "workspace:*",
     "fastify": "5.6.1",
     "fastify-plugin": "5.1.0",
+    "pg": "^8.13.1",
     "tsconfig-paths": "latest",
     "yahoo-finance2": "2.13.3",
     "zod": "^3.23.8",

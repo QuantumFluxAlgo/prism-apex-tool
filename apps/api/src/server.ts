@@ -23,6 +23,7 @@ import readyRoute from './routes/ready.js';
 import { getConfig } from './config/env.js';
 import jobsBoot from './jobs/boot.js';
 import strategyAlias from './plugins/strategy-alias.js';
+import metricsRoute from './routes/metrics.js';
 
 const cfg = getConfig();
 
@@ -95,6 +96,7 @@ export function buildServer() {
   app.register(readyRoute);
   app.register(healthRoute);
   app.register(versionRoute);
+  app.register(metricsRoute);
   app.register(analyticsRoutes);
   app.register(auditRoutes);
   app.register(accountsRoutes);
