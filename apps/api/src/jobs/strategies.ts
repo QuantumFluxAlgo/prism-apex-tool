@@ -108,10 +108,10 @@ interface Ddb01Config {
 interface Config {
   VWAP_FT: Record<string, any>;
   OSB: Record<string, any>;
-  'APX-DDB-01': Ddb01Config;
+  'ORR': Ddb01Config;
 }
 
-let cfg: Config = { VWAP_FT: {}, OSB: {}, 'APX-DDB-01': {} };
+let cfg: Config = { VWAP_FT: {}, OSB: {}, 'ORR': {} };
 
 function loadConfig(): Config {
   const defaultPath =
@@ -125,7 +125,7 @@ function loadConfig(): Config {
   return {
     VWAP_FT: parsed?.VWAP_FT ?? {},
     OSB: parsed?.OSB ?? {},
-    'APX-DDB-01': parsed?.['APX-DDB-01'] ?? {},
+    'ORR': parsed?.['ORR'] ?? {},
   };
 }
 
@@ -215,7 +215,7 @@ function onBar(bar: BarMessage): void {
   }
 
   updateDdbState(cs, bar, wkey);
-  maybeEmitDdbSuggestion(bar, cs, tick, cfg['APX-DDB-01']);
+  maybeEmitDdbSuggestion(bar, cs, tick, cfg['ORR']);
 
   swings(cs.bars as any, 3); // computed for side-effects (debug)
 
@@ -327,7 +327,7 @@ function maybeEmitDdbSuggestion(
   const target = roundPrice(entry + targetTicks * tick.tickSize);
 
   const meta: Suggestion['meta'] = {
-    strategy: 'APX-DDB-01',
+    strategy: 'ORR',
     rr: plan.rr,
     notes: plan.notes,
     weeklyVwap,

@@ -2,6 +2,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 
 import ThemeProvider, { useTheme } from './ui/ThemeProvider';
 import Tabs from './ui/Tabs';
+import SessionCountdown from './ui/SessionCountdown';
 import TicketsPage from './pages/Tickets';
 import PositionsPage from './pages/Positions';
 import ReportsPage from './pages/Reports';
@@ -20,13 +21,16 @@ function Header() {
           Shared shell for tickets, positions, reports, and metrics.
         </p>
       </div>
-      <button
-        type="button"
-        onClick={() => setMode(isDark ? 'light' : 'dark')}
-        className="self-start rounded-full border border-gray-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-4 py-2 text-sm text-gray-700 dark:text-gray-200 shadow-sm"
-      >
-        {isDark ? 'Switch to light' : 'Switch to dark'}
-      </button>
+      <div className="flex flex-col items-end gap-2 text-right">
+        <SessionCountdown />
+        <button
+          type="button"
+          onClick={() => setMode(isDark ? 'light' : 'dark')}
+          className="self-start rounded-full border border-gray-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-4 py-2 text-sm text-gray-700 dark:text-gray-200 shadow-sm"
+        >
+          {isDark ? 'Switch to light' : 'Switch to dark'}
+        </button>
+      </div>
     </header>
   );
 }
