@@ -7,7 +7,9 @@ import Badge from '../ui/Badge';
 import Button from '../ui/Button';
 import { fmtUtc } from '../utils/time';
 import { fmtPrice, fmtR, fmtPnlUSD } from '../utils/number';
+import { tooltipPnL, tooltipDist } from '../utils/ticks';
 import { fetchSymbols, fetchTickets, completeTicket, type TicketRow } from '../lib/api';
+import { useToast } from '../context/ToastContext';
 
 type Filters = {
   from?: string;
@@ -18,7 +20,18 @@ type Filters = {
   showShorts?: boolean;
 };
 
+const deriveR = (row: TicketRow) => {
+  if (row.rr !== null && row.rr !== undefined && !Number.isNaN(row.rr)) return row.rr;
+  const entry = row.entry_price;
+  const stop = row.stop_price;
+  const target = row.target_price;
+  if (entry === null || entry === undefined || stop === null || stop === undefined || target === null || target === undefined) return null;
+  if (entry === stop) return null;
+  return Math.abs((target - entry) / (entry - stop));
+};
+
 export default function TicketsPage() {
+  const { toast } = useToast();
   const [rows, setRows] = useState<TicketRow[]>([]);
   const [total, setTotal] = useState<number>(0);
   const [symbols, setSymbols] = useState<string[]>([]);
@@ -134,19 +147,27 @@ export default function TicketsPage() {
       key: 'stop_price',
       header: 'Stop',
       align: 'right',
-      render: (row) => fmtPrice(row.stop_price),
+      render: (row) => (
+      <span title={tooltipDist(row.symbol, row.entry_price, row.stop_price, 'Stop Δ')}>
+        {fmtPrice(row.stop_price)}
+      </span>
+    ),
     },
     {
       key: 'target_price',
       header: 'Target',
       align: 'right',
-      render: (row) => fmtPrice(row.target_price),
+      render: (row) => (
+      <span title={tooltipDist(row.symbol, row.entry_price, row.target_price, 'Target Δ')}>
+        {fmtPrice(row.target_price)}
+      </span>
+    ),
     },
     {
       key: 'rr',
       header: 'R',
       align: 'right',
-      render: (row) => fmtR(row.rr),
+      render: (row) => fmtR(deriveR(row)),
     },
     {
       key: 'pnl',
@@ -189,6 +210,7 @@ export default function TicketsPage() {
                 try {
                   setBusyId(id);
                   const updated = await completeTicket(id, { user: 'operator' });
+                  toast('Ticket marked complete');
                   setRows((prev) => prev.map((entry) => (entry.id === id ? { ...entry, ...updated } : entry)));
                 } catch (err) {
                   setError(err instanceof Error ? err.message : String(err));
