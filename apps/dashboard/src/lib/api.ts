@@ -120,7 +120,7 @@ export async function fetchTickets(params: {
   if (params.to) search.set('to', params.to);
   if (params.symbol && params.symbol !== 'ALL') search.set('symbol', params.symbol);
   if (params.strategy && params.strategy !== 'ALL') search.set('strategy', params.strategy);
-  if (params.status && params.status !== 'ANY') search.set('status', params.status);
+  if (params.status && params.status !== 'ANY' && params.status !== 'ALL') search.set('status', params.status);
 
   search.set('limit', String(params.limit ?? 25));
   search.set('offset', String(params.offset ?? 0));
@@ -136,4 +136,15 @@ export async function fetchTickets(params: {
     total: typeof data.total === 'number' ? data.total : data.rows?.length ?? 0,
     rows: Array.isArray(data.rows) ? data.rows : [],
   };
+}
+
+export async function completeTicket(id: string, body: { user?: string; note?: string }) {
+  const res = await fetch(`/api/tickets/${encodeURIComponent(id)}/complete`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body ?? {}),
+  });
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  const json = await res.json();
+  return json.row as TicketRow;
 }
