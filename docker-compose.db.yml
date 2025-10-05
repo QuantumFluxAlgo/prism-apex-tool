@@ -36,5 +36,30 @@ services:
           echo "[db_maint] cron started (nightly VACUUM ANALYZE @ 02:00)"
           crond -f -l 8
 
+  gapfill-cron:
+    image: alpine:3.20
+    depends_on:
+      - db
+    environment:
+      - TZ=UTC
+      - DATABASE_URL=${DATABASE_URL:-postgres://apex:apex@db:5432/prismapex}
+      - YAHOO_SYMBOLS=${YAHOO_SYMBOLS:-ES=F,NQ=F,GC=F,CL=F}
+      - YAHOO_INTERVAL=${YAHOO_INTERVAL:-1m}
+    volumes:
+      - ./:/repo:ro
+    entrypoint:
+      - /bin/sh
+      - -lc
+      - |
+          set -e
+          apk add --no-cache nodejs-current npm >/dev/null
+          corepack enable >/dev/null 2>&1 || true
+          crontab - <<'CRON'
+          20 2 * * * node /repo/apps/ingest/dist/gapfill.js >> /var/log/gapfill-cron.log 2>&1
+          CRON
+          touch /var/log/gapfill-cron.log
+          echo "[gapfill-cron] scheduled daily 02:20 UTC (GMT)."
+          crond -f -l 8
+
 volumes:
   db_data:
