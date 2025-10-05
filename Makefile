@@ -15,3 +15,7 @@ ps:
 	$(COMPOSE) ps
 maint:
 	$(COMPOSE) run --rm db_maint sh -lc 'psql "$$DATABASE_URL" -v ON_ERROR_STOP=1 -f /maintenance/maintenance.sql && echo "VACUUM ANALYZE completed"'
+
+.PHONY: gapfill
+gapfill:
+	$(COMPOSE) run --rm gapfill-once
