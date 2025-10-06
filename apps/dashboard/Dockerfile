@@ -16,13 +16,8 @@ COPY tsconfig.base.json tsconfig.base.json
 COPY tsconfig.paths.json tsconfig.paths.json
 COPY types types
 
-# Install deps (dev deps included because PNPM_CONFIG_PROD=false)
-RUN pnpm install --frozen-lockfile=false
-
-# Build dashboard only
-WORKDIR /app/apps/dashboard
-RUN pnpm install --frozen-lockfile=false
-RUN pnpm run build
+# Install deps and build the dashboard only
+RUN pnpm -w install --ignore-scripts && pnpm -C apps/dashboard build
 
 # ---- Nginx stage ----
 FROM nginx:1.27-alpine AS runtime

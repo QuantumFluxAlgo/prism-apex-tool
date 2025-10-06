@@ -1,5 +1,6 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
+import YahooStatus from '../components/YahooStatus';
 
 const items = [
   { path: '/worklist', label: 'Worklist' },
@@ -29,6 +30,7 @@ export default function Tabs() {
           </Link>
         );
       })}
+      <YahooStatus />
     </div>
   );
 }
