@@ -2,7 +2,7 @@ import type { FastifyInstance } from 'fastify';
 import { Client } from 'pg';
 
 export default async function yahooHealthRoute(app: FastifyInstance) {
-  app.get('/api/health/yahoo', async (_req, _reply) => {
+  const handler = async () => {
     const client = new Client({ connectionString: process.env.DATABASE_URL });
     await client.connect();
     try {
@@ -14,14 +14,17 @@ export default async function yahooHealthRoute(app: FastifyInstance) {
          GROUP BY 1
          ORDER BY 1;
       `);
-      const status = rows.every(r => r.minutes_behind < 20)
+      const status = rows.every((r) => r.minutes_behind < 20)
         ? 'ok'
-        : rows.some(r => r.minutes_behind < 60)
+        : rows.some((r) => r.minutes_behind < 60)
           ? 'degraded'
           : 'down';
       return { status, rows };
     } finally {
       await client.end();
     }
-  });
+  };
+
+  app.get('/health/yahoo', handler);
+  app.get('/api/health/yahoo', handler);
 }
