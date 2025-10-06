@@ -1,5 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import DataTable, { type DataTableColumn } from '../ui/DataTable';
+import ReasonLegend from '../components/ReasonLegend';
+import CopyOcoButton from '../components/CopyOcoButton';
 import FiltersBar from '../ui/FiltersBar';
 import Kpi from '../ui/Kpi';
 import Button from '../ui/Button';
@@ -99,7 +101,7 @@ export default function Worklist() {
       header: 'Stop',
       align: 'right',
       render: (row) => (
-      <span title={tooltipDist(row.symbol, row.entry_price, row.stop_price, 'Stop Δ')}>
+      <span title={tooltipDist(row.symbol, row.entry_price ?? null, row.stop_price ?? null, 'Stop Δ')}>
         {fmtPrice(row.stop_price ?? undefined)}
       </span>
     ),
@@ -109,7 +111,7 @@ export default function Worklist() {
       header: 'Target',
       align: 'right',
       render: (row) => (
-      <span title={tooltipDist(row.symbol, row.entry_price, row.target_price, 'Target Δ')}>
+      <span title={tooltipDist(row.symbol, row.entry_price ?? null, row.target_price ?? null, 'Target Δ')}>
         {fmtPrice(row.target_price ?? undefined)}
       </span>
     ),
@@ -128,7 +130,7 @@ export default function Worklist() {
         const pnl = row.pnl ?? null;
         const tone = pnl === null ? 'neutral' : pnl > 0 ? 'green' : pnl < 0 ? 'red' : 'neutral';
         return (
-          <Badge tone={tone} title={tooltipPnL(row.symbol, row.entry_price, row.exit_price)}>
+          <Badge tone={tone} title={tooltipPnL(row.symbol, row.entry_price ?? null, row.exit_price ?? null)}>
             {fmtPnlUSD(pnl)}
           </Badge>
         );
@@ -137,36 +139,48 @@ export default function Worklist() {
     {
       key: 'reason',
       header: 'Warning',
-      render: (row) => (row.reason ? <span className="text-xs text-amber-600 dark:text-amber-300">{row.reason}</span> : '—'),
+      render: (row) => (row.reason ? <Badge tone="amber">{row.reason}</Badge> : '—'),
     },
     {
       key: 'action',
       header: '',
       className: 'text-right',
       render: (row) => (
-        <Button
-          size="sm"
-          variant="primary"
-          disabled={!row.actionable || row.direction !== 'LONG' || row.status !== 'OPEN'}
-          onClick={async () => {
-            if (!row.id) return;
-            try {
-              const updated = await completeTicket(String(row.id), { user: 'operator', note: 'worklist' });
-              toast('Ticket marked complete');
-              setRows((prev) => prev.filter((entry) => entry.id !== updated.id));
-            } catch (err) {
-              setError(err instanceof Error ? err.message : String(err));
-            }
-          }}
-        >
-          Mark Complete
-        </Button>
+        <div className="flex justify-end gap-2">
+          <CopyOcoButton
+            symbol={row.symbol}
+            direction={row.direction as 'LONG' | 'SHORT'}
+            entry={row.entry_price}
+            stop={row.stop_price}
+            target={row.target_price}
+            rr={deriveR(row) ?? undefined}
+            disabled={row.direction !== 'LONG'}
+          />
+          <Button
+            size="sm"
+            variant="primary"
+            disabled={!row.actionable || row.direction !== 'LONG' || row.status !== 'OPEN'}
+            onClick={async () => {
+              if (!row.id) return;
+              try {
+                const updated = await completeTicket(String(row.id), { user: 'operator', note: 'worklist' });
+                toast('Ticket marked complete');
+                setRows((prev) => prev.filter((entry) => entry.id !== updated.id));
+              } catch (err) {
+                setError(err instanceof Error ? err.message : String(err));
+              }
+            }}
+          >
+            Mark Complete
+          </Button>
+        </div>
       ),
     },
   ];
 
   return (
     <div className="space-y-4">
+      <ReasonLegend />
       <FiltersBar>
         <div className="flex w-full items-center justify-between">
           <div className="text-sm font-medium text-gray-700 dark:text-gray-200">Actionable Worklist</div>
