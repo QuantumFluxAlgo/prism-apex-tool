@@ -17,7 +17,7 @@ import versionRoute from './routes/version.js';
 import { analyticsRoutes } from './routes/analytics.js';
 import { auditRoutes } from './routes/audit.js';
 import { accountsRoutes } from './routes/accounts.js';
-import yahooHealthRoute from './routes/health.yahoo.js';
+import yahooHealthRoutes from './routes/health.yahoo.js';
 import { exportRoutes } from './routes/export.js';
 import ticketsRoute from './routes/tickets.js';
 import ticketCompleteRoute from './routes/ticket.complete.js';
@@ -106,7 +106,7 @@ export function buildServer() {
   app.register(analyticsRoutes);
   app.register(auditRoutes);
   app.register(accountsRoutes);
-  app.register(yahooHealthRoute);
+  app.register(yahooHealthRoutes);
   app.register(exportRoutes);
 
   app.register(marketRoutes);

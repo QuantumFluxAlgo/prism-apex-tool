@@ -40,6 +40,8 @@ services:
       RTH_OPEN_UTC: ${RTH_OPEN_UTC:-13:30Z}
       RTH_CLOSE_UTC: ${RTH_CLOSE_UTC:-20:59Z}
       FASTIFY_HOST: 0.0.0.0
+      YAHOO_OK_LAG_MIN: ${YAHOO_OK_LAG_MIN:-25}
+      YAHOO_DEGRADED_LAG_MIN: ${YAHOO_DEGRADED_LAG_MIN:-90}
     ports: ["3000:3000"]
     depends_on:
       db:
