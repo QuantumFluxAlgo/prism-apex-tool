@@ -42,7 +42,7 @@ services:
       FASTIFY_HOST: 0.0.0.0
       YAHOO_OK_LAG_MIN: ${YAHOO_OK_LAG_MIN:-25}
       YAHOO_DEGRADED_LAG_MIN: ${YAHOO_DEGRADED_LAG_MIN:-90}
-    ports: ["3000:3000"]
+    ports: ["${API_PORT:-3000}:3000"]
     depends_on:
       db:
         condition: service_healthy
