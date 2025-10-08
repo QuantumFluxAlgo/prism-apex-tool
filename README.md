@@ -69,3 +69,5 @@ make up
 ```
 
 See DEPLOY.md for details.
+
+See [docs/RUNBOOK.local.md](docs/RUNBOOK.local.md) for quick local start.
