@@ -40,7 +40,8 @@
     "lint:api": "eslint apps/api",
     "build:cjs:api": "tsc --module commonjs --target ES2020 --moduleResolution node --esModuleInterop --resolveJsonModule --outDir apps/api/dist-cjs/scripts apps/api/src/scripts/syncTickets.ts",
     "lint:legacy": "eslint -c .eslint/flat-merge.mjs .",
-    "guard:orders": "bash scripts/guard_no_order_placement.sh"
+    "guard:orders": "bash scripts/guard_no_order_placement.sh",
+    "guard:no-rapidapi": "bash scripts/guard_no_rapidapi.sh"
   },
   "engines": {
     "node": ">=20 <21"
