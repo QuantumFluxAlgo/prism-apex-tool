@@ -184,3 +184,5 @@ used for tests and development. Real PnL will be supplied in PR-C1.
 
 ## License
 Internal use only. Not for redistribution.
+
+See [docs/SMOKE.md](docs/SMOKE.md) for a local smoke test.
