@@ -6,3 +6,7 @@ pnpm-store
 **/.DS_Store
 **/*.log
 **/coverage
+
+!apps/dashboard/nginx.conf
+!apps/
+!apps/dashboard/
