@@ -257,3 +257,8 @@ docker compose run --rm tickets-once
 - API: http://localhost:3000
 - Dashboard: http://localhost:5180
 - Poller: http://localhost:8080 (for health/debug only)
+
+> **Free Yahoo mode**  
+> The stack uses public Yahoo endpoints and does **not** require `YAHOO_API_KEY`.  
+> The Yahoo poller health endpoint is `http://localhost:8080/health` (note: `/` returns `Cannot GET /` by design).
+
