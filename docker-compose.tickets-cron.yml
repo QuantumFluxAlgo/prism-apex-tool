@@ -2,7 +2,7 @@ services:
   tickets-cron:
     image: prism-apex/api:latest
     working_dir: /app
-    command: ["bash","-lc","while true; do echo \"[tickets-cron] running\"; node apps/tickets/dist/backfill-orr.js || true; sleep ${TICKETS_CRON_SEC:-300}; done"]
+    command: ["bash","-lc","while true; do echo \"[tickets-cron] running\"; node apps/tickets/dist/backfill-orr.js || true; sleep ${TICKETS_CRON_SEC:-60}; done"]
     env_file:
       - .env
     environment:

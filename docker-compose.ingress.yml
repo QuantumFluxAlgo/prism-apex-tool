@@ -15,3 +15,8 @@ services:
       - "8080:8080"
     restart: unless-stopped
     command: ["pnpm","-C","apps/ingress-yahoo-dev","start"]
+    healthcheck:
+      test: ["CMD-SHELL","wget -qO- http://localhost:8080/ || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 3

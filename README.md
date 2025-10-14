@@ -209,3 +209,51 @@ docker compose up -d --build api dashboard
 # Health:  http://localhost:3000/health
 # UI:      http://localhost:5180/
 ```
+
+## 24/7 Full Stack (Local)
+
+This brings up **DB + API + Dashboard + Yahoo poller + scheduled gap-fill + 60s ORR tickets** in one go.
+
+```bash
+# Use the committed overrides & cron
+export COMPOSE_FILE="docker-compose.yml:docker-compose.override.yml:docker-compose.db.yml:docker-compose.dashboard-full.yml:docker-compose.ingress.yml:docker-compose.api.override.yml:docker-compose.override.local.yml:docker-compose.local.patch.yml:docker-compose.local.instruments.yml:docker-compose.local.ports.yml:docker-compose.tickets-cron.yml"
+
+# Start everything (rebuild if needed)
+docker compose up -d --build db api dashboard-full ingress-yahoo gapfill-cron tickets-cron
+
+# Health checks
+curl -sS http://localhost:3000/health       # API → {"status":"ok"}
+curl -sS "http://localhost:3000/tickets?limit=3" | jq
+curl -sS http://localhost:5180/ | head -n 5  # Dashboard HTML
+# Optional: poller HTML (only for debugging)
+# curl -sS http://localhost:8080/ | head -n 5
+
+# Data sanity (last 28d coverage)
+docker compose exec -T db psql -U apex -d prismapex -c "
+  SELECT symbol, MIN(ts_utc) AS first, MAX(ts_utc) AS last, COUNT(*) AS bars_28d
+  FROM prism.bars_1m
+  WHERE ts_utc >= now() - interval '28 days'
+  GROUP BY 1 ORDER BY 1;"
+
+# Tickets sanity
+docker compose exec -T db psql -U apex -d prismapex -c "
+  SELECT symbol, COUNT(*) FROM prism.tickets GROUP BY 1 ORDER BY 1;"
+
+```
+
+One-liners
+
+```bash
+# Rebuild + restart core app surfaces
+docker compose up -d --build api dashboard-full
+
+# Manual backfills if needed
+docker compose run --rm ingest-once
+docker compose run --rm tickets-once
+```
+
+**Ports**
+
+- API: http://localhost:3000
+- Dashboard: http://localhost:5180
+- Poller: http://localhost:8080 (for health/debug only)
