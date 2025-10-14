@@ -262,3 +262,26 @@ docker compose run --rm tickets-once
 > The stack uses public Yahoo endpoints and does **not** require `YAHOO_API_KEY`.  
 > The Yahoo poller health endpoint is `http://localhost:8080/health` (note: `/` returns `Cannot GET /` by design).
 
+
+## 24/7 Operation (One-Click)
+
+Use `make up` / `make down` to start/stop the whole stack. On Linux servers, enable systemd so it starts on boot:
+
+```bash
+sudo cp deploy/systemd/prism-apex-tool.service /etc/systemd/system/
+sudo systemctl daemon-reload
+sudo systemctl enable --now prism-apex-tool
+```
+
+### Health checks
+```bash
+curl -sS http://localhost:3000/health      # API should be {"status":"ok"}
+curl -sS http://localhost:8080/health      # Ingress should be {"ok":true}
+open  http://localhost:5180/worklist       # Dashboard tickets/worklist
+```
+
+**Notes**
+- Yahoo mode is keyless; the ingress home page shows `Cannot GET /` by design — use `/health`.
+- Tickets refresh every **60s**; daily **gapfill** runs at **02:20 UTC**.
+- Symbols: ES,NQ,YM,RTY,GC,CL,6E,EURUSD.
+
