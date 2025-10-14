@@ -194,49 +194,59 @@ async function insertTicket(pg: Client, symbol: string, sessionDate: string, tic
     else if (rr < 2.0) reason = 'R:R below 2.0';
     else if (rr > 4.5) reason = 'R:R above 4.5';
   }
-  await pg.query(`
-    INSERT INTO tickets (
-      symbol, strategy, direction, session_date_utc,
-      opened_at_utc, closed_at_utc, entry_price, exit_price,
-     stop_price, target_price, pnl,
-    rr,
-    actionable,
-    reason, rr, actionable, non_actionable_reason, meta
-    ) VALUES (
-      $1,'ORR',$2,$3::date,$4,$5,$6,$7,$8,$9,$10,
-      jsonb_build_object(
-        'orHigh',$11::double precision,
-        'orLow',$12::double precision,
-        'openingRangeMinutes',$13::int,
-        'reversalWindowMinutes',$14::int
+  await pg.query(
+    `
+      INSERT INTO tickets (
+        symbol, strategy, direction, session_date_utc,
+        opened_at_utc, closed_at_utc, entry_price, exit_price,
+        stop_price, target_price, pnl,
+        rr,
+        actionable,
+        non_actionable_reason,
+        meta
+      ) VALUES (
+        $1,'ORR',$2,$3::date,$4,$5,$6,$7,$8,$9,$10,
+        $11,
+        $12,
+        $13,
+        jsonb_build_object(
+          'orHigh',$14::double precision,
+          'orLow',$15::double precision,
+          'openingRangeMinutes',$16::int,
+          'reversalWindowMinutes',$17::int
+        )
       )
-    )
-    ON CONFLICT (symbol, strategy, direction, opened_at_utc) DO UPDATE SET
-      entry_price = EXCLUDED.entry_price,
-      exit_price = EXCLUDED.exit_price,
-      stop_price = EXCLUDED.stop_price,
-      target_price = EXCLUDED.target_price,
-      pnl = EXCLUDED.pnl,
-      rr = EXCLUDED.rr,
-      actionable = EXCLUDED.actionable,
-      non_actionable_reason = EXCLUDED.non_actionable_reason,
-      meta = EXCLUDED.meta
-  `, [
-    symbol,
-    ticket.direction,
-    sessionDate,
-    ticket.openedAt.toISOString(),
-    ticket.closedAt.toISOString(),
-    ticket.entry,
-    ticket.exit,
-    ticket.stop,
-    ticket.target,
-    pnl,
-    ticket.orHigh,
-    ticket.orLow,
-    cfg.openingRangeMinutes,
-    cfg.reversalWindowMinutes
-  ]);
+      ON CONFLICT (symbol, strategy, direction, opened_at_utc) DO UPDATE SET
+        entry_price = EXCLUDED.entry_price,
+        exit_price = EXCLUDED.exit_price,
+        stop_price = EXCLUDED.stop_price,
+        target_price = EXCLUDED.target_price,
+        pnl = EXCLUDED.pnl,
+        rr = EXCLUDED.rr,
+        actionable = EXCLUDED.actionable,
+        non_actionable_reason = EXCLUDED.non_actionable_reason,
+        meta = EXCLUDED.meta
+    `,
+    [
+      symbol,
+      ticket.direction,
+      sessionDate,
+      ticket.openedAt.toISOString(),
+      ticket.closedAt.toISOString(),
+      ticket.entry,
+      ticket.exit,
+      ticket.stop,
+      ticket.target,
+      pnl,
+      rr,
+      actionable,
+      reason,
+      ticket.orHigh,
+      ticket.orLow,
+      cfg.openingRangeMinutes,
+      cfg.reversalWindowMinutes,
+    ],
+  );
 }
 
 async function run() {

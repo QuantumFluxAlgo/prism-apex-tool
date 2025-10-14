@@ -1,7 +1,8 @@
 services:
   dashboard-full:
     build:
-      context: apps/dashboard
+      context: .
+      dockerfile: apps/dashboard/Dockerfile
     image: prism-apex/dashboard-full:local
     container_name: prism-apex-dashboard-full
     environment:
@@ -10,8 +11,6 @@ services:
       API_BASE_URL: "http://api:3000"
     depends_on:
       - api
-    ports:
-      - "8080:8080"
     volumes:
       - api-data:/data:ro
     restart: unless-stopped

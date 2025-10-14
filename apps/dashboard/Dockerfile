@@ -1,5 +1,5 @@
 # ---- Build stage ----
-FROM node:20-alpine AS build
+FROM node:20-slim AS build
 
 WORKDIR /app
 ENV CI=1 PNPM_CONFIG_PROD=false
@@ -10,7 +10,6 @@ COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 COPY apps/dashboard/package.json apps/dashboard/package.json
 COPY apps apps
 COPY packages packages
-COPY sdks sdks
 COPY tests tests
 COPY tsconfig.base.json tsconfig.base.json
 COPY tsconfig.paths.json tsconfig.paths.json
