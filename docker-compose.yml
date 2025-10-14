@@ -31,7 +31,7 @@ services:
     image: prism-apex/ingest:latest
     environment:
       - DATABASE_URL=${DATABASE_URL:-postgres://apex:apex@db:5432/prismapex}
-      - YAHOO_SYMBOLS=${YAHOO_SYMBOLS:-ES=F,NQ=F,GC=F,CL=F}
+      - YAHOO_SYMBOLS=${YAHOO_SYMBOLS:-ES=F,NQ=F,YM=F,RTY=F,GC=F,CL=F,6E=F,EURUSD=X}
       - YAHOO_RANGE=${YAHOO_RANGE:-30d}
       - YAHOO_INTERVAL=${YAHOO_INTERVAL:-1m}
     command: ["node", "apps/ingest/dist/backfill.js"]
@@ -45,7 +45,7 @@ services:
     image: prism-apex/ingest:latest
     environment:
       - DATABASE_URL=${DATABASE_URL:-postgres://apex:apex@db:5432/prismapex}
-      - YAHOO_SYMBOLS=${YAHOO_SYMBOLS:-ES=F,NQ=F,GC=F,CL=F}
+      - YAHOO_SYMBOLS=${YAHOO_SYMBOLS:-ES=F,NQ=F,YM=F,RTY=F,GC=F,CL=F,6E=F,EURUSD=X}
       - YAHOO_INTERVAL=${YAHOO_INTERVAL:-1m}
     command: ["node", "apps/ingest/dist/gapfill.js"]
     depends_on:
@@ -58,7 +58,7 @@ services:
     image: prism-apex/tickets:latest
     environment:
       - DATABASE_URL=${DATABASE_URL:-postgres://apex:apex@db:5432/prismapex}
-      - YAHOO_SYMBOLS=${YAHOO_SYMBOLS:-ES=F,NQ=F,GC=F,CL=F}
+      - YAHOO_SYMBOLS=${YAHOO_SYMBOLS:-ES=F,NQ=F,YM=F,RTY=F,GC=F,CL=F,6E=F,EURUSD=X}
       - TICKETS_DAYS=${TICKETS_DAYS:-30}
       - ORR_OR_MIN=${ORR_OR_MIN:-5}
       - ORR_WINDOW_MIN=${ORR_WINDOW_MIN:-60}
