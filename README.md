@@ -186,3 +186,26 @@ used for tests and development. Real PnL will be supplied in PR-C1.
 Internal use only. Not for redistribution.
 
 See [docs/SMOKE.md](docs/SMOKE.md) for a local smoke test.
+
+---
+
+## Quickstart (Local, 8 Symbols)
+
+```bash
+export COMPOSE_FILE="docker-compose.yml:docker-compose.override.yml:docker-compose.db.yml:docker-compose.dashboard.yml:docker-compose.ingress.yml:docker-compose.api.override.yml:docker-compose.override.local.yml:docker-compose.local.patch.yml:docker-compose.local.instruments.yml"
+
+# Bring up DB and wait
+docker compose up -d db
+docker compose exec -T db bash -lc 'until pg_isready -h 127.0.0.1 -p 5432; do sleep 1; done'
+
+# Backfill minute bars (last 28–30d) for ES,NQ,YM,RTY,GC,CL,6E,EURUSD
+docker compose run --rm ingest-once
+
+# One-shot ORR tickets
+docker compose run --rm tickets-once
+
+# API + Dashboard
+docker compose up -d --build api dashboard
+# Health:  http://localhost:3000/health
+# UI:      http://localhost:5180/
+```
