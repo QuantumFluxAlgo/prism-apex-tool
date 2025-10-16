@@ -1,1 +1,0 @@
-No matching log found for pattern: reports/lint/round2_1/*/lint.out
