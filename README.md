@@ -1,8 +1,87 @@
 # Prism-Apex Tool
 
-Operator-assisted trading — tickets-only. Docker-only dev & deploy.
+## Contents
 
-> This page was auto-generated from existing repo docs. Check TODO/TBD markers.
+- [Quick Start](#quick-start)
+- [Docs Map](#docs-map)
+- [Non-Negotiables](#non-negotiables)
+- [Mission](#mission)
+- [Runtime Model (Docker-only)](#runtime-model-docker-only)
+- [Dataflow (High-Level)](#dataflow-high-level)
+- [In-Scope Strategies (MVP)](#in-scope-strategies-mvp)
+- [Apex Guardrails (Enforced)](#apex-guardrails-enforced)
+- [Tickets (Canonical)](#tickets-canonical)
+- [Prereqs](#prereqs)
+- [Run](#run)
+- [API-focused commands](#api-focused-commands)
+- [API bundling](#api-bundling)
+- [Path aliases](#path-aliases)
+- [Core Flow (Yahoo → DB → ORR → Tickets → Dashboard)](#core-flow-yahoo-db-orr-tickets-dashboard)
+- [Repository Landmarks](#repository-landmarks)
+- [Guardrails & Compliance Reminders](#guardrails-compliance-reminders)
+- [Onboarding Checklist](#onboarding-checklist)
+- [Current Functionality Snapshot (Yahoo → DB → ORR → Tickets → Dashboard)](#current-functionality-snapshot-yahoo-db-orr-tickets-dashboard)
+- [Core Flow at a Glance](#core-flow-at-a-glance)
+- [Repository Landmarks](#repository-landmarks)
+- [Development Guardrails](#development-guardrails)
+- [Working With the Tickets-Only Constraint](#working-with-the-tickets-only-constraint)
+- [Onboarding Checklist for New Contributors](#onboarding-checklist-for-new-contributors)
+- [Prerequisites](#prerequisites)
+- [1. Start the stack (Postgres on host **55433**)](#1-start-the-stack-postgres-on-host-55433)
+- [2. Verify everything is healthy](#2-verify-everything-is-healthy)
+- [3. Stop the stack](#3-stop-the-stack)
+- [Notes](#notes)
+- [Cleanup (SAFE / dry-run)](#cleanup-safe-dry-run)
+- [Git](#git)
+- [chore/post-merge-verification...origin/Test](#chorepost-merge-verificationorigintest)
+- [Cleanup (dry-run)](#cleanup-dry-run)
+- [Docker smoke](#docker-smoke)
+- [Purpose](#purpose)
+- [Rules](#rules)
+- [Usage](#usage)
+- [Purpose](#purpose)
+- [Location](#location)
+- [Usage](#usage)
+- [1. Evaluation Phase Rules](#1-evaluation-phase-rules)
+- [What It Does](#what-it-does)
+- [How to Use It](#how-to-use-it)
+- [Config Options](#config-options)
+- [Visuals](#visuals)
+- [1. Consistency Rules](#1-consistency-rules)
+- [2. Risk Management](#2-risk-management)
+- [3. Payout Rules](#3-payout-rules)
+- [Visuals](#visuals)
+- [1. Purchase Evaluation Plan](#1-purchase-evaluation-plan)
+- [2. Platform Setup](#2-platform-setup)
+- [3. Trading the Evaluation](#3-trading-the-evaluation)
+- [4. Passing Evaluation](#4-passing-evaluation)
+- [5. Activation of PA](#5-activation-of-pa)
+- [Visuals](#visuals)
+- [Rithmic + NinjaTrader](#rithmic-ninjatrader)
+- [How the Connection Works](#how-the-connection-works)
+- [Difficulty Rating: 8/10](#difficulty-rating-810)
+- [Pros](#pros)
+- [Cons](#cons)
+- [Step-by-Step Setup (Apex-Specific)](#step-by-step-setup-apex-specific)
+- [Watchouts & Best Practices](#watchouts-best-practices)
+- [Tradovate + TradingView](#tradovate-tradingview)
+- [How the Connection Works](#how-the-connection-works)
+- [Difficulty Rating: 3/10](#difficulty-rating-310)
+- [Pros](#pros)
+- [Cons](#cons)
+- [Step-by-Step Setup (Apex-Specific)](#step-by-step-setup-apex-specific)
+- [Watchouts & Best Practices](#watchouts-best-practices)
+- [WealthCharts](#wealthcharts)
+- [How the Connection Works](#how-the-connection-works)
+- [Difficulty Rating: 4/10](#difficulty-rating-410)
+- [Pros](#pros)
+- [Cons](#cons)
+- [Step-by-Step Setup (Apex-Specific)](#step-by-step-setup-apex-specific)
+- [Watchouts & Best Practices](#watchouts-best-practices)
+- [Comparison Matrix](#comparison-matrix)
+- [Recommendations](#recommendations)
+- [Supported Channels](#supported-channels)
+- [How to Use It](#how-to-use-it)
 
 ## Quick Start
 
@@ -81,11 +160,11 @@ Tradovate Market Data WS (live)
 
 
 ### In-Scope Strategies (MVP)
-- **VWAP First-Touch**  
-  Code: `packages/strategies/src/vwapFirstTouch.ts`  
+- **VWAP First-Touch**
+  Code: `packages/strategies/src/vwapFirstTouch.ts`
   Config: `configs/strategies/vwap-first-touch.json`
-- **Opening-Session Breakout (OSB)**  
-  Code: `packages/strategies/src/osbBreakout.ts`  
+- **Opening-Session Breakout (OSB)**
+  Code: `packages/strategies/src/osbBreakout.ts`
   Config: `configs/strategies/opening-session-breakout.json`
 
 Strategy toggling/scheduling is allowed via config; new strategies can be added later.
@@ -246,36 +325,6 @@ The codebase must never introduce broker order placement (tickets-only). CI enfo
 - Vitest pulls in the map via the `vite-tsconfig-paths` plugin (see the shared `vitest.config.ts` family), and Node-based setups/scripts load `tsconfig-paths/register` (e.g., `apps/api/test.setup.ts`).
 - Update `tsconfig.paths.json` whenever folders move; the rest follows automatically.
 
-## Ports & Env
-See [docs/ports-and-env.md](docs/ports-and-env.md) for guidance on API and dashboard port variables.
-
-
-
----
-**From:** `apex/README.md`
-
-# Apex Trader Funding Integration
-
-**Purpose:** Centralized documentation for evaluation, funded accounts, payouts, and platforms.
-
-
-**From:** `apex/platforms/README.md`
-
-# Apex Platform Options
-
-Overview of supported platforms: Rithmic/NinjaTrader, Tradovate/TradingView, WealthCharts.
-
-
-
----
-**From:** `docs/ARCHITECTURE_OVERVIEW.md`
-
-# Prism-Apex Architecture Overview (Tickets-Only Brain)
-
-Prism-Apex is the **brain** for operator-assisted trading on Apex Trader Funding accounts. We generate levels, guardrails, and tickets so a human operator can execute manually inside Tradovate. The platform never places an order or liquidates via API.
-
----
-
 ## Core Flow (Yahoo → DB → ORR → Tickets → Dashboard)
 1. **Yahoo delayed feed → DB** — background jobs pull ≈15-minute delayed data from the Yahoo Finance API and load it into Postgres.
 2. **Derived series in DB** — ORR and its namesake strategies read bar/VWAP/ATR series stored in the DB (no direct market-side API required).
@@ -367,26 +416,6 @@ Artifacts are uploaded on failure to help debugging.
   - Provides REST + WebSocket endpoints for telemetry, ticket download, health probes.
   - Stores strategy orchestrator jobs (`src/jobs`) and guardrails integration tests (`src/tests`).
 
-  - Front-end telemetry surfaces. Expect Vite + React with vitest configs in the root.
-  - Pulls tickets, account summaries, and health information. Does **not** place trades.
-- `tickets/`
-  - Operational JSONL log of every approved ticket. Treat as immutable history: archive only, never delete.
-- `packages/`
-  - Shared libraries: indicators, strategies, runtime, rules, telemetry. Most cross-cutting logic lives here.
-  - `packages/runtime` glues strategies + guardrails together.
-- `configs/`, `config/`
-  - Strategy enablement, environment toggles, size policies. Clarify which files are production vs experimental.
-- `scripts/`
-  - Operational utilities. `scan_repo.sh` is read-only; any cleanup script we add later will default to archive-first and require explicit opt-in for deletion.
-- `docs/`
-  - Architecture ADRs, runbooks, compliance notes, and now:
-    - `REPO_SCAN_REPORT.md` & `REPO_SCAN_QUESTIONS.md`
-    - `SCAN_SUMMARY_MESSAGE.md` (paste-ready status)
-    - This overview (`CODEBASE_OVERVIEW.md`) for onboarding.
-- `docker-compose*.yml`, `Dockerfile`
-  - Define the Docker-only runtime assumption. Align documented ports with these manifests to avoid drift.
-- `requirements.txt`, potential Python helpers
-  - Python 3.11 utilities (ETL, analytics). Respect lint/format defaults if you extend them.
 
 ---
 
@@ -1268,7 +1297,7 @@ Outputs
 - 5R clamp verified; daily loss proximity flags populated.
 - No `any`, TypeScript strict OK.
 
-**COMPLETION CHECK**  
+**COMPLETION CHECK**
 Files created/updated:
 
 - `packages/backtest/src/types.ts`
@@ -1770,7 +1799,7 @@ Builds CLI, runs backtest, writes results to `./out`.
 - `make demo` runs end-to-end without external dependencies.
 - All new TS compiles with `tsc` (strict) and no `any`.
 
-**COMPLETION CHECK**  
+**COMPLETION CHECK**
 Files created/updated:
 
 - `data/ES_1m.sample.csv`
@@ -2098,7 +2127,7 @@ flowchart TD
 
 ## Do / Don’t
 
-**Do:** Close early if in doubt.  
+**Do:** Close early if in doubt.
 **Don’t:** Carry any position past **21:59 GMT**.
 
 [Placeholder: screenshot flat confirmation]
@@ -2131,7 +2160,7 @@ flowchart TD
 
 ## Do / Don’t
 
-**Do:** Double-check symbol & account before submit.  
+**Do:** Double-check symbol & account before submit.
 **Don’t:** Modify ticket values unless instructed by PM/SA.
 
 [Placeholder: screenshot Tradovate OCO ticket]
@@ -2217,7 +2246,7 @@ flowchart TD
 
 ## Do / Don’t
 
-**Do:** Keep Slack open.  
+**Do:** Keep Slack open.
 **Don’t:** Enter trades before session open.
 
 [Placeholder: screenshot dashboard health]
@@ -2535,8 +2564,8 @@ Remember: runtime remains **tickets-only**. These ports expose telemetry and ope
 
 # Prism Apex Tool — Go-Live Master Checklist (Oct 1)
 
-**Owners:** Sean (CTO), Craig (CEO), Solutions Architect, IT PM, Lead Operator  
-**Environment:** Production (single Ubuntu host, Docker)  
+**Owners:** Sean (CTO), Craig (CEO), Solutions Architect, IT PM, Lead Operator
+**Environment:** Production (single Ubuntu host, Docker)
 **Decision Gate:** All boxes ✅ before enabling live operations on Oct 1.
 
 ---
@@ -2710,7 +2739,7 @@ curl -fsS http://<server>:8080/health
 
 # Prism Apex Tool — Executive Go-Live Sign-Off
 
-**Project:** Prism Apex Tool (Path 1b — Prop-Firm Equities/Futures Trading)  
+**Project:** Prism Apex Tool (Path 1b — Prop-Firm Equities/Futures Trading)
 **Go-Live Date:** Oct 1 (GMT)
 
 ---
@@ -2741,16 +2770,16 @@ curl -fsS http://<server>:8080/health
 
 ## Approval
 
-**CTO (Sean):**  
+**CTO (Sean):**
 Name: \***\*\*\*\*\***\_\_\_\***\*\*\*\*\*** Signature: \***\*\*\*\*\***\_\_\_\***\*\*\*\*\*** Date: \***\*\_\_\*\***
 
-**CEO (Craig):**  
+**CEO (Craig):**
 Name: \***\*\*\*\*\***\_\_\_\***\*\*\*\*\*** Signature: \***\*\*\*\*\***\_\_\_\***\*\*\*\*\*** Date: \***\*\_\_\*\***
 
-**Solutions Architect:**  
+**Solutions Architect:**
 Name: \***\*\*\*\*\***\_\_\_\***\*\*\*\*\*** Signature: \***\*\*\*\*\***\_\_\_\***\*\*\*\*\*** Date: \***\*\_\_\*\***
 
-**IT PM:**  
+**IT PM:**
 Name: \***\*\*\*\*\***\_\_\_\***\*\*\*\*\*** Signature: \***\*\*\*\*\***\_\_\_\***\*\*\*\*\*** Date: \***\*\_\_\*\***
 
 
@@ -2760,7 +2789,7 @@ Name: \***\*\*\*\*\***\_\_\_\***\*\*\*\*\*** Signature: \***\*\*\*\*\***\_\_\_\*
 
 # Prism Apex Tool — UAT Scenarios & Scripts
 
-**Goal:** Prove MVP works end-to-end with manual execution and Apex guardrails before Oct 1.  
+**Goal:** Prove MVP works end-to-end with manual execution and Apex guardrails before Oct 1.
 **Test Window:** Preferably same time window as live operations. All times GMT.
 
 ---
@@ -2947,59 +2976,6 @@ and funded accounts, applying appropriate controls for each stage.
 | Stop-Loss Presence    | ✅                     | Funded module requires stop-loss on each trade     |
 | Payout Caps           | ✅                     | Funded module computes capped payouts              |
 | Discretionary Conduct | ⚠️                     | Operators monitor for reckless behaviour           |
-
-## Technical References
-
-- [Evaluation Rules Module](../../rules/evaluation.py)
-- [Funded Rules Module](../../rules/funded.py)
-- [Unified Rule Engine](../../rules/engine.py)
-
-
-
----
-**From:** `docs/safe_cleanup.md`
-
-<!-- BEGIN: SAFE_CLEANUP_DOC -->
-# Safe Cleanup Script (`safe_cleanup.sh`)
-
-
-> **TL;DR**
-> - Preview (dry-run): `./safe_cleanup.sh`
-> - Execute locally (prompted): `DRY_RUN=0 ./safe_cleanup.sh`
-> - CI/scripted (no prompt, logged): `AUTO_YES=1 DRY_RUN=0 ./safe_cleanup.sh | tee cleanup_real.log`
-
-_Last updated: 2025-10-01_
-
-
-A **safe-by-default** helper that removes **only untracked files** within a tight allow-list of cache/scratch locations. It runs from the repo root, defaults to **dry-run**, prints a plan, and appends a timestamped summary to `docs/YAHOO_DATA_CLEANUP.md`.
-
----
-
-## Contents
-- [Quick Start](#quick-start)
-- [Behavior Matrix](#behavior-matrix)
-- [Exit Codes & Return Behavior](#exit-codes--return-behavior)
-- [Allow-List & Directory Handling](#allow-list--directory-handling)
-- [Logging & Audit Trail](#logging--audit-trail)
-- [Usage Patterns & CI](#usage-patterns--ci)
-- [Safety Guarantees](#safety-guarantees)
-- [Why Untracked-Only?](#why-untracked-only)
-- [Operator Checklist](#operator-checklist)
-- [Operator Runbook Snippets](#operator-runbook-snippets)
-- [Known Pitfalls](#known-pitfalls)
-- [Security & PII](#security--pii)
-- [FAQ](#faq)
-- [Troubleshooting](#troubleshooting)
-- [Glossary](#glossary)
-- [Tickets-Only Posture Reminder](#tickets-only-posture-reminder)
----
-- [Platform Notes & Shell Equivalents](#platform-notes--shell-equivalents)
-- [Operator Integration (Makefile / Justfile)](#operator-integration-makefile--justfile)
-- [Contributing (Docs/Tooling)](#contributing-docstooling)
-- [What Good Looks Like](#what-good-looks-like)
-- [Maintenance & Ownership](#maintenance--ownership)
-- [Prerequisites & Compatibility](#prerequisites--compatibility)
-- [Env Vars Quick Reference](#env-vars-quick-reference)
 
 ## Quick Start
 Preview (no deletions):
@@ -3232,82 +3208,6 @@ clean-safe:
 ```
 
 ---
-
-## Contributing (Docs/Tooling)
-- Keep PRs focused and small; scope to docs/tooling improvements.
-- Never add automated order placement, liquidation logic, or other trading automation in this path.
-- Target the `Test` branch (never main) and note operator impact in the PR description.
-
-### What Good Looks Like
-
-**Dry-run (expected):**
-```text
-=== SAFE CLEANUP (UNTRACKED ONLY) ===
-Git root: /…/prism-apex-tool-Test
-Dry run: 1
-
--- Files to delete (untracked, in allow-listed dirs): 0
-  (none)
-
--- Directories to delete recursively (build caches): 2
-  - .next
-  - .turbo
-(auto-continue: dry-run or AUTO_YES set or non-interactive)
-[DRY-RUN] No deletions performed.
-```
-
-**Execute with AUTO_YES (expected when there are candidates):**
-```text
-=== SAFE CLEANUP (UNTRACKED ONLY) ===
-Git root: /…/prism-apex-tool-Test
-Dry run: 0
-
--- Files to delete (untracked, in allow-listed dirs): 3
-  - tmp/sim.log
-  - data/snap/cache.bin
-  - .cache/test.idx
-
--- Directories to delete recursively (build caches): 1
-  - .turbo
-
-removed dir .turbo
-deleted tmp/sim.log
-deleted data/snap/cache.bin
-deleted .cache/test.idx
-rmdir tmp (empty)
-Done.
-```
-
-> If the output lists tracked files or non-allow-listed paths, **stop and investigate** before proceeding.
-
-### Maintenance & Ownership
-- **Owners**: Tooling/Docs maintainers (this path is docs/tooling-only).
-- **Scope**: Do **not** introduce order placement, liquidation logic, or strategy changes here.
-- **How to contribute**: Open a small PR to `Test` with operator impact noted; keep edits scoped to docs/tooling.
-- **Operating posture**: Tickets-only remains in force—operators still copy tickets into Tradovate OCO manually.
-
-### Prerequisites & Compatibility
-- **Git** installed with the repository cloned locally (script runs from repo root).
-- **Shell**: POSIX-compatible (bash/zsh); supported on **macOS**, **Linux**, and **WSL**. PowerShell users can use `$env:` syntax from the Platform Notes section.
-- **Docker** (optional): required only if you run the follow-up compose smoke checks; the cleanup itself has no Docker dependency.
-
-### Env Vars Quick Reference
-| Variable | Default | When to override | Effect |
-|----------|:-------:|------------------|--------|
-| `DRY_RUN` | `1` | Set `DRY_RUN=0` to perform deletions. | Toggle between preview and actual cleanup. |
-| `AUTO_YES` | `0` | Set `AUTO_YES=1` for non-interactive runs (CI/scripts). | Skips the confirmation prompt when `DRY_RUN=0`. |
-
-[↩︎ Back to top](#safe-cleanup-script-safe_cleanupsh)
-<!-- END: SAFE_CLEANUP_DOC -->
-
-
-
-
-
----
-**From:** `docs/simulator/overview.md`
-
-# Prism Apex Risk Simulator
 
 ## What It Does
 
@@ -3552,107 +3452,6 @@ Add header: x-webhook-secret: <your secret>
 - Ubuntu 22.04+ VM (you chose VM deployment)
 
 - Node LTS and pnpm (installer script handles it)
-
-## One‑time setup (as a sudo‑capable user)
-
-```bash
-# 1) Clone the repo into prism user's home (or adjust REPO_DIR for your layout)
-sudo useradd -m -s /bin/bash prism || true
-sudo -u prism -H bash -lc 'cd ~ && git clone https://github.com/QuantumFluxAlgo/prism-apex-tool.git || true'
-# If already cloned, pull latest Test branch
-sudo -u prism -H bash -lc 'cd ~/prism-apex-tool && git fetch && git checkout Test && git pull'
-
-# 2) Run the installer
-cd ~/prism-apex-tool
-sudo APP_USER=prism REPO_DIR=/home/prism/prism-apex-tool bash infra/systemd/install-prism-apex.sh
-
-# 3) Edit env and set secrets
-sudo -u prism nano /home/prism/prism-apex.env
-# Set TRADINGVIEW_WEBHOOK_SECRET and (optionally) BEARER_TOKEN
-
-# 4) Start service
-sudo systemctl start prism-apex
-sudo systemctl status prism-apex --no-pager
-
-# 5) Verify health
-
-```
-
-Logs & lifecycle
-
-```
-journalctl -u prism-apex -f
-sudo systemctl restart prism-apex
-sudo systemctl stop prism-apex
-```
-
-Data directory
-
-Default: /home/prism/prism-apex-data (tickets, accounts, exports)
-
-Ensure backups if needed.
-
-Reverse proxy (optional, HTTP only here)
-
-See [../nginx/README.md](../nginx/README.md) for Nginx + Let's Encrypt TLS termination.
-
-
-
-
-
-If proxy adds X-Forwarded-\*, set TRUST_PROXY=true in /home/prism/prism-apex.env
-
-Firewall quickstart (optional)
-
-```
-sudo ufw allow 22/tcp
-
-sudo ufw enable
-```
-
-Health endpoints
-
-GET /health → {"ok":true} when service is up
-
-GET /ready → readiness check
-
-GET /version → version metadata (if enabled)
-
-Updates / redeploy
-
-```
-sudo -u prism -H bash -lc 'cd ~/prism-apex-tool && git fetch && git checkout Test && git pull'
-sudo -u prism -H bash -lc 'pnpm install --prefer-offline --frozen-lockfile && pnpm --filter ./apps/api build'
-sudo systemctl restart prism-apex
-```
-
----
-
-
-
----
-**From:** `packages/analytics/README.md`
-
-# @prism-apex/analytics (stub)
-
-Temporary no-op analytics facade used to keep CI green.
-
-- `trackEvent(name, props)` – no-op
-- `trackError(error, context)` – no-op
-- `meter(name, value, tags)` – no-op
-- `createAnalyticsScope(scope)` – returns the same no-op fns
-
-Replace with a real implementation in a later telemetry PR.
-
-
-
----
-**From:** `reports/harvest/20250910-173432/summary.md`
-
-# Harvest r2 — 20250910-173432
-
-- Typecheck exit status: 2
-- Approx TS error hits (grep): 172
 
 ## Top TS files (current)
      14 packages/indicators/__tests__/swings.spec.ts
