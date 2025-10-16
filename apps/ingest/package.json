@@ -6,8 +6,7 @@
   "scripts": {
     "build": "tsc -p tsconfig.json",
     "start": "node dist/backfill.js",
-    "backfill": "node dist/backfill.js",
-    "gapfill": "node dist/gapfill.js"
+    "backfill": "node dist/backfill.js"
   },
   "dependencies": {
     "pg": "^8.13.1",

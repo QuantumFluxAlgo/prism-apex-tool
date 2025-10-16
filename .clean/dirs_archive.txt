@@ -1,6 +1,0 @@
-./.readme_backups
-./docs/scan
-./docs/_archive
-./ci_artifacts
-./.git/refs/tags/backup
-./reports

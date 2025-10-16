@@ -19,12 +19,9 @@
   ],
   "scripts": {
     "build": "tsup",
-    "clean": "rimraf dist",
     "test": "vitest run",
     "lint": "eslint . --ext .ts",
-    "typecheck": "tsc -p tsconfig.json --noEmit",
-    "format": "prettier -w .",
-    "format:check": "prettier -c ."
+    "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {},
   "devDependencies": {

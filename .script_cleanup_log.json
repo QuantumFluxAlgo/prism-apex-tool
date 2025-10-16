@@ -1,0 +1,140 @@
+{
+  "changed": 15,
+  "touched": [
+    {
+      "p": "apps/api/package.json",
+      "removed": [
+        "coverage",
+        "format",
+        "format:check"
+      ]
+    },
+    {
+      "p": "apps/dashboard/package.json",
+      "removed": [
+        "preview",
+        "test:ui",
+        "e2e"
+      ]
+    },
+    {
+      "p": "apps/ingest/package.json",
+      "removed": [
+        "gapfill"
+      ]
+    },
+    {
+      "p": "package.json",
+      "removed": [
+        "format",
+        "format:check",
+        "test:watch",
+        "coverage",
+        "prepare",
+        "clean",
+        "compose:up",
+        "compose:down",
+        "bootstrap",
+        "validate",
+        "versions",
+        "scan:strays",
+        "docker:build",
+        "docker:run",
+        "config:check",
+        "services:start",
+        "test:unit:local",
+        "test:unit",
+        "test:ci",
+        "test:unit:ws",
+        "compose:lite",
+        "compose:full",
+        "scan:dead:deps",
+        "scan:dead:symbols",
+        "lint:api",
+        "build:cjs:api",
+        "lint:legacy",
+        "guard:orders",
+        "guard:no-rapidapi",
+        "docs:refactor",
+        "docs:lint"
+      ]
+    },
+    {
+      "p": "packages/accounts/package.json",
+      "removed": [
+        "format"
+      ]
+    },
+    {
+      "p": "packages/audit/package.json",
+      "removed": [
+        "clean",
+        "format",
+        "format:check"
+      ]
+    },
+    {
+      "p": "packages/config/package.json",
+      "removed": [
+        "format",
+        "format:check"
+      ]
+    },
+    {
+      "p": "packages/consistency/package.json",
+      "removed": [
+        "clean",
+        "format",
+        "format:check"
+      ]
+    },
+    {
+      "p": "packages/metrics/package.json",
+      "removed": [
+        "format",
+        "format:check"
+      ]
+    },
+    {
+      "p": "packages/reporting/package.json",
+      "removed": [
+        "format",
+        "format:check"
+      ]
+    },
+    {
+      "p": "packages/rules/package.json",
+      "removed": [
+        "format",
+        "format:check"
+      ]
+    },
+    {
+      "p": "packages/rules-apex/package.json",
+      "removed": [
+        "format",
+        "format:check"
+      ]
+    },
+    {
+      "p": "packages/runtime/package.json",
+      "removed": [
+        "format",
+        "format:check"
+      ]
+    },
+    {
+      "p": "packages/signals/package.json",
+      "removed": [
+        "format",
+        "format:check"
+      ]
+    },
+    {
+      "p": "packages/ticketizer/package.json",
+      "removed": [
+        "format"
+      ]
+    }
+  ]
+}

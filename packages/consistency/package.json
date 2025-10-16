@@ -10,12 +10,9 @@
   ],
   "scripts": {
     "build": "tsc -b",
-    "clean": "rimraf dist",
     "lint": "eslint . --ext .ts",
     "test": "vitest run",
-    "typecheck": "tsc -p tsconfig.json --noEmit",
-    "format": "prettier -w .",
-    "format:check": "prettier -c ."
+    "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {},
   "devDependencies": {

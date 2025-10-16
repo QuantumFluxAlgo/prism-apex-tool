@@ -23,8 +23,7 @@
     "build": "tsc -p tsconfig.json",
     "test": "vitest --run",
     "typecheck": "tsc -p tsconfig.json --noEmit",
-    "lint": "eslint . --ext .ts",
-    "format": "prettier -w ."
+    "lint": "eslint . --ext .ts"
   },
   "dependencies": {},
   "devDependencies": {
