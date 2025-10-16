@@ -1,46 +1,25 @@
-# Prism-Apex Tool
+# Technical Specification
 
-Operator-assisted trading — tickets-only. Docker-only dev & deploy.
+Reference architecture, modules, data contracts, and guardrails.
 
 > This page was auto-generated from existing repo docs. Check TODO/TBD markers.
 
-## Quick Start
+## Architecture Overview
+- Tradovate WS → Bars/VWAP/ATR → Strategy Orchestrator (VWAP First-Touch, OSB) → Apex guardrails → Tickets JSONL → Dashboard
 
-- Docker required
-- `pnpm install --frozen-lockfile`
-- `docker compose up -d`
-- `pnpm docs:lint`
+## Modules
+- Strategy core (protected)
+- Guardrails (rules-apex, protected)
+- Tickets store & dashboard
+- Telemetry (read-only Tradovate REST)
 
-## Docs Map
+## Data Contracts
+- Tickets JSONL schema (TBD fill from existing docs)
+- Env var matrix (TBD)
 
-- [TECH-SPEC.md](./TECH-SPEC.md)
-- [AGENTS.md](./AGENTS.md)
-- [OPERATIONS.md](./OPERATIONS.md)
-- [INTEGRATIONS-TRADOVATE.md](./INTEGRATIONS-TRADOVATE.md)
-- [TESTING.md](./TESTING.md)
-- [CONTRIBUTING.md](./CONTRIBUTING.md)
-- [GLOSSARY.md](./GLOSSARY.md)
-
-## Non-Negotiables
-- Tickets-only (no API order placement)
-- Protected folders: strategy core, guardrails, infra/CI/CD
-- 12-factor config; structured JSON logs
-
----
-**From:** `CHANGELOG.md`
-
-Changelog
-Unreleased
-
-deprecation(root): remove stale backups and zero-byte placeholders
-
-chore(compose): add API healthcheck and drop unused root volumes
-
-docs: update Docker quickstart; add ADR; fix stale local endpoint/port mentions
-
-test: add Docker-only smoke script
-
-
+## Quality Bars
+- JS/TS: `pnpm lint && pnpm typecheck && pnpm test`
+- Python: `ruff --fix && black --check && pytest -q`
 
 ---
 **From:** `PROJECT.md`
@@ -158,131 +137,121 @@ JSON logs; no PII; CORS allow-list via env; health/readiness/metrics present.
 
 
 ---
-**From:** `README-Docker.md`
+**From:** `apex/platforms/rithmic.md`
 
-# Docker — API-only quickstart
+# Rithmic + NinjaTrader
 
-## Prereqs
-- Docker Desktop (Compose v2)
+**Purpose:** Document setup and caveats for Rithmic accounts.
 
-## Run
-```bash
-docker compose up -d --build
-docker compose ps
+## Setup Steps
 
-Verify
-curl -fsS http://localhost:3000/health
-curl -fsS http://localhost:3000/openapi.json | head -n 20
-curl -fsS http://localhost:3000/ready
-curl -fsS http://localhost:3000/version
-bash scripts/smoke-openapi.sh
-bash scripts/smoke-endpoints.sh
-bash scripts/smoke-api-docker.sh
-```
+- TODO: Provide step-by-step account linking and platform install instructions.
 
-Notes:
+## Windows Requirement
 
-This compose is API-only. Public endpoints: /health, /ready, /openapi.json, /version.
+- Platform requires Windows environment.
+- Compliance Note: Unsupported OS use may breach terms.
 
-scripts/smoke-api.sh is dev-only (requires host Node/tsc). Prefer the Docker-only scripts above.
+## Technical Difficulty
 
-For server deploys, docker-compose.prod.yml may map port 80 (via 80:${PORT:-8000}); local quickstart uses port 3000.
+- Rated 7/10.
+- Compliance Note: Operators should verify user competency before recommendation.
 
+## Pros
 
+- Low latency execution.
+- Flexible automation support.
+- Compliance Note: Automation must log orders for audit.
 
----
-**From:** `README-dev.md`
+## Cons
 
+- Windows-only; complex initial configuration; no mobile support.
+- Compliance Note: Document exceptions for Mac users.
 
-Developer Guide
-Ports at a glance
+## Watchouts
 
-API (prod-like via compose): 3000
+- Server selection impacts latency.
+- Concurrent logins restricted.
+- Data status must be real-time.
+- Compliance Note: Monitor for unauthorized API connections.
 
-Dashboard-Lite (compose): 5178
-
-Full Dashboard (compose): 8080
-
-API (dev script, if provided): 8000 (hot-reload)
-
-Dev workflow (hot reload, if scripts exist)
-./dev_api.sh              # API on :8000 (Fastify watch) — optional
-pnpm --filter @prism-apex/dashboard-lite dev   # Vite dev UI on :5173 (if applicable)
-
-Prod-like workflow (Docker)
-docker compose up -d --build
-docker compose -f docker-compose.yml -f docker-compose.dashboard-lite.yml up -d --build
-docker compose -f docker-compose.yml -f docker-compose.dashboard-full.yml up -d --build
-
-Sanity checks
-curl -fsS http://localhost:3000/health
-curl -fsS http://localhost:3000/ready
-
-Notes
-
-This repo may contain pre-existing lint/typecheck/test failures; CI runs are non-blocking except for the no-order-API guard, which is hard-fail by design.
-
-If Docker is not installed locally, compose builds will be skipped. Install Docker to run containers.
-
-Absolute rule
-
-The codebase must never introduce broker order placement (tickets-only). CI enforces this at PR time.
-
-### API-focused commands
-- `pnpm build:api` — build only the API workspace and its deps
-- `pnpm typecheck:api` — typecheck API scope
-- `pnpm test:api` — run API tests only
-
-### API bundling
-- Runtime artifact is **CommonJS**: `apps/api/dist/server.cjs` (bundled by **tsup**).
-- Typechecking remains via `tsc --noEmit` using `tsconfig.build.json`.
-- If your entry file is not `src/server.ts`, update `apps/api/tsup.config.ts`.
-
-### Path aliases
-- Source of truth: `tsconfig.paths.json`. `tsconfig.base.json` extends it so every workspace inherits the same `paths` map.
-- Use the `@prism-apex/<workspace>` pattern when importing. Examples:
-  - `@prism-apex/app-api/*` → `apps/api/src/*`
-  - `@prism-apex/rules-apex/*` → `packages/rules-apex/src/*`
-- Vitest pulls in the map via the `vite-tsconfig-paths` plugin (see the shared `vitest.config.ts` family), and Node-based setups/scripts load `tsconfig-paths/register` (e.g., `apps/api/test.setup.ts`).
-- Update `tsconfig.paths.json` whenever folders move; the rest follows automatically.
-
-## Ports & Env
-See [docs/ports-and-env.md](docs/ports-and-env.md) for guidance on API and dashboard port variables.
+TODO: Add screenshots of NinjaTrader config.
 
 
 
 ---
-**From:** `apex/README.md`
+**From:** `apex/platforms/tradovate.md`
 
-# Apex Trader Funding Integration
+# Tradovate + TradingView
 
-**Purpose:** Centralized documentation for evaluation, funded accounts, payouts, and platforms.
+**Purpose:** Document setup and caveats for Tradovate accounts.
 
-TODO: Add high-level intro.
+## Setup Steps
 
-## Links
+- TODO: Outline account activation and TradingView integration.
 
-- [Evaluation Rules](./evaluation-rules.md)
-- [Funded Rules](./funded-rules.md)
-- [Payout Process](./payouts.md)
-- [Platform Options](./platforms/README.md)
+## Technical Difficulty
+
+- Rated 3/10.
+- Compliance Note: Suitable for beginners but still requires supervision.
+
+## Pros
+
+- Web, Mac, and mobile access.
+- Native TradingView integration.
+- Compliance Note: Cloud-based trading must ensure secure credentials.
+
+## Cons
+
+- Fewer advanced tools.
+- Reliance on cloud connectivity.
+- Compliance Note: Verify stability before high-frequency use.
+
+## Watchouts
+
+- Symbol codes differ from other platforms.
+- Payout day counts may vary.
+- Compliance Note: Confirm platform timezones for EOD rules.
+
+TODO: Add TradingView broker panel screenshot.
 
 
 
 ---
-**From:** `apex/platforms/README.md`
+**From:** `apex/platforms/wealthcharts.md`
 
-# Apex Platform Options
+# WealthCharts
 
-Overview of supported platforms: Rithmic/NinjaTrader, Tradovate/TradingView, WealthCharts.
+**Purpose:** Document setup and caveats for WealthCharts accounts.
 
-TODO: Add operator guidance chart.
+## Setup Steps
 
-## Links
+- TODO: Provide account linking and layout selection steps.
 
-- [Rithmic + NinjaTrader](./rithmic.md)
-- [Tradovate + TradingView](./tradovate.md)
-- [WealthCharts](./wealthcharts.md)
+## Technical Difficulty
+
+- Rated 4/10.
+- Compliance Note: Provide training on platform-specific quirks.
+
+## Pros
+
+- Pre-made layouts and guided workflows.
+- Built-in liquidation indicator.
+- Compliance Note: Ensure indicator visibility for all traders.
+
+## Cons
+
+- Closed ecosystem with limited integrations.
+- Potential Windows-only risk depending on components.
+- Compliance Note: Review update policies for security.
+
+## Watchouts
+
+- Platform updates may be mandatory.
+- Automation support is limited.
+- Compliance Note: Document any external tool connections.
+
+TODO: Add Apex-prebuilt layout diagram.
 
 
 
@@ -468,13 +437,6 @@ Artifacts are uploaded on failure to help debugging.
 
 Staying inside these guardrails keeps Prism-Apex compliant with the operator-assisted mission while giving us the visibility we need to keep accounts safe.
 
-
-
-
----
-**From:** `docs/CONTRIBUTING-scripts.md`
-
-If your local repo has no 'origin' remote configured, Codex prompts will skip 'git push' and print a compare URL hint instead.
 
 
 
@@ -700,51 +662,6 @@ End-of-day
 Ensure no open tickets remain; archive logs as needed
 
 Policy: Tickets-only. No order placement APIs are allowed in this codebase.
-
-
-
----
-**From:** `docs/PLATFORMS/tradovate.md`
-
-
-Tradovate Platform Notes (Market Data Only)
-
-Use demo credentials/API add-on for market data and contract metadata.
-
-This app opens market-data sockets and reads metadata; it does not place, modify, or cancel orders.
-
-TradingView alerts are supported via webhook if preferred; include your shared secret.
-
-Operator copies ticket into Tradovate as an OCO. No auto-trading.
-
-Reminder: Tickets-only is a hard requirement. CI rejects any code introducing order APIs.
-
-
-
----
-**From:** `docs/POST_MERGE_VERIFY.md`
-
-# Post-merge Verification
-- UTC: 2025-09-29 21:07:36
-- Base: Test
-- Branch: chore/post-merge-verification
-
-## Git
-```
-## chore/post-merge-verification...origin/Test
- M docs/YAHOO_DATA_CLEANUP.md
-?? docs/POST_MERGE_VERIFY.md
-```
-
-## Cleanup (dry-run)
-Ran `DRY_RUN=1 tools/cleanup_yahoo_data.sh` (no deletions). See `docs/YAHOO_DATA_CLEANUP.md` for tracked candidates.
-
-## Docker smoke
-- `docker compose --env-file .env.example.local up -d --build`
-- API health reached `healthy`
-- `docker compose --env-file .env.example.local logs --no-color tickets-sync | tail -n 80`
-- `tail -n 10 data/tickets.jsonl`
-- `docker compose --env-file .env.example.local down`
 
 
 
@@ -7944,221 +7861,6 @@ Once those decisions are in, I can draft the cleanup plan/PR without risking imp
 
 
 ---
-**From:** `docs/UPGRADE.md`
-
-# Upgrade Guide
-
-## From older snapshots to v0.1.0
-
-1. **Engines & Package Manager**
-
-- Use Node **20.x** and pnpm **9.x**.
-- `corepack enable && pnpm -v` should show 9.x.
-
-2. **Install**
-
-```bash
-pnpm install
-```
-
-3. **Environment**
-
-Copy `.env.example` → `.env`.
-
-Optional auth
-
-```bash
-export BEARER_TOKEN="change-me"
-```
-
-Optional rate-limit tuning
-
-```bash
-export RATE_LIMIT_MAX=60
-export RATE_LIMIT_WINDOW_MS=60000
-export RATE_LIMIT_MAX_BUCKETS=50000
-```
-
-4. **Run locally**
-
-```bash
-pnpm --filter ./apps/api dev
-# or Docker:
-pnpm compose:up
-```
-
-5. **Validate**
-
-```bash
-curl http://localhost:3000/health
-curl http://localhost:3000/ready
-curl http://localhost:3000/openapi.json
-```
-
-6. **Tests / Typecheck**
-
-```bash
-pnpm test          # per-workspace
-pnpm typecheck     # source-only typecheck
-pnpm coverage      # API package coverage
-```
-
-7. **Docker production image**
-
-```bash
-pnpm docker:build
-pnpm docker:run
-```
-
-## Notes
-
-- ESM only. Legacy CJS configs should be removed or converted.
-- Public routes: `/health`, `/ready`, `/openapi.json`, `/version`.
-
-
-
----
-**From:** `docs/YAHOO_DATA_CLEANUP.md`
-
-# Yahoo Data Cleanup (SAFE: untracked-only)
-- UTC: 2025-09-29 21:06:39
-- Mode: DRY-RUN
-- Backup (untracked set): `backups/yahoo-data-20250929210634.tar.gz`
-
-## Untracked candidates (preview)
-_None_
-
-## Tracked candidates (reported only; NOT removed)
-| Size | Modified (UTC) | Path |
-|-----:|----------------|------|
-| 4.0K | 2025-09-20 07:58:23 | `apps/api/data/accounts.json` |
-| 4.0K | 2025-09-20 07:58:23 | `apps/api/data/tickets.jsonl` |
-| 4.0K | 2025-09-29 19:57:04 | `data/ES_1m.sample.csv` |
-| 4.0K | 2025-09-29 19:57:04 | `data/ES_ticks.sample.csv` |
-| 4.0K | 2025-09-29 19:57:04 | `data/accounts.sample.json` |
-| 4.0K | 2025-09-29 19:57:04 | `data/sample_bars/ES_1m.csv` |
-| 4.0K | 2025-09-29 19:57:04 | `data/sample_bars/NQ_1m.csv` |
-| 4.0K | 2025-09-29 19:57:04 | `data/strategy_schedule.sample.json` |
-## 2025-10-01T14:49:40+01:00
-=== SAFE CLEANUP (UNTRACKED ONLY) ===
-Git root: /Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test
-Dry run: 1
-
--- Files to delete (untracked, in allow-listed dirs): 0
-  (none)
-
--- Directories to delete recursively (build caches): 0
-  (none)
-
-## 2025-10-01T14:49:46+01:00
-=== SAFE CLEANUP (UNTRACKED ONLY) ===
-Git root: /Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test
-Dry run: 1
-
--- Files to delete (untracked, in allow-listed dirs): 0
-  (none)
-
--- Directories to delete recursively (build caches): 0
-  (none)
-
-## 2025-10-01T14:51:31+01:00
-=== SAFE CLEANUP (UNTRACKED ONLY) ===
-Git root: /Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test
-Dry run: 1
-
--- Files to delete (untracked, in allow-listed dirs): 0
-  (none)
-
--- Directories to delete recursively (build caches): 0
-  (none)
-(auto-continue: dry-run or AUTO_YES set or non-interactive)
-[DRY-RUN] No deletions performed.
-
-## 2025-10-01T15:03:13+01:00
-=== SAFE CLEANUP (UNTRACKED ONLY) ===
-Git root: /Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test
-Dry run: 0
-
--- Files to delete (untracked, in allow-listed dirs): 0
-  (none)
-
--- Directories to delete recursively (build caches): 0
-  (none)
-(auto-continue: dry-run or AUTO_YES set or non-interactive)
-Done.
-
-
-
-
----
-**From:** `docs/accounts.md`
-
-# Accounts Registry API
-
-The accounts registry stores account metadata on disk under `DATA_DIR/accounts` (falls back to `APEX_DATA_DIR` when set). Each account is saved as a JSON file and has the shape:
-
-```json
-{
-  "id": "PA-150K-123456",
-  "maxContracts": 17,
-  "bufferCleared": false,
-  "updatedAt": "2024-01-01T00:00:00.000Z",
-  "notes": "plan:150k",
-  "lastSuggestedContracts": 2,
-  "lastSuggestedAt": "2024-01-01T00:00:00.000Z"
-}
-```
-
-These REST endpoints mirror the CLI helpers (e.g. `prism-accounts set --id ...`). They are secured and require a bearer token.
-
-`lastSuggestedContracts` and `lastSuggestedAt` are optional fields used to track the most recent sizing advice.
-
-## Examples
-
-List accounts:
-
-```bash
-curl -H "authorization: Bearer $TOKEN" http://localhost:8000/accounts
-```
-
-Upsert an account:
-
-```bash
-curl -X PUT -H "authorization: Bearer $TOKEN" \
-     -H "content-type: application/json" \
-     -d '{"maxContracts":17,"bufferCleared":false,"notes":"plan:150k, platform:Tradovate"}' \
-     http://localhost:8000/accounts/PA-150K-123456
-```
-
-Authentication: set `BEARER_TOKEN` in the environment and supply `Authorization: Bearer $TOKEN` on requests.
-
-
-
----
-**From:** `docs/adr/ADR-2025-09-09-docker-api-only.md`
-
-ADR: Docker compose is API-only (2025-09-09)
-Context
-
-Local Docker runs currently ship only the API container. The dashboard and database are not included to keep iterations fast and CI stable.
-
-Decision
-
-Keep docker-compose.yml API-only.
-
-Add a container healthcheck and Docker-only smoke script.
-
-Clarify docs and fix stale references (/readiness → /ready, local API port 3000).
-
-Consequences
-
-Local quickstart is simpler and reliable.
-
-A follow-up ADR/PR will introduce an all-in-one compose (API + dashboard + DB) behind a separate file or profile.
-
-
-
----
 **From:** `docs/adr/ADR-2025-09-09-operator-assisted-architecture.md`
 
 
@@ -8210,27 +7912,6 @@ Future: we may revisit limited API actions (telemetry reads only) but never auto
 
 
 ---
-**From:** `docs/analytics/payout_tracker.md`
-
-# Payout Tracker
-
-## Purpose
-
-Tracks progress toward Apex payout thresholds.
-
-## Rules
-
-- Threshold: $2,500 profit (no rule breaches).
-- Status saved in `reports/payout_status.json`.
-- Dashboard shows current progress bar.
-
-## Usage
-
-Run `/api/analytics/payout` or check dashboard.
-
-
-
----
 **From:** `docs/analytics/post_trade.md`
 
 # Post-Trade Analytics
@@ -8250,131 +7931,6 @@ Reports stored in `reports/daily_YYYY-MM-DD.json`.
 ## Usage
 
 View on dashboard under "Daily Report".
-
-
-
----
-**From:** `docs/apex/01_rules.md`
-
-# Apex Trader Funding – Proprietary Trading Rules
-
-## 1. Evaluation Phase Rules
-
-### What It Does
-
-- Profit targets and trailing drawdown thresholds
-- Minimum 7 trading days
-- End-of-day flat requirement
-- No daily drawdown or scaling limits
-
-### How to Use It
-
-- Track trailing drawdown daily
-- Close all positions before 4:59 PM ET
-- Maintain ≥7 unique trade days
-
-### Config Options
-
-- Account size (25k, 50k, 100k, etc.)
-- Trailing drawdown amount
-- Platform (Rithmic, Tradovate, WealthCharts)
-
-### Visuals
-
-```mermaid
-flowchart TD
-    A[Start Evaluation] --> B[Trade ≥7 Days]
-    B --> C{Hit Profit Target?}
-    C -->|Yes| D[Pass Evaluation]
-    C -->|No| E[Continue or Reset]
-```
-
-[Placeholder: screenshot of Apex evaluation dashboard]
-
-
-
----
-**From:** `docs/apex/02_funded_rules.md`
-
-# Apex Trader Funding – Funded (Performance) Account Rules
-
-## 1. Consistency Rules
-
-- 30% profit distribution rule
-- 30% max daily loss relative to profits
-
-## 2. Risk Management
-
-- Mandatory stop-loss on every trade
-- 5:1 max risk-reward ratio
-- Half-contract rule until drawdown buffer cleared
-
-## 3. Payout Rules
-
-- First $25k 100% to trader
-- 90/10 split after until payout #6 → then 100%
-- 8-day minimum trading cycle between withdrawals
-- Safety net balance requirement for first 3 payouts
-
-## Visuals
-
-```mermaid
-flowchart TD
-    A[Trade in PA] --> B[Follow Consistency Rule]
-    B --> C{≥8 Trading Days?}
-    C -->|Yes| D[Payout Request]
-    C -->|No| E[Keep Trading]
-```
-
-[Placeholder: payout dashboard screenshot]
-
-
-
----
-**From:** `docs/apex/03_funding_process.md`
-
-# Apex Trader Funding – Step-by-Step Process
-
-## 1. Purchase Evaluation Plan
-
-- Select account size + platform
-
-## 2. Platform Setup
-
-- Rithmic → NinjaTrader
-- Tradovate → Web, Mobile, TradingView
-- WealthCharts → All-in-One
-
-## 3. Trading the Evaluation
-
-- Close positions daily
-- Obey trailing drawdown
-- No multi-account hedging
-
-## 4. Passing Evaluation
-
-- Hit profit goal
-- Trade 7+ days
-- Maintain compliance
-
-## 5. Activation of PA
-
-- Sign contract
-- Pay $85/month PA fee
-- Transition to funded trading
-
-## Visuals
-
-```mermaid
-flowchart TD
-    A[Sign Up] --> B[Platform Setup]
-    B --> C[Evaluation Trading]
-    C --> D{Pass?}
-    D -->|Yes| E[Performance Account Activated]
-    D -->|No| F[Reset or Retry]
-```
-
-[Placeholder: onboarding email screenshot]
 
 
 
@@ -8533,36 +8089,6 @@ flowchart TD
 - **Mac or Mobile Beginners** → _Tradovate + TradingView_ for quick, cross-platform access.
 - **Windows Power Users & Automation** → _Rithmic + NinjaTrader_ for advanced DOM and strategy support.
 - **Traders Needing Built-In Risk Tools** → _WealthCharts_ for the liquidation indicator and simplified setup.
-
-
-
----
-**From:** `docs/apex/05_notifications.md`
-
-# Notifications Integration
-
-## Supported Channels
-
-- Email
-- Telegram
-- Slack
-
-## How to Use It
-
-- Configure webhook in Apex dashboard
-- Connect Slack workspace (via bot token)
-- Test alerts on evaluation + PA status changes
-
-## Visuals
-
-```mermaid
-flowchart LR
-    A[Apex Dashboard] --> B[Slack Alerts]
-    A --> C[Telegram Alerts]
-    A --> D[Email Alerts]
-```
-
-[Placeholder: screenshot Slack channel with Apex alert]
 
 
 
@@ -8860,72 +8386,6 @@ against Apex Trader Funding guardrails.
 
 
 ---
-**From:** `docs/compliance/rule-engine.md`
-
-# Compliance Rule Engine
-
-## Purpose
-
-Codify Apex Trader Funding rules into machine-enforceable checks.
-
-## How It Works
-
-- Loads `apex/rules.json` definitions.
-- Validates `AccountState` against all rules via `checkCompliance`.
-- Returns `{ ok, violations[] }`.
-- Violations feed into the Alerts pipeline.
-
-## Example
-
-```ts
-import { checkCompliance, AccountState } from '../../apps/api/src/services/rules/engine.js';
-
-const state: AccountState = {
-  phase: 'evaluation',
-  balance: 50000,
-  equityHigh: 50000,
-  openPositions: [],
-  tradeHistory: [],
-  dayPnL: {},
-  trailingDrawdown: 49000,
-};
-
-const res = checkCompliance(state);
-console.log(res.ok);
-```
-
-## Rules Covered
-
-| JSON id             | Rule                  | Apex Reference                       |
-| ------------------- | --------------------- | ------------------------------------ |
-| eval-profit-target  | Profit Target         | Evaluation Handbook §Profit Target   |
-| eval-trailing-dd    | Trailing Drawdown     | Evaluation Handbook §Drawdown        |
-| eval-min-days       | Minimum Trading Days  | Evaluation Handbook §7 Days          |
-| eval-eod-flat       | End of Day Flat       | Evaluation Handbook §EOD             |
-| eval-resets         | Account Resets        | Evaluation Handbook §Resets          |
-| funded-stoploss     | Stop-Loss Required    | Funded Account Handbook §Stops       |
-| funded-consistency  | Consistency Rule      | Funded Account Handbook §Consistency |
-| funded-scaling      | Half-Contract Scaling | Funded Account Handbook §Scaling     |
-| funded-windfall     | No All-In/Windfall    | Funded Account Handbook §Windfall    |
-| funded-dd-lock      | Trailing DD Lock      | Funded Account Handbook §DD Lock     |
-| funded-news         | News Trading Ban      | Funded Account Handbook §News        |
-| payout-safety-net   | Safety Net            | Payouts Handbook §Safety Net         |
-| payout-cadence      | Payout Cadence        | Payouts Handbook §Cadence            |
-| payout-profit-split | Profit Split          | Payouts Handbook §Profit Split       |
-
-## Operator Impact
-
-- Operators see compliance alerts before inputting trades.
-- Violations mean: **do not place ticket**.
-
-## Future Work
-
-- Map remaining Apex rules into `apex/rules.json`.
-- Add a diagram of the compliance flow.
-
-
-
----
 **From:** `docs/config.md`
 
 # Guardrails & Sizing (Env)
@@ -9030,32 +8490,6 @@ pnpm config:check
 
 
 ---
-**From:** `docs/consistency.md`
-
-# Consistency Metrics
-
-The Consistency Enforcer computes Apex-style payout eligibility metrics:
-
-- **Top-day share** must be \u2264 30% of total net.
-- At least **5 profit days** with \u2265 $50 net in the last 8 days.
-
-For now the system runs in **metrics-only** mode. Tickets include
-`meta.consistencyNotes = "metrics-only; enforce=false"`.
-
-An optional flag `CONSISTENCY_ENFORCE=true` prepares the system for
-pre-blocking funded accounts but is disabled until real PnL telemetry
-arrives.
-
-## API
-
-`GET /report/consistency?accountId=<id>&window=8`
-
-Returns the computed metrics and pass/fail reasons. A mock PnL provider is
-used for tests and development. Real PnL will be supplied in PR-C1.
-
-
-
----
 **From:** `docs/dashboard/guide.md`
 
 # Prism Apex Tool — Operator Dashboard Guide
@@ -9130,52 +8564,6 @@ Alerts refresh automatically every 5 seconds.
 
 
 ---
-**From:** `docs/deployment/guide.md`
-
-# Prism Apex Tool — Deployment Guide
-
-## Local Development
-
-- Run `make dashboard` for local API/UI.
-- Calibration: `make calibrate`.
-- Payouts: `make payouts`.
-
-## Docker
-
-```bash
-docker compose build
-docker compose up -d
-```
-
-## GitHub Actions
-
-CI runs on develop: lint, tests, calibration.
-
-CD runs on main: deploys to server via SSH + Docker.
-
-## Server Deployment
-
-SSH into server.
-
-```bash
-cd ~/prism-apex-tool
-./infra/deploy.sh
-```
-
-## Visuals
-
-```mermaid
-flowchart TD
-    Dev[Developer Push] --> CI[GitHub CI Tests]
-    CI -->|Pass| Main[Merge to Main]
-    Main --> CD[GitHub CD Deploy]
-    CD --> Server[Server Docker Compose]
-    Server --> Operator[Web Dashboard + API]
-```
-
-
-
----
 **From:** `docs/deployment/hardening.md`
 
 # Production Hardening — Prism Apex Tool
@@ -9198,170 +8586,6 @@ This guide ensures the tool runs safely in production.
 2. Run `make panic` to confirm panic button works.
 3. Check Grafana for CPU/mem + guardrail alerts.
 4. Ensure liveness probe auto-restarts container if stuck.
-
-
-
----
-**From:** `docs/dev/quickstart.md`
-
-# Prism Apex – Dev Quickstart
-
-This guide gives you three one-liners to prove the MVP works locally without real credentials.
-
----
-
-## 0) Prereqs
-
-- Node 20+
-- npm workspaces installed (`npm ci` at repo root)
-- (Optional) Docker if you want to run the API in containers
-
----
-
-## 1) Seed the API store (safe demo state)
-
-```bash
-make seed
-```
-
-Outputs: `.data/state.json` with demo tickets, recipients, and risk context.
-
-## 2) Run a sample backtest (ORB on ES 1m)
-
-```bash
-make backtest
-```
-
-Outputs:
-
-- `out/es_orb_sample.json` (summary)
-- `out/es_orb_sample-fills.csv`
-- `out/es_orb_sample-daily.csv`
-
-## 3) Full demo script
-
-```bash
-make demo
-```
-
-Builds CLI, runs backtest, writes results to `./out`.
-
-### What you should see
-
-- JSON summary printed to console.
-- CSV files with fills and per-day PnL.
-- No network calls or secrets required.
-
----
-
-## Next Steps
-
-- Point the API to read-only Tradovate credentials (when ready).
-- Connect Slack/Telegram tokens to receive alerts (Prompt 18).
-- Follow the Operator Handbook (Prompt 21) for the manual input workflow.
-
----
-
-**QUALITY GATES (must pass)**
-
-- `make seed` creates `.data/state.json` without errors.
-- `make backtest` writes `out/es_orb_sample.*` files and prints a JSON summary.
-- `make demo` runs end-to-end without external dependencies.
-- All new TS compiles with `tsc` (strict) and no `any`.
-
-**COMPLETION CHECK**  
-Files created/updated:
-
-- `data/ES_1m.sample.csv`
-- `apps/api/scripts/seed.ts`
-- `apps/cli/scripts/demo.sh`
-- `Makefile` (new targets)
-- `docs/dev/quickstart.md`
-
-
-
----
-**From:** `docs/export.md`
-
-# Ticket export
-
-`GET /export/tickets?date=YYYY-MM-DD&format=json|csv&accountId=ID`
-
-Exports tickets for a given UTC date. The default `format` is `json`. Use `format=csv` for a compact CSV output. When `accountId` is supplied and the account exists, sizing suggestions are included.
-
-## JSON example
-
-```json
-[
-  {
-    "when": "2024-08-24T12:00:00Z",
-    "symbol": "ES",
-    "side": "BUY",
-    "qty": 1,
-    "entry": 1,
-    "stop": 0,
-    "target": 2,
-    "accepted": true,
-    "rr": 2,
-    "reasons": [],
-    "preCloseSuppressed": false,
-    "flatByUtc": "20:59",
-    "sizeSuggested": 2,
-    "sizeAllowed": 2,
-    "halfSizeSuggested": false,
-    "overAllowed": false,
-    "jumpExceeded": false
-  }
-]
-```
-
-## CSV example
-
-```
-ts,symbol,side,entry,stop,target,rr,accepted,reason_summary,pre_close,flat_by_utc,size_suggested,size_allowed,half_size_suggested,over_allowed,jump_exceeded
-2024-08-24T12:00:00Z,ES,BUY,1,0,2,2,true,,false,20:59,2,2,false,false,false
-```
-
-Sizing fields appear only when `accountId` is provided and an account file exists in the data directory. `sizeAllowed` mirrors `sizeSuggested` for backward compatibility. `overAllowed` and `jumpExceeded` appear when the stored ticket includes a `qty`.
-
-
-
----
-**From:** `docs/multi-account/guide.md`
-
-# Multi-Account Management — Operator Guide
-
-## What This Does
-
-- Shows all your Apex accounts grouped by **trader group** (you).
-- **Blocks hedging**: you cannot be long and short the same symbol across your accounts.
-- **Copy-Trade** helper: generates same-direction tickets per account with safe sizes.
-
-## Plain English Rules
-
-- **No Hedging:** If one account is **BUY ES**, another account in your group **cannot** be **SELL ES** at the same time.
-- **Same Direction Copying:** You may place the **same direction** across your accounts if each account obeys its own limits.
-- **Sizing:** We cap sizes by each account’s `maxContracts`. If a funded account has no buffer, we auto **half-size**.
-
-## How to Use
-
-1. Open the dashboard → **Multi-Account** section.
-2. Click **Preview Copy-Trade** on your group.
-3. If preview is ✅, the system lists per-account tickets for you to enter in Tradovate.
-4. If ❌ shows **would_create_hedge**, you must close the opposite position first.
-
-## Alerts & Logs
-
-- Any detected hedge triggers a **🚫 Slack/Email alert** and appears in **audit logs**.
-- All copy-trade generations are logged as **OPERATOR_ACTION**.
-
-```mermaid
-flowchart TD
-    A[Strategy Ticket] --> B[Copy-Trader Preview]
-    B -->|OK| C[Per-Account Tickets (Same Direction)]
-    B -->|Hedge| D[BLOCK + Alert]
-    C --> Operator[Manual Entry in Tradovate]
-```
 
 
 
@@ -9576,68 +8800,6 @@ flowchart TD
 
 
 ---
-**From:** `docs/operator/quick-cards/eod-flat.md`
-
-# Quick Card — End-of-Day Flat (21:59 GMT)
-
-**Goal:** Be **flat** (no positions) by **21:59 GMT**.
-
-## Timeline (GMT)
-
-- **20:49–20:54:** System sends **WARN** “EOD T–10”.
-- **20:55–20:59:** System sends **CRITICAL** “EOD T–5”.
-- **21:59:** Must be **FLAT**.
-
-## Steps
-
-1. Check **open positions** in Tradovate — close if any.
-2. Verify **dashboard** shows no open positions.
-3. Capture daily summary (export or screenshot).
-4. Post **EOD flat** confirmation in Slack.
-
-## Do / Don’t
-
-**Do:** Close early if in doubt.  
-**Don’t:** Carry any position past **21:59 GMT**.
-
-[Placeholder: screenshot flat confirmation]
-
-
-
----
-**From:** `docs/operator/quick-cards/execute-ticket.md`
-
-# Quick Card — Execute a Ticket (Tradovate Manual Entry)
-
-**Goal:** Enter the system’s ticket with OCO **Stop + Target**.
-
-## Steps
-
-1. In dashboard **Tickets**, pick the next ticket.
-   - Fields: symbol, side, **entry**, **stop**, **target**, size.
-2. Open **Tradovate** order ticket for the same symbol/account.
-3. Select **OCO / Bracket** order type (Stop + Target).
-4. Fill **Entry**, **Stop**, **Target**, **Size** exactly as shown.
-5. Review → **Submit**.
-6. Confirm in Tradovate **Working Orders** that OCO is present.
-7. Record the ticket ID in the daily log.
-
-## Checks
-
-- Stop present? **Yes** (mandatory)
-- Target ≤ **5R**? (System ensures; verify number)
-- No **Pause** flag on dashboard? (If **Pause**, do not submit)
-
-## Do / Don’t
-
-**Do:** Double-check symbol & account before submit.  
-**Don’t:** Modify ticket values unless instructed by PM/SA.
-
-[Placeholder: screenshot Tradovate OCO ticket]
-
-
-
----
 **From:** `docs/operator/quick-cards/incidents-&-escalation.md`
 
 # Quick Card — Incidents & Escalation
@@ -9661,65 +8823,6 @@ flowchart TD
 - If a position is at risk → **CLOSE FIRST**, then escalate.
 
 [Placeholder: Slack incident snippet]
-
-
-
----
-**From:** `docs/operator/quick-cards/monitor-&-alerts.md`
-
-# Quick Card — Monitor & Alerts
-
-**Goal:** React quickly to warnings and blocks.
-
-## Alert Types
-
-- **WARN (amber):**
-  - Daily loss ≥70% cap
-  - Consistency (funded) ≥25%
-  - EOD T–10 window
-- **CRITICAL (red):**
-  - Daily loss ≥85% cap
-  - Missing OCO
-  - Consistency (funded) ≥30%
-  - EOD T–5 window
-
-## What To Do
-
-- **WARN:** Slow down; prepare to flatten or skip new tickets.
-- **CRITICAL:** **Stop** new entries. Verify positions. Escalate if needed.
-
-## Tools
-
-- Dashboard **alerts panel** (refresh ~5–60s).
-- Slack/Email notifications from system.
-- `/jobs/status` for recent job run times and flags.
-
-[Placeholder: screenshot alert banner]
-
-
-
----
-**From:** `docs/operator/quick-cards/sod-checklist.md`
-
-# Quick Card — Start of Day (SOD)
-
-**Goal:** Be fully ready when the session opens.
-
-## Checklist
-
-- [ ] Open **Prism Apex Dashboard** → `/health` shows **OK**.
-- [ ] Check **/jobs/status** → no stale errors; `ocoMissing=false`.
-- [ ] Confirm **notifications** work (Slack/Email visible).
-- [ ] Verify **session times** (CME RTH): **14:30–21:59 GMT** (MVP focus).
-- [ ] Confirm **account** and **symbol universe** for the day (ES, NQ; or as configured).
-- [ ] Read any **operator notes** in Slack.
-
-## Do / Don’t
-
-**Do:** Keep Slack open.  
-**Don’t:** Enter trades before session open.
-
-[Placeholder: screenshot dashboard health]
 
 
 
@@ -9939,67 +9042,6 @@ That’s it. Copy the line, enter the OCO, and you’re done.
 
 
 ---
-**From:** `docs/payouts/calendar.md`
-
-# Prism Apex Tool — Payout Calendar
-
-## Rules Recap
-
-- **First payout**: After 10 trading days AND $1,000 net profit.
-- **Cycle**: Every 14 days after first payout.
-- **Amounts**:
-  - 100% of first $25,000.
-  - 90% of profits above $25,000.
-
-## Current Account Example
-
-- Trading days completed: 12
-- Total profit: $2,050
-- Eligible? **Yes**
-- Next payout date: 2025-09-01
-- Estimated payout: $2,050
-
-_All dates are in UTC/GMT._
-
-## Mermaid Flow
-
-```mermaid
-flowchart TD
-    A[10+ Days + $1k Profit?] -->|No| B[Not Eligible]
-    A -->|Yes| C[Eligible for Payout]
-    C --> D[First $25k → 100%]
-    D --> E[Above $25k → 90%]
-    C --> F[Next Payout in 14 Days]
-```
-
-[Placeholder: operator calendar screenshot]
-
-
-
----
-**From:** `docs/ports-and-env.md`
-
-# Ports & Environment Notes
-
-The local stack exposes two primary ports by default:
-
-- **8080** – Prism Apex API (compose service `api`).
-- **5178** – Dashboard Lite / operator UI.
-
-They are currently documented directly inside `README-dev.md` and compose files. To reduce drift and make overrides easier, prefer exporting the ports via environment variables, for example:
-
-```env
-API_PORT=8080
-DASH_PORT=5178
-```
-
-You can then reference these variables inside compose overrides or `.env` files. This change does not modify any Docker compose files yet—it simply notes the convention so future updates can centralise port management.
-
-Remember: runtime remains **tickets-only**. These ports expose telemetry and operator dashboards; no automated order placement endpoints exist.
-
-
-
----
 **From:** `docs/release/checklist.md`
 
 # Release Checklist — Prism Apex Tool
@@ -10140,67 +9182,6 @@ If all checks pass:
 If any checks fail:
 
 - Stop and report back.
-
-
-
----
-**From:** `docs/release/runbook-rollback.md`
-
-# Prism Apex Tool — Rollback & Incident Runbook
-
-**Priority:** Restore safe operations quickly, protect Apex compliance, prevent irreversible loss.
-
----
-
-## 1) Immediate Actions
-
-- [ ] Announce incident in Slack `#ops-incidents` (include time, symptoms).
-- [ ] **Pause** new tickets (dashboard Pause or temporary block in API).
-- [ ] Verify positions in Tradovate — **flatten** if risk is elevated.
-
-## 2) Quick Diagnostics (5–10 min)
-
-- [ ] `GET /health` — should be OK.
-- [ ] `docker compose ps` — containers running.
-- [ ] `docker compose logs --since=10m` — check errors.
-- [ ] `/jobs/status` — lastOk timestamps present.
-
-## 3) Rollback (Tag N → N-1)
-
-- [ ] Select previous tag (e.g., `v0.1.2` → `v0.1.1`).
-- [ ] Run:
-
-```bash
-TAG=v0.1.1 make deploy
-```
-
-- [ ] Confirm health:
-
-```bash
-curl -fsS http://<server>:8080/health
-```
-
-- [ ] Open dashboard `/`
-
-## 4) Data Safety
-
-- Volumes preserved; no destructive migrations in MVP.
-- Backup `.env` and `.data/state.json` before manual edits.
-
-## 5) Recovery & Resume
-
-- Clear dashboard **Pause** flag when safe.
-- Announce resolution in Slack with incident summary.
-- Create follow-up ticket for root cause & action items.
-
-## 6) Post-Mortem Template
-
-- What happened:
-- Impact window:
-- Root cause:
-- Actions taken:
-- Preventative measures:
-- Owners & due dates:
 
 
 
@@ -10875,277 +9856,6 @@ flowchart TD
 
 
 ---
-**From:** `docs/telemetry.md`
-
-# Telemetry (Demo)
-
-This repository includes a read-only telemetry client for the Tradovate demo environment. The client polls account balances, open positions, fills, and computes simple daily PnL and a buffer-cleared flag. Telemetry is **demo-only**; live wiring will arrive in a future PR.
-
-## Configuration
-
-Set the following environment variables (see `.env.example`):
-
-```
-ENABLE_TELEMETRY=true
-TELEMETRY_POLL_MS=5000
-TRADOVATE_DEMO_REST_BASE=https://demo.tradovateapi.com/v1
-TRADOVATE_USER=...
-TRADOVATE_PASSWORD=...
-TRADOVATE_APP_ID=...
-TRADOVATE_APP_VERSION=prism-apex/0.2.0
-TRADOVATE_API_CID=...
-TRADOVATE_API_SEC=...
-TRADOVATE_DEVICE_ID=prism-apex-dev-telemetry
-BUFFER_CLEAR_THRESHOLD=2500
-```
-
-## API
-
-When telemetry is enabled the API exposes:
-
-- `GET /telemetry/positions?accountId=...`
-- `GET /telemetry/account?accountId=...`
-- `GET /telemetry/fills?date=YYYY-MM-DD&accountId=...`
-- `/ready` includes a `telemetry` block with basic metrics.
-
-The consistency report uses telemetry-derived PnL when enabled; otherwise it falls back to mock data.
-
-## Dashboard
-
-A `/positions` tab displays open positions, account balance, and buffer status. The page polls the API at a selectable interval (3s/5s/10s/Off).
-
-## Buffer Cleared
-
-The buffer flag is derived from cumulative realized PnL crossing `BUFFER_CLEAR_THRESHOLD`. This is a placeholder heuristic for demo purposes and may be replaced when the live platform exposes an explicit flag.
-
-
-
----
-**From:** `infra/README-DEPLOY.md`
-
-# Prism Apex Tool — Deployment (Production)
-
-## Overview
-
-This stack deploys two containers:
-
-- **API** on port **8000**
-- **Dashboard** on port **80** (proxies `/api/*` to API via Nginx in the image)
-
-## One-time Server Setup
-
-1. Provision Ubuntu 22.04 server.
-2. Add GitHub Actions secrets (below).
-3. First CI run will **bootstrap** Docker automatically.
-
-## Required GitHub Secrets
-
-- `GHCR_USERNAME`, `GHCR_TOKEN` — push images to GHCR
-- `PROD_SSH_HOST`, `PROD_SSH_USER`, `PROD_SSH_KEY` — deploy over SSH
-- `PROD_STACK_DIR` — e.g., `/home/ubuntu/prism-stack`
-- `STACK_NAME` — e.g., `prism`
-
-## First Deploy
-
-1. Copy `infra/.env.prod.example` → create **server** file `${PROD_STACK_DIR}/.env`.
-2. Tag a release locally:
-   ```bash
-   make release TAG=v0.1.0
-   ```
-3. CI builds & pushes images, then deploys to the server.
-
-## Verify:
-
-- <http://<server-ip>/> (dashboard)
-- <http://<server-ip>:8000/health> (API)
-
-## Rollback
-
-Re-deploy previous tag:
-
-```
-TAG=v0.0.9 make deploy
-```
-
-## Notes
-
-- Volumes are preserved across updates (prism_data).
-- Health-gated rollout avoids serving broken builds.
-- Add a reverse proxy + TLS later (Caddy/Traefik) if you need HTTPS.
-
-
-
----
-**From:** `infra/README.md`
-
-# Infra
-
-Infrastructure configuration for Prism Apex Tool. Docker Compose and deployment scripts will be added in later prompts.
-
-
-
----
-**From:** `infra/nginx/README.md`
-
-# Prism Apex — Nginx + Let’s Encrypt TLS
-
-## Prereqs
-
-- DNS A/AAAA records for **YOUR_DOMAIN** pointing to this VM’s public IP
-- Prism Apex API running via systemd on `127.0.0.1:8000`
-- Ubuntu 22.04+ (or Debian-based)
-
-## One-time setup
-
-```bash
-# From repo root, as sudo-capable user
-export DOMAIN=YOUR_DOMAIN
-export EMAIL=you@example.com
-bash infra/nginx/setup-nginx-certbot.sh
-```
-
-### What this does
-
-- Installs Nginx + Certbot
-- Places site config at /etc/nginx/sites-available/prism-apex.conf
-- Obtains a Let’s Encrypt cert for $DOMAIN
-- Forces HTTPS + HTTP/2
-- Proxies to http://127.0.0.1:8000
-- Adds rate limiting and security headers
-
-### Verify
-
-```bash
-curl -I https://$DOMAIN/health
-# Should return HTTP/2 200
-```
-
-### Logs
-
-- /var/log/nginx/prism-apex.access.log
-- /var/log/nginx/prism-apex.error.log
-
-### Renewals
-
-Certbot installs a systemd timer. To test:
-
-```bash
-sudo certbot renew --dry-run
-```
-
-### TradingView
-
-Point your webhook to: https://$DOMAIN/webhooks/tradingview
-
-Add header: x-webhook-secret: <your secret>
-
-
-
----
-**From:** `infra/systemd/README.md`
-
-# Prism Apex — Ubuntu VM (systemd) Runbook
-
-## Prereqs
-
-- Ubuntu 22.04+ VM (you chose VM deployment)
-- Open outbound internet for npm install; inbound TCP :8000 (or reverse proxy)
-- Node LTS and pnpm (installer script handles it)
-
-## One‑time setup (as a sudo‑capable user)
-
-```bash
-# 1) Clone the repo into prism user's home (or adjust REPO_DIR for your layout)
-sudo useradd -m -s /bin/bash prism || true
-sudo -u prism -H bash -lc 'cd ~ && git clone https://github.com/QuantumFluxAlgo/prism-apex-tool.git || true'
-# If already cloned, pull latest Test branch
-sudo -u prism -H bash -lc 'cd ~/prism-apex-tool && git fetch && git checkout Test && git pull'
-
-# 2) Run the installer
-cd ~/prism-apex-tool
-sudo APP_USER=prism REPO_DIR=/home/prism/prism-apex-tool bash infra/systemd/install-prism-apex.sh
-
-# 3) Edit env and set secrets
-sudo -u prism nano /home/prism/prism-apex.env
-# Set TRADINGVIEW_WEBHOOK_SECRET and (optionally) BEARER_TOKEN
-
-# 4) Start service
-sudo systemctl start prism-apex
-sudo systemctl status prism-apex --no-pager
-
-# 5) Verify health
-curl -s http://127.0.0.1:8000/health | jq .
-```
-
-Logs & lifecycle
-
-```
-journalctl -u prism-apex -f
-sudo systemctl restart prism-apex
-sudo systemctl stop prism-apex
-```
-
-Data directory
-
-Default: /home/prism/prism-apex-data (tickets, accounts, exports)
-
-Ensure backups if needed.
-
-Reverse proxy (optional, HTTP only here)
-
-See [../nginx/README.md](../nginx/README.md) for Nginx + Let's Encrypt TLS termination.
-
-Leave service on HOST=0.0.0.0 PORT=8000
-
-Terminate TLS in Nginx/Traefik and forward to 127.0.0.1:8000
-
-If proxy adds X-Forwarded-\*, set TRUST_PROXY=true in /home/prism/prism-apex.env
-
-Firewall quickstart (optional)
-
-```
-sudo ufw allow 22/tcp
-sudo ufw allow 8000/tcp   # or only allow from proxy host
-sudo ufw enable
-```
-
-Health endpoints
-
-GET /health → {"ok":true} when service is up
-
-GET /ready → readiness check
-
-GET /version → version metadata (if enabled)
-
-Updates / redeploy
-
-```
-sudo -u prism -H bash -lc 'cd ~/prism-apex-tool && git fetch && git checkout Test && git pull'
-sudo -u prism -H bash -lc 'pnpm install --prefer-offline --frozen-lockfile && pnpm --filter ./apps/api build'
-sudo systemctl restart prism-apex
-```
-
----
-
-
-
----
-**From:** `packages/analytics/README.md`
-
-# @prism-apex/analytics (stub)
-
-Temporary no-op analytics facade used to keep CI green.
-
-- `trackEvent(name, props)` – no-op
-- `trackError(error, context)` – no-op
-- `meter(name, value, tags)` – no-op
-- `createAnalyticsScope(scope)` – returns the same no-op fns
-
-Replace with a real implementation in a later telemetry PR.
-
-
-
----
 **From:** `reports/harvest/20250910-173432/summary.md`
 
 # Harvest r2 — 20250910-173432
@@ -11458,45 +10168,49 @@ vitest.local.config.ts(48,9): error TS2769: No overload matches this call.
 
 
 ---
-**From:** `var/pnl/README.md`
+**From:** `reports/types/r3/20250909-183940/summary.md`
 
-# Daily PnL Data (for Consistency Metrics)
+# TypeScript Hotspots — 20250909-183940
 
-Create `var/pnl/daily.json` with an array of objects:
+- Exit status: 2
+- Approx TS errors (grep): 155
 
-```json
-[
-  { "date": "2025-08-18", "pnl": 320.5 },
-  { "date": "2025-08-19", "pnl": -150.0 }
-]
-```
+## Top files (by error count)
+     14 packages/indicators/__tests__/swings.spec.ts
+     14 packages/indicators/__tests__/atr.spec.ts
+     13 apps/api/test/rules/engine.test.ts
+     12 packages/strategies/src/vwapFirstTouch.ts
+     10 packages/indicators/__tests__/vwap.spec.ts
+      8 apps/api/src/jobs/strategies.ts
+      7 packages/clients-tradovate/__tests__/telemetry.spec.ts
+      6 packages/indicators/src/swings.ts
+      6 apps/api/src/jobs/ticketizer.ts
+      5 packages/strategies/tests/osbBreakout.spec.ts
+      5 packages/runtime/__tests__/ws.resilience.spec.ts
+      4 packages/strategies/tests/vwapFirstTouch.spec.ts
+      4 packages/strategies/src/osbBreakout.ts
+      4 packages/accounts/src/cli.ts
+      4 apps/api/src/routes/tickets.ts
+      3 vitest.local.config.ts
+      3 tests/setup/vitest.setup.ts
+      3 packages/signals/src/__tests__/core.spec.ts
+      3 packages/rules/src/apex.ts
+      3 packages/rules-apex/test/stop.spec.ts
 
-date: YYYY-MM-DD
-
-pnl: number (positive for profit, negative for loss)
-
-The API route GET /report/consistency?window=8 reads this file. If it is missing or empty,
-the route responds with 204 No Content.
-
-====================
-INTEGRATION NOTES
-
-Register apps/api/src/routes/consistency.ts in your API server the same way other routes are registered.
-
-No external services required.
-
-Keep the window query between 1..15 (clamped in code).
-
-====================
-RUN / VERIFY
-
-pnpm --filter @prism-apex/metrics typecheck
-
-pnpm --filter @prism-apex/metrics test
-
-pnpm --filter @prism-apex/api test
-
-(Optional) create var/pnl/daily.json and curl:
-curl -s "http://localhost:3000/report/consistency?window=8
-" | jq .
+## Top TS error codes
+     56 error TS18048
+     54 error TS2532
+     12 error TS2345
+      5 error TS2561
+      5 error TS2322
+      4 error TS2307
+      3 error TS2769
+      3 error TS2554
+      3 error TS2339
+      3 error TS1343
+      2 error TS2540
+      2 error TS2305
+      1 error TS2614
+      1 error TS2578
+      1 error TS2558
 

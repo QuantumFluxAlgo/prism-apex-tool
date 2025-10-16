@@ -1,46 +1,19 @@
-# Prism-Apex Tool
+# Agents & Automation
 
-Operator-assisted trading — tickets-only. Docker-only dev & deploy.
+What’s automated vs operator-controlled.
 
 > This page was auto-generated from existing repo docs. Check TODO/TBD markers.
 
-## Quick Start
+## Boundaries
+- Operator copies tickets into Tradovate (manual OCO)
+- No API order placement or liquidation
 
-- Docker required
-- `pnpm install --frozen-lockfile`
-- `docker compose up -d`
-- `pnpm docs:lint`
+## Workflows
+- Signals → Orchestrator → Guardrails → Ticket issuance → Operator OCO entry
 
-## Docs Map
-
-- [TECH-SPEC.md](./TECH-SPEC.md)
-- [AGENTS.md](./AGENTS.md)
-- [OPERATIONS.md](./OPERATIONS.md)
-- [INTEGRATIONS-TRADOVATE.md](./INTEGRATIONS-TRADOVATE.md)
-- [TESTING.md](./TESTING.md)
-- [CONTRIBUTING.md](./CONTRIBUTING.md)
-- [GLOSSARY.md](./GLOSSARY.md)
-
-## Non-Negotiables
-- Tickets-only (no API order placement)
-- Protected folders: strategy core, guardrails, infra/CI/CD
-- 12-factor config; structured JSON logs
-
----
-**From:** `CHANGELOG.md`
-
-Changelog
-Unreleased
-
-deprecation(root): remove stale backups and zero-byte placeholders
-
-chore(compose): add API healthcheck and drop unused root volumes
-
-docs: update Docker quickstart; add ADR; fix stale local endpoint/port mentions
-
-test: add Docker-only smoke script
-
-
+## Safety
+- Daily loss halts (Apex)
+- Idempotent signal handling
 
 ---
 **From:** `PROJECT.md`
@@ -158,39 +131,6 @@ JSON logs; no PII; CORS allow-list via env; health/readiness/metrics present.
 
 
 ---
-**From:** `README-Docker.md`
-
-# Docker — API-only quickstart
-
-## Prereqs
-- Docker Desktop (Compose v2)
-
-## Run
-```bash
-docker compose up -d --build
-docker compose ps
-
-Verify
-curl -fsS http://localhost:3000/health
-curl -fsS http://localhost:3000/openapi.json | head -n 20
-curl -fsS http://localhost:3000/ready
-curl -fsS http://localhost:3000/version
-bash scripts/smoke-openapi.sh
-bash scripts/smoke-endpoints.sh
-bash scripts/smoke-api-docker.sh
-```
-
-Notes:
-
-This compose is API-only. Public endpoints: /health, /ready, /openapi.json, /version.
-
-scripts/smoke-api.sh is dev-only (requires host Node/tsc). Prefer the Docker-only scripts above.
-
-For server deploys, docker-compose.prod.yml may map port 80 (via 80:${PORT:-8000}); local quickstart uses port 3000.
-
-
-
----
 **From:** `README-dev.md`
 
 
@@ -252,24 +192,6 @@ See [docs/ports-and-env.md](docs/ports-and-env.md) for guidance on API and dashb
 
 
 ---
-**From:** `apex/README.md`
-
-# Apex Trader Funding Integration
-
-**Purpose:** Centralized documentation for evaluation, funded accounts, payouts, and platforms.
-
-TODO: Add high-level intro.
-
-## Links
-
-- [Evaluation Rules](./evaluation-rules.md)
-- [Funded Rules](./funded-rules.md)
-- [Payout Process](./payouts.md)
-- [Platform Options](./platforms/README.md)
-
-
-
----
 **From:** `apex/platforms/README.md`
 
 # Apex Platform Options
@@ -283,6 +205,87 @@ TODO: Add operator guidance chart.
 - [Rithmic + NinjaTrader](./rithmic.md)
 - [Tradovate + TradingView](./tradovate.md)
 - [WealthCharts](./wealthcharts.md)
+
+
+
+---
+**From:** `apex/platforms/rithmic.md`
+
+# Rithmic + NinjaTrader
+
+**Purpose:** Document setup and caveats for Rithmic accounts.
+
+## Setup Steps
+
+- TODO: Provide step-by-step account linking and platform install instructions.
+
+## Windows Requirement
+
+- Platform requires Windows environment.
+- Compliance Note: Unsupported OS use may breach terms.
+
+## Technical Difficulty
+
+- Rated 7/10.
+- Compliance Note: Operators should verify user competency before recommendation.
+
+## Pros
+
+- Low latency execution.
+- Flexible automation support.
+- Compliance Note: Automation must log orders for audit.
+
+## Cons
+
+- Windows-only; complex initial configuration; no mobile support.
+- Compliance Note: Document exceptions for Mac users.
+
+## Watchouts
+
+- Server selection impacts latency.
+- Concurrent logins restricted.
+- Data status must be real-time.
+- Compliance Note: Monitor for unauthorized API connections.
+
+TODO: Add screenshots of NinjaTrader config.
+
+
+
+---
+**From:** `apex/platforms/wealthcharts.md`
+
+# WealthCharts
+
+**Purpose:** Document setup and caveats for WealthCharts accounts.
+
+## Setup Steps
+
+- TODO: Provide account linking and layout selection steps.
+
+## Technical Difficulty
+
+- Rated 4/10.
+- Compliance Note: Provide training on platform-specific quirks.
+
+## Pros
+
+- Pre-made layouts and guided workflows.
+- Built-in liquidation indicator.
+- Compliance Note: Ensure indicator visibility for all traders.
+
+## Cons
+
+- Closed ecosystem with limited integrations.
+- Potential Windows-only risk depending on components.
+- Compliance Note: Review update policies for security.
+
+## Watchouts
+
+- Platform updates may be mandatory.
+- Automation support is limited.
+- Compliance Note: Document any external tool connections.
+
+TODO: Add Apex-prebuilt layout diagram.
 
 
 
@@ -472,13 +475,6 @@ Staying inside these guardrails keeps Prism-Apex compliant with the operator-ass
 
 
 ---
-**From:** `docs/CONTRIBUTING-scripts.md`
-
-If your local repo has no 'origin' remote configured, Codex prompts will skip 'git push' and print a compare URL hint instead.
-
-
-
----
 **From:** `docs/DEPLOY-LOCAL-INGRESS.md`
 
 
@@ -641,29 +637,6 @@ Reports land in `docs/YAHOO_DATA_CLEANUP.md`.
 
 
 ---
-**From:** `docs/MAINTENANCE.md`
-
-# Maintenance — SAFE Data Cleanup
-
-Use `tools/cleanup_yahoo_data.sh` to clear Yahoo-style artifacts in a controlled way.
-
-1. **Dry run (recommended first)**
-   ```bash
-   tools/cleanup_yahoo_data.sh --dry-run
-   ```
-   Only reports what *would* be backed up/removed (writes to `docs/YAHOO_DATA_CLEANUP.md`).
-
-2. **Real cleanup**
-   ```bash
-   tools/cleanup_yahoo_data.sh
-   ```
-   Creates a timestamped `backups/yahoo-data-*.tar.gz` archive before deleting untracked candidates.
-
-Tracked files are never deleted; tracked candidates are listed for manual inspection.
-
-
-
----
 **From:** `docs/OPERATIONS.md`
 
 
@@ -745,23 +718,6 @@ Ran `DRY_RUN=1 tools/cleanup_yahoo_data.sh` (no deletions). See `docs/YAHOO_DATA
 - `docker compose --env-file .env.example.local logs --no-color tickets-sync | tail -n 80`
 - `tail -n 10 data/tickets.jsonl`
 - `docker compose --env-file .env.example.local down`
-
-
-
----
-**From:** `docs/README_NAV.md`
-
-# Documentation Index
-
-- **Scan Report:** `docs/REPO_SCAN_REPORT.md`
-- **Scan Questions:** `docs/REPO_SCAN_QUESTIONS.md`
-- **Scan Summary Message:** `docs/SCAN_SUMMARY_MESSAGE.md`
-- **Codebase Overview:** `docs/CODEBASE_OVERVIEW.md`
-- **Architecture Overview:** `docs/ARCHITECTURE_OVERVIEW.md`
-- **Cleanup Policy:** `docs/REPO_CLEANUP_POLICY.md`
-- **Latest Cleanup Report:** `docs/CLEANUP_REPORT.md`
-
-- **Ports & Env:** `docs/ports-and-env.md`
 
 
 
@@ -7944,80 +7900,6 @@ Once those decisions are in, I can draft the cleanup plan/PR without risking imp
 
 
 ---
-**From:** `docs/UPGRADE.md`
-
-# Upgrade Guide
-
-## From older snapshots to v0.1.0
-
-1. **Engines & Package Manager**
-
-- Use Node **20.x** and pnpm **9.x**.
-- `corepack enable && pnpm -v` should show 9.x.
-
-2. **Install**
-
-```bash
-pnpm install
-```
-
-3. **Environment**
-
-Copy `.env.example` → `.env`.
-
-Optional auth
-
-```bash
-export BEARER_TOKEN="change-me"
-```
-
-Optional rate-limit tuning
-
-```bash
-export RATE_LIMIT_MAX=60
-export RATE_LIMIT_WINDOW_MS=60000
-export RATE_LIMIT_MAX_BUCKETS=50000
-```
-
-4. **Run locally**
-
-```bash
-pnpm --filter ./apps/api dev
-# or Docker:
-pnpm compose:up
-```
-
-5. **Validate**
-
-```bash
-curl http://localhost:3000/health
-curl http://localhost:3000/ready
-curl http://localhost:3000/openapi.json
-```
-
-6. **Tests / Typecheck**
-
-```bash
-pnpm test          # per-workspace
-pnpm typecheck     # source-only typecheck
-pnpm coverage      # API package coverage
-```
-
-7. **Docker production image**
-
-```bash
-pnpm docker:build
-pnpm docker:run
-```
-
-## Notes
-
-- ESM only. Legacy CJS configs should be removed or converted.
-- Public routes: `/health`, `/ready`, `/openapi.json`, `/version`.
-
-
-
----
 **From:** `docs/YAHOO_DATA_CLEANUP.md`
 
 # Yahoo Data Cleanup (SAFE: untracked-only)
@@ -8091,74 +7973,6 @@ Done.
 
 
 ---
-**From:** `docs/accounts.md`
-
-# Accounts Registry API
-
-The accounts registry stores account metadata on disk under `DATA_DIR/accounts` (falls back to `APEX_DATA_DIR` when set). Each account is saved as a JSON file and has the shape:
-
-```json
-{
-  "id": "PA-150K-123456",
-  "maxContracts": 17,
-  "bufferCleared": false,
-  "updatedAt": "2024-01-01T00:00:00.000Z",
-  "notes": "plan:150k",
-  "lastSuggestedContracts": 2,
-  "lastSuggestedAt": "2024-01-01T00:00:00.000Z"
-}
-```
-
-These REST endpoints mirror the CLI helpers (e.g. `prism-accounts set --id ...`). They are secured and require a bearer token.
-
-`lastSuggestedContracts` and `lastSuggestedAt` are optional fields used to track the most recent sizing advice.
-
-## Examples
-
-List accounts:
-
-```bash
-curl -H "authorization: Bearer $TOKEN" http://localhost:8000/accounts
-```
-
-Upsert an account:
-
-```bash
-curl -X PUT -H "authorization: Bearer $TOKEN" \
-     -H "content-type: application/json" \
-     -d '{"maxContracts":17,"bufferCleared":false,"notes":"plan:150k, platform:Tradovate"}' \
-     http://localhost:8000/accounts/PA-150K-123456
-```
-
-Authentication: set `BEARER_TOKEN` in the environment and supply `Authorization: Bearer $TOKEN` on requests.
-
-
-
----
-**From:** `docs/adr/ADR-2025-09-09-docker-api-only.md`
-
-ADR: Docker compose is API-only (2025-09-09)
-Context
-
-Local Docker runs currently ship only the API container. The dashboard and database are not included to keep iterations fast and CI stable.
-
-Decision
-
-Keep docker-compose.yml API-only.
-
-Add a container healthcheck and Docker-only smoke script.
-
-Clarify docs and fix stale references (/readiness → /ready, local API port 3000).
-
-Consequences
-
-Local quickstart is simpler and reliable.
-
-A follow-up ADR/PR will introduce an all-in-one compose (API + dashboard + DB) behind a separate file or profile.
-
-
-
----
 **From:** `docs/adr/ADR-2025-09-09-operator-assisted-architecture.md`
 
 
@@ -8210,27 +8024,6 @@ Future: we may revisit limited API actions (telemetry reads only) but never auto
 
 
 ---
-**From:** `docs/analytics/payout_tracker.md`
-
-# Payout Tracker
-
-## Purpose
-
-Tracks progress toward Apex payout thresholds.
-
-## Rules
-
-- Threshold: $2,500 profit (no rule breaches).
-- Status saved in `reports/payout_status.json`.
-- Dashboard shows current progress bar.
-
-## Usage
-
-Run `/api/analytics/payout` or check dashboard.
-
-
-
----
 **From:** `docs/analytics/post_trade.md`
 
 # Post-Trade Analytics
@@ -8250,131 +8043,6 @@ Reports stored in `reports/daily_YYYY-MM-DD.json`.
 ## Usage
 
 View on dashboard under "Daily Report".
-
-
-
----
-**From:** `docs/apex/01_rules.md`
-
-# Apex Trader Funding – Proprietary Trading Rules
-
-## 1. Evaluation Phase Rules
-
-### What It Does
-
-- Profit targets and trailing drawdown thresholds
-- Minimum 7 trading days
-- End-of-day flat requirement
-- No daily drawdown or scaling limits
-
-### How to Use It
-
-- Track trailing drawdown daily
-- Close all positions before 4:59 PM ET
-- Maintain ≥7 unique trade days
-
-### Config Options
-
-- Account size (25k, 50k, 100k, etc.)
-- Trailing drawdown amount
-- Platform (Rithmic, Tradovate, WealthCharts)
-
-### Visuals
-
-```mermaid
-flowchart TD
-    A[Start Evaluation] --> B[Trade ≥7 Days]
-    B --> C{Hit Profit Target?}
-    C -->|Yes| D[Pass Evaluation]
-    C -->|No| E[Continue or Reset]
-```
-
-[Placeholder: screenshot of Apex evaluation dashboard]
-
-
-
----
-**From:** `docs/apex/02_funded_rules.md`
-
-# Apex Trader Funding – Funded (Performance) Account Rules
-
-## 1. Consistency Rules
-
-- 30% profit distribution rule
-- 30% max daily loss relative to profits
-
-## 2. Risk Management
-
-- Mandatory stop-loss on every trade
-- 5:1 max risk-reward ratio
-- Half-contract rule until drawdown buffer cleared
-
-## 3. Payout Rules
-
-- First $25k 100% to trader
-- 90/10 split after until payout #6 → then 100%
-- 8-day minimum trading cycle between withdrawals
-- Safety net balance requirement for first 3 payouts
-
-## Visuals
-
-```mermaid
-flowchart TD
-    A[Trade in PA] --> B[Follow Consistency Rule]
-    B --> C{≥8 Trading Days?}
-    C -->|Yes| D[Payout Request]
-    C -->|No| E[Keep Trading]
-```
-
-[Placeholder: payout dashboard screenshot]
-
-
-
----
-**From:** `docs/apex/03_funding_process.md`
-
-# Apex Trader Funding – Step-by-Step Process
-
-## 1. Purchase Evaluation Plan
-
-- Select account size + platform
-
-## 2. Platform Setup
-
-- Rithmic → NinjaTrader
-- Tradovate → Web, Mobile, TradingView
-- WealthCharts → All-in-One
-
-## 3. Trading the Evaluation
-
-- Close positions daily
-- Obey trailing drawdown
-- No multi-account hedging
-
-## 4. Passing Evaluation
-
-- Hit profit goal
-- Trade 7+ days
-- Maintain compliance
-
-## 5. Activation of PA
-
-- Sign contract
-- Pay $85/month PA fee
-- Transition to funded trading
-
-## Visuals
-
-```mermaid
-flowchart TD
-    A[Sign Up] --> B[Platform Setup]
-    B --> C[Evaluation Trading]
-    C --> D{Pass?}
-    D -->|Yes| E[Performance Account Activated]
-    D -->|No| F[Reset or Retry]
-```
-
-[Placeholder: onboarding email screenshot]
 
 
 
@@ -8537,36 +8205,6 @@ flowchart TD
 
 
 ---
-**From:** `docs/apex/05_notifications.md`
-
-# Notifications Integration
-
-## Supported Channels
-
-- Email
-- Telegram
-- Slack
-
-## How to Use It
-
-- Configure webhook in Apex dashboard
-- Connect Slack workspace (via bot token)
-- Test alerts on evaluation + PA status changes
-
-## Visuals
-
-```mermaid
-flowchart LR
-    A[Apex Dashboard] --> B[Slack Alerts]
-    A --> C[Telegram Alerts]
-    A --> D[Email Alerts]
-```
-
-[Placeholder: screenshot Slack channel with Apex alert]
-
-
-
----
 **From:** `docs/apex/06_knowledge_base.md`
 
 # Apex Trader Funding – Rules, Funding Process, and Technical Platforms
@@ -8712,154 +8350,6 @@ flowchart TD
 
 
 ---
-**From:** `docs/backtest/overview.md`
-
-# Prism Apex Backtesting Framework
-
-## What It Does
-
-- Replays OHLCV bars to simulate ORB and VWAP strategies.
-- Applies Apex guardrails: stop required, ≤5R cap, EOD flat (session close), daily loss proximity.
-- Outputs JSON + CSV (fills, daily summaries).
-
-## Quick Start
-
-```bash
-node apps/cli/src/backtest.js \
-  --strategy=ORB \
-  --data=data/ES_1m.csv \
-  --mode=evaluation \
-  --open=14:30 --close=21:59 \
-  --tickValue=50 --seed=42
-```
-
-Outputs
-`backtest.json` → summary + fills + daily
-
-`backtest-fills.csv` → one row per filled trade
-
-`backtest-daily.csv` → per-day PnL summary
-
-## Config Notes (MVP)
-
-- Session times: use UTC/GMT equivalents to enforce EOD flat.
-- ≤5R cap: engine clamps targets above 5R.
-- Daily loss cap: soft emulation via per-day PnL in backtest.
-- Determinism: `--seed` controls slippage randomness (if enabled).
-
-## Extend Later (Tick-Level)
-
-- Replace simulateTrade with tick-matching engine.
-- Add partial fills, queue priority, and latency models.
-- Plug in full Prompt 24 compliance pass per-trade & end-of-day.
-
-## Caveats
-
-- Bar-level fills can over-estimate executions vs ticks.
-- Use conservative slippage settings in pre-prod studies.
-
----
-
-**QUALITY GATES (must pass)**
-
-- `npm run test -w tests` (Vitest) → `tests/backtest/engine.spec.ts` passes.
-- CLI produces `*.json` and `*.csv` and prints a summary.
-- 5R clamp verified; daily loss proximity flags populated.
-- No `any`, TypeScript strict OK.
-
-**COMPLETION CHECK**  
-Files created/updated:
-
-- `packages/backtest/src/types.ts`
-- `packages/backtest/src/io.ts`
-- `packages/backtest/src/util.ts`
-- `packages/backtest/src/fills.ts`
-- `packages/backtest/src/engine.ts`
-- `packages/backtest/src/adapters/orb.ts`
-- `packages/backtest/src/adapters/vwap.ts`
-- `packages/backtest/src/index.ts`
-- `apps/cli/src/backtest.ts`
-- `tests/backtest/engine.spec.ts`
-- `docs/backtest/overview.md`
-
-
-
----
-**From:** `docs/backtest/tick-readiness.md`
-
-# Tick-Level Readiness (Post-MVP)
-
-## What’s Included Now
-
-- **Tick replay hooks** with a simple **cross-through fill** model.
-- Feature-flagged CLI (`--modeReplay=tick`).
-- Tiny sample tick CSV for demos.
-
-## What’s Next (Not Included Yet)
-
-- Queue/latency modeling.
-- Partial fills & order book depth.
-- Realistic slippage tied to spreads & volume.
-- Parquet reader for high-volume tick data (planned).
-
-## Usage
-
-```bash
-# Tick replay (uses sample ticks)
-node apps/cli/dist/backtest.js \
-  --strategy=ORB \
-  --modeReplay=tick \
-  --tickData=data/ES_ticks.sample.csv \
-  --mode=evaluation --open=14:30 --close=21:59 \
-  --tickValue=50 --seed=42 --out=out/es_orb_tick
-```
-
-Diagram
-
-```mermaid
-flowchart TD
-    A[Signals: ORB/VWAP] --> B{Replay Mode}
-    B -->|bar| C[Bar Engine]
-    B -->|tick| D[Tick Engine]
-    C --> E[Fills + Daily PnL]
-    D --> E
-    E --> F[Reports JSON/CSV]
-```
-
-
-
----
-**From:** `docs/calibration/summary.md`
-
-# Prism Apex Tool — Risk Calibration Summary
-
-This document summarizes parameter sweeps of **ORB** and **VWAP** strategies
-against Apex Trader Funding guardrails.
-
-## Key Findings (Example)
-
-- ORB with 15m window, 8 tick stop, 2R target → 61% win rate, **passes all Apex rules**.
-- VWAP with 20bps band, 8 tick stop → strong expectancy but **breaches daily loss cap** in 8% of days.
-- Across all runs, ~72% parameter sets breached at least one Apex rule.
-
-## Metrics Recorded
-
-- Win rate (%)
-- Expectancy ($ per trade)
-- Max drawdown
-- Rule breaches (daily loss, trailing drawdown, consistency, EOD flat)
-
-## Next Steps
-
-- Narrow parameter ranges to those that consistently pass Apex rules.
-- Incorporate into **live guardrails** (Prompt 14).
-- Share CSV/JSON results with strategy engineers.
-
-[Placeholder: charts from notebooks/calibration.ipynb]
-
-
-
----
 **From:** `docs/compliance/rule-engine.md`
 
 # Compliance Rule Engine
@@ -8922,110 +8412,6 @@ console.log(res.ok);
 
 - Map remaining Apex rules into `apex/rules.json`.
 - Add a diagram of the compliance flow.
-
-
-
----
-**From:** `docs/config.md`
-
-# Guardrails & Sizing (Env)
-
-| Key                            | Default        | Notes                                       |
-| ------------------------------ | -------------- | ------------------------------------------- |
-| MIN_RR                         | 1.5            | minimum risk/reward                         |
-| MAX_RR                         | 5              | maximum risk/reward (≤5)                    |
-| FLAT_BY_UTC                    | 20:59          | EOD flat cutoff (UTC)                       |
-| SIZE_POLICY                    | percent-of-max | sizing policy                               |
-| PCT_OF_MAX_WHEN_NO_BUFFER      | 0.5            | percent of max contracts without buffer     |
-| PCT_OF_MAX_WHEN_BUFFER         | 1.0            | percent of max contracts after buffer       |
-| HALF_SIZE_UNTIL_BUFFER         | true           | start half size until buffer cleared        |
-| ENFORCE_SIZE_HINTS             | false          | reject qty above allowed when true          |
-| SIZE_JUMP_MULTIPLIER           | 2              | flag when qty > lastSuggested \* multiplier |
-| ENFORCE_SIZE_JUMPS             | false          | reject when jumpExceeded and this is true   |
-| CONSISTENCY_TRACKING_ENABLED   | true           | metrics only; no enforcement in V1          |
-| CONSISTENCY_DAY_SHARE_LIMIT    | 0.3            | 30% single-day share limit                  |
-| CONSISTENCY_MIN_PROFIT_DAY_USD | 50             | minimum profit to count a day               |
-| CONSISTENCY_WINDOW_DAYS        | 8              | rolling summary window                      |
-| MIN_PROFIT_TICKS               | (blank)        | profit floor disabled                       |
-| MIN_EXPECTED_PROFIT_USD        | (blank)        | profit floor disabled                       |
-
-Consistency is tracked only in V1; enforcement comes later.
-
-## TradingView Webhook
-
-Set `TRADINGVIEW_WEBHOOK_SECRET` in your environment.
-
-Example alert:
-
-```json
-{
-  "symbol": "ES1!",
-  "side": "BUY",
-  "entry": 5050.25,
-  "stop": 5046.25,
-  "target": 5055.25
-}
-```
-
-Send to `POST /webhooks/tradingview` with header `x-webhook-secret: <secret>`.
-
-
-
----
-**From:** `docs/configs/ACCOUNTS.md`
-
-# accounts.json — Fields
-
-- **name**: label for the account (e.g., "PA-1")
-- **accountId**: Tradovate numeric account ID
-- **accountSpec**: Tradovate account spec (e.g., "PA123456")
-- **mode**: "eval" or "funded"
-- **planMaxContracts**: hard cap from the plan
-- **baseSize**: our default ticket size before guards (≥1)
-- **multiplier**: per-account multiplier (e.g., 1.2 to scale up)
-- **minQty**: clamp low (≥0)
-
-Start from `configs/accounts.example.json` and run:
-
-
-pnpm config:check
-
-
-
----
-**From:** `docs/configs/README.md`
-
-# Configs — Accounts & Strategies
-
-## Accounts (`configs/accounts.json`)
-**Shape**
-- `name` (string) — label for the account
-- `accountId` (integer > 0)
-- `accountSpec` (string) — broker account spec
-- `mode` ("eval" | "funded")
-- `planMaxContracts` (integer > 0)
-- `baseSize` (integer > 0, default 1)
-- `multiplier` (number > 0, default 1)
-- `minQty` (integer ≥ 0, default 1)
-
-Copy `configs/accounts.example.json` and edit your values.
-
-## Strategies (`configs/strategies/*.json`)
-Each strategy file contains the **numeric knobs** your strategy reads at runtime.
-Common fields (examples):
-- `lookbackBars`, `rangeLookbackMinutes`, `bufferTicks`, `cooldownBars`, `minRR`
-- Optional time fields: `sessionStart`, `sessionEnd` in `HH:MM` or `HH:MM:SS`
-
-Use the `*.example.json` files as templates and align keys with your actual strategy code.
-
-## Validation
-Run:
-
-
-pnpm config:check
-
-- Checks: types, numeric finiteness, non-negative durations/counts; accounts schema also rejects **unknown keys** and bad types.
-- Strategy validation is **generic** and safe: it enforces numeric/time types; for strict key lists, pass `allowedKeys` in your own loader or extend the schema.
 
 
 
@@ -9172,32 +8558,6 @@ flowchart TD
     CD --> Server[Server Docker Compose]
     Server --> Operator[Web Dashboard + API]
 ```
-
-
-
----
-**From:** `docs/deployment/hardening.md`
-
-# Production Hardening — Prism Apex Tool
-
-## Overview
-
-This guide ensures the tool runs safely in production.
-
-## Key Safeguards
-
-- Panic Brake → one-click OFF.
-- Auto-restart → crashes restart within 10s.
-- Healthcheck → /api/health shows system OK.
-- Secrets → stored only in .env.production.
-- Monitoring → Prometheus + Grafana.
-
-## Steps
-
-1. Deploy with Docker/Helm.
-2. Run `make panic` to confirm panic button works.
-3. Check Grafana for CPU/mem + guardrail alerts.
-4. Ensure liveness probe auto-restarts container if stuck.
 
 
 
@@ -10875,173 +10235,6 @@ flowchart TD
 
 
 ---
-**From:** `docs/telemetry.md`
-
-# Telemetry (Demo)
-
-This repository includes a read-only telemetry client for the Tradovate demo environment. The client polls account balances, open positions, fills, and computes simple daily PnL and a buffer-cleared flag. Telemetry is **demo-only**; live wiring will arrive in a future PR.
-
-## Configuration
-
-Set the following environment variables (see `.env.example`):
-
-```
-ENABLE_TELEMETRY=true
-TELEMETRY_POLL_MS=5000
-TRADOVATE_DEMO_REST_BASE=https://demo.tradovateapi.com/v1
-TRADOVATE_USER=...
-TRADOVATE_PASSWORD=...
-TRADOVATE_APP_ID=...
-TRADOVATE_APP_VERSION=prism-apex/0.2.0
-TRADOVATE_API_CID=...
-TRADOVATE_API_SEC=...
-TRADOVATE_DEVICE_ID=prism-apex-dev-telemetry
-BUFFER_CLEAR_THRESHOLD=2500
-```
-
-## API
-
-When telemetry is enabled the API exposes:
-
-- `GET /telemetry/positions?accountId=...`
-- `GET /telemetry/account?accountId=...`
-- `GET /telemetry/fills?date=YYYY-MM-DD&accountId=...`
-- `/ready` includes a `telemetry` block with basic metrics.
-
-The consistency report uses telemetry-derived PnL when enabled; otherwise it falls back to mock data.
-
-## Dashboard
-
-A `/positions` tab displays open positions, account balance, and buffer status. The page polls the API at a selectable interval (3s/5s/10s/Off).
-
-## Buffer Cleared
-
-The buffer flag is derived from cumulative realized PnL crossing `BUFFER_CLEAR_THRESHOLD`. This is a placeholder heuristic for demo purposes and may be replaced when the live platform exposes an explicit flag.
-
-
-
----
-**From:** `infra/README-DEPLOY.md`
-
-# Prism Apex Tool — Deployment (Production)
-
-## Overview
-
-This stack deploys two containers:
-
-- **API** on port **8000**
-- **Dashboard** on port **80** (proxies `/api/*` to API via Nginx in the image)
-
-## One-time Server Setup
-
-1. Provision Ubuntu 22.04 server.
-2. Add GitHub Actions secrets (below).
-3. First CI run will **bootstrap** Docker automatically.
-
-## Required GitHub Secrets
-
-- `GHCR_USERNAME`, `GHCR_TOKEN` — push images to GHCR
-- `PROD_SSH_HOST`, `PROD_SSH_USER`, `PROD_SSH_KEY` — deploy over SSH
-- `PROD_STACK_DIR` — e.g., `/home/ubuntu/prism-stack`
-- `STACK_NAME` — e.g., `prism`
-
-## First Deploy
-
-1. Copy `infra/.env.prod.example` → create **server** file `${PROD_STACK_DIR}/.env`.
-2. Tag a release locally:
-   ```bash
-   make release TAG=v0.1.0
-   ```
-3. CI builds & pushes images, then deploys to the server.
-
-## Verify:
-
-- <http://<server-ip>/> (dashboard)
-- <http://<server-ip>:8000/health> (API)
-
-## Rollback
-
-Re-deploy previous tag:
-
-```
-TAG=v0.0.9 make deploy
-```
-
-## Notes
-
-- Volumes are preserved across updates (prism_data).
-- Health-gated rollout avoids serving broken builds.
-- Add a reverse proxy + TLS later (Caddy/Traefik) if you need HTTPS.
-
-
-
----
-**From:** `infra/README.md`
-
-# Infra
-
-Infrastructure configuration for Prism Apex Tool. Docker Compose and deployment scripts will be added in later prompts.
-
-
-
----
-**From:** `infra/nginx/README.md`
-
-# Prism Apex — Nginx + Let’s Encrypt TLS
-
-## Prereqs
-
-- DNS A/AAAA records for **YOUR_DOMAIN** pointing to this VM’s public IP
-- Prism Apex API running via systemd on `127.0.0.1:8000`
-- Ubuntu 22.04+ (or Debian-based)
-
-## One-time setup
-
-```bash
-# From repo root, as sudo-capable user
-export DOMAIN=YOUR_DOMAIN
-export EMAIL=you@example.com
-bash infra/nginx/setup-nginx-certbot.sh
-```
-
-### What this does
-
-- Installs Nginx + Certbot
-- Places site config at /etc/nginx/sites-available/prism-apex.conf
-- Obtains a Let’s Encrypt cert for $DOMAIN
-- Forces HTTPS + HTTP/2
-- Proxies to http://127.0.0.1:8000
-- Adds rate limiting and security headers
-
-### Verify
-
-```bash
-curl -I https://$DOMAIN/health
-# Should return HTTP/2 200
-```
-
-### Logs
-
-- /var/log/nginx/prism-apex.access.log
-- /var/log/nginx/prism-apex.error.log
-
-### Renewals
-
-Certbot installs a systemd timer. To test:
-
-```bash
-sudo certbot renew --dry-run
-```
-
-### TradingView
-
-Point your webhook to: https://$DOMAIN/webhooks/tradingview
-
-Add header: x-webhook-secret: <your secret>
-
-
-
----
 **From:** `infra/systemd/README.md`
 
 # Prism Apex — Ubuntu VM (systemd) Runbook
@@ -11130,373 +10323,49 @@ sudo systemctl restart prism-apex
 
 
 ---
-**From:** `packages/analytics/README.md`
+**From:** `reports/types/r3/20250909-183940/summary.md`
 
-# @prism-apex/analytics (stub)
+# TypeScript Hotspots — 20250909-183940
 
-Temporary no-op analytics facade used to keep CI green.
+- Exit status: 2
+- Approx TS errors (grep): 155
 
-- `trackEvent(name, props)` – no-op
-- `trackError(error, context)` – no-op
-- `meter(name, value, tags)` – no-op
-- `createAnalyticsScope(scope)` – returns the same no-op fns
-
-Replace with a real implementation in a later telemetry PR.
-
-
-
----
-**From:** `reports/harvest/20250910-173432/summary.md`
-
-# Harvest r2 — 20250910-173432
-
-- Typecheck exit status: 2
-- Approx TS error hits (grep): 172
-
-## Top TS files (current)
+## Top files (by error count)
      14 packages/indicators/__tests__/swings.spec.ts
      14 packages/indicators/__tests__/atr.spec.ts
      13 apps/api/test/rules/engine.test.ts
      12 packages/strategies/src/vwapFirstTouch.ts
-     11 packages/sdk/src/index.ts
      10 packages/indicators/__tests__/vwap.spec.ts
       8 apps/api/src/jobs/strategies.ts
       7 packages/clients-tradovate/__tests__/telemetry.spec.ts
-      6 packages/rules-apex/src/applyGuards.ts
       6 packages/indicators/src/swings.ts
       6 apps/api/src/jobs/ticketizer.ts
       5 packages/strategies/tests/osbBreakout.spec.ts
       5 packages/runtime/__tests__/ws.resilience.spec.ts
       4 packages/strategies/tests/vwapFirstTouch.spec.ts
       4 packages/strategies/src/osbBreakout.ts
+      4 packages/accounts/src/cli.ts
+      4 apps/api/src/routes/tickets.ts
+      3 vitest.local.config.ts
+      3 tests/setup/vitest.setup.ts
+      3 packages/signals/src/__tests__/core.spec.ts
+      3 packages/rules/src/apex.ts
+      3 packages/rules-apex/test/stop.spec.ts
 
-## Top TS codes (current)
+## Top TS error codes
      56 error TS18048
      54 error TS2532
-     13 error TS2305
      12 error TS2345
-      8 error TS2339
       5 error TS2561
       5 error TS2322
       4 error TS2307
       3 error TS2769
       3 error TS2554
+      3 error TS2339
       3 error TS1343
       2 error TS2540
-      1 error TS4104
+      2 error TS2305
       1 error TS2614
       1 error TS2578
-
-## Tail: lint_l4_tail.txt
-```
-No matching log found for pattern: reports/lint/l4/*/lint.out
-```
-
-## Tail: lint_r3_tail.txt
-```
-No matching log found for pattern: reports/lint/round3/*/lint.out
-```
-
-## Tail: lint_r2_1_tail.txt
-```
-No matching log found for pattern: reports/lint/round2_1/*/lint.out
-```
-
-## Tail: unit_t7_tail.txt
-```
-No matching log found for pattern: reports/tests/t7/*/unit.out
-```
-
-## Tail: types_r5_tail.txt
-```
-packages/indicators/__tests__/atr.spec.ts(63,16): error TS2532: Object is possibly 'undefined'.
-packages/indicators/__tests__/atr.spec.ts(63,31): error TS2532: Object is possibly 'undefined'.
-packages/indicators/__tests__/atr.spec.ts(64,16): error TS2532: Object is possibly 'undefined'.
-packages/indicators/__tests__/atr.spec.ts(64,30): error TS2532: Object is possibly 'undefined'.
-packages/indicators/__tests__/swings.spec.ts(1,31): error TS2307: Cannot find module '../../__tests__/helpers/assert' or its corresponding type declarations.
-packages/indicators/__tests__/swings.spec.ts(22,76): error TS2345: Argument of type 'number | undefined' is not assignable to parameter of type 'number'.
-  Type 'undefined' is not assignable to type 'number'.
-packages/indicators/__tests__/swings.spec.ts(25,23): error TS2532: Object is possibly 'undefined'.
-packages/indicators/__tests__/swings.spec.ts(25,42): error TS2532: Object is possibly 'undefined'.
-packages/indicators/__tests__/swings.spec.ts(26,23): error TS2532: Object is possibly 'undefined'.
-packages/indicators/__tests__/swings.spec.ts(26,42): error TS2532: Object is possibly 'undefined'.
-packages/indicators/__tests__/swings.spec.ts(27,23): error TS2532: Object is possibly 'undefined'.
-packages/indicators/__tests__/swings.spec.ts(27,42): error TS2532: Object is possibly 'undefined'.
-packages/indicators/__tests__/swings.spec.ts(28,23): error TS2532: Object is possibly 'undefined'.
-packages/indicators/__tests__/swings.spec.ts(28,42): error TS2532: Object is possibly 'undefined'.
-packages/indicators/__tests__/swings.spec.ts(29,23): error TS2532: Object is possibly 'undefined'.
-packages/indicators/__tests__/swings.spec.ts(29,42): error TS2532: Object is possibly 'undefined'.
-packages/indicators/__tests__/swings.spec.ts(38,76): error TS2345: Argument of type 'number | undefined' is not assignable to parameter of type 'number'.
-  Type 'undefined' is not assignable to type 'number'.
-packages/indicators/__tests__/swings.spec.ts(40,42): error TS2532: Object is possibly 'undefined'.
-packages/indicators/__tests__/swings.spec.ts(40,61): error TS2532: Object is possibly 'undefined'.
-packages/indicators/__tests__/vwap.spec.ts(1,31): error TS2307: Cannot find module '../../__tests__/helpers/assert' or its corresponding type declarations.
-packages/indicators/__tests__/vwap.spec.ts(13,3): error TS2322: Type '{ ts: string | undefined; open: number; high: number; low: number; close: number; volume: number; }[]' is not assignable to type 'Bar1m[]'.
-  Type '{ ts: string | undefined; open: number; high: number; low: number; close: number; volume: number; }' is not assignable to type 'Bar1m'.
-    Types of property 'ts' are incompatible.
-      Type 'string | undefined' is not assignable to type 'string'.
-        Type 'undefined' is not assignable to type 'string'.
-packages/indicators/__tests__/vwap.spec.ts(15,25): error TS18048: 'open' is possibly 'undefined'.
-packages/indicators/__tests__/vwap.spec.ts(15,38): error TS18048: 'high' is possibly 'undefined'.
-packages/indicators/__tests__/vwap.spec.ts(15,50): error TS18048: 'low' is possibly 'undefined'.
-packages/indicators/__tests__/vwap.spec.ts(15,63): error TS18048: 'close' is possibly 'undefined'.
-packages/indicators/__tests__/vwap.spec.ts(15,79): error TS18048: 'volume' is possibly 'undefined'.
-packages/indicators/__tests__/vwap.spec.ts(28,17): error TS2532: Object is possibly 'undefined'.
-packages/indicators/__tests__/vwap.spec.ts(28,33): error TS2532: Object is possibly 'undefined'.
-packages/indicators/__tests__/vwap.spec.ts(28,48): error TS2532: Object is possibly 'undefined'.
-packages/indicators/__tests__/vwap.spec.ts(43,37): error TS2345: Argument of type 'number | undefined' is not assignable to parameter of type 'number'.
-  Type 'undefined' is not assignable to type 'number'.
-packages/indicators/src/swings.ts(19,9): error TS2532: Object is possibly 'undefined'.
-packages/indicators/src/swings.ts(20,32): error TS2532: Object is possibly 'undefined'.
-packages/indicators/src/swings.ts(20,51): error TS2532: Object is possibly 'undefined'.
-packages/indicators/src/swings.ts(22,9): error TS2532: Object is possibly 'undefined'.
-packages/indicators/src/swings.ts(23,32): error TS2532: Object is possibly 'undefined'.
-packages/indicators/src/swings.ts(23,51): error TS2532: Object is possibly 'undefined'.
-packages/rules-apex/src/applyGuards.ts(31,14): error TS2339: Property 'push' does not exist on type 'readonly ["phase:eval" | "phase:funded"]'.
-packages/rules-apex/src/applyGuards.ts(32,14): error TS2339: Property 'push' does not exist on type 'readonly ["phase:eval" | "phase:funded"]'.
-packages/rules-apex/src/applyGuards.ts(33,46): error TS2339: Property 'push' does not exist on type 'readonly ["phase:eval" | "phase:funded"]'.
-packages/rules-apex/src/applyGuards.ts(34,39): error TS2339: Property 'push' does not exist on type 'readonly ["phase:eval" | "phase:funded"]'.
-packages/rules-apex/src/applyGuards.ts(60,14): error TS2339: Property 'push' does not exist on type 'readonly ["phase:eval" | "phase:funded"]'.
-packages/rules-apex/src/applyGuards.ts(73,7): error TS4104: The type 'readonly ["phase:eval" | "phase:funded"]' is 'readonly' and cannot be assigned to the mutable type 'string[]'.
-packages/rules-apex/test/stop.spec.ts(5,17): error TS2554: Expected 3 arguments, but got 2.
-packages/rules-apex/test/stop.spec.ts(13,17): error TS2554: Expected 3 arguments, but got 2.
-packages/rules-apex/test/stop.spec.ts(21,17): error TS2554: Expected 3 arguments, but got 2.
-packages/rules/src/apex.ts(38,21): error TS18048: 'h' is possibly 'undefined'.
-packages/rules/src/apex.ts(38,32): error TS18048: 'm' is possibly 'undefined'.
-packages/rules/src/apex.ts(38,41): error TS18048: 's' is possibly 'undefined'.
-packages/rules/src/config.ts(11,59): error TS1343: The 'import.meta' meta-property is only allowed when the '--module' option is 'es2020', 'es2022', 'esnext', 'system', 'node16', 'node18', 'node20', or 'nodenext'.
-packages/runtime/__tests__/ws.resilience.spec.ts(31,5): error TS18048: 'first' is possibly 'undefined'.
-packages/runtime/__tests__/ws.resilience.spec.ts(37,5): error TS18048: 'second' is possibly 'undefined'.
-packages/runtime/__tests__/ws.resilience.spec.ts(46,11): error TS2558: Expected 0-1 type arguments, but got 2.
-packages/runtime/__tests__/ws.resilience.spec.ts(49,49): error TS2345: Argument of type '[string | undefined]' is not assignable to parameter of type 'never'.
-packages/runtime/__tests__/ws.resilience.spec.ts(54,12): error TS2532: Object is possibly 'undefined'.
-packages/sdk/src/index.ts(2,3): error TS2305: Module '"./types.js"' has no exported member 'OSBInput'.
-packages/sdk/src/index.ts(3,3): error TS2305: Module '"./types.js"' has no exported member 'VWAPInput'.
-packages/sdk/src/index.ts(4,3): error TS2305: Module '"./types.js"' has no exported member 'SuggestionResult'.
-packages/sdk/src/index.ts(5,3): error TS2305: Module '"./types.js"' has no exported member 'SymbolsResponse'.
-packages/sdk/src/index.ts(6,3): error TS2305: Module '"./types.js"' has no exported member 'SessionsResponse'.
-packages/sdk/src/index.ts(49,3): error TS2305: Module '"./types.js"' has no exported member 'Bar'.
-packages/sdk/src/index.ts(50,3): error TS2305: Module '"./types.js"' has no exported member 'OSBInput'.
-packages/sdk/src/index.ts(51,3): error TS2305: Module '"./types.js"' has no exported member 'VWAPInput'.
-packages/sdk/src/index.ts(52,3): error TS2305: Module '"./types.js"' has no exported member 'SuggestionResult'.
-packages/sdk/src/index.ts(53,3): error TS2305: Module '"./types.js"' has no exported member 'SymbolsResponse'.
-packages/sdk/src/index.ts(54,3): error TS2305: Module '"./types.js"' has no exported member 'SessionsResponse'.
-packages/signals/src/__tests__/core.spec.ts(25,12): error TS18048: 's' is possibly 'undefined'.
-packages/signals/src/__tests__/core.spec.ts(26,12): error TS18048: 's' is possibly 'undefined'.
-packages/signals/src/__tests__/core.spec.ts(36,12): error TS2532: Object is possibly 'undefined'.
-packages/strategies/src/config/strategy-config.ts(35,41): error TS1343: The 'import.meta' meta-property is only allowed when the '--module' option is 'es2020', 'es2022', 'esnext', 'system', 'node16', 'node18', 'node20', or 'nodenext'.
-packages/strategies/src/osbBreakout.ts(57,19): error TS18048: 'lastBar' is possibly 'undefined'.
-packages/strategies/src/osbBreakout.ts(57,70): error TS18048: 'lastBar' is possibly 'undefined'.
-packages/strategies/src/osbBreakout.ts(58,21): error TS18048: 'lastBar' is possibly 'undefined'.
-packages/strategies/src/osbBreakout.ts(58,71): error TS18048: 'lastBar' is possibly 'undefined'.
-packages/strategies/src/vwapFirstTouch.ts(47,18): error TS2532: Object is possibly 'undefined'.
-packages/strategies/src/vwapFirstTouch.ts(47,41): error TS2532: Object is possibly 'undefined'.
-packages/strategies/src/vwapFirstTouch.ts(52,41): error TS2532: Object is possibly 'undefined'.
-packages/strategies/src/vwapFirstTouch.ts(56,21): error TS2532: Object is possibly 'undefined'.
-packages/strategies/src/vwapFirstTouch.ts(58,18): error TS18048: 'vnow' is possibly 'undefined'.
-packages/strategies/src/vwapFirstTouch.ts(58,60): error TS18048: 'vnow' is possibly 'undefined'.
-packages/strategies/src/vwapFirstTouch.ts(63,30): error TS18048: 'touchBar' is possibly 'undefined'.
-packages/strategies/src/vwapFirstTouch.ts(63,47): error TS18048: 'vnow' is possibly 'undefined'.
-packages/strategies/src/vwapFirstTouch.ts(69,24): error TS2345: Argument of type 'number | undefined' is not assignable to parameter of type 'number'.
-  Type 'undefined' is not assignable to type 'number'.
-packages/strategies/src/vwapFirstTouch.ts(70,24): error TS2345: Argument of type 'number | undefined' is not assignable to parameter of type 'number'.
-  Type 'undefined' is not assignable to type 'number'.
-packages/strategies/src/vwapFirstTouch.ts(74,24): error TS2345: Argument of type 'number | undefined' is not assignable to parameter of type 'number'.
-  Type 'undefined' is not assignable to type 'number'.
-packages/strategies/src/vwapFirstTouch.ts(75,24): error TS2345: Argument of type 'number | undefined' is not assignable to parameter of type 'number'.
-  Type 'undefined' is not assignable to type 'number'.
-packages/strategies/tests/osbBreakout.spec.ts(38,12): error TS18048: 's' is possibly 'undefined'.
-packages/strategies/tests/osbBreakout.spec.ts(39,12): error TS18048: 's' is possibly 'undefined'.
-packages/strategies/tests/osbBreakout.spec.ts(40,12): error TS18048: 's' is possibly 'undefined'.
-packages/strategies/tests/osbBreakout.spec.ts(112,25): error TS18048: 's' is possibly 'undefined'.
-packages/strategies/tests/osbBreakout.spec.ts(112,34): error TS18048: 's' is possibly 'undefined'.
-packages/strategies/tests/vwapFirstTouch.spec.ts(36,12): error TS18048: 's' is possibly 'undefined'.
-packages/strategies/tests/vwapFirstTouch.spec.ts(37,12): error TS18048: 's' is possibly 'undefined'.
-packages/strategies/tests/vwapFirstTouch.spec.ts(38,25): error TS18048: 's' is possibly 'undefined'.
-packages/strategies/tests/vwapFirstTouch.spec.ts(38,34): error TS18048: 's' is possibly 'undefined'.
-packages/ticketizer/src/fanout.ts(48,12): error TS2339: Property 'maxContractsAllowed' does not exist on type '{}'.
-packages/ticketizer/src/fanout.ts(93,35): error TS2339: Property 'maxContractsAllowed' does not exist on type '{}'.
-tests/setup/vitest.setup.ts(16,15): error TS2540: Cannot assign to 'NODE_ENV' because it is a read-only property.
-tests/setup/vitest.setup.ts(17,15): error TS2540: Cannot assign to 'LOG_LEVEL' because it is a read-only property.
-tests/setup/vitest.setup.ts(23,5): error TS2578: Unused '@ts-expect-error' directive.
-vitest.local.config.ts(5,3): error TS2769: No overload matches this call.
-  The last overload gave the following error.
-    Object literal may only specify known properties, and 'projects' does not exist in type 'UserConfigExport'.
-vitest.local.config.ts(23,9): error TS2769: No overload matches this call.
-  The last overload gave the following error.
-    Object literal may only specify known properties, and 'maxThreads' does not exist in type 'ProjectConfig'.
-vitest.local.config.ts(48,9): error TS2769: No overload matches this call.
-  The last overload gave the following error.
-    Object literal may only specify known properties, and 'maxThreads' does not exist in type 'ProjectConfig'.
- ELIFECYCLE  Command failed with exit code 2.
-```
-
-## Tail: types_r3_tail.txt
-```
-packages/clients-tradovate/__tests__/telemetry.spec.ts(98,18): error TS2339: Property 'bufferCleared' does not exist on type 'never'.
-packages/clients-tradovate/src/__tests__/ws.spec.ts(30,12): error TS18048: 'inst' is possibly 'undefined'.
-packages/clients-tradovate/src/__tests__/ws.spec.ts(31,12): error TS18048: 'inst' is possibly 'undefined'.
-packages/clients-tradovate/src/__tests__/ws.spec.ts(41,5): error TS18048: 'first' is possibly 'undefined'.
-packages/indicators/__tests__/atr.spec.ts(12,3): error TS2322: Type '{ ts: string | undefined; open: number; high: number; low: number; close: number; volume: number; }[]' is not assignable to type 'Bar1m[]'.
-  Type '{ ts: string | undefined; open: number; high: number; low: number; close: number; volume: number; }' is not assignable to type 'Bar1m'.
-    Types of property 'ts' are incompatible.
-      Type 'string | undefined' is not assignable to type 'string'.
-        Type 'undefined' is not assignable to type 'string'.
-packages/indicators/__tests__/atr.spec.ts(14,25): error TS18048: 'open' is possibly 'undefined'.
-packages/indicators/__tests__/atr.spec.ts(14,38): error TS18048: 'high' is possibly 'undefined'.
-packages/indicators/__tests__/atr.spec.ts(14,50): error TS18048: 'low' is possibly 'undefined'.
-packages/indicators/__tests__/atr.spec.ts(14,63): error TS18048: 'close' is possibly 'undefined'.
-packages/indicators/__tests__/atr.spec.ts(14,79): error TS18048: 'volume' is possibly 'undefined'.
-packages/indicators/__tests__/atr.spec.ts(59,26): error TS2345: Argument of type 'Bar1m | undefined' is not assignable to parameter of type 'Bar1m'.
-  Type 'undefined' is not assignable to type 'Bar1m'.
-packages/indicators/__tests__/atr.spec.ts(59,35): error TS2532: Object is possibly 'undefined'.
-packages/indicators/__tests__/atr.spec.ts(61,7): error TS2532: Object is possibly 'undefined'.
-packages/indicators/__tests__/atr.spec.ts(61,22): error TS2532: Object is possibly 'undefined'.
-packages/indicators/__tests__/atr.spec.ts(62,16): error TS2532: Object is possibly 'undefined'.
-packages/indicators/__tests__/atr.spec.ts(62,31): error TS2532: Object is possibly 'undefined'.
-packages/indicators/__tests__/atr.spec.ts(63,16): error TS2532: Object is possibly 'undefined'.
-packages/indicators/__tests__/atr.spec.ts(63,30): error TS2532: Object is possibly 'undefined'.
-packages/indicators/__tests__/swings.spec.ts(21,76): error TS2345: Argument of type 'number | undefined' is not assignable to parameter of type 'number'.
-  Type 'undefined' is not assignable to type 'number'.
-packages/indicators/__tests__/swings.spec.ts(24,23): error TS2532: Object is possibly 'undefined'.
-packages/indicators/__tests__/swings.spec.ts(24,42): error TS2532: Object is possibly 'undefined'.
-packages/indicators/__tests__/swings.spec.ts(25,23): error TS2532: Object is possibly 'undefined'.
-packages/indicators/__tests__/swings.spec.ts(25,42): error TS2532: Object is possibly 'undefined'.
-packages/indicators/__tests__/swings.spec.ts(26,23): error TS2532: Object is possibly 'undefined'.
-packages/indicators/__tests__/swings.spec.ts(26,42): error TS2532: Object is possibly 'undefined'.
-packages/indicators/__tests__/swings.spec.ts(27,23): error TS2532: Object is possibly 'undefined'.
-packages/indicators/__tests__/swings.spec.ts(27,42): error TS2532: Object is possibly 'undefined'.
-packages/indicators/__tests__/swings.spec.ts(28,23): error TS2532: Object is possibly 'undefined'.
-packages/indicators/__tests__/swings.spec.ts(28,42): error TS2532: Object is possibly 'undefined'.
-packages/indicators/__tests__/swings.spec.ts(37,76): error TS2345: Argument of type 'number | undefined' is not assignable to parameter of type 'number'.
-  Type 'undefined' is not assignable to type 'number'.
-packages/indicators/__tests__/swings.spec.ts(39,42): error TS2532: Object is possibly 'undefined'.
-packages/indicators/__tests__/swings.spec.ts(39,61): error TS2532: Object is possibly 'undefined'.
-packages/indicators/__tests__/vwap.spec.ts(12,3): error TS2322: Type '{ ts: string | undefined; open: number; high: number; low: number; close: number; volume: number; }[]' is not assignable to type 'Bar1m[]'.
-  Type '{ ts: string | undefined; open: number; high: number; low: number; close: number; volume: number; }' is not assignable to type 'Bar1m'.
-    Types of property 'ts' are incompatible.
-      Type 'string | undefined' is not assignable to type 'string'.
-        Type 'undefined' is not assignable to type 'string'.
-packages/indicators/__tests__/vwap.spec.ts(14,25): error TS18048: 'open' is possibly 'undefined'.
-packages/indicators/__tests__/vwap.spec.ts(14,38): error TS18048: 'high' is possibly 'undefined'.
-packages/indicators/__tests__/vwap.spec.ts(14,50): error TS18048: 'low' is possibly 'undefined'.
-packages/indicators/__tests__/vwap.spec.ts(14,63): error TS18048: 'close' is possibly 'undefined'.
-packages/indicators/__tests__/vwap.spec.ts(14,79): error TS18048: 'volume' is possibly 'undefined'.
-packages/indicators/__tests__/vwap.spec.ts(27,17): error TS2532: Object is possibly 'undefined'.
-packages/indicators/__tests__/vwap.spec.ts(27,33): error TS2532: Object is possibly 'undefined'.
-packages/indicators/__tests__/vwap.spec.ts(27,48): error TS2532: Object is possibly 'undefined'.
-packages/indicators/__tests__/vwap.spec.ts(42,37): error TS2345: Argument of type 'number | undefined' is not assignable to parameter of type 'number'.
-  Type 'undefined' is not assignable to type 'number'.
-packages/indicators/src/swings.ts(19,9): error TS2532: Object is possibly 'undefined'.
-packages/indicators/src/swings.ts(20,32): error TS2532: Object is possibly 'undefined'.
-packages/indicators/src/swings.ts(20,51): error TS2532: Object is possibly 'undefined'.
-packages/indicators/src/swings.ts(22,9): error TS2532: Object is possibly 'undefined'.
-packages/indicators/src/swings.ts(23,32): error TS2532: Object is possibly 'undefined'.
-packages/indicators/src/swings.ts(23,51): error TS2532: Object is possibly 'undefined'.
-packages/rules-apex/test/stop.spec.ts(5,17): error TS2554: Expected 3 arguments, but got 2.
-packages/rules-apex/test/stop.spec.ts(13,17): error TS2554: Expected 3 arguments, but got 2.
-packages/rules-apex/test/stop.spec.ts(21,17): error TS2554: Expected 3 arguments, but got 2.
-packages/rules/src/apex.ts(38,21): error TS18048: 'h' is possibly 'undefined'.
-packages/rules/src/apex.ts(38,32): error TS18048: 'm' is possibly 'undefined'.
-packages/rules/src/apex.ts(38,41): error TS18048: 's' is possibly 'undefined'.
-packages/rules/src/config.ts(11,59): error TS1343: The 'import.meta' meta-property is only allowed when the '--module' option is 'es2020', 'es2022', 'esnext', 'system', 'node16', 'node18', 'node20', or 'nodenext'.
-packages/runtime/__tests__/ws.resilience.spec.ts(31,5): error TS18048: 'first' is possibly 'undefined'.
-packages/runtime/__tests__/ws.resilience.spec.ts(37,5): error TS18048: 'second' is possibly 'undefined'.
-packages/runtime/__tests__/ws.resilience.spec.ts(46,11): error TS2558: Expected 0-1 type arguments, but got 2.
-packages/runtime/__tests__/ws.resilience.spec.ts(49,49): error TS2345: Argument of type '[string | undefined]' is not assignable to parameter of type 'never'.
-packages/runtime/__tests__/ws.resilience.spec.ts(54,12): error TS2532: Object is possibly 'undefined'.
-packages/signals/src/__tests__/core.spec.ts(25,12): error TS18048: 's' is possibly 'undefined'.
-packages/signals/src/__tests__/core.spec.ts(26,12): error TS18048: 's' is possibly 'undefined'.
-packages/signals/src/__tests__/core.spec.ts(36,12): error TS2532: Object is possibly 'undefined'.
-packages/strategies/src/config/strategy-config.ts(35,41): error TS1343: The 'import.meta' meta-property is only allowed when the '--module' option is 'es2020', 'es2022', 'esnext', 'system', 'node16', 'node18', 'node20', or 'nodenext'.
-packages/strategies/src/osbBreakout.ts(39,19): error TS18048: 'lastBar' is possibly 'undefined'.
-packages/strategies/src/osbBreakout.ts(39,70): error TS18048: 'lastBar' is possibly 'undefined'.
-packages/strategies/src/osbBreakout.ts(40,21): error TS18048: 'lastBar' is possibly 'undefined'.
-packages/strategies/src/osbBreakout.ts(40,71): error TS18048: 'lastBar' is possibly 'undefined'.
-packages/strategies/src/vwapFirstTouch.ts(29,18): error TS2532: Object is possibly 'undefined'.
-packages/strategies/src/vwapFirstTouch.ts(29,41): error TS2532: Object is possibly 'undefined'.
-packages/strategies/src/vwapFirstTouch.ts(34,41): error TS2532: Object is possibly 'undefined'.
-packages/strategies/src/vwapFirstTouch.ts(38,21): error TS2532: Object is possibly 'undefined'.
-packages/strategies/src/vwapFirstTouch.ts(40,18): error TS18048: 'vnow' is possibly 'undefined'.
-packages/strategies/src/vwapFirstTouch.ts(40,60): error TS18048: 'vnow' is possibly 'undefined'.
-packages/strategies/src/vwapFirstTouch.ts(45,30): error TS18048: 'touchBar' is possibly 'undefined'.
-packages/strategies/src/vwapFirstTouch.ts(45,47): error TS18048: 'vnow' is possibly 'undefined'.
-packages/strategies/src/vwapFirstTouch.ts(51,24): error TS2345: Argument of type 'number | undefined' is not assignable to parameter of type 'number'.
-  Type 'undefined' is not assignable to type 'number'.
-packages/strategies/src/vwapFirstTouch.ts(52,24): error TS2345: Argument of type 'number | undefined' is not assignable to parameter of type 'number'.
-  Type 'undefined' is not assignable to type 'number'.
-packages/strategies/src/vwapFirstTouch.ts(56,24): error TS2345: Argument of type 'number | undefined' is not assignable to parameter of type 'number'.
-  Type 'undefined' is not assignable to type 'number'.
-packages/strategies/src/vwapFirstTouch.ts(57,24): error TS2345: Argument of type 'number | undefined' is not assignable to parameter of type 'number'.
-  Type 'undefined' is not assignable to type 'number'.
-packages/strategies/tests/osbBreakout.spec.ts(38,12): error TS18048: 's' is possibly 'undefined'.
-packages/strategies/tests/osbBreakout.spec.ts(39,12): error TS18048: 's' is possibly 'undefined'.
-packages/strategies/tests/osbBreakout.spec.ts(40,12): error TS18048: 's' is possibly 'undefined'.
-packages/strategies/tests/osbBreakout.spec.ts(112,25): error TS18048: 's' is possibly 'undefined'.
-packages/strategies/tests/osbBreakout.spec.ts(112,34): error TS18048: 's' is possibly 'undefined'.
-packages/strategies/tests/vwapFirstTouch.spec.ts(36,12): error TS18048: 's' is possibly 'undefined'.
-packages/strategies/tests/vwapFirstTouch.spec.ts(37,12): error TS18048: 's' is possibly 'undefined'.
-packages/strategies/tests/vwapFirstTouch.spec.ts(38,25): error TS18048: 's' is possibly 'undefined'.
-packages/strategies/tests/vwapFirstTouch.spec.ts(38,34): error TS18048: 's' is possibly 'undefined'.
-packages/ticketizer/src/fanout.ts(48,12): error TS2339: Property 'maxContractsAllowed' does not exist on type '{}'.
-packages/ticketizer/src/fanout.ts(93,35): error TS2339: Property 'maxContractsAllowed' does not exist on type '{}'.
-tests/setup/vitest.setup.ts(16,15): error TS2540: Cannot assign to 'NODE_ENV' because it is a read-only property.
-tests/setup/vitest.setup.ts(17,15): error TS2540: Cannot assign to 'LOG_LEVEL' because it is a read-only property.
-tests/setup/vitest.setup.ts(23,5): error TS2578: Unused '@ts-expect-error' directive.
-vitest.local.config.ts(5,3): error TS2769: No overload matches this call.
-  The last overload gave the following error.
-    Object literal may only specify known properties, and 'projects' does not exist in type 'UserConfigExport'.
-vitest.local.config.ts(23,9): error TS2769: No overload matches this call.
-  The last overload gave the following error.
-    Object literal may only specify known properties, and 'maxThreads' does not exist in type 'ProjectConfig'.
-vitest.local.config.ts(48,9): error TS2769: No overload matches this call.
-  The last overload gave the following error.
-    Object literal may only specify known properties, and 'maxThreads' does not exist in type 'ProjectConfig'.
- ELIFECYCLE  Command failed with exit code 2.
-```
-
-
-
----
-**From:** `var/pnl/README.md`
-
-# Daily PnL Data (for Consistency Metrics)
-
-Create `var/pnl/daily.json` with an array of objects:
-
-```json
-[
-  { "date": "2025-08-18", "pnl": 320.5 },
-  { "date": "2025-08-19", "pnl": -150.0 }
-]
-```
-
-date: YYYY-MM-DD
-
-pnl: number (positive for profit, negative for loss)
-
-The API route GET /report/consistency?window=8 reads this file. If it is missing or empty,
-the route responds with 204 No Content.
-
-====================
-INTEGRATION NOTES
-
-Register apps/api/src/routes/consistency.ts in your API server the same way other routes are registered.
-
-No external services required.
-
-Keep the window query between 1..15 (clamped in code).
-
-====================
-RUN / VERIFY
-
-pnpm --filter @prism-apex/metrics typecheck
-
-pnpm --filter @prism-apex/metrics test
-
-pnpm --filter @prism-apex/api test
-
-(Optional) create var/pnl/daily.json and curl:
-curl -s "http://localhost:3000/report/consistency?window=8
-" | jq .
+      1 error TS2558
 
