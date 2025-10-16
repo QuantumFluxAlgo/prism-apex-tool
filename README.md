@@ -8,7 +8,7 @@ Operator-assisted trading — tickets-only. Docker-only dev & deploy.
 
 - Docker required
 - `pnpm install --frozen-lockfile`
-- `docker compose up -d`
+- `docker compose up -d
 - `pnpm docs:lint`
 
 ## Docs Map
@@ -167,7 +167,7 @@ JSON logs; no PII; CORS allow-list via env; health/readiness/metrics present.
 
 ## Run
 ```bash
-docker compose up -d --build
+docker compose up -d
 docker compose ps
 
 Verify
@@ -199,7 +199,7 @@ Ports at a glance
 
 API (prod-like via compose): 3000
 
-Dashboard-Lite (compose): 5178
+
 
 Full Dashboard (compose): 8080
 
@@ -207,11 +207,11 @@ API (dev script, if provided): 8000 (hot-reload)
 
 Dev workflow (hot reload, if scripts exist)
 ./dev_api.sh              # API on :8000 (Fastify watch) — optional
-pnpm --filter @prism-apex/dashboard-lite dev   # Vite dev UI on :5173 (if applicable)
+
 
 Prod-like workflow (Docker)
-docker compose up -d --build
-docker compose -f docker-compose.yml -f docker-compose.dashboard-lite.yml up -d --build
+docker compose up -d
+
 docker compose -f docker-compose.yml -f docker-compose.dashboard-full.yml up -d --build
 
 Sanity checks
@@ -403,7 +403,7 @@ Artifacts are uploaded on failure to help debugging.
 2. **Strategies** inside `packages/strategies`, `packages/rules-apex`, and related helpers evaluate those series and emit structured opportunities.
 3. **Guardrails + sizing** (`packages/rules`, `packages/rules-apex`, config files under `configs/` & `config/`) enforce Apex limits, risk tolerances, and program compliance.
 4. **Ticketizer** writes append-only JSONL tickets into `tickets/*.jsonl` via services in `apps/api/src/tickets`. Each ticket captures entry, stops/targets, sizing, and rationale.
-5. **Operator dashboard** (`apps/dashboard`, `apps/dashboard-lite`) provides read-only telemetry. It may read from Tradovate for balances/fills, but **never** sends orders.
+
 6. **Operator copies ticket → Tradovate** as OCO orders. Execution stays manual, keeping us within the “no automated orders” rule.
 
 ---
@@ -414,7 +414,7 @@ Artifacts are uploaded on failure to help debugging.
   - Node/TypeScript API (pnpm workspace project).
   - Provides REST + WebSocket endpoints for telemetry, ticket download, health probes.
   - Stores strategy orchestrator jobs (`src/jobs`) and guardrails integration tests (`src/tests`).
-- `apps/dashboard/`, `apps/dashboard-lite/`
+
   - Front-end telemetry surfaces. Expect Vite + React with vitest configs in the root.
   - Pulls tickets, account summaries, and health information. Does **not** place trades.
 - `tickets/`
@@ -671,11 +671,11 @@ Operations — Daily Checklist
 
 Start services
 
-API: docker compose up -d --build
+API: docker compose up -d
 
 UI: choose one
 
-Lite: add -f docker-compose.dashboard-lite.yml
+
 
 Full: add -f docker-compose.dashboard-full.yml
 
@@ -683,7 +683,7 @@ Verify health
 
 curl -fsS http://localhost:3000/health → {"ok":true}
 
-UI loads (5178 for Lite, 8080 for Full)
+UI loads at http://localhost:8080
 
 Confirm tickets path
 
@@ -829,7 +829,7 @@ These paths may only be moved or deleted with an explicit approval outside of th
 - Logs: every `*.log` file and any `logs/**` directory
 - Build output: `dist/**`, `build/**`, `.tmp/`
 - Temp/dumps: `tmp/**`, `temp/**`, `dump/**`, `dumps/**`
-- Databases & pids generated locally: `*.sqlite`, `*.db`, `*.pid`
+
 - Known compiled output: `apps/api/dist-cjs/`
 - Oversized loose assets outside the protected trees (default `>50MB`)
 
@@ -922,9 +922,9 @@ These artifacts are reproducible from source. When the cleanup script finds them
 - `dev_dashboard.sh` (file — 518.00 B)
 - `docker-compose.api.override.yml` (file — 181.00 B)
 - `docker-compose.dashboard-full.yml` (file — 440.00 B)
-- `docker-compose.dashboard-lite.fix.yml` (file — 105.00 B)
-- `docker-compose.dashboard-lite.override.yml` (file — 410.00 B)
-- `docker-compose.dashboard-lite.yml` (file — 460.00 B)
+
+
+
 - `docker-compose.dashboard.rollupfix.yml` (file — 53.00 B)
 - `docker-compose.dashboard.yml` (file — 331.00 B)
 - `docker-compose.ingress.yml` (file — 439.00 B)
@@ -964,9 +964,9 @@ These artifacts are reproducible from source. When the cleanup script finds them
 - **compose_files**: 13
   - `docker-compose.api.override.yml`
   - `docker-compose.dashboard-full.yml`
-  - `docker-compose.dashboard-lite.fix.yml`
-  - `docker-compose.dashboard-lite.override.yml`
-  - `docker-compose.dashboard-lite.yml`
+
+
+
   - `docker-compose.dashboard.rollupfix.yml`
   - `docker-compose.dashboard.yml`
   - `docker-compose.ingress.yml`
@@ -978,7 +978,7 @@ These artifacts are reproducible from source. When the cleanup script finds them
 - **dockerfiles**: 5
   - `Dockerfile`
   - `apps/api/Dockerfile`
-  - `apps/dashboard-lite/Dockerfile`
+
   - `apps/dashboard/Dockerfile`
   - `apps/ingress-yahoo-dev/Dockerfile`
 - **package_json**: 369
@@ -1182,7 +1182,7 @@ None found.
 - node_modules/.pnpm/@asteasolutions+zod-to-openapi@7.3.4_zod@3.25.76/node_modules/@asteasolutions/zod-to-openapi/dist/transformers/enum.d.ts
 - node_modules/.pnpm/@asteasolutions+zod-to-openapi@7.3.4_zod@3.25.76/node_modules/@asteasolutions/zod-to-openapi/dist/transformers/index.d.ts
 - node_modules/.pnpm/@asteasolutions+zod-to-openapi@7.3.4_zod@3.25.76/node_modules/@asteasolutions/zod-to-openapi/dist/transformers/intersection.d.ts
-- node_modules/.pnpm/@asteasolutions+zod-to-openapi@7.3.4_zod@3.25.76/node_modules/@asteasolutions/zod-to-openapi/dist/transformers/literal.d.ts
+
 - node_modules/.pnpm/@asteasolutions+zod-to-openapi@7.3.4_zod@3.25.76/node_modules/@asteasolutions/zod-to-openapi/dist/transformers/native-enum.d.ts
 - node_modules/.pnpm/@asteasolutions+zod-to-openapi@7.3.4_zod@3.25.76/node_modules/@asteasolutions/zod-to-openapi/dist/transformers/number.d.ts
 - node_modules/.pnpm/@asteasolutions+zod-to-openapi@7.3.4_zod@3.25.76/node_modules/@asteasolutions/zod-to-openapi/dist/transformers/object.d.ts
@@ -1469,8 +1469,8 @@ None found.
 - node_modules/.pnpm/@sinclair+typebox@0.32.35/node_modules/@sinclair/typebox/build/cjs/type/error/index.js
 - node_modules/.pnpm/@sinclair+typebox@0.32.35/node_modules/@sinclair/typebox/build/cjs/type/exclude/exclude-from-mapped-result.d.ts
 - node_modules/.pnpm/@sinclair+typebox@0.32.35/node_modules/@sinclair/typebox/build/cjs/type/exclude/exclude-from-mapped-result.js
-- node_modules/.pnpm/@sinclair+typebox@0.32.35/node_modules/@sinclair/typebox/build/cjs/type/exclude/exclude-from-template-literal.d.ts
-- node_modules/.pnpm/@sinclair+typebox@0.32.35/node_modules/@sinclair/typebox/build/cjs/type/exclude/exclude-from-template-literal.js
+
+
 - node_modules/.pnpm/@sinclair+typebox@0.32.35/node_modules/@sinclair/typebox/build/cjs/type/exclude/exclude.d.ts
 - node_modules/.pnpm/@sinclair+typebox@0.32.35/node_modules/@sinclair/typebox/build/cjs/type/exclude/exclude.js
 - node_modules/.pnpm/@sinclair+typebox@0.32.35/node_modules/@sinclair/typebox/build/cjs/type/exclude/index.d.ts
@@ -1489,8 +1489,8 @@ None found.
 - node_modules/.pnpm/@sinclair+typebox@0.32.35/node_modules/@sinclair/typebox/build/cjs/type/extends/index.js
 - node_modules/.pnpm/@sinclair+typebox@0.32.35/node_modules/@sinclair/typebox/build/cjs/type/extract/extract-from-mapped-result.d.ts
 - node_modules/.pnpm/@sinclair+typebox@0.32.35/node_modules/@sinclair/typebox/build/cjs/type/extract/extract-from-mapped-result.js
-- node_modules/.pnpm/@sinclair+typebox@0.32.35/node_modules/@sinclair/typebox/build/cjs/type/extract/extract-from-template-literal.d.ts
-- node_modules/.pnpm/@sinclair+typebox@0.32.35/node_modules/@sinclair/typebox/build/cjs/type/extract/extract-from-template-literal.js
+
+
 - node_modules/.pnpm/@sinclair+typebox@0.32.35/node_modules/@sinclair/typebox/build/cjs/type/extract/extract.d.ts
 - node_modules/.pnpm/@sinclair+typebox@0.32.35/node_modules/@sinclair/typebox/build/cjs/type/extract/extract.js
 - node_modules/.pnpm/@sinclair+typebox@0.32.35/node_modules/@sinclair/typebox/build/cjs/type/extract/index.d.ts
@@ -1569,10 +1569,10 @@ None found.
 - node_modules/.pnpm/@sinclair+typebox@0.32.35/node_modules/@sinclair/typebox/build/cjs/type/keyof/keyof-property-keys.js
 - node_modules/.pnpm/@sinclair+typebox@0.32.35/node_modules/@sinclair/typebox/build/cjs/type/keyof/keyof.d.ts
 - node_modules/.pnpm/@sinclair+typebox@0.32.35/node_modules/@sinclair/typebox/build/cjs/type/keyof/keyof.js
-- node_modules/.pnpm/@sinclair+typebox@0.32.35/node_modules/@sinclair/typebox/build/cjs/type/literal/index.d.ts
-- node_modules/.pnpm/@sinclair+typebox@0.32.35/node_modules/@sinclair/typebox/build/cjs/type/literal/index.js
-- node_modules/.pnpm/@sinclair+typebox@0.32.35/node_modules/@sinclair/typebox/build/cjs/type/literal/literal.d.ts
-- node_modules/.pnpm/@sinclair+typebox@0.32.35/node_modules/@sinclair/typebox/build/cjs/type/literal/literal.js
+
+
+
+
 - node_modules/.pnpm/@sinclair+typebox@0.32.35/node_modules/@sinclair/typebox/build/cjs/type/mapped/index.d.ts
 - node_modules/.pnpm/@sinclair+typebox@0.32.35/node_modules/@sinclair/typebox/build/cjs/type/mapped/index.js
 - node_modules/.pnpm/@sinclair+typebox@0.32.35/node_modules/@sinclair/typebox/build/cjs/type/mapped/mapped-key.d.ts
@@ -1717,22 +1717,22 @@ None found.
 - node_modules/.pnpm/@sinclair+typebox@0.32.35/node_modules/@sinclair/typebox/build/cjs/type/symbols/index.js
 - node_modules/.pnpm/@sinclair+typebox@0.32.35/node_modules/@sinclair/typebox/build/cjs/type/symbols/symbols.d.ts
 - node_modules/.pnpm/@sinclair+typebox@0.32.35/node_modules/@sinclair/typebox/build/cjs/type/symbols/symbols.js
-- node_modules/.pnpm/@sinclair+typebox@0.32.35/node_modules/@sinclair/typebox/build/cjs/type/template-literal/finite.d.ts
-- node_modules/.pnpm/@sinclair+typebox@0.32.35/node_modules/@sinclair/typebox/build/cjs/type/template-literal/finite.js
-- node_modules/.pnpm/@sinclair+typebox@0.32.35/node_modules/@sinclair/typebox/build/cjs/type/template-literal/generate.d.ts
-- node_modules/.pnpm/@sinclair+typebox@0.32.35/node_modules/@sinclair/typebox/build/cjs/type/template-literal/generate.js
-- node_modules/.pnpm/@sinclair+typebox@0.32.35/node_modules/@sinclair/typebox/build/cjs/type/template-literal/index.d.ts
-- node_modules/.pnpm/@sinclair+typebox@0.32.35/node_modules/@sinclair/typebox/build/cjs/type/template-literal/index.js
-- node_modules/.pnpm/@sinclair+typebox@0.32.35/node_modules/@sinclair/typebox/build/cjs/type/template-literal/parse.d.ts
-- node_modules/.pnpm/@sinclair+typebox@0.32.35/node_modules/@sinclair/typebox/build/cjs/type/template-literal/parse.js
-- node_modules/.pnpm/@sinclair+typebox@0.32.35/node_modules/@sinclair/typebox/build/cjs/type/template-literal/pattern.d.ts
-- node_modules/.pnpm/@sinclair+typebox@0.32.35/node_modules/@sinclair/typebox/build/cjs/type/template-literal/pattern.js
-- node_modules/.pnpm/@sinclair+typebox@0.32.35/node_modules/@sinclair/typebox/build/cjs/type/template-literal/syntax.d.ts
-- node_modules/.pnpm/@sinclair+typebox@0.32.35/node_modules/@sinclair/typebox/build/cjs/type/template-literal/syntax.js
-- node_modules/.pnpm/@sinclair+typebox@0.32.35/node_modules/@sinclair/typebox/build/cjs/type/template-literal/template-literal.d.ts
-- node_modules/.pnpm/@sinclair+typebox@0.32.35/node_modules/@sinclair/typebox/build/cjs/type/template-literal/template-literal.js
-- node_modules/.pnpm/@sinclair+typebox@0.32.35/node_modules/@sinclair/typebox/build/cjs/type/template-literal/union.d.ts
-- node_modules/.pnpm/@sinclair+typebox@0.32.35/node_modules/@sinclair/typebox/build/cjs/type/template-literal/union.js
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 - node_modules/.pnpm/@sinclair+typebox@0.32.35/node_modules/@sinclair/typebox/build/cjs/type/transform/index.d.ts
 - node_modules/.pnpm/@sinclair+typebox@0.32.35/node_modules/@sinclair/typebox/build/cjs/type/transform/index.js
 - node_modules/.pnpm/@sinclair+typebox@0.32.35/node_modules/@sinclair/typebox/build/cjs/type/transform/transform.d.ts
@@ -1935,8 +1935,8 @@ None found.
 - node_modules/.pnpm/@sinclair+typebox@0.32.35/node_modules/@sinclair/typebox/build/esm/type/error/index.mjs
 - node_modules/.pnpm/@sinclair+typebox@0.32.35/node_modules/@sinclair/typebox/build/esm/type/exclude/exclude-from-mapped-result.d.mts
 - node_modules/.pnpm/@sinclair+typebox@0.32.35/node_modules/@sinclair/typebox/build/esm/type/exclude/exclude-from-mapped-result.mjs
-- node_modules/.pnpm/@sinclair+typebox@0.32.35/node_modules/@sinclair/typebox/build/esm/type/exclude/exclude-from-template-literal.d.mts
-- node_modules/.pnpm/@sinclair+typebox@0.32.35/node_modules/@sinclair/typebox/build/esm/type/exclude/exclude-from-template-literal.mjs
+
+
 - node_modules/.pnpm/@sinclair+typebox@0.32.35/node_modules/@sinclair/typebox/build/esm/type/exclude/exclude.d.mts
 - node_modules/.pnpm/@sinclair+typebox@0.32.35/node_modules/@sinclair/typebox/build/esm/type/exclude/exclude.mjs
 - node_modules/.pnpm/@sinclair+typebox@0.32.35/node_modules/@sinclair/typebox/build/esm/type/exclude/index.d.mts
@@ -1955,8 +1955,8 @@ None found.
 - node_modules/.pnpm/@sinclair+typebox@0.32.35/node_modules/@sinclair/typebox/build/esm/type/extends/index.mjs
 - node_modules/.pnpm/@sinclair+typebox@0.32.35/node_modules/@sinclair/typebox/build/esm/type/extract/extract-from-mapped-result.d.mts
 - node_modules/.pnpm/@sinclair+typebox@0.32.35/node_modules/@sinclair/typebox/build/esm/type/extract/extract-from-mapped-result.mjs
-- node_modules/.pnpm/@sinclair+typebox@0.32.35/node_modules/@sinclair/typebox/build/esm/type/extract/extract-from-template-literal.d.mts
-- node_modules/.pnpm/@sinclair+typebox@0.32.35/node_modules/@sinclair/typebox/build/esm/type/extract/extract-from-template-literal.mjs
+
+
 - node_modules/.pnpm/@sinclair+typebox@0.32.35/node_modules/@sinclair/typebox/build/esm/type/extract/extract.d.mts
 - node_modules/.pnpm/@sinclair+typebox@0.32.35/node_modules/@sinclair/typebox/build/esm/type/extract/extract.mjs
 - node_modules/.pnpm/@sinclair+typebox@0.32.35/node_modules/@sinclair/typebox/build/esm/type/extract/index.d.mts
@@ -2035,10 +2035,10 @@ None found.
 - node_modules/.pnpm/@sinclair+typebox@0.32.35/node_modules/@sinclair/typebox/build/esm/type/keyof/keyof-property-keys.mjs
 - node_modules/.pnpm/@sinclair+typebox@0.32.35/node_modules/@sinclair/typebox/build/esm/type/keyof/keyof.d.mts
 - node_modules/.pnpm/@sinclair+typebox@0.32.35/node_modules/@sinclair/typebox/build/esm/type/keyof/keyof.mjs
-- node_modules/.pnpm/@sinclair+typebox@0.32.35/node_modules/@sinclair/typebox/build/esm/type/literal/index.d.mts
-- node_modules/.pnpm/@sinclair+typebox@0.32.35/node_modules/@sinclair/typebox/build/esm/type/literal/index.mjs
-- node_modules/.pnpm/@sinclair+typebox@0.32.35/node_modules/@sinclair/typebox/build/esm/type/literal/literal.d.mts
-- node_modules/.pnpm/@sinclair+typebox@0.32.35/node_modules/@sinclair/typebox/build/esm/type/literal/literal.mjs
+
+
+
+
 - node_modules/.pnpm/@sinclair+typebox@0.32.35/node_modules/@sinclair/typebox/build/esm/type/mapped/index.d.mts
 - node_modules/.pnpm/@sinclair+typebox@0.32.35/node_modules/@sinclair/typebox/build/esm/type/mapped/index.mjs
 - node_modules/.pnpm/@sinclair+typebox@0.32.35/node_modules/@sinclair/typebox/build/esm/type/mapped/mapped-key.d.mts
@@ -2183,22 +2183,22 @@ None found.
 - node_modules/.pnpm/@sinclair+typebox@0.32.35/node_modules/@sinclair/typebox/build/esm/type/symbols/index.mjs
 - node_modules/.pnpm/@sinclair+typebox@0.32.35/node_modules/@sinclair/typebox/build/esm/type/symbols/symbols.d.mts
 - node_modules/.pnpm/@sinclair+typebox@0.32.35/node_modules/@sinclair/typebox/build/esm/type/symbols/symbols.mjs
-- node_modules/.pnpm/@sinclair+typebox@0.32.35/node_modules/@sinclair/typebox/build/esm/type/template-literal/finite.d.mts
-- node_modules/.pnpm/@sinclair+typebox@0.32.35/node_modules/@sinclair/typebox/build/esm/type/template-literal/finite.mjs
-- node_modules/.pnpm/@sinclair+typebox@0.32.35/node_modules/@sinclair/typebox/build/esm/type/template-literal/generate.d.mts
-- node_modules/.pnpm/@sinclair+typebox@0.32.35/node_modules/@sinclair/typebox/build/esm/type/template-literal/generate.mjs
-- node_modules/.pnpm/@sinclair+typebox@0.32.35/node_modules/@sinclair/typebox/build/esm/type/template-literal/index.d.mts
-- node_modules/.pnpm/@sinclair+typebox@0.32.35/node_modules/@sinclair/typebox/build/esm/type/template-literal/index.mjs
-- node_modules/.pnpm/@sinclair+typebox@0.32.35/node_modules/@sinclair/typebox/build/esm/type/template-literal/parse.d.mts
-- node_modules/.pnpm/@sinclair+typebox@0.32.35/node_modules/@sinclair/typebox/build/esm/type/template-literal/parse.mjs
-- node_modules/.pnpm/@sinclair+typebox@0.32.35/node_modules/@sinclair/typebox/build/esm/type/template-literal/pattern.d.mts
-- node_modules/.pnpm/@sinclair+typebox@0.32.35/node_modules/@sinclair/typebox/build/esm/type/template-literal/pattern.mjs
-- node_modules/.pnpm/@sinclair+typebox@0.32.35/node_modules/@sinclair/typebox/build/esm/type/template-literal/syntax.d.mts
-- node_modules/.pnpm/@sinclair+typebox@0.32.35/node_modules/@sinclair/typebox/build/esm/type/template-literal/syntax.mjs
-- node_modules/.pnpm/@sinclair+typebox@0.32.35/node_modules/@sinclair/typebox/build/esm/type/template-literal/template-literal.d.mts
-- node_modules/.pnpm/@sinclair+typebox@0.32.35/node_modules/@sinclair/typebox/build/esm/type/template-literal/template-literal.mjs
-- node_modules/.pnpm/@sinclair+typebox@0.32.35/node_modules/@sinclair/typebox/build/esm/type/template-literal/union.d.mts
-- node_modules/.pnpm/@sinclair+typebox@0.32.35/node_modules/@sinclair/typebox/build/esm/type/template-literal/union.mjs
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 - node_modules/.pnpm/@sinclair+typebox@0.32.35/node_modules/@sinclair/typebox/build/esm/type/transform/index.d.mts
 - node_modules/.pnpm/@sinclair+typebox@0.32.35/node_modules/@sinclair/typebox/build/esm/type/transform/index.mjs
 - node_modules/.pnpm/@sinclair+typebox@0.32.35/node_modules/@sinclair/typebox/build/esm/type/transform/transform.d.mts
@@ -2492,9 +2492,9 @@ None found.
 - node_modules/.pnpm/@typescript-eslint+eslint-plugin@8.40.0_@typescript-eslint+parser@8.40.0_eslint@9.33.0_jiti@2_ubhg2z23o3kfp42byazhcgvvbq/node_modules/@typescript-eslint/eslint-plugin/dist/rules/ban-tslint-comment.d.ts
 - node_modules/.pnpm/@typescript-eslint+eslint-plugin@8.40.0_@typescript-eslint+parser@8.40.0_eslint@9.33.0_jiti@2_ubhg2z23o3kfp42byazhcgvvbq/node_modules/@typescript-eslint/eslint-plugin/dist/rules/ban-tslint-comment.d.ts.map
 - node_modules/.pnpm/@typescript-eslint+eslint-plugin@8.40.0_@typescript-eslint+parser@8.40.0_eslint@9.33.0_jiti@2_ubhg2z23o3kfp42byazhcgvvbq/node_modules/@typescript-eslint/eslint-plugin/dist/rules/ban-tslint-comment.js
-- node_modules/.pnpm/@typescript-eslint+eslint-plugin@8.40.0_@typescript-eslint+parser@8.40.0_eslint@9.33.0_jiti@2_ubhg2z23o3kfp42byazhcgvvbq/node_modules/@typescript-eslint/eslint-plugin/dist/rules/class-literal-property-style.d.ts
-- node_modules/.pnpm/@typescript-eslint+eslint-plugin@8.40.0_@typescript-eslint+parser@8.40.0_eslint@9.33.0_jiti@2_ubhg2z23o3kfp42byazhcgvvbq/node_modules/@typescript-eslint/eslint-plugin/dist/rules/class-literal-property-style.d.ts.map
-- node_modules/.pnpm/@typescript-eslint+eslint-plugin@8.40.0_@typescript-eslint+parser@8.40.0_eslint@9.33.0_jiti@2_ubhg2z23o3kfp42byazhcgvvbq/node_modules/@typescript-eslint/eslint-plugin/dist/rules/class-literal-property-style.js
+
+
+
 - node_modules/.pnpm/@typescript-eslint+eslint-plugin@8.40.0_@typescript-eslint+parser@8.40.0_eslint@9.33.0_jiti@2_ubhg2z23o3kfp42byazhcgvvbq/node_modules/@typescript-eslint/eslint-plugin/dist/rules/class-methods-use-this.d.ts
 - node_modules/.pnpm/@typescript-eslint+eslint-plugin@8.40.0_@typescript-eslint+parser@8.40.0_eslint@9.33.0_jiti@2_ubhg2z23o3kfp42byazhcgvvbq/node_modules/@typescript-eslint/eslint-plugin/dist/rules/class-methods-use-this.d.ts.map
 - node_modules/.pnpm/@typescript-eslint+eslint-plugin@8.40.0_@typescript-eslint+parser@8.40.0_eslint@9.33.0_jiti@2_ubhg2z23o3kfp42byazhcgvvbq/node_modules/@typescript-eslint/eslint-plugin/dist/rules/class-methods-use-this.js
@@ -2708,9 +2708,9 @@ None found.
 - node_modules/.pnpm/@typescript-eslint+eslint-plugin@8.40.0_@typescript-eslint+parser@8.40.0_eslint@9.33.0_jiti@2_ubhg2z23o3kfp42byazhcgvvbq/node_modules/@typescript-eslint/eslint-plugin/dist/rules/no-type-alias.d.ts
 - node_modules/.pnpm/@typescript-eslint+eslint-plugin@8.40.0_@typescript-eslint+parser@8.40.0_eslint@9.33.0_jiti@2_ubhg2z23o3kfp42byazhcgvvbq/node_modules/@typescript-eslint/eslint-plugin/dist/rules/no-type-alias.d.ts.map
 - node_modules/.pnpm/@typescript-eslint+eslint-plugin@8.40.0_@typescript-eslint+parser@8.40.0_eslint@9.33.0_jiti@2_ubhg2z23o3kfp42byazhcgvvbq/node_modules/@typescript-eslint/eslint-plugin/dist/rules/no-type-alias.js
-- node_modules/.pnpm/@typescript-eslint+eslint-plugin@8.40.0_@typescript-eslint+parser@8.40.0_eslint@9.33.0_jiti@2_ubhg2z23o3kfp42byazhcgvvbq/node_modules/@typescript-eslint/eslint-plugin/dist/rules/no-unnecessary-boolean-literal-compare.d.ts
-- node_modules/.pnpm/@typescript-eslint+eslint-plugin@8.40.0_@typescript-eslint+parser@8.40.0_eslint@9.33.0_jiti@2_ubhg2z23o3kfp42byazhcgvvbq/node_modules/@typescript-eslint/eslint-plugin/dist/rules/no-unnecessary-boolean-literal-compare.d.ts.map
-- node_modules/.pnpm/@typescript-eslint+eslint-plugin@8.40.0_@typescript-eslint+parser@8.40.0_eslint@9.33.0_jiti@2_ubhg2z23o3kfp42byazhcgvvbq/node_modules/@typescript-eslint/eslint-plugin/dist/rules/no-unnecessary-boolean-literal-compare.js
+
+
+
 - node_modules/.pnpm/@typescript-eslint+eslint-plugin@8.40.0_@typescript-eslint+parser@8.40.0_eslint@9.33.0_jiti@2_ubhg2z23o3kfp42byazhcgvvbq/node_modules/@typescript-eslint/eslint-plugin/dist/rules/no-unnecessary-condition.d.ts
 - node_modules/.pnpm/@typescript-eslint+eslint-plugin@8.40.0_@typescript-eslint+parser@8.40.0_eslint@9.33.0_jiti@2_ubhg2z23o3kfp42byazhcgvvbq/node_modules/@typescript-eslint/eslint-plugin/dist/rules/no-unnecessary-condition.d.ts.map
 - node_modules/.pnpm/@typescript-eslint+eslint-plugin@8.40.0_@typescript-eslint+parser@8.40.0_eslint@9.33.0_jiti@2_ubhg2z23o3kfp42byazhcgvvbq/node_modules/@typescript-eslint/eslint-plugin/dist/rules/no-unnecessary-condition.js
@@ -2819,9 +2819,9 @@ None found.
 - node_modules/.pnpm/@typescript-eslint+eslint-plugin@8.40.0_@typescript-eslint+parser@8.40.0_eslint@9.33.0_jiti@2_ubhg2z23o3kfp42byazhcgvvbq/node_modules/@typescript-eslint/eslint-plugin/dist/rules/prefer-includes.d.ts
 - node_modules/.pnpm/@typescript-eslint+eslint-plugin@8.40.0_@typescript-eslint+parser@8.40.0_eslint@9.33.0_jiti@2_ubhg2z23o3kfp42byazhcgvvbq/node_modules/@typescript-eslint/eslint-plugin/dist/rules/prefer-includes.d.ts.map
 - node_modules/.pnpm/@typescript-eslint+eslint-plugin@8.40.0_@typescript-eslint+parser@8.40.0_eslint@9.33.0_jiti@2_ubhg2z23o3kfp42byazhcgvvbq/node_modules/@typescript-eslint/eslint-plugin/dist/rules/prefer-includes.js
-- node_modules/.pnpm/@typescript-eslint+eslint-plugin@8.40.0_@typescript-eslint+parser@8.40.0_eslint@9.33.0_jiti@2_ubhg2z23o3kfp42byazhcgvvbq/node_modules/@typescript-eslint/eslint-plugin/dist/rules/prefer-literal-enum-member.d.ts
-- node_modules/.pnpm/@typescript-eslint+eslint-plugin@8.40.0_@typescript-eslint+parser@8.40.0_eslint@9.33.0_jiti@2_ubhg2z23o3kfp42byazhcgvvbq/node_modules/@typescript-eslint/eslint-plugin/dist/rules/prefer-literal-enum-member.d.ts.map
-- node_modules/.pnpm/@typescript-eslint+eslint-plugin@8.40.0_@typescript-eslint+parser@8.40.0_eslint@9.33.0_jiti@2_ubhg2z23o3kfp42byazhcgvvbq/node_modules/@typescript-eslint/eslint-plugin/dist/rules/prefer-literal-enum-member.js
+
+
+
 - node_modules/.pnpm/@typescript-eslint+eslint-plugin@8.40.0_@typescript-eslint+parser@8.40.0_eslint@9.33.0_jiti@2_ubhg2z23o3kfp42byazhcgvvbq/node_modules/@typescript-eslint/eslint-plugin/dist/rules/prefer-namespace-keyword.d.ts
 - node_modules/.pnpm/@typescript-eslint+eslint-plugin@8.40.0_@typescript-eslint+parser@8.40.0_eslint@9.33.0_jiti@2_ubhg2z23o3kfp42byazhcgvvbq/node_modules/@typescript-eslint/eslint-plugin/dist/rules/prefer-namespace-keyword.d.ts.map
 - node_modules/.pnpm/@typescript-eslint+eslint-plugin@8.40.0_@typescript-eslint+parser@8.40.0_eslint@9.33.0_jiti@2_ubhg2z23o3kfp42byazhcgvvbq/node_modules/@typescript-eslint/eslint-plugin/dist/rules/prefer-namespace-keyword.js
@@ -2969,9 +2969,9 @@ None found.
 - node_modules/.pnpm/@typescript-eslint+eslint-plugin@8.40.0_@typescript-eslint+parser@8.40.0_eslint@9.33.0_jiti@2_ubhg2z23o3kfp42byazhcgvvbq/node_modules/@typescript-eslint/eslint-plugin/dist/util/getThisExpression.d.ts
 - node_modules/.pnpm/@typescript-eslint+eslint-plugin@8.40.0_@typescript-eslint+parser@8.40.0_eslint@9.33.0_jiti@2_ubhg2z23o3kfp42byazhcgvvbq/node_modules/@typescript-eslint/eslint-plugin/dist/util/getThisExpression.d.ts.map
 - node_modules/.pnpm/@typescript-eslint+eslint-plugin@8.40.0_@typescript-eslint+parser@8.40.0_eslint@9.33.0_jiti@2_ubhg2z23o3kfp42byazhcgvvbq/node_modules/@typescript-eslint/eslint-plugin/dist/util/getThisExpression.js
-- node_modules/.pnpm/@typescript-eslint+eslint-plugin@8.40.0_@typescript-eslint+parser@8.40.0_eslint@9.33.0_jiti@2_ubhg2z23o3kfp42byazhcgvvbq/node_modules/@typescript-eslint/eslint-plugin/dist/util/getValueOfLiteralType.d.ts
-- node_modules/.pnpm/@typescript-eslint+eslint-plugin@8.40.0_@typescript-eslint+parser@8.40.0_eslint@9.33.0_jiti@2_ubhg2z23o3kfp42byazhcgvvbq/node_modules/@typescript-eslint/eslint-plugin/dist/util/getValueOfLiteralType.d.ts.map
-- node_modules/.pnpm/@typescript-eslint+eslint-plugin@8.40.0_@typescript-eslint+parser@8.40.0_eslint@9.33.0_jiti@2_ubhg2z23o3kfp42byazhcgvvbq/node_modules/@typescript-eslint/eslint-plugin/dist/util/getValueOfLiteralType.js
+
+
+
 - node_modules/.pnpm/@typescript-eslint+eslint-plugin@8.40.0_@typescript-eslint+parser@8.40.0_eslint@9.33.0_jiti@2_ubhg2z23o3kfp42byazhcgvvbq/node_modules/@typescript-eslint/eslint-plugin/dist/util/getWrappedCode.d.ts
 - node_modules/.pnpm/@typescript-eslint+eslint-plugin@8.40.0_@typescript-eslint+parser@8.40.0_eslint@9.33.0_jiti@2_ubhg2z23o3kfp42byazhcgvvbq/node_modules/@typescript-eslint/eslint-plugin/dist/util/getWrappedCode.d.ts.map
 - node_modules/.pnpm/@typescript-eslint+eslint-plugin@8.40.0_@typescript-eslint+parser@8.40.0_eslint@9.33.0_jiti@2_ubhg2z23o3kfp42byazhcgvvbq/node_modules/@typescript-eslint/eslint-plugin/dist/util/getWrappedCode.js
@@ -2996,9 +2996,9 @@ None found.
 - node_modules/.pnpm/@typescript-eslint+eslint-plugin@8.40.0_@typescript-eslint+parser@8.40.0_eslint@9.33.0_jiti@2_ubhg2z23o3kfp42byazhcgvvbq/node_modules/@typescript-eslint/eslint-plugin/dist/util/isNodeEqual.d.ts
 - node_modules/.pnpm/@typescript-eslint+eslint-plugin@8.40.0_@typescript-eslint+parser@8.40.0_eslint@9.33.0_jiti@2_ubhg2z23o3kfp42byazhcgvvbq/node_modules/@typescript-eslint/eslint-plugin/dist/util/isNodeEqual.d.ts.map
 - node_modules/.pnpm/@typescript-eslint+eslint-plugin@8.40.0_@typescript-eslint+parser@8.40.0_eslint@9.33.0_jiti@2_ubhg2z23o3kfp42byazhcgvvbq/node_modules/@typescript-eslint/eslint-plugin/dist/util/isNodeEqual.js
-- node_modules/.pnpm/@typescript-eslint+eslint-plugin@8.40.0_@typescript-eslint+parser@8.40.0_eslint@9.33.0_jiti@2_ubhg2z23o3kfp42byazhcgvvbq/node_modules/@typescript-eslint/eslint-plugin/dist/util/isNullLiteral.d.ts
-- node_modules/.pnpm/@typescript-eslint+eslint-plugin@8.40.0_@typescript-eslint+parser@8.40.0_eslint@9.33.0_jiti@2_ubhg2z23o3kfp42byazhcgvvbq/node_modules/@typescript-eslint/eslint-plugin/dist/util/isNullLiteral.d.ts.map
-- node_modules/.pnpm/@typescript-eslint+eslint-plugin@8.40.0_@typescript-eslint+parser@8.40.0_eslint@9.33.0_jiti@2_ubhg2z23o3kfp42byazhcgvvbq/node_modules/@typescript-eslint/eslint-plugin/dist/util/isNullLiteral.js
+
+
+
 - node_modules/.pnpm/@typescript-eslint+eslint-plugin@8.40.0_@typescript-eslint+parser@8.40.0_eslint@9.33.0_jiti@2_ubhg2z23o3kfp42byazhcgvvbq/node_modules/@typescript-eslint/eslint-plugin/dist/util/isStartOfExpressionStatement.d.ts
 - node_modules/.pnpm/@typescript-eslint+eslint-plugin@8.40.0_@typescript-eslint+parser@8.40.0_eslint@9.33.0_jiti@2_ubhg2z23o3kfp42byazhcgvvbq/node_modules/@typescript-eslint/eslint-plugin/dist/util/isStartOfExpressionStatement.d.ts.map
 - node_modules/.pnpm/@typescript-eslint+eslint-plugin@8.40.0_@typescript-eslint+parser@8.40.0_eslint@9.33.0_jiti@2_ubhg2z23o3kfp42byazhcgvvbq/node_modules/@typescript-eslint/eslint-plugin/dist/util/isStartOfExpressionStatement.js
@@ -4396,15 +4396,15 @@ None found.
 - node_modules/.pnpm/cac@6.7.14/node_modules/cac/dist/index.d.ts
 - node_modules/.pnpm/cac@6.7.14/node_modules/cac/dist/index.js
 - node_modules/.pnpm/cac@6.7.14/node_modules/cac/dist/index.mjs
-- node_modules/.pnpm/caniuse-lite@1.0.30001736/node_modules/caniuse-lite/dist/lib/statuses.js
-- node_modules/.pnpm/caniuse-lite@1.0.30001736/node_modules/caniuse-lite/dist/lib/supported.js
-- node_modules/.pnpm/caniuse-lite@1.0.30001736/node_modules/caniuse-lite/dist/unpacker/agents.js
-- node_modules/.pnpm/caniuse-lite@1.0.30001736/node_modules/caniuse-lite/dist/unpacker/browserVersions.js
-- node_modules/.pnpm/caniuse-lite@1.0.30001736/node_modules/caniuse-lite/dist/unpacker/browsers.js
-- node_modules/.pnpm/caniuse-lite@1.0.30001736/node_modules/caniuse-lite/dist/unpacker/feature.js
-- node_modules/.pnpm/caniuse-lite@1.0.30001736/node_modules/caniuse-lite/dist/unpacker/features.js
-- node_modules/.pnpm/caniuse-lite@1.0.30001736/node_modules/caniuse-lite/dist/unpacker/index.js
-- node_modules/.pnpm/caniuse-lite@1.0.30001736/node_modules/caniuse-lite/dist/unpacker/region.js
+
+
+
+
+
+
+
+
+
 - node_modules/.pnpm/chownr@3.0.0/node_modules/chownr/dist/commonjs/index.d.ts
 - node_modules/.pnpm/chownr@3.0.0/node_modules/chownr/dist/commonjs/index.d.ts.map
 - node_modules/.pnpm/chownr@3.0.0/node_modules/chownr/dist/commonjs/index.js
@@ -4840,9 +4840,9 @@ None found.
 - node_modules/.pnpm/esquery@1.6.0/node_modules/esquery/dist/esquery.esm.min.js
 - node_modules/.pnpm/esquery@1.6.0/node_modules/esquery/dist/esquery.esm.min.js.map
 - node_modules/.pnpm/esquery@1.6.0/node_modules/esquery/dist/esquery.js
-- node_modules/.pnpm/esquery@1.6.0/node_modules/esquery/dist/esquery.lite.js
-- node_modules/.pnpm/esquery@1.6.0/node_modules/esquery/dist/esquery.lite.min.js
-- node_modules/.pnpm/esquery@1.6.0/node_modules/esquery/dist/esquery.lite.min.js.map
+
+
+
 - node_modules/.pnpm/esquery@1.6.0/node_modules/esquery/dist/esquery.min.js
 - node_modules/.pnpm/esquery@1.6.0/node_modules/esquery/dist/esquery.min.js.map
 - node_modules/.pnpm/estree-walker@2.0.2/node_modules/estree-walker/dist/esm/estree-walker.js
@@ -5755,11 +5755,11 @@ None found.
 - node_modules/.pnpm/std-env@3.9.0/node_modules/std-env/dist/index.d.mts
 - node_modules/.pnpm/std-env@3.9.0/node_modules/std-env/dist/index.d.ts
 - node_modules/.pnpm/std-env@3.9.0/node_modules/std-env/dist/index.mjs
-- node_modules/.pnpm/strip-literal@2.1.1/node_modules/strip-literal/dist/index.cjs
-- node_modules/.pnpm/strip-literal@2.1.1/node_modules/strip-literal/dist/index.d.cts
-- node_modules/.pnpm/strip-literal@2.1.1/node_modules/strip-literal/dist/index.d.mts
-- node_modules/.pnpm/strip-literal@2.1.1/node_modules/strip-literal/dist/index.d.ts
-- node_modules/.pnpm/strip-literal@2.1.1/node_modules/strip-literal/dist/index.mjs
+
+
+
+
+
 - node_modules/.pnpm/sucrase@3.35.0/node_modules/sucrase/dist/CJSImportProcessor.js
 - node_modules/.pnpm/sucrase@3.35.0/node_modules/sucrase/dist/HelperManager.js
 - node_modules/.pnpm/sucrase@3.35.0/node_modules/sucrase/dist/NameManager.js
@@ -7379,9 +7379,9 @@ None found.
 ### port_candidates.txt
 Lines: 776
 
-- /Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docker-compose.dashboard-lite.yml:8:      DASHBOARD_LITE_PORT: "5178"
-- /Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docker-compose.dashboard-lite.yml:10:      API_BASE_URL: "http://api:3000"
-- /Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docker-compose.dashboard-lite.yml:14:      - "5178:5178"
+
+
+
 - /Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/README-Docker.md:12:curl -fsS http://localhost:3000/health
 - /Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/README-Docker.md:13:curl -fsS http://localhost:3000/openapi.json | head -n 20
 - /Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/README-Docker.md:14:curl -fsS http://localhost:3000/ready
@@ -7397,14 +7397,14 @@ Lines: 776
 - /Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/README.md:10:# API → http://localhost:3000
 - /Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/README.md:11:# Health: curl -fsS http://localhost:3000/health   # expect {"ok":true}
 - /Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/README.md:12:# Ready:  curl -fsS http://localhost:3000/ready
-- /Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/README.md:19:# UI → http://localhost:5178
+
 - /Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/README.md:25:# UI → http://localhost:8080
 - /Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/README-dev.md:5:API (prod-like via compose): 3000
-- /Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/README-dev.md:7:Dashboard-Lite (compose): 5178
+
 - /Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/README-dev.md:9:Full Dashboard (compose): 8080
 - /Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/README-dev.md:11:API (dev script, if provided): 8000 (hot-reload)
 - /Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/README-dev.md:14:./dev_api.sh              # API on :8000 (Fastify watch) — optional
-- /Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/README-dev.md:15:pnpm --filter @prism-apex/dashboard-lite dev   # Vite dev UI on :5173 (if applicable)
+
 - /Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/README-dev.md:23:curl -fsS http://localhost:3000/health
 - /Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/README-dev.md:24:curl -fsS http://localhost:3000/ready
 - /Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docker-compose.override.yml:8:      DATABASE_URL: "${DATABASE_URL:-postgresql://apex:apex@db:5432/prismapex?schema=public}"
@@ -7417,8 +7417,8 @@ Lines: 776
 - /Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/.env.example:18:RATE_LIMIT_MAX_BUCKETS=50000
 - /Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/.env.example:73:TELEMETRY_POLL_MS=5000
 - /Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/.env.example:74:BUFFER_CLEAR_THRESHOLD=2500
-- /Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docker-compose.dashboard.yml:5:    command: sh -lc "corepack enable && corepack prepare pnpm@9.0.0 --activate && pnpm -C apps/dashboard install && pnpm -C apps/dashboard dev --host 0.0.0.0 --port 5180"
-- /Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docker-compose.dashboard.yml:9:      - "5180:5180"
+
+
 - /Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/apps/ingress-yahoo-dev/src/server.ts:238:const port = Number(process.env.PORT || 8080);
 - /Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/apps/api/.env.local.example:5:PORT=8000
 - /Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/infra/README-DEPLOY.md:7:- **API** on port **8000**
@@ -7465,7 +7465,7 @@ Lines: 776
 - /Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/apps/e2e/tests/smoke.spec.ts:4:const API = process.env.BASE_API_URL ?? 'http://localhost:8000';
 - /Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/apps/dashboard/vite.config.ts:5:const API = process.env.VITE_API_BASE || 'http://127.0.0.1:3000';
 - /Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/apps/dashboard/vite.config.ts:10:    port: Number(process.env.PORT) || 5173,
-- /Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/apps/dashboard-lite/src/App.tsx:23:const REFRESH_MS = 10000;
+
 - /Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/apps/api/src/store.ts:66:        netLiqHigh: 52000,
 - /Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/apps/api/src/store.ts:67:        ddAmount: 3000,
 - /Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/apps/api/src/store.ts:157:    const dayAgo = Date.now() - 24 * 60 * 60 * 1000;
@@ -7496,19 +7496,19 @@ Lines: 776
 - /Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/export.md:12:    "when": "2024-08-24T12:00:00Z",
 - /Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/export.md:37:2024-08-24T12:00:00Z,ES,BUY,1,0,2,2,true,,false,20:59,2,2,false,false,false
 - /Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/apps/api/src/scripts/syncTickets.ts:115:    const sleepMs = Math.max(0, intervalSec * 1000 - elapsed);
-- /Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docker-compose.override.local.yml:8:      pnpm -C apps/dashboard dev --host 0.0.0.0 --port 5180"
+
 - /Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docker-compose.override.local.yml:11:      - "5179:80"
-- /Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/apps/dashboard-lite/vite.config.ts:4:// Dev: UI on 5179; proxy API to Express on 5178
-- /Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/apps/dashboard-lite/vite.config.ts:8:    port: 5179,
-- /Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/apps/dashboard-lite/vite.config.ts:11:      '/api': { target: 'http://localhost:5178', changeOrigin: true },
-- /Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/apps/dashboard-lite/vite.config.ts:14:  preview: { port: 5179, strictPort: true },
+
+
+
+
 - /Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/.env.ingress.example:19:PORT=8080
 - /Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/release/runbook-rollback.md:32:curl -fsS http://<server>:8080/health
 - /Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/packages/clients-tradovate/src/__tests__/ws.spec.ts:29:    vi.advanceTimersByTime(2500);
 - /Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/packages/clients-tradovate/src/__tests__/ws.spec.ts:43:    vi.advanceTimersByTime(1100);
-- /Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/apps/dashboard-lite/README.md:13:# open http://localhost:5179 and it will call the API on 5178
-- /Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/apps/dashboard-lite/README.md:18:# Dashboard Lite: http://localhost:5178
-- /Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/apps/dashboard-lite/README.md:19:# API: http://localhost:3000
+
+
+
 - /Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/apps/dashboard/src/components/EODCountdown.tsx:21:    const id = setInterval(() => setNow(new Date()), 1000);
 - /Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/apps/dashboard/src/components/EODCountdown.tsx:27:  const inBlock = force || msLeft <= 5 * 60 * 1000;
 - /Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/apps/dashboard/src/components/EODCountdown.tsx:30:  const mm = Math.max(0, Math.floor((msLeft % 3600000) / 60000));
@@ -7524,8 +7524,8 @@ Lines: 776
 - /Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/tickets.md:15:  "timestampUtc": "2025-09-09T14:31:22Z",
 - /Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/tickets.md:73:MESZ5,BUY,5550.25,5544.25,5560.25,2,APEX-123456,2025-09-09T14:31:22Z,vwap-first-touch,1.5,true,,half-size
 - /Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/tickets.md:89:MESZ5 BUY 2 5550.25 5544.25 5560.25
-- /Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/apps/dashboard-lite/server/index.ts:10:const PORT = Number(process.env.DASHBOARD_LITE_PORT || 5178);
-- /Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/apps/dashboard-lite/server/index.ts:40:      `<html><body><p>Run <code>pnpm -w -C apps/dashboard-lite dev</code> and open <a href="http://localhost:5179">web</a>.</p></body></html>`,
+
+
 - /Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/release/go-live-checklist.md:17:- [ ] `http://<server>:8080/health` returns `{ ok: true }`.
 - /Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/apps/dashboard/src/components/PositionsOrders.tsx:22:    const id = setInterval(run, 5000);
 - /Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/packages/clients-tradovate/src/telemetry.ts:31:  const pollMs = opts?.pollMs ?? 5000;
@@ -7552,7 +7552,7 @@ Lines: 776
 - /Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/apps/api/scripts/seed.ts:76:        target: 15760,
 - /Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/apps/api/scripts/seed.ts:84:      netLiqHigh: 52000,
 - /Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/apps/api/scripts/seed.ts:85:      ddAmount: 3000,
-- /Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/apps/dashboard-lite/web/src/pages/App.tsx:23:const REFRESH_MS = 10000;
+
 - /Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/safe_cleanup.md:10:_Last updated: 2025-10-01_
 - /Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/safe_cleanup.md:96:## 2025-02-10T21:34:11-05:00
 - /Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/apps/api/src/routes/compat.ts:11:    { symbol: 'ES', side: 'BUY', price: 5432.25, human: 'BUY ES @ 5432.25 (OR breakout)' },
@@ -7565,7 +7565,7 @@ Lines: 776
 - /Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/RELEASE_NOTES.md:18:- Rate-limit defaults: `RATE_LIMIT_MAX=60`, `RATE_LIMIT_WINDOW_MS=60000`, `RATE_LIMIT_MAX_BUCKETS=50000`.
 - /Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/packages/clients-tradovate/src/bars.ts:17:    const minute = Math.floor(q.ts / 60000) * 60000;
 - /Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/OPERATIONS.md:16:curl -fsS http://localhost:3000/health → {"ok":true}
-- /Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/OPERATIONS.md:18:UI loads (5178 for Lite, 8080 for Full)
+- /Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/OPERATIONS.md:18:UI loads at http://localhost:8080
 - /Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/apps/api/src/tests/ready.spec.ts:8:    vi.setSystemTime(new Date('2024-01-01T00:00:00Z'));
 - /Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/UPGRADE.md:30:export RATE_LIMIT_WINDOW_MS=60000
 - /Users/seankeane/prism-apex-tool-scan/prism-apex-tool-Test/docs/UPGRADE.md:31:export RATE_LIMIT_MAX_BUCKETS=50000
@@ -9984,13 +9984,13 @@ flowchart TD
 The local stack exposes two primary ports by default:
 
 - **8080** – Prism Apex API (compose service `api`).
-- **5178** – Dashboard Lite / operator UI.
+
 
 They are currently documented directly inside `README-dev.md` and compose files. To reduce drift and make overrides easier, prefer exporting the ports via environment variables, for example:
 
 ```env
 API_PORT=8080
-DASH_PORT=5178
+
 ```
 
 You can then reference these variables inside compose overrides or `.env` files. This change does not modify any Docker compose files yet—it simply notes the convention so future updates can centralise port management.
@@ -11321,13 +11321,13 @@ tests/setup/vitest.setup.ts(17,15): error TS2540: Cannot assign to 'LOG_LEVEL' b
 tests/setup/vitest.setup.ts(23,5): error TS2578: Unused '@ts-expect-error' directive.
 vitest.local.config.ts(5,3): error TS2769: No overload matches this call.
   The last overload gave the following error.
-    Object literal may only specify known properties, and 'projects' does not exist in type 'UserConfigExport'.
+
 vitest.local.config.ts(23,9): error TS2769: No overload matches this call.
   The last overload gave the following error.
-    Object literal may only specify known properties, and 'maxThreads' does not exist in type 'ProjectConfig'.
+
 vitest.local.config.ts(48,9): error TS2769: No overload matches this call.
   The last overload gave the following error.
-    Object literal may only specify known properties, and 'maxThreads' does not exist in type 'ProjectConfig'.
+
  ELIFECYCLE  Command failed with exit code 2.
 ```
 
@@ -11445,13 +11445,13 @@ tests/setup/vitest.setup.ts(17,15): error TS2540: Cannot assign to 'LOG_LEVEL' b
 tests/setup/vitest.setup.ts(23,5): error TS2578: Unused '@ts-expect-error' directive.
 vitest.local.config.ts(5,3): error TS2769: No overload matches this call.
   The last overload gave the following error.
-    Object literal may only specify known properties, and 'projects' does not exist in type 'UserConfigExport'.
+
 vitest.local.config.ts(23,9): error TS2769: No overload matches this call.
   The last overload gave the following error.
-    Object literal may only specify known properties, and 'maxThreads' does not exist in type 'ProjectConfig'.
+
 vitest.local.config.ts(48,9): error TS2769: No overload matches this call.
   The last overload gave the following error.
-    Object literal may only specify known properties, and 'maxThreads' does not exist in type 'ProjectConfig'.
+
  ELIFECYCLE  Command failed with exit code 2.
 ```
 

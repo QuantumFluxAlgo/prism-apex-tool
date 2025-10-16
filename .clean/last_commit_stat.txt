@@ -1,0 +1,12 @@
+commit b1d22b88fd500b519e4d3c412c6a6d72252b34aa
+Author: Sean Keane <seankeane@example.com>
+Date:   Thu Oct 16 13:33:57 2025 +0100
+
+    chore(deps): remove unused deps/devDeps and delete Vite configs per hygiene plan
+
+ apps/api/package.json         |  11 +--
+ apps/dashboard/package.json   |   2 -
+ apps/dashboard/vite.config.ts |  30 ------
+ package.json                  |   1 -
+ pnpm-lock.yaml                | 209 ------------------------------------------
+ 5 files changed, 1 insertion(+), 252 deletions(-)

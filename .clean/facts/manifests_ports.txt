@@ -1,0 +1,23 @@
+docker-compose.override.yml:11:    ports:
+docker-compose.override.yml:12:      - "${API_PORT:-3000}:3000"
+docker-compose.override.yml:63:    ports:
+docker-compose.override.yml:64:      - "${POSTGRES_PORT:-55433}:5432"
+docker-compose.dashboard.yml:8:    ports:
+docker-compose.db.yml:10:    ports:
+docker-compose.prod.yml:42:      FASTIFY_HOST: 0.0.0.0
+docker-compose.prod.yml:45:    ports: ["${API_PORT:-3000}:3000"]
+docker-compose.prod.yml:64:      VITE_API_BASE: http://localhost:3000
+docker-compose.prod.yml:65:    ports: ["8080:80"]
+docker-compose.ingress.yml:14:    ports:
+docker-compose.yml:9:    ports:
+docker-compose.yml:10:      - "${API_PORT:-3000}:3000"
+docker-compose.yml:22:    ports:
+docker-compose.local.ports.yml:4:    ports:
+docker-compose.local.ports.yml:8:    ports:
+docker-compose.local.ports.yml:13:    ports:
+Dockerfile:20:EXPOSE 3000
+Dockerfile:26:EXPOSE 80
+docker-compose.override.local.yml:9:    ports:
+apps/api/Dockerfile:78:EXPOSE 3000
+apps/dashboard/Dockerfile:32:EXPOSE 80
+apps/api/src/index.ts:4:const host = process.env.FASTIFY_HOST ?? process.env.HOST ?? '0.0.0.0';

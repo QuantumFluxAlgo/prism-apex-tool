@@ -1,0 +1,3 @@
+.github/workflows/ci.yml:51:        run: pnpm run typecheck:api || true
+.github/workflows/ci.yml:54:        run: pnpm run test:api || true
+.github/workflows/ci.yml:70:        run: pnpm run build:api || true

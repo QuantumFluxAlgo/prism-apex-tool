@@ -1,0 +1,53 @@
+apps/ingress-yahoo-dev/src/server.ts:239:app.get('/health', (_, _res) => _res.json({ ok: true, service: 'ingress-yahoo-dev' }));
+apps/e2e/tests/smoke.spec.ts:13:  // Try /health, fall back to /
+apps/e2e/tests/smoke.spec.ts:14:  const health = await ctx.get(`${API}/health`);
+apps/dashboard/nginx.conf:21:  location = /health { add_header Content-Type text/plain; return 200 "ok\n"; }
+apps/dashboard/src/lib/api.ts:106:  ready: () => request(DIRECT_BASE, '/ready'),
+apps/api/__tests__/ready.spec.ts:3:import readyRoute from '../src/routes/ready.js';
+apps/api/__tests__/ready.spec.ts:4:import { setJobBeat } from '@prism-apex/runtime/health';
+apps/api/__tests__/ready.spec.ts:6:describe('GET /ready', () => {
+apps/api/__tests__/ready.spec.ts:12:    let res = await app.inject({ method: 'GET', url: '/ready' });
+apps/api/__tests__/ready.spec.ts:18:    res = await app.inject({ method: 'GET', url: '/ready' });
+apps/dashboard/src/components/TicketsTable.tsx:35:          <a href="/ready" className="underline">
+apps/dashboard/src/components/TicketsTable.tsx:36:            /ready
+apps/api/tests/ingress-yahoo-dev.server.spec.ts:53:  it('GET /health -> 200 or 404', async () => {
+apps/api/tests/ingress-yahoo-dev.server.spec.ts:54:    const res = await request.get('/health');
+apps/api/tests/my-module.smoke.spec.ts:53:  it('GET /health -> 200 or 404', async () => {
+apps/api/tests/my-module.smoke.spec.ts:54:    const res = await request.get('/health');
+apps/dashboard/src/components/YahooStatus.tsx:12:        const res = await fetch('/api/health/yahoo');
+apps/api/test/version.test.ts:21:import { getAppVersion } from '../src/utils/version.js';
+apps/api/test/version.test.ts:37:    const mod = await import('../src/utils/version.js');
+apps/api/test/version.test.ts:38:    expect(() => mod.getAppVersion()).toThrow(/version/i);
+apps/api/tests/@filename.spec.ts:53:  it('GET /health -> 200 or 404', async () => {
+apps/api/tests/@filename.spec.ts:54:    const res = await request.get('/health');
+apps/api/src/server.ts:15:import healthRoute from './routes/health.js';
+apps/api/src/server.ts:16:import versionRoute from './routes/version.js';
+apps/api/src/server.ts:20:import yahooHealthRoutes from './routes/health.yahoo.js';
+apps/api/src/server.ts:25:import readyRoute from './routes/ready.js';
+apps/api/src/server.ts:95:  const publicPaths = ['/health', '/ready', '/openapi.json', '/version', '/webhooks/tradingview'];
+apps/api/src/plugins/auth.ts:14:  const publicPaths = opts.publicPaths ?? ['/health', '/openapi.json', '/version'];
+apps/api/src/plugins/rateLimit.ts:20:  const publicPaths = opts.publicPaths ?? ['/health', '/ready', '/openapi.json', '/version'];
+apps/api/src/routes/ready.ts:9:  app.get('/ready', async (_req, reply) => {
+apps/api/src/openapi/spec.ts:20:    'Send `Authorization: Bearer <token>`. Public endpoints (no auth): /health, /ready, /openapi.json, /version.',
+apps/api/src/openapi/spec.ts:25:  path: '/ready',
+apps/api/src/openapi/spec.ts:256:      description: 'Public endpoints: /health, /ready, /openapi.json, /version.',
+apps/api/src/tests/ticketizer.api.spec.ts:66:    const ready = await app.inject({ method: 'GET', url: '/ready' });
+apps/api/src/tests/ready.spec.ts:5:describe('/ready', () => {
+apps/api/src/tests/ready.spec.ts:22:    let res = await app.inject({ method: 'GET', url: '/ready' });
+apps/api/src/tests/ready.spec.ts:30:    res = await app.inject({ method: 'GET', url: '/ready' });
+apps/api/src/tests/version.route.spec.ts:3:import versionRoute from '../routes/version';
+apps/api/src/tests/version.route.spec.ts:5:describe('GET /version', () => {
+apps/api/src/tests/version.route.spec.ts:10:    const res = await app.inject({ method: 'GET', url: '/version' });
+apps/api/src/tests/telemetry.api.spec.ts:40:    const ready = await app.inject({ method: 'GET', url: '/ready' });
+apps/api/src/tests/hardening.spec.ts:35:    const res = await app.inject({ method: 'GET', url: '/ready' });
+apps/api/src/routes/health.ts:4:  app.get('/health', async () => ({ status: 'ok' }));
+apps/api/src/routes/version.ts:76:  fastify.get('/version', async (_req, _rep) => {
+apps/api/src/tests/jobs.lifecycle.spec.ts:6:  it('reflects job running state in /ready', async () => {
+apps/api/src/tests/jobs.lifecycle.spec.ts:10:    let res = await app.inject({ method: 'GET', url: '/ready' });
+apps/api/src/tests/jobs.lifecycle.spec.ts:13:    res = await app.inject({ method: 'GET', url: '/ready' });
+apps/api/src/routes/health.yahoo.ts:25:    app.get('/api/health/yahoo', async (_, reply) =>
+apps/api/src/routes/health.yahoo.ts:28:    app.get('/health/yahoo', async (_, reply) =>
+apps/api/src/routes/health.yahoo.ts:90:  app.get('/api/health/yahoo', async (_req, reply) => handle(reply));
+apps/api/src/routes/health.yahoo.ts:91:  app.get('/health/yahoo', async (_req, reply) => handle(reply)); // non-prefixed twin
+apps/api/src/routes/openapi.ts:23:  app.get('/openapi.json', async (_req, reply) => {
+apps/api/src/routes/compat.ts:38:  // NOTE: Do NOT redefine /health here. Core server already exposes it.

@@ -1,0 +1,25 @@
+b1d22b88 2025-10-16 13:33:57 +0100 Sean Keane chore(deps): remove unused deps/devDeps and delete Vite configs per hygiene plan
+033ee73b 2025-10-16 13:28:31 +0100 Sean Keane chore(cleanup): purge archives, scans, reports; remove obsolete docs; prep Rapid AI purge
+77d991c7 2025-10-16 12:46:59 +0100 Sean Keane docs(refactor): canonicalize docs set, archive legacy markdown, add generator
+8174f5a6 2025-10-16 12:03:29 +0100 Sean Keane docs(README): rebuild from backups; remove accidental ts_utc artifacts
+c61793e1 2025-10-16 11:56:01 +0100 Sean Keane docs(README): unify SMOKE/RUNBOOK/TICKETS; Quick Start + Shutdown; instruments; status/metrics; market-feed; guards
+a5c54b7c 2025-10-16 10:26:59 +0100 Sean Keane chore: ignore generated bars and local helper
+aa21693a 2025-10-14 22:33:46 +0100 Sean Keane ops: 24/7 stack — make up/down, 60s tickets-cron, systemd unit, health checks & docs
+87daadf5 2025-10-14 22:17:00 +0100 Sean Keane ops: free Yahoo mode — ingress healthcheck on /health, doc note
+b676a83e 2025-10-14 22:00:17 +0100 Sean Keane ops: 24x7 stack — 60s ORR cadence, poller healthcheck, docs
+fc88cfeb 2025-10-14 21:44:44 +0100 Sean Keane ops: 24x7 stack — remove dash 8080 publish, enable ingress-yahoo, add tickets-cron, restart policies
+944f7fc1 2025-10-14 20:08:25 +0100 Sean Keane docs: add quickstart for 8-symbol local stack
+1d88420a 2025-10-14 20:02:04 +0100 Sean Keane docs: add .env.example with 8-symbol Yahoo defaults
+962304f0 2025-10-14 20:01:14 +0100 Sean Keane data: expand Yahoo symbols to ES,NQ,YM,RTY,GC,CL,6E,EURUSD (drop FDAX=F)
+38ab1bc3 2025-10-10 14:16:52 +0100 Sean Keane chore: local compose + deploy fixes (pre-sync)
+c8b8f6eb 2025-10-08 14:32:07 +0100 Sean Keane chore(smoke): add local smoke test
+3c4719b6 2025-10-08 14:21:11 +0100 Sean Keane chore(compose): env ports
+b3e42de7 2025-10-08 13:05:40 +0100 Sean Keane chore(merge): squash PR #328 (feat/readme-regenerate-merged) into Test
+b8967048 2025-10-08 13:04:12 +0100 Sean Keane squash PR #335 into Test
+75b35eb7 2025-10-08 13:03:40 +0100 Sean Keane squash PR #334 into Test
+d8ad5e47 2025-10-08 13:03:17 +0100 Sean Keane squash PR #327 into Test
+f5f254b5 2025-10-08 12:25:45 +0100 Sean Keane Docs: Local runbook quickstart (#336)
+51beef90 2025-10-06 01:56:01 +0100 Sean Keane feat(health): Yahoo feed health with ok/degraded/down/paused + env thresholds (#333)
+aad2f191 2025-10-06 01:34:59 +0100 Sean Keane fix: expose yahoo health without api prefix (#332)
+d04c6de5 2025-10-06 01:30:54 +0100 Sean Keane Integrate all + Yahoo health + dashboard fix (#331)
+7c15704d 2025-10-06 00:24:58 +0100 Sean Keane chore(mvp): production compose + auto-migrate setup (#330)
