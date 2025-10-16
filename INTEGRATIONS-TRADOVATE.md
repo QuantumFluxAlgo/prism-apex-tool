@@ -1,30 +1,22 @@
-# Prism-Apex Tool
+# Integrations — Tradovate
 
-Operator-assisted trading — tickets-only. Docker-only dev & deploy.
+Auth, WS/REST split, rate limits, compliance.
 
 > This page was auto-generated from existing repo docs. Check TODO/TBD markers.
 
-## Quick Start
+## Environments
+- Demo vs Live endpoints
+- Separate sockets for user-data vs market data
 
-- Docker required
-- `pnpm install --frozen-lockfile`
-- `docker compose up -d`
-- `pnpm docs:lint`
+## Auth
+- Token via REST; mdAccessToken for MD socket; send `authorize` frame
+- Device ID binding (2FA style)
 
-## Docs Map
+## Market Data
+- Live MD via CME sub-vendor (cost) or use demo/alternate data
 
-- [TECH-SPEC.md](./TECH-SPEC.md)
-- [AGENTS.md](./AGENTS.md)
-- [OPERATIONS.md](./OPERATIONS.md)
-- [INTEGRATIONS-TRADOVATE.md](./INTEGRATIONS-TRADOVATE.md)
-- [TESTING.md](./TESTING.md)
-- [CONTRIBUTING.md](./CONTRIBUTING.md)
-- [GLOSSARY.md](./GLOSSARY.md)
-
-## Non-Negotiables
-- Tickets-only (no API order placement)
-- Protected folders: strategy core, guardrails, infra/CI/CD
-- 12-factor config; structured JSON logs
+## Rate Limits
+- Dynamic; penalty time + ticket; backoff + replay
 
 ---
 **From:** `CHANGELOG.md`
@@ -39,6 +31,60 @@ chore(compose): add API healthcheck and drop unused root volumes
 docs: update Docker quickstart; add ADR; fix stale local endpoint/port mentions
 
 test: add Docker-only smoke script
+
+
+
+---
+**From:** `DEPLOY.md`
+
+# One-Go Docker Deploy
+
+## Prerequisites
+- Docker Desktop (or Docker Engine + Compose V2)
+- No process listening on host ports **3000** (API) and **8080** (Dashboard)
+
+## Quick start
+```bash
+# From repo root
+make up
+# or explicitly:
+docker compose -f docker-compose.yml up -d --build
+```
+
+**Dashboard** → http://localhost:8080
+
+**API** (health, if implemented) → http://localhost:3000/health
+
+## What it does
+- Builds the workspace with PNPM in a multi-stage Dockerfile
+- Produces two images:
+  - **api** (Node 20) on port 3000
+  - **dashboard** (Nginx) on port 8080, proxying `/api/*` to `api:3000`
+- No secrets are committed. Copy `.env.template` to `.env` and fill in real values as needed.
+
+## Useful commands
+```
+make logs     # tail logs
+make ps       # container status
+make down     # stop stack
+make build    # rebuild images (no cache)
+```
+
+## Troubleshooting
+- **Port already in use (3000/8080)** → stop the conflicting process or container (`docker ps` then `docker stop <id>`).
+- **Build fails on dashboard** → ensure TypeScript DOM libs/shims are present; run `pnpm -C apps/dashboard build` locally to check.
+- **Health endpoint** → If `/health` is not implemented, either add one in the API or adjust/remove the healthcheck.
+
+## Gapfill maintenance (1-minute bars)
+- One-shot: `make gapfill` (fetches only missing minutes in the last 30 days; duplicate-safe).
+- Nightly: `gapfill-cron` service runs at **02:20 UTC (GMT)** and writes logs to `/var/log/gapfill-cron.log`.
+
+Verify:
+```bash
+docker compose -f docker-compose.yml -f docker-compose.db.yml up -d gapfill-cron
+docker compose -f docker-compose.yml -f docker-compose.db.yml logs --tail=20 gapfill-cron
+```
+
 
 
 
@@ -287,6 +333,125 @@ TODO: Add operator guidance chart.
 
 
 ---
+**From:** `apex/platforms/rithmic.md`
+
+# Rithmic + NinjaTrader
+
+**Purpose:** Document setup and caveats for Rithmic accounts.
+
+## Setup Steps
+
+- TODO: Provide step-by-step account linking and platform install instructions.
+
+## Windows Requirement
+
+- Platform requires Windows environment.
+- Compliance Note: Unsupported OS use may breach terms.
+
+## Technical Difficulty
+
+- Rated 7/10.
+- Compliance Note: Operators should verify user competency before recommendation.
+
+## Pros
+
+- Low latency execution.
+- Flexible automation support.
+- Compliance Note: Automation must log orders for audit.
+
+## Cons
+
+- Windows-only; complex initial configuration; no mobile support.
+- Compliance Note: Document exceptions for Mac users.
+
+## Watchouts
+
+- Server selection impacts latency.
+- Concurrent logins restricted.
+- Data status must be real-time.
+- Compliance Note: Monitor for unauthorized API connections.
+
+TODO: Add screenshots of NinjaTrader config.
+
+
+
+---
+**From:** `apex/platforms/tradovate.md`
+
+# Tradovate + TradingView
+
+**Purpose:** Document setup and caveats for Tradovate accounts.
+
+## Setup Steps
+
+- TODO: Outline account activation and TradingView integration.
+
+## Technical Difficulty
+
+- Rated 3/10.
+- Compliance Note: Suitable for beginners but still requires supervision.
+
+## Pros
+
+- Web, Mac, and mobile access.
+- Native TradingView integration.
+- Compliance Note: Cloud-based trading must ensure secure credentials.
+
+## Cons
+
+- Fewer advanced tools.
+- Reliance on cloud connectivity.
+- Compliance Note: Verify stability before high-frequency use.
+
+## Watchouts
+
+- Symbol codes differ from other platforms.
+- Payout day counts may vary.
+- Compliance Note: Confirm platform timezones for EOD rules.
+
+TODO: Add TradingView broker panel screenshot.
+
+
+
+---
+**From:** `apex/platforms/wealthcharts.md`
+
+# WealthCharts
+
+**Purpose:** Document setup and caveats for WealthCharts accounts.
+
+## Setup Steps
+
+- TODO: Provide account linking and layout selection steps.
+
+## Technical Difficulty
+
+- Rated 4/10.
+- Compliance Note: Provide training on platform-specific quirks.
+
+## Pros
+
+- Pre-made layouts and guided workflows.
+- Built-in liquidation indicator.
+- Compliance Note: Ensure indicator visibility for all traders.
+
+## Cons
+
+- Closed ecosystem with limited integrations.
+- Potential Windows-only risk depending on components.
+- Compliance Note: Review update policies for security.
+
+## Watchouts
+
+- Platform updates may be mandatory.
+- Automation support is limited.
+- Compliance Note: Document any external tool connections.
+
+TODO: Add Apex-prebuilt layout diagram.
+
+
+
+---
 **From:** `docs/ARCHITECTURE_OVERVIEW.md`
 
 # Prism-Apex Architecture Overview (Tickets-Only Brain)
@@ -350,34 +515,6 @@ Staying within these boundaries keeps Prism-Apex compliant while giving operator
   - `pnpm -r test`
 
 Artifacts are uploaded on failure to help debugging.
-
-
-
----
-**From:** `docs/CLEANUP_REPORT.md`
-
-# Cleanup Report
-
-- Timestamp: 2025-10-04T14:56:41+01:00
-- Mode: DELETE
-- Large file threshold: 50MB
-
-## Removed Paths
-- (logs) `logs/final-check.txt` (tracked)
-- (reports logs) `reports/removals/round1/20250909-133034/removals.log`
-- (workspace logs) `cleanup_real.log` (untracked)
-- (workspace logs) `cleanup_dryrun.log` (untracked)
-- Additional untracked cache/log directories discovered via `docs/scan/*.json` (dist/build/tmp/dump variants) — all removed.
-
-## Disk Usage
-- Before: 481.69 MB (505088169 bytes)
-- After : 481.69 MB (505087524 bytes)
-- Saved : 645.00 B (645 bytes)
-
-## Notes
-- tickets/*.jsonl, source trees, configs, migrations, and `.env*` were left untouched.
-- Set `CLEANUP_DRY_RUN=1` to preview or `ARCHIVE_MODE=1` to move clutter into `archive/ATTIC-<date>` instead of deleting.
-- No automated order placement or liquidation paths were introduced.
 
 
 
@@ -468,13 +605,6 @@ Artifacts are uploaded on failure to help debugging.
 
 Staying inside these guardrails keeps Prism-Apex compliant with the operator-assisted mission while giving us the visibility we need to keep accounts safe.
 
-
-
-
----
-**From:** `docs/CONTRIBUTING-scripts.md`
-
-If your local repo has no 'origin' remote configured, Codex prompts will skip 'git push' and print a compare URL hint instead.
 
 
 
@@ -641,29 +771,6 @@ Reports land in `docs/YAHOO_DATA_CLEANUP.md`.
 
 
 ---
-**From:** `docs/MAINTENANCE.md`
-
-# Maintenance — SAFE Data Cleanup
-
-Use `tools/cleanup_yahoo_data.sh` to clear Yahoo-style artifacts in a controlled way.
-
-1. **Dry run (recommended first)**
-   ```bash
-   tools/cleanup_yahoo_data.sh --dry-run
-   ```
-   Only reports what *would* be backed up/removed (writes to `docs/YAHOO_DATA_CLEANUP.md`).
-
-2. **Real cleanup**
-   ```bash
-   tools/cleanup_yahoo_data.sh
-   ```
-   Creates a timestamped `backups/yahoo-data-*.tar.gz` archive before deleting untracked candidates.
-
-Tracked files are never deleted; tracked candidates are listed for manual inspection.
-
-
-
----
 **From:** `docs/OPERATIONS.md`
 
 
@@ -745,23 +852,6 @@ Ran `DRY_RUN=1 tools/cleanup_yahoo_data.sh` (no deletions). See `docs/YAHOO_DATA
 - `docker compose --env-file .env.example.local logs --no-color tickets-sync | tail -n 80`
 - `tail -n 10 data/tickets.jsonl`
 - `docker compose --env-file .env.example.local down`
-
-
-
----
-**From:** `docs/README_NAV.md`
-
-# Documentation Index
-
-- **Scan Report:** `docs/REPO_SCAN_REPORT.md`
-- **Scan Questions:** `docs/REPO_SCAN_QUESTIONS.md`
-- **Scan Summary Message:** `docs/SCAN_SUMMARY_MESSAGE.md`
-- **Codebase Overview:** `docs/CODEBASE_OVERVIEW.md`
-- **Architecture Overview:** `docs/ARCHITECTURE_OVERVIEW.md`
-- **Cleanup Policy:** `docs/REPO_CLEANUP_POLICY.md`
-- **Latest Cleanup Report:** `docs/CLEANUP_REPORT.md`
-
-- **Ports & Env:** `docs/ports-and-env.md`
 
 
 
@@ -8231,29 +8321,6 @@ Run `/api/analytics/payout` or check dashboard.
 
 
 ---
-**From:** `docs/analytics/post_trade.md`
-
-# Post-Trade Analytics
-
-## Purpose
-
-Every day after trading, the system generates a report:
-
-- Daily PnL (gross and net)
-- Guardrail breaches
-- Operator actions
-
-## Location
-
-Reports stored in `reports/daily_YYYY-MM-DD.json`.
-
-## Usage
-
-View on dashboard under "Daily Report".
-
-
-
----
 **From:** `docs/apex/01_rules.md`
 
 # Apex Trader Funding – Proprietary Trading Rules
@@ -8290,43 +8357,6 @@ flowchart TD
 ```
 
 [Placeholder: screenshot of Apex evaluation dashboard]
-
-
-
----
-**From:** `docs/apex/02_funded_rules.md`
-
-# Apex Trader Funding – Funded (Performance) Account Rules
-
-## 1. Consistency Rules
-
-- 30% profit distribution rule
-- 30% max daily loss relative to profits
-
-## 2. Risk Management
-
-- Mandatory stop-loss on every trade
-- 5:1 max risk-reward ratio
-- Half-contract rule until drawdown buffer cleared
-
-## 3. Payout Rules
-
-- First $25k 100% to trader
-- 90/10 split after until payout #6 → then 100%
-- 8-day minimum trading cycle between withdrawals
-- Safety net balance requirement for first 3 payouts
-
-## Visuals
-
-```mermaid
-flowchart TD
-    A[Trade in PA] --> B[Follow Consistency Rule]
-    B --> C{≥8 Trading Days?}
-    C -->|Yes| D[Payout Request]
-    C -->|No| E[Keep Trading]
-```
-
-[Placeholder: payout dashboard screenshot]
 
 
 
@@ -8668,198 +8698,6 @@ flowchart LR
 
 
 ---
-**From:** `docs/audit/guide.md`
-
-# Prism Apex Tool — Audit Trail Guide
-
-## Purpose
-
-- Records all **system events**, **rule checks**, and **operator actions**.
-- Ensures compliance with Apex rules (manual input, EOD flat).
-
-## Log Formats
-
-- **audit.log** → plain text, human readable.
-- **audit_YYYY-MM-DD.jsonl** → structured JSON lines for parsing.
-
-## Example Entry
-
-```json
-{
-  "timestamp": "2025-08-17T13:45:01Z",
-  "event_type": "RULE_CHECK",
-  "message": "Breaches detected",
-  "details": { "breaches": ["daily_loss"] }
-}
-```
-
-## Retention
-
-- Keep logs for 90 days minimum.
-- Archive older logs to cloud if required.
-
-## Visuals
-
-```mermaid
-flowchart TD
-    A[System Event] --> L[Audit Logger]
-    B[Rule Check] --> L
-    C[Operator Action] --> L
-    L -->|JSONL/Text| F[logs/audit/]
-    F --> Operator[Review / Compliance]
-```
-
-
-
----
-**From:** `docs/backtest/overview.md`
-
-# Prism Apex Backtesting Framework
-
-## What It Does
-
-- Replays OHLCV bars to simulate ORB and VWAP strategies.
-- Applies Apex guardrails: stop required, ≤5R cap, EOD flat (session close), daily loss proximity.
-- Outputs JSON + CSV (fills, daily summaries).
-
-## Quick Start
-
-```bash
-node apps/cli/src/backtest.js \
-  --strategy=ORB \
-  --data=data/ES_1m.csv \
-  --mode=evaluation \
-  --open=14:30 --close=21:59 \
-  --tickValue=50 --seed=42
-```
-
-Outputs
-`backtest.json` → summary + fills + daily
-
-`backtest-fills.csv` → one row per filled trade
-
-`backtest-daily.csv` → per-day PnL summary
-
-## Config Notes (MVP)
-
-- Session times: use UTC/GMT equivalents to enforce EOD flat.
-- ≤5R cap: engine clamps targets above 5R.
-- Daily loss cap: soft emulation via per-day PnL in backtest.
-- Determinism: `--seed` controls slippage randomness (if enabled).
-
-## Extend Later (Tick-Level)
-
-- Replace simulateTrade with tick-matching engine.
-- Add partial fills, queue priority, and latency models.
-- Plug in full Prompt 24 compliance pass per-trade & end-of-day.
-
-## Caveats
-
-- Bar-level fills can over-estimate executions vs ticks.
-- Use conservative slippage settings in pre-prod studies.
-
----
-
-**QUALITY GATES (must pass)**
-
-- `npm run test -w tests` (Vitest) → `tests/backtest/engine.spec.ts` passes.
-- CLI produces `*.json` and `*.csv` and prints a summary.
-- 5R clamp verified; daily loss proximity flags populated.
-- No `any`, TypeScript strict OK.
-
-**COMPLETION CHECK**  
-Files created/updated:
-
-- `packages/backtest/src/types.ts`
-- `packages/backtest/src/io.ts`
-- `packages/backtest/src/util.ts`
-- `packages/backtest/src/fills.ts`
-- `packages/backtest/src/engine.ts`
-- `packages/backtest/src/adapters/orb.ts`
-- `packages/backtest/src/adapters/vwap.ts`
-- `packages/backtest/src/index.ts`
-- `apps/cli/src/backtest.ts`
-- `tests/backtest/engine.spec.ts`
-- `docs/backtest/overview.md`
-
-
-
----
-**From:** `docs/backtest/tick-readiness.md`
-
-# Tick-Level Readiness (Post-MVP)
-
-## What’s Included Now
-
-- **Tick replay hooks** with a simple **cross-through fill** model.
-- Feature-flagged CLI (`--modeReplay=tick`).
-- Tiny sample tick CSV for demos.
-
-## What’s Next (Not Included Yet)
-
-- Queue/latency modeling.
-- Partial fills & order book depth.
-- Realistic slippage tied to spreads & volume.
-- Parquet reader for high-volume tick data (planned).
-
-## Usage
-
-```bash
-# Tick replay (uses sample ticks)
-node apps/cli/dist/backtest.js \
-  --strategy=ORB \
-  --modeReplay=tick \
-  --tickData=data/ES_ticks.sample.csv \
-  --mode=evaluation --open=14:30 --close=21:59 \
-  --tickValue=50 --seed=42 --out=out/es_orb_tick
-```
-
-Diagram
-
-```mermaid
-flowchart TD
-    A[Signals: ORB/VWAP] --> B{Replay Mode}
-    B -->|bar| C[Bar Engine]
-    B -->|tick| D[Tick Engine]
-    C --> E[Fills + Daily PnL]
-    D --> E
-    E --> F[Reports JSON/CSV]
-```
-
-
-
----
-**From:** `docs/calibration/summary.md`
-
-# Prism Apex Tool — Risk Calibration Summary
-
-This document summarizes parameter sweeps of **ORB** and **VWAP** strategies
-against Apex Trader Funding guardrails.
-
-## Key Findings (Example)
-
-- ORB with 15m window, 8 tick stop, 2R target → 61% win rate, **passes all Apex rules**.
-- VWAP with 20bps band, 8 tick stop → strong expectancy but **breaches daily loss cap** in 8% of days.
-- Across all runs, ~72% parameter sets breached at least one Apex rule.
-
-## Metrics Recorded
-
-- Win rate (%)
-- Expectancy ($ per trade)
-- Max drawdown
-- Rule breaches (daily loss, trailing drawdown, consistency, EOD flat)
-
-## Next Steps
-
-- Narrow parameter ranges to those that consistently pass Apex rules.
-- Incorporate into **live guardrails** (Prompt 14).
-- Share CSV/JSON results with strategy engineers.
-
-[Placeholder: charts from notebooks/calibration.ipynb]
-
-
-
----
 **From:** `docs/compliance/rule-engine.md`
 
 # Compliance Rule Engine
@@ -8926,52 +8764,6 @@ console.log(res.ok);
 
 
 ---
-**From:** `docs/config.md`
-
-# Guardrails & Sizing (Env)
-
-| Key                            | Default        | Notes                                       |
-| ------------------------------ | -------------- | ------------------------------------------- |
-| MIN_RR                         | 1.5            | minimum risk/reward                         |
-| MAX_RR                         | 5              | maximum risk/reward (≤5)                    |
-| FLAT_BY_UTC                    | 20:59          | EOD flat cutoff (UTC)                       |
-| SIZE_POLICY                    | percent-of-max | sizing policy                               |
-| PCT_OF_MAX_WHEN_NO_BUFFER      | 0.5            | percent of max contracts without buffer     |
-| PCT_OF_MAX_WHEN_BUFFER         | 1.0            | percent of max contracts after buffer       |
-| HALF_SIZE_UNTIL_BUFFER         | true           | start half size until buffer cleared        |
-| ENFORCE_SIZE_HINTS             | false          | reject qty above allowed when true          |
-| SIZE_JUMP_MULTIPLIER           | 2              | flag when qty > lastSuggested \* multiplier |
-| ENFORCE_SIZE_JUMPS             | false          | reject when jumpExceeded and this is true   |
-| CONSISTENCY_TRACKING_ENABLED   | true           | metrics only; no enforcement in V1          |
-| CONSISTENCY_DAY_SHARE_LIMIT    | 0.3            | 30% single-day share limit                  |
-| CONSISTENCY_MIN_PROFIT_DAY_USD | 50             | minimum profit to count a day               |
-| CONSISTENCY_WINDOW_DAYS        | 8              | rolling summary window                      |
-| MIN_PROFIT_TICKS               | (blank)        | profit floor disabled                       |
-| MIN_EXPECTED_PROFIT_USD        | (blank)        | profit floor disabled                       |
-
-Consistency is tracked only in V1; enforcement comes later.
-
-## TradingView Webhook
-
-Set `TRADINGVIEW_WEBHOOK_SECRET` in your environment.
-
-Example alert:
-
-```json
-{
-  "symbol": "ES1!",
-  "side": "BUY",
-  "entry": 5050.25,
-  "stop": 5046.25,
-  "target": 5055.25
-}
-```
-
-Send to `POST /webhooks/tradingview` with header `x-webhook-secret: <secret>`.
-
-
-
----
 **From:** `docs/configs/ACCOUNTS.md`
 
 # accounts.json — Fields
@@ -8989,43 +8781,6 @@ Start from `configs/accounts.example.json` and run:
 
 
 pnpm config:check
-
-
-
----
-**From:** `docs/configs/README.md`
-
-# Configs — Accounts & Strategies
-
-## Accounts (`configs/accounts.json`)
-**Shape**
-- `name` (string) — label for the account
-- `accountId` (integer > 0)
-- `accountSpec` (string) — broker account spec
-- `mode` ("eval" | "funded")
-- `planMaxContracts` (integer > 0)
-- `baseSize` (integer > 0, default 1)
-- `multiplier` (number > 0, default 1)
-- `minQty` (integer ≥ 0, default 1)
-
-Copy `configs/accounts.example.json` and edit your values.
-
-## Strategies (`configs/strategies/*.json`)
-Each strategy file contains the **numeric knobs** your strategy reads at runtime.
-Common fields (examples):
-- `lookbackBars`, `rangeLookbackMinutes`, `bufferTicks`, `cooldownBars`, `minRR`
-- Optional time fields: `sessionStart`, `sessionEnd` in `HH:MM` or `HH:MM:SS`
-
-Use the `*.example.json` files as templates and align keys with your actual strategy code.
-
-## Validation
-Run:
-
-
-pnpm config:check
-
-- Checks: types, numeric finiteness, non-negative durations/counts; accounts schema also rejects **unknown keys** and bad types.
-- Strategy validation is **generic** and safe: it enforces numeric/time types; for strict key lists, pass `allowedKeys` in your own loader or extend the schema.
 
 
 
@@ -9281,52 +9036,6 @@ Files created/updated:
 
 
 ---
-**From:** `docs/export.md`
-
-# Ticket export
-
-`GET /export/tickets?date=YYYY-MM-DD&format=json|csv&accountId=ID`
-
-Exports tickets for a given UTC date. The default `format` is `json`. Use `format=csv` for a compact CSV output. When `accountId` is supplied and the account exists, sizing suggestions are included.
-
-## JSON example
-
-```json
-[
-  {
-    "when": "2024-08-24T12:00:00Z",
-    "symbol": "ES",
-    "side": "BUY",
-    "qty": 1,
-    "entry": 1,
-    "stop": 0,
-    "target": 2,
-    "accepted": true,
-    "rr": 2,
-    "reasons": [],
-    "preCloseSuppressed": false,
-    "flatByUtc": "20:59",
-    "sizeSuggested": 2,
-    "sizeAllowed": 2,
-    "halfSizeSuggested": false,
-    "overAllowed": false,
-    "jumpExceeded": false
-  }
-]
-```
-
-## CSV example
-
-```
-ts,symbol,side,entry,stop,target,rr,accepted,reason_summary,pre_close,flat_by_utc,size_suggested,size_allowed,half_size_suggested,over_allowed,jump_exceeded
-2024-08-24T12:00:00Z,ES,BUY,1,0,2,2,true,,false,20:59,2,2,false,false,false
-```
-
-Sizing fields appear only when `accountId` is provided and an account file exists in the data directory. `sizeAllowed` mirrors `sizeSuggested` for backward compatibility. `overAllowed` and `jumpExceeded` appear when the stored ticket includes a `qty`.
-
-
-
----
 **From:** `docs/multi-account/guide.md`
 
 # Multi-Account Management — Operator Guide
@@ -9361,44 +9070,6 @@ flowchart TD
     B -->|OK| C[Per-Account Tickets (Same Direction)]
     B -->|Hedge| D[BLOCK + Alert]
     C --> Operator[Manual Entry in Tradovate]
-```
-
-
-
----
-**From:** `docs/notifications/guide.md`
-
-# Prism Apex Tool — Notifications Guide
-
-## What It Does
-
-- Sends alerts via **Slack** and **Email**.
-- Covers:
-  - Guardrail breaches (Apex rules).
-  - Payout readiness.
-  - CI/CD deployment results.
-
-## How to Set Up
-
-1. Create a Slack Incoming Webhook.
-2. Add SMTP email credentials (Gmail works).
-3. Copy `.env.example` → `.env` and fill in values.
-
-## Test It
-
-```bash
-make notify-test
-```
-
-## Notification Flow
-
-```mermaid
-flowchart TD
-    A[Guardrail Breach] --> N[Notify Service]
-    B[Payout Ready] --> N
-    C[CI/CD Event] --> N
-    N -->|Slack| S[Operator Slack Channel]
-    N -->|Email| E[Operator Email Inbox]
 ```
 
 
@@ -9665,40 +9336,6 @@ flowchart TD
 
 
 ---
-**From:** `docs/operator/quick-cards/monitor-&-alerts.md`
-
-# Quick Card — Monitor & Alerts
-
-**Goal:** React quickly to warnings and blocks.
-
-## Alert Types
-
-- **WARN (amber):**
-  - Daily loss ≥70% cap
-  - Consistency (funded) ≥25%
-  - EOD T–10 window
-- **CRITICAL (red):**
-  - Daily loss ≥85% cap
-  - Missing OCO
-  - Consistency (funded) ≥30%
-  - EOD T–5 window
-
-## What To Do
-
-- **WARN:** Slow down; prepare to flatten or skip new tickets.
-- **CRITICAL:** **Stop** new entries. Verify positions. Escalate if needed.
-
-## Tools
-
-- Dashboard **alerts panel** (refresh ~5–60s).
-- Slack/Email notifications from system.
-- `/jobs/status` for recent job run times and flags.
-
-[Placeholder: screenshot alert banner]
-
-
-
----
 **From:** `docs/operator/quick-cards/sod-checklist.md`
 
 # Quick Card — Start of Day (SOD)
@@ -9939,44 +9576,6 @@ That’s it. Copy the line, enter the OCO, and you’re done.
 
 
 ---
-**From:** `docs/payouts/calendar.md`
-
-# Prism Apex Tool — Payout Calendar
-
-## Rules Recap
-
-- **First payout**: After 10 trading days AND $1,000 net profit.
-- **Cycle**: Every 14 days after first payout.
-- **Amounts**:
-  - 100% of first $25,000.
-  - 90% of profits above $25,000.
-
-## Current Account Example
-
-- Trading days completed: 12
-- Total profit: $2,050
-- Eligible? **Yes**
-- Next payout date: 2025-09-01
-- Estimated payout: $2,050
-
-_All dates are in UTC/GMT._
-
-## Mermaid Flow
-
-```mermaid
-flowchart TD
-    A[10+ Days + $1k Profit?] -->|No| B[Not Eligible]
-    A -->|Yes| C[Eligible for Payout]
-    C --> D[First $25k → 100%]
-    D --> E[Above $25k → 90%]
-    C --> F[Next Payout in 14 Days]
-```
-
-[Placeholder: operator calendar screenshot]
-
-
-
----
 **From:** `docs/ports-and-env.md`
 
 # Ports & Environment Notes
@@ -9996,36 +9595,6 @@ DASH_PORT=5178
 You can then reference these variables inside compose overrides or `.env` files. This change does not modify any Docker compose files yet—it simply notes the convention so future updates can centralise port management.
 
 Remember: runtime remains **tickets-only**. These ports expose telemetry and operator dashboards; no automated order placement endpoints exist.
-
-
-
----
-**From:** `docs/release/checklist.md`
-
-# Release Checklist — Prism Apex Tool
-
-## Preflight
-
-- [ ] All unit tests pass (`make test`)
-- [ ] All guardrail monitors pass (`make guardrails:test`)
-- [ ] Simulator run successful (`make simulate`)
-
-## Operator Signoff
-
-- [ ] Operator confirms panic button works
-- [ ] Operator confirms notifications (Slack/Email) received
-- [ ] Operator confirms training mode works
-
-## PM Signoff
-
-- [ ] PM validates checklist complete
-- [ ] Version bump confirmed
-
-## Release
-
-- [ ] Run `make release VERSION=vX.Y.Z`
-- [ ] GitHub Actions pipeline must pass
-- [ ] Tag pushed and CI confirms release
 
 
 
@@ -10112,34 +9681,6 @@ Remember: runtime remains **tickets-only**. These ports expose telemetry and ope
 
 - [ ] ✅ GO LIVE on Oct 1
 - [ ] ❌ BLOCKED (attach reason)
-
-
-
----
-**From:** `docs/release/operator_signoff.md`
-
-# Operator Release Signoff — Plain English
-
-## Why This Matters
-
-We need to be sure Prism Apex Tool is safe to run under Apex rules.
-
-## What You Do
-
-1. Run `make simulate` → confirms rules are respected.
-2. Run `make guardrails:test` → ensures brakes work.
-3. Test panic button in dashboard → system must stop.
-4. Confirm Slack/Email alerts arrive.
-5. Confirm training mode works (`make training`).
-
-If all checks pass:
-
-- Tell PM "OK to release."
-- PM will tag the release.
-
-If any checks fail:
-
-- Stop and report back.
 
 
 
@@ -10397,61 +9938,6 @@ Name: \***\*\*\*\*\***\_\_\_\***\*\*\*\*\*** Signature: \***\*\*\*\*\***\_\_\_\*
 | UAT-10 |                    |       |               |       |
 | UAT-11 |                    |       |               |       |
 | UAT-12 |                    |       |               |       |
-
-
-
----
-**From:** `docs/rules/overview.md`
-
-# PrismOne Rules Overview
-
-PrismOne embeds Apex Trader Funding rules to maintain profitability and
-operational discipline. The platform differentiates between evaluation
-and funded accounts, applying appropriate controls for each stage.
-
-## Evaluation Accounts
-
-- **Profit Target** – account must reach the configured profit target
-  before advancing.
-- **Trailing Drawdown** – balance may not fall more than the defined
-  amount below the high-water mark.
-- **Minimum Trading Days** – at least seven unique trading days are
-  required.
-- **End-of-Day Flat** – no positions may remain open after the allowed
-  trading session.
-- **Allowed Trading Times** – trades outside the configured session are
-  flagged for review.
-
-## Funded Accounts
-
-- **30% Consistency Rule** – profit from any single day may not exceed
-  30% of total profits.
-- **Stop-Loss Requirement** – every trade must carry a protective
-  stop-loss order.
-- **Scaling Limits** – contract counts are capped until trailing
-  drawdown is cleared.
-- **Payout Rules** – eligibility requires minimum trading days,
-  profitable days, and observes payout caps.
-- **Forbidden Strategies** – predefined strategies are automatically
-  rejected.
-
-## Operator Checklist
-
-| Rule / Control        | Enforced Automatically | Notes                                              |
-| --------------------- | ---------------------- | -------------------------------------------------- |
-| Trailing Drawdown     | ✅                     | Both phases emit violations when breached          |
-| Minimum Trading Days  | ✅                     | Evaluation module tracks unique trading days       |
-| End-of-Day Flat       | ✅                     | Evaluation module raises events for open positions |
-| Consistency Rule      | ✅                     | Funded module validates 30% limit                  |
-| Stop-Loss Presence    | ✅                     | Funded module requires stop-loss on each trade     |
-| Payout Caps           | ✅                     | Funded module computes capped payouts              |
-| Discretionary Conduct | ⚠️                     | Operators monitor for reckless behaviour           |
-
-## Technical References
-
-- [Evaluation Rules Module](../../rules/evaluation.py)
-- [Funded Rules Module](../../rules/funded.py)
-- [Unified Rule Engine](../../rules/engine.py)
 
 
 
@@ -10804,77 +10290,6 @@ Done.
 
 
 ---
-**From:** `docs/simulator/overview.md`
-
-# Prism Apex Risk Simulator
-
-## What It Does
-
-The simulator replays historical market data (bars) to test PrismOne strategies under Apex rules. It demonstrates profitability **and** whether the strategy stays within guardrails.
-
-## How to Use
-
-1. Collect historical OHLCV bar data (1m or 5m).
-2. Run:
-
-```bash
-python -m simulator.run --strategy ORB --data data/ES_5m.csv --mode evaluation
-```
-
-This writes `results.json` and `results.csv` for review.
-
-## Design
-
-- **Bar-level**: Fast MVP using OHLCV bars.
-- **Tick-level**: Future enhancement for precision.
-
-## Outputs
-
-- Trade log with PnL and balance.
-- Metrics: win rate, average R, drawdown, daily PnL.
-- Breach log: any Apex rule violations.
-
-Operators can load the CSV/JSON into spreadsheets; engineers can reproduce backtests via the CLI.
-
-
-
----
-**From:** `docs/strategy-switcher/guide.md`
-
-# Strategy Switcher — Operator Guide
-
-## What This Does
-
-- Controls whether **ORB** or **VWAP** strategy is active.
-- Scheduler automatically turns strategies ON/OFF based on time windows.
-- Blocks strategies during restricted periods (e.g., news, EOD).
-
-## Plain English
-
-- ORB runs at market open (14:30–15:00 GMT).
-- VWAP runs until near close (15:00–20:50 GMT).
-- EOD Flat: everything turns OFF at 20:50 GMT, operator must be flat.
-- Restrictions: system disables trading around major events like CPI.
-
-## How to Use
-
-1. See **current active strategy** in dashboard.
-2. Use dropdown/buttons to override manually (logged).
-3. Add restricted windows to config JSON if needed.
-4. Scheduler ensures Apex rules are met (no trading after EOD).
-
-```mermaid
-flowchart TD
-    A[Config JSON Windows] --> B[Scheduler Job]
-    C[Restrictions] --> B
-    B --> D[Switch Active Strategy]
-    D --> E[Dashboard Badge]
-    D --> F[Audit Log + Notification]
-```
-
-
-
----
 **From:** `docs/telemetry.md`
 
 # Telemetry (Demo)
@@ -10972,15 +10387,6 @@ TAG=v0.0.9 make deploy
 - Volumes are preserved across updates (prism_data).
 - Health-gated rollout avoids serving broken builds.
 - Add a reverse proxy + TLS later (Caddy/Traefik) if you need HTTPS.
-
-
-
----
-**From:** `infra/README.md`
-
-# Infra
-
-Infrastructure configuration for Prism Apex Tool. Docker Compose and deployment scripts will be added in later prompts.
 
 
 
@@ -11126,22 +10532,6 @@ sudo systemctl restart prism-apex
 ```
 
 ---
-
-
-
----
-**From:** `packages/analytics/README.md`
-
-# @prism-apex/analytics (stub)
-
-Temporary no-op analytics facade used to keep CI green.
-
-- `trackEvent(name, props)` – no-op
-- `trackError(error, context)` – no-op
-- `meter(name, value, tags)` – no-op
-- `createAnalyticsScope(scope)` – returns the same no-op fns
-
-Replace with a real implementation in a later telemetry PR.
 
 
 
@@ -11454,6 +10844,55 @@ vitest.local.config.ts(48,9): error TS2769: No overload matches this call.
     Object literal may only specify known properties, and 'maxThreads' does not exist in type 'ProjectConfig'.
  ELIFECYCLE  Command failed with exit code 2.
 ```
+
+
+
+---
+**From:** `reports/types/r3/20250909-183940/summary.md`
+
+# TypeScript Hotspots — 20250909-183940
+
+- Exit status: 2
+- Approx TS errors (grep): 155
+
+## Top files (by error count)
+     14 packages/indicators/__tests__/swings.spec.ts
+     14 packages/indicators/__tests__/atr.spec.ts
+     13 apps/api/test/rules/engine.test.ts
+     12 packages/strategies/src/vwapFirstTouch.ts
+     10 packages/indicators/__tests__/vwap.spec.ts
+      8 apps/api/src/jobs/strategies.ts
+      7 packages/clients-tradovate/__tests__/telemetry.spec.ts
+      6 packages/indicators/src/swings.ts
+      6 apps/api/src/jobs/ticketizer.ts
+      5 packages/strategies/tests/osbBreakout.spec.ts
+      5 packages/runtime/__tests__/ws.resilience.spec.ts
+      4 packages/strategies/tests/vwapFirstTouch.spec.ts
+      4 packages/strategies/src/osbBreakout.ts
+      4 packages/accounts/src/cli.ts
+      4 apps/api/src/routes/tickets.ts
+      3 vitest.local.config.ts
+      3 tests/setup/vitest.setup.ts
+      3 packages/signals/src/__tests__/core.spec.ts
+      3 packages/rules/src/apex.ts
+      3 packages/rules-apex/test/stop.spec.ts
+
+## Top TS error codes
+     56 error TS18048
+     54 error TS2532
+     12 error TS2345
+      5 error TS2561
+      5 error TS2322
+      4 error TS2307
+      3 error TS2769
+      3 error TS2554
+      3 error TS2339
+      3 error TS1343
+      2 error TS2540
+      2 error TS2305
+      1 error TS2614
+      1 error TS2578
+      1 error TS2558
 
 
 
