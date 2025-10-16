@@ -1,287 +1,355 @@
-# Prism Apex Tool
 
-## What this is
-The **Prism Apex Tool** is a semi-automated trading brain for **Apex Trader Funding** style accounts.  
-It **ingests Yahoo Finance 1-minute bars (~15m delayed)**, applies the **Opening Range Retest (ORR)** strategy, **enforces guardrails**, and surfaces **actionable tickets** in a Dashboard for **manual execution** (e.g., on Tradovate).
+Prism-Apex Tool — Monorepo
 
-- **No auto-execution.** The tool generates tickets; an operator places OCO orders manually.
-- **Live signals only** appear in **Worklist** (source=`live`), while backfilled tickets remain in **Tickets** for research (source=`backfill`).
-- **R:R gating** = actionable if `2.0 ≤ R:R ≤ 4.5` and **LONG-only** (SHORTs are visible but non-actionable).
-- **Per-session caps**: ES/NQ = 1, CL/GC = up to 2 (only within first 90 minutes of RTH).
-- **EOD cutoff**: 4:59 PM ET server-side for actionability; UI shows a global countdown.
+Last updated (UTC): 2025-10-16T10:56:00Z
 
-## High-level architecture
-- **apps/api** (Node/TypeScript): REST API, strategy orchestration, ticket emits, exports (`/api/export/*`), health (`/health`)
-- **apps/dashboard** (React): Worklist (live), Tickets (all), Metrics, **Downloads** (bars, tickets, README)
-- **Postgres**: bars storage (`bars_1m`), ticket log with dedupe and indices; actionable views
-- **Cron/Jobs**: `gapfill-cron` for bars; optional `tickets-cron` nightly backfill (ORR sweep)
+Overview & Guardrails
 
 
+Yahoo (≈15m delayed) → Postgres (bars_1m + VWAP/ATR calc) → ORR strategies → tickets/*.jsonl → Dashboard (read-only).
+Operator manually enters OCOs in Tradovate. **No API order placement.**
+Node 20.x target; Docker-only workflows; pnpm workspace.
 
-## Strategy: Opening Range Retest (ORR)
-**Idea:** During the first minutes of the session (OR), price often head-fakes outside the opening range and **retests** back inside. We capture that reversal with strict risk gating.
 
-1) **Opening Range (OR)**  
-   - First `ORR_OR_MIN` minutes after session open (default **5 min**) define **orHigh** and **orLow**.
+Guards
 
-2) **Retest & Entry** (within `ORR_WINDOW_MIN`, default **60 min**)  
-   - **LONG**: Price breaks below **orLow** then **closes back above** it → enter LONG on that close.  
-   - **SHORT** (view-only): Price breaks above **orHigh** then **closes back below** it → enter SHORT on that close.
+- **guard:no-rapidapi** — enforced (no RapidAPI references).
+- **guard:orders** — tickets-only posture; executable order placement must not exist.
 
-3) **Stops/Targets**  
-   - **Stop**: opposite OR boundary (for LONG, stop = **orLow**).  
-   - **Target**: entry ± OR height (symmetrical distance).  
-   - **R:R** math:
-     ```
-     Reward = target_price - entry_price
-     Risk   = entry_price - stop_price
-     R:R    = Reward / Risk
-     ```
-   - **Actionable gate**: 2.0 ≤ R:R ≤ 4.5, **LONG-only**, **before EOD cutoff**.
 
-4) **Caps & Dedup**  
-   - **Per session**: ES/NQ → 1 ticket; CL/GC → up to 2 tickets (only in first 90 minutes).  
-   - DB **unique identity**: `(symbol, strategy, direction, opened_at_utc)`.  
-   - Live emits use `source='live'`; backfills use `source='backfill'`.
+Instruments & Limits (MVP scope)
 
-5) **End-of-session**  
-   - If neither stop/target hit, trade is **closed at the session’s last bar** (no carry overnight).
 
-## Session + Symbols
-- Default US RTH **13:30Z–20:59Z** (configurable via env).  
-- Symbols (default): `ES=F,NQ=F,CL=F,GC=F`.  
-- **Yahoo delay**: ~15 minutes; Dashboard shows a **delay badge** and **global countdown**.
+| Category                | Yahoo Ticker(s)                                | Notes                                 |
+|-------------------------|-----------------------------------------------|----------------------------------------|
+| Equity Index Futures    | ES=F, NQ=F, YM=F, RTY=F                       | Apex-eligible cores                    |
+| Micro Index Futures     | MES=F, MNQ=F, MYM=F, M2K=F                    | Micro contracts                        |
+| Energy                  | CL=F, NG=F, HO=F, RB=F                        | Crude, NatGas, Heating Oil, Gasoline   |
+| Metals                  | GC=F, SI=F, HG=F, PL=F                        | Gold, Silver, Copper, Platinum         |
+| Agricultural           | ZC=F, ZW=F, ZS=F, LE=F, HE=F                  | Corn, Wheat, Soy, Cattle, Hogs         |
+| FX (Futures)            | 6E=F, 6B=F, 6J=F                              | Euro, Sterling, Yen                    |
+| Crypto (CME)            | MBT=F, MET=F                                  | Micro BTC, Micro ETH                   |
+| Spot FX (optional)      | EURUSD=X (read-only)                          | Used for comparison only               |
 
-## Guardrails & policy
-- **Actionability**:
-  - LONG-only; SHORTs are labeled **“view-only”**.
-  - **R:R < 2.0** → not actionable (**reason**: “R:R below 2.0”).  
-  - **R:R > 4.5** → not actionable (**reason**: “R:R above 4.5”).  
-  - **After cutoff** → not actionable (**reason**: “After EOD cutoff”).
-- **Ticket source**:
-  - `live` → visible in **Worklist** and **Tickets**; can be **completed**.  
-  - `backfill` → visible in **Tickets** only; cannot be completed.
-- **Dedupe**: identity key + `ON CONFLICT` upserts to update fields without duplicating.
 
-## Dashboard
-- **Worklist**: auto-refresh (5s with backoff), **always-visible reason tags**, **toast** on complete, **Copy-OCO** (multi-line), **tick-math tooltips**, **PnL in $ and R** (hover to see tick math).
-- **Tickets**: research view (all sources), same formatting + reasons.
-- **Metrics**: signal counts, PnL summaries (WIP).
-- **Downloads** (rightmost tab):
-  - **Bars CSV**: `/api/export/bars.csv?symbol=ES=F&start=...&end=...` (≤14 days)  
-  - **Tickets CSV**: `/api/export/tickets.csv?strategy=ORR&start=...&end=...` (≤14 days)
-  - **README**: `/api/export/readme.md`
-  - **Presets**: Last 1 / 7 / 14 days; date-range selector hard-clamped to 14 days.
+Data source: Yahoo Finance native endpoints (query1.finance.yahoo.com). ~15m delayed.
+Tickets-only posture: No API order placement or liquidation—operator enters OCOs manually in Tradovate.
 
-## How to run locally
-- **Requirements**: Docker (Compose), Node 20+, pnpm, Postgres (container managed).
-- **.env** (see `.env.example`):
+Quick Start (Docker-only)
+
+
+```sh
+# 1) Bring up DB + API + Dashboard (+optional market feed)
+docker compose -f docker-compose.yml -f docker-compose.override.yml up -d
+# If using the minute-cadence feed we added:
+docker compose -f docker-compose.yml -f docker-compose.override.yml -f docker-compose.market-feed.override.yml --profile market up -d market-feed
+
+# 2) Check health & status
+curl -s http://localhost:3000/health
+curl -s http://localhost:3000/status | jq .
+curl -s http://localhost:3000/metrics | jq .
+
+# 3) Dashboard
+#   - dashboard-full usually on http://localhost:8080
+
+
+
+
+Shutdown
+
+
+
+# Graceful stop
+docker compose down
+# If feed used with profile:
+docker compose -f docker-compose.yml -f docker-compose.override.yml -f docker-compose.market-feed.override.yml --profile market down
+
+
+
+
+Local Environment Setup
+
+# Prism-Apex — Local Runbook (Minimal)
+
+## Prereqs
+- Node 20.x (use `.nvmrc`)
+- Docker + Docker Compose
+- pnpm 9+
+
+## Install
 ```bash
-DATABASE_URL=postgres://apex:apex@db:5432/prismapex
-YAHOO_SYMBOLS=ES=F,NQ=F,GC=F,CL=F
-ORR_LIVE=1
-RTH_OPEN_UTC=13:30Z
-RTH_CLOSE_UTC=20:59Z
-ORR_OR_MIN=5
-ORR_WINDOW_MIN=60
-```
-Set the following environment variables (see `.env.example`):
-
-```
-ENABLE_TELEMETRY=true
-TELEMETRY_POLL_MS=5000
-TRADOVATE_DEMO_REST_BASE=https://demo.tradovateapi.com/v1
-TRADOVATE_USER=...
-TRADOVATE_PASSWORD=...
-TRADOVATE_APP_ID=...
-TRADOVATE_APP_VERSION=prism-apex/0.2.0
-TRADOVATE_API_CID=...
-TRADOVATE_API_SEC=...
-TRADOVATE_DEVICE_ID=prism-apex-dev-telemetry
-BUFFER_CLEAR_THRESHOLD=2500
+nvm use 20
+pnpm install
 ```
 
-- **Start**:
-```
-docker compose -f docker-compose.yml -f docker-compose.db.yml up -d --build
-curl -fsS http://localhost:3000/health
-# Open UI: http://localhost:8080
-```
-- Verify bars freshness:
-```
-docker compose -f docker-compose.yml -f docker-compose.db.yml exec -T db   psql "$DATABASE_URL" -Atc "select symbol, max(ts_utc) from bars_1m group by 1 order by 1;"
-```
-- Smoke test exports:
-```
-curl -I -s "$API_URL/api/export/readme.md" | head -n1
-curl -I -s "$API_URL/api/export/bars.csv?symbol=ES=F&limit=5" | head -n1
-curl -I -s "$API_URL/api/export/tickets.csv?strategy=ORR&limit=5" | head -n1
-```
-
-
-
-## Docker (from previous README)
+## Ports
+Set free ports_utcto avoid conflicts_utc
 ```bash
-docker compose build
-docker compose up -d
+export POSTGRES_PORT=55434
+export API_PORT=3001
 ```
 
-## Usage (from previous README)
-Run `/api/analytics/payout` or check dashboard.
-```
-
-#### docs/analytics/post_trade.md
-
-```markdown
-
-## API / Routes (from previous README)
-`GET /report/consistency?accountId=<id>&window=8`
-
-Returns the computed metrics and pass/fail reasons. A mock PnL provider is
-used for tests and development. Real PnL will be supplied in PR-C1.
-```
-
-#### docs/dashboard/guide.md
-
-```markdown
-
-## Troubleshooting (from previous README)
-- **Shell lacks `mapfile` — will it fail?** No. The script uses a POSIX-friendly loop.
-- **“No candidates” output — is something wrong?** Usually not; the tree may be clean or files are out of scope.
-- **Does it delete Docker volumes or containers?** No. Only affects repo files. Use `docker compose down -v` separately if needed.
-
----
-
-## Notes (from previous README)
-- tickets/*.jsonl, source trees, configs, migrations, and `.env*` were left untouched.
-- Set `CLEANUP_DRY_RUN=1` to preview or `ARCHIVE_MODE=1` to move clutter into `archive/ATTIC-<date>` instead of deleting.
-- No automated order placement or liquidation paths were introduced.
-```
-
-#### docs/CODEBASE_OVERVIEW.md
-
-```markdown
-
-## Data model (simplified)
-- `bars_1m`: symbol, ts_utc, o/h/l/c, volume
-- `tickets`:
-  - identity: (symbol, strategy='ORR', direction, opened_at_utc)
-  - core: entry_price, stop_price, target_price, exit_price, pnl, rr
-  - flags: actionable (bool), non_actionable_reason (text), source ('live'|'backfill')
-  - meta: { orHigh, orLow, openingRangeMinutes, reversalWindowMinutes }
-
-## Build & release
-- Feature branches → PR against Test → squash merge.
-- Migrations under `deploy/sql/00x_*.sql` (idempotent).
-- Docker images: api, dashboard, db sidecars.
-
-## Roadmap
-- Performance analytics (per symbol/session).
-- Slack/Email notifications.
-- Strategy parameter controls in UI.
-- Tradovate connector (read-only first, then OCO assistant).
-- Role-based access.
-
-## License
-Internal use only. Not for redistribution.
-
-See [docs/SMOKE.md](docs/SMOKE.md) for a local smoke test.
-
----
-
-## Quickstart (Local, 8 Symbols)
-
+## Start services
 ```bash
-export COMPOSE_FILE="docker-compose.yml:docker-compose.override.yml:docker-compose.db.yml:docker-compose.dashboard.yml:docker-compose.ingress.yml:docker-compose.api.override.yml:docker-compose.override.local.yml:docker-compose.local.patch.yml:docker-compose.local.instruments.yml"
-
-# Bring up DB and wait
-docker compose up -d db
-docker compose exec -T db bash -lc 'until pg_isready -h 127.0.0.1 -p 5432; do sleep 1; done'
-
-# Backfill minute bars (last 28–30d) for ES,NQ,YM,RTY,GC,CL,6E,EURUSD
-docker compose run --rm ingest-once
-
-# One-shot ORR tickets
-docker compose run --rm tickets-once
-
-# API + Dashboard
-docker compose up -d --build api dashboard
-# Health:  http://localhost:3000/health
-# UI:      http://localhost:5180/
+# Database
+docker compose -f docker-compose.yml -f docker-compose.override.yml up -d db
+# API (tickets_utconly)
+docker compose up -d api
+# Health check
+curl -sf http://localhost:$API_PORT/health
 ```
 
-## 24/7 Full Stack (Local)
-
-This brings up **DB + API + Dashboard + Yahoo poller + scheduled gap-fill + 60s ORR tickets** in one go.
-
+## Dashboard (optional)
 ```bash
-# Use the committed overrides & cron
-export COMPOSE_FILE="docker-compose.yml:docker-compose.override.yml:docker-compose.db.yml:docker-compose.dashboard-full.yml:docker-compose.ingress.yml:docker-compose.api.override.yml:docker-compose.override.local.yml:docker-compose.local.patch.yml:docker-compose.local.instruments.yml:docker-compose.local.ports.yml:docker-compose.tickets-cron.yml"
-
-# Start everything (rebuild if needed)
-docker compose up -d --build db api dashboard-full ingress-yahoo gapfill-cron tickets-cron
-
-# Health checks
-curl -sS http://localhost:3000/health       # API → {"status":"ok"}
-curl -sS "http://localhost:3000/tickets?limit=3" | jq
-curl -sS http://localhost:5180/ | head -n 5  # Dashboard HTML
-# Optional: poller HTML (only for debugging)
-# curl -sS http://localhost:8080/ | head -n 5
-
-# Data sanity (last 28d coverage)
-docker compose exec -T db psql -U apex -d prismapex -c "
-  SELECT symbol, MIN(ts_utc) AS first, MAX(ts_utc) AS last, COUNT(*) AS bars_28d
-  FROM prism.bars_1m
-  WHERE ts_utc >= now() - interval '28 days'
-  GROUP BY 1 ORDER BY 1;"
-
-# Tickets sanity
-docker compose exec -T db psql -U apex -d prismapex -c "
-  SELECT symbol, COUNT(*) FROM prism.tickets GROUP BY 1 ORDER BY 1;"
-
+docker compose -f docker-compose.dashboard.yml up -d
+# open http://localhost:5180
 ```
 
-One-liners
+## Notes
+- Tickets_utconly: any trading calls fence with `ORDERS_DISABLED`.
+- Data source: Yahoo Finance native (`query1.finance.yahoo.com`), ~15m delayed.
+- If a port is taken, set another `POSTGRES_PORT` or `API_PORT` and restart.
 
+Smoke Tests & Backfill Runbook
+
+# Local Smoke Test
+
+Quick validation of the Yahoo → Postgres → Ticket → API path (tickets_utconly build).
+
+## Usage
 ```bash
-# Rebuild + restart core app surfaces
-docker compose up -d --build api dashboard-full
-
-# Manual backfills if needed
-docker compose run --rm ingest-once
-docker compose run --rm tickets-once
+./scripts_utcsmoke.sh
 ```
 
-**Ports**
+What it does:
+1. Picks free `POSTGRES_PORT` / `API_PORT` (override by env).
+2. Starts_utcthe compose `db` and `api` services.
+3. Checks `http://localhost:$API_PORT/health`.
+4. Hits_utcYahoo native chart endpoint (`query1.finance.yahoo.com`).
+5. Appends a smoke ticket to `tickets_utcsmoke.jsonl` (tickets_utconly; no live trading).
+6. Best-effort probes `/tickets_utc.
 
-- API: http://localhost:3000
-- Dashboard: http://localhost:5180
-- Poller: http://localhost:8080 (for health/debug only)
+If any step fails, the script exits_utcnon-zero with a short message.
 
-> **Free Yahoo mode**  
-> The stack uses public Yahoo endpoints and does **not** require `YAHOO_API_KEY`.  
-> The Yahoo poller health endpoint is `http://localhost:8080/health` (note: `/` returns `Cannot GET /` by design).
+## Cleanup
+Use `docker compose down` to stop services and remove the generated smoke ticket if desired.
+
+Ticket Model & ORR Flow
 
 
-## 24/7 Operation (One-Click)
+Tickets_utc— Canonical Schema & Exports
 
-Use `make up` / `make down` to start/stop the whole stack. On Linux servers, enable systemd so it starts on boot:
+Tickets_utcare the only way Prism-Apex communicates trade ideas. Operators copy the values into Tradovate as an OCO. No API orders.
 
-```bash
-sudo cp deploy/systemd/prism-apex-tool.service /etc/systemd/system/
-sudo systemctl daemon-reload
-sudo systemctl enable --now prism-apex-tool
-```
+1) Canonical JSON Schema (shape, not a JSON-Schema file)
+{
+  "symbol": "MESZ5",
+  "side": "BUY|SELL",
+  "entry": 5550.25,
+  "stop": 5544.25,
+  "target": 5560.25,
+  "qty": 2,
+  "accountId": "APEX-123456",
+  "timestampUtc": "2025-09-09T14:31:22Z",
+  "meta": {
+    "strategy": "vwap-first-touch | osb-breakout | ...",
+    "rr": 1.5,
+    "guardrails": ["stopSideOk","rrInRange","sizeHalfUntilBuffer"],
+    "sizingHint": "half-size | normal | reduced",
+    "consistencyNotes": "optional string"
+  },
+  "accepted": true,
+  "reasons": []
+}
 
-### Health checks
-```bash
-curl -sS http://localhost:3000/health      # API should be {"status":"ok"}
-curl -sS http://localhost:8080/health      # Ingress should be {"ok":true}
-open  http://localhost:5180/worklist       # Dashboard tickets/worklist
-```
 
-**Notes**
-- Yahoo mode is keyless; the ingress home page shows `Cannot GET /` by design — use `/health`.
-- Tickets refresh every **60s**; daily **gapfill** runs at **02:20 UTC**.
-- Symbols: ES,NQ,YM,RTY,GC,CL,6E,EURUSD.
+Field notes:
+
+Prices are absolute (not ticks).
+
+qty is contracts_utcto enter on this account unless the ticket states otherwise.
+
+accepted = true means operator MAY enter; false means do NOT.
+
+2) Rejection Codes (when accepted=false)
+
+A ticket can be rejected by guardrails. Reasons appear as an array of strings:
+
+STOP_REQUIRED — policy requires a stop.
+
+STOP_SIDE_INVALID — stop not on safe side for side.
+
+RR_OUT_OF_RANGE — risk:reward outs_utcde allowed [min,max].
+
+SIZE_CLAMPED — reduced per anti-windfall / half-size until buffer.
+
+TRAILING_DRAWDOWN — account’s trailing drawdown risk exceeded.
+
+EOD_WINDOW — inside end-of-day flat window.
+
+OUT_OF_HOURS — not in session window for the strategy.
+
+CONFIG_DISABLED — strategy disabled by config/schedule.
+
+DUPLICATE_SIGNAL — duplicate within de-dupe horizon.
+
+SYMBOL_INVALID — symbol/contract not permitted.
+
+If any of these appear, the UI/API will show accepted=false — do not place the order.
+
+3) CSV Export Shape
+
+Endpoint: GET /export/tickets_utcdate=YYYY-MM-DD
+
+Header
+
+symbol,side,entry,stop,target,qty,accountId,timestampUtc,strategy,rr,accepted,reasons,sizingHint
+
+
+Example Row
+
+MESZ5,BUY,5550.25,5544.25,5560.25,2,APEX-123456,2025-09-09T14:31:22Z,vwap-first-touch,1.5,true,,half-size
+
+
+reasons is a ;-joined list if multiple (or empty).
+
+strategy and sizingHint are derived from meta.
+
+4) Operator Copy Format (one-liner)
+
+Use this exact order for quick copy from UI to the platform:
+
+SYMBOL SIDE QTY ENTRY STOP TARGET
+
+
+Example:
+
+MESZ5 BUY 2 5550.25 5544.25 5560.25
+
+
+This maps directly to Tradovate inputs_utc
+
+Contract = SYMBOL
+
+Side = SIDE
+
+Quantity = QTY
+
+Entry (Limit) = ENTRY (or Market per ticket)
+
+Stop = STOP (Stop-Market)
+
+Target = TARGET (Limit)
+
+5) Sizing & Fanout Notes
+
+qty respects_utcsizing policies (e.g., half-size until buffer clears).
+
+For multiple accounts_utc either:
+
+Use qty per account, or
+
+Split a total across accounts_utcand round down per account.
+
+Keep identical prices across accounts_utcto preserve R:R.
+
+6) EOD Suppression
+
+Tickets_utccreated within the configured EOD flat window are suppressed.
+
+Suppressed tickets_utcshow accepted=false and include EOD_WINDOW in reasons.
+
+Dashboard displays an EOD countdown to flat window start.
+
+7) Endpoints_utc(read-only)
+
+GET /tickets_utcdate=YYYY-MM-DD[&strategy=STRATEGY] — JSONL aggregation for the day (optional strategy filter).
+
+GET /export/tickets_utcdate=YYYY-MM-DD — CSV snapshot.
+
+Operational tip: If a ticket is accepted but you decide not to enter it, no API changes are needed—this is operator-assisted by design.
+
+Status & Metrics
+
+
+
+/status exposes service lights (db, api, yahoo, cron jobs) and per-symbol freshness (age_ms).
+
+/metrics reports bars counts and min/max timestamps per symbol; ensure public.bars_1m view maps to prism.bars_1m.
+
+
+Market Feed (minute cadence)
+
+
+A light minute-cadence Yahoo v8 fetcher (ops/market-feed) upserts into prism.bars_1m on (symbol, ts_utc).
+Env knobs: PRISM_SYMBOLS, PRISM_RANGE (e.g., 90m), PRISM_INTERVAL (1m), LOOP_SECONDS (60–120s).
+Polite throttling 300–450ms per symbol.
+
+
+Ports & Env Parity
+
+
+
+API: ${API_PORT:-3000} → 3000
+
+Dashboard: 8080:80
+
+DB: ${POSTGRES_PORT:-55433} → 5432
+Configure commonly exposed ports in compose via env; keep defaults sane.
+
+
+CI / Engines
+
+
+
+Enforce Node 20.x in CI. Keep .nvmrc for devs.
+
+Non-blocking lint for legacy warnings; typecheck/tests must pass.
+
+
+Troubleshooting
+
+
+
+macOS bash 3.2 quirks: avoid mapfile, prefer here-docs with quoted delimiters.
+
+Ensure public.bars_1m view exists for /metrics if the API expects it.
+
+If /status shows yahoo:red but container healthy: verify API→ingress alias/URL.
+
+
+Repository Map
+
+
+
+apps/
+  api/           # REST API (/health, /status, /metrics, /tickets)
+  dashboard/     # UI (status bar, worklist)
+  ingress-yahoo/ # Lightweight ingress health (if present)
+packages/
+  ticketizer/    # ORR logic
+  data-yahoo/    # Yahoo v8 fetch helpers
+ops/
+  market-feed/   # Minute-cadence feed container (Node 20, pg client)
+docs/            # (kept) misc future docs; SMOKE/RUNBOOK/TICKETS merged into README
+scripts/         # guards, smoke helpers
+
+
+
+
+Appendix — Additional Notes
+
+Keep guard:no-rapidapi and guard:orders green.
+
+Throttle Yahoo requests; avoid tight loops across large instrument sets.
+
+Prefer env-parameterized compose overrides for local port changes.
+
+Changelog (curated)
+
+
+
+2025-10-15: Added market-feed, expanded instruments, fixed ingress alias, restored metrics via public view, enforced tickets-only.
+
+2025-10-16: Consolidated docs into README; added Quick Start & Shutdown; auto-push to origin/Test.
 
