@@ -16,7 +16,6 @@ type Filters = {
   symbol?: string;
   strategy?: string;
   status?: string;
-  showShorts?: boolean;
 };
 
 const DEFAULT_SYMBOL_OPTIONS = [
@@ -56,7 +55,6 @@ export default function TicketsPage() {
     symbol: 'ALL',
     strategy: 'ALL',
     status: 'ALL',
-    showShorts: false,
   });
 
   useEffect(() => {
@@ -92,8 +90,7 @@ export default function TicketsPage() {
       .then((response) => {
         if (cancelled) return;
         const rawRows = response.rows ?? [];
-        const filteredRows = filters.showShorts ? rawRows : rawRows.filter((row) => row.direction === 'LONG');
-        setRows(filteredRows);
+        setRows(rawRows);
         setTotal(typeof response.total === 'number' ? response.total : rawRows.length);
       })
       .catch((err) => {
@@ -108,7 +105,7 @@ export default function TicketsPage() {
     return () => {
       cancelled = true;
     };
-  }, [limit, offset, filters.from, filters.to, filters.symbol, filters.strategy, filters.status, filters.showShorts]);
+  }, [limit, offset, filters.from, filters.to, filters.symbol, filters.strategy, filters.status]);
 
   const statusCounts = useMemo(() => {
     return rows.reduce(
@@ -253,16 +250,7 @@ export default function TicketsPage() {
                 },
               },
             ]}
-            toggles={[
-              {
-                label: 'Show SHORTs (view-only)',
-                checked: Boolean(filters.showShorts),
-                onChange: (checked) => {
-                  setOffset(0);
-                  setFilters((prev) => ({ ...prev, showShorts: checked }));
-                },
-              },
-            ]}
+            toggles={[]}
           />
         </CardBody>
       </Card>
