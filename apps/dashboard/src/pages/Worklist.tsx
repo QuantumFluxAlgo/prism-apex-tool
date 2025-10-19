@@ -85,8 +85,11 @@ export default function Worklist() {
     };
   }, []);
 
-  const load = useCallback(async () => {
-    setLoading(true);
+  const load = useCallback(async (withSpinner = false) => {
+    if (withSpinner) {
+      setLoading(true);
+      setError(null);
+    }
     try {
       const query = {
         limit,
@@ -107,6 +110,7 @@ export default function Worklist() {
         : rawRows.filter((row) => (row.direction ?? 'LONG') === 'LONG');
       setRows(filteredRows);
       setTotal(typeof res.total === 'number' ? res.total : rawRows.length);
+      setError(null);
       return true;
     } catch (err) {
       setRows([]);
@@ -114,7 +118,7 @@ export default function Worklist() {
       setError(err instanceof Error ? err.message : String(err));
       return false;
     } finally {
-      setLoading(false);
+      if (withSpinner) setLoading(false);
     }
   }, [filters, offset]);
 
@@ -123,15 +127,15 @@ export default function Worklist() {
     let timer: ReturnType<typeof setTimeout> | undefined;
     let delay = 5000;
 
-    const tick = async () => {
+    const run = async (withSpinner: boolean) => {
       if (cancelled) return;
-      const ok = await load();
+      const ok = await load(withSpinner);
       delay = ok ? 5000 : Math.min(60000, delay * 2);
       if (cancelled) return;
-      timer = setTimeout(tick, delay);
+      timer = setTimeout(() => run(false), delay);
     };
 
-    void tick();
+    void run(true);
 
     return () => {
       cancelled = true;
@@ -314,7 +318,7 @@ export default function Worklist() {
               },
             ]}
           >
-            <Button size="sm" variant="ghost" onClick={() => void load()}>
+            <Button size="sm" variant="ghost" onClick={() => void load(true)} disabled={loading}>
               Refresh
             </Button>
           </FiltersBar>
