@@ -70,6 +70,8 @@
       .pa-time {
         font-variant-numeric: tabular-nums;
         letter-spacing: 0.02em;
+        color: var(--text, #e5e7eb);
+        font-weight: 600;
       }
     `;
     document.head.appendChild(style);
@@ -99,19 +101,12 @@
     right.className = 'pa-right';
     const timeEl = document.createElement('span');
     timeEl.className = 'pa-time';
+    timeEl.setAttribute('aria-label', 'Current time in GMT');
     const refreshEl = document.createElement('span');
     refreshEl.className = 'pa-muted';
     refreshEl.textContent = '15s auto-refresh';
-    const link = document.createElement('a');
-    link.className = 'pa-link';
-    link.textContent = 'Details';
-    link.href = '/status/';
-    link.addEventListener('click', (event) => {
-      event.preventDefault();
-      window.location.href = '/status/';
-    });
 
-    right.append(timeEl, refreshEl, link);
+    right.append(timeEl, refreshEl);
 
     bar.append(
       chipDb.chip,
