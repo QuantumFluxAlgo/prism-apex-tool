@@ -74,39 +74,65 @@
     `;
     document.head.appendChild(style);
 
+    function buildChip(label, title) {
+      const chip = document.createElement('div');
+      chip.className = 'pa-chip';
+      if (title) chip.title = title;
+      const dot = document.createElement('span');
+      dot.className = 'pa-dot';
+      const text = document.createElement('span');
+      text.textContent = label;
+      chip.append(dot, text);
+      return { chip, dot };
+    }
+
     const bar = document.createElement('div');
     bar.className = 'pa-statusbar';
-    bar.innerHTML = `
-      <div class="pa-chip" title="Database connectivity"><span class="pa-dot" id="dot-db"></span><span>DB</span></div>
-      <div class="pa-chip" title="API health"><span class="pa-dot" id="dot-api"></span><span>API</span></div>
-      <div class="pa-chip" title="Yahoo ingress"><span class="pa-dot" id="dot-yahoo"></span><span>Yahoo</span></div>
-      <div class="pa-chip" title="Tickets cron (1m)"><span class="pa-dot" id="dot-tickets"></span><span>Tickets</span></div>
-      <div class="pa-chip" title="Gapfill cron"><span class="pa-dot" id="dot-gapfill"></span><span>Gapfill</span></div>
-      <div class="pa-right">
-        <span class="pa-time" id="pa-time"></span>
-        <span class="pa-muted">15s auto-refresh</span>
-        <a class="pa-link" id="status-link">Details</a>
-      </div>
-    `;
+
+    const chipDb = buildChip('DB', 'Database connectivity');
+    const chipApi = buildChip('API', 'API health');
+    const chipYahoo = buildChip('Yahoo', 'Yahoo ingress');
+    const chipTickets = buildChip('Tickets', 'Tickets cron (1m)');
+    const chipGapfill = buildChip('Gapfill', 'Gapfill cron');
+
+    const right = document.createElement('div');
+    right.className = 'pa-right';
+    const timeEl = document.createElement('span');
+    timeEl.className = 'pa-time';
+    const refreshEl = document.createElement('span');
+    refreshEl.className = 'pa-muted';
+    refreshEl.textContent = '15s auto-refresh';
+    const link = document.createElement('a');
+    link.className = 'pa-link';
+    link.textContent = 'Details';
+    link.href = '/status/';
+    link.addEventListener('click', (event) => {
+      event.preventDefault();
+      window.location.href = '/status/';
+    });
+
+    right.append(timeEl, refreshEl, link);
+
+    bar.append(
+      chipDb.chip,
+      chipApi.chip,
+      chipYahoo.chip,
+      chipTickets.chip,
+      chipGapfill.chip,
+      right,
+    );
 
     (document.body || document.documentElement).prepend(bar);
 
     const dots = {
-      db: document.getElementById('dot-db'),
-      api: document.getElementById('dot-api'),
-      yahoo: document.getElementById('dot-yahoo'),
-      tickets: document.getElementById('dot-tickets'),
-      gapfill: document.getElementById('dot-gapfill'),
+      db: chipDb.dot,
+      api: chipApi.dot,
+      yahoo: chipYahoo.dot,
+      tickets: chipTickets.dot,
+      gapfill: chipGapfill.dot,
     };
 
-    document.getElementById('status-link')?.addEventListener('click', () => {
-      window.location.href = '/status/';
-    });
-
-    const timeEl = document.getElementById('pa-time');
-
     function updateTime() {
-      if (!timeEl) return;
       const now = new Date();
       const iso = now.toISOString();
       const time = iso.slice(11, 19);
