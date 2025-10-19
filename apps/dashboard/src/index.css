@@ -406,6 +406,76 @@ a {
   font-size: 13px;
 }
 
+.statusbar {
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding: 10px 16px;
+  background: var(--apex-surface);
+  color: var(--apex-text);
+  border-bottom: 1px solid var(--apex-card-border);
+  box-shadow: var(--apex-shadow);
+}
+
+.statusbar--error {
+  box-shadow: inset 0 -2px 0 var(--apex-red);
+}
+
+.statusbar-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  border-radius: var(--apex-radius-pill);
+  border: 1px solid var(--apex-button-border);
+  background: var(--apex-button-bg);
+  font-size: 12px;
+}
+
+.statusbar-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 999px;
+  background: var(--apex-button-border);
+}
+
+.statusbar-dot--green {
+  background: var(--apex-green);
+}
+
+.statusbar-dot--amber {
+  background: var(--apex-amber);
+}
+
+.statusbar-dot--red {
+  background: var(--apex-red);
+}
+
+.statusbar-right {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  color: var(--apex-text-muted);
+  font-size: 12px;
+}
+
+.statusbar-time {
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.02em;
+  color: var(--apex-text);
+  font-weight: 600;
+}
+
+.statusbar-refresh {
+  font-size: 12px;
+}
+
 .status-page {
   gap: 20px;
 }

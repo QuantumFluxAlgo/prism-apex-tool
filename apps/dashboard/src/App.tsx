@@ -11,6 +11,7 @@ import Worklist from './pages/Worklist';
 import StatusPage from './pages/Status';
 import { Card, CardBody } from './ui/Card';
 import Button from './ui/Button';
+import SystemStatusBar from './components/SystemStatusBar';
 
 function Header() {
   const { mode, setMode } = useTheme();
@@ -47,6 +48,7 @@ export default function App() {
         <BrowserRouter>
           <div className="dashboard-shell">
             <div className="dashboard-wrapper">
+              <SystemStatusBar />
               <Card>
                 <CardBody className="dashboard-card__body stack">
                   <Header />
