@@ -4,11 +4,11 @@ import { Card, CardBody } from '../ui/Card';
 import DataTable, { type DataTableColumn } from '../ui/DataTable';
 import FiltersBar from '../ui/FiltersBar';
 import Badge from '../ui/Badge';
+import Button from '../ui/Button';
 import { fmtUtc } from '../utils/time';
 import { fmtPrice, fmtR, fmtPnlUSD } from '../utils/number';
 import { tooltipPnL, tooltipDist } from '../utils/ticks';
 import { fetchSymbols, fetchTickets, type TicketRow } from '../lib/api';
-import { useToast } from '../context/ToastContext';
 
 type Filters = {
   from?: string;
@@ -45,7 +45,6 @@ const deriveR = (row: TicketRow) => {
 };
 
 export default function TicketsPage() {
-  const { toast } = useToast();
   const [rows, setRows] = useState<TicketRow[]>([]);
   const [total, setTotal] = useState<number>(0);
   const [symbols, setSymbols] = useState<string[]>([]);
@@ -209,6 +208,8 @@ export default function TicketsPage() {
       ),
     },
   ];
+
+  const nextDisabled = rows.length < limit;
 
   return (
     <div className="dashboard-stack">
