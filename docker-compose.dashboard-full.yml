@@ -5,6 +5,8 @@ services:
       dockerfile: apps/dashboard/Dockerfile
     image: prism-apex/dashboard-full:local
     container_name: prism-apex-dashboard-full
+    ports:
+      - "5180:80"
     environment:
       PORT: "8080"
       APEX_TICKETS_DIR: "/data/tickets"
