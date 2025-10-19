@@ -209,7 +209,7 @@ export default function TicketsPage() {
     },
   ];
 
-  const nextDisabled = rows.length < limit;
+  const nextDisabled = offset + limit >= total;
 
   return (
     <div className="dashboard-stack">
