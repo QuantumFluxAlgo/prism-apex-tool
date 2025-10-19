@@ -1,4 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
+import Button from '../ui/Button';
+import { useTheme } from '../ui/ThemeProvider';
 
 type Health = 'green' | 'amber' | 'red' | 'grey' | string | undefined | null;
 
@@ -30,6 +32,8 @@ function getDotClass(health: Health) {
 }
 
 export default function SystemStatusBar() {
+  const { mode, setMode } = useTheme();
+  const isDark = mode === 'dark';
   const [status, setStatus] = useState<StatusResponse | null>(null);
   const [error, setError] = useState(false);
   const [now, setNow] = useState(() => new Date());
@@ -92,6 +96,16 @@ export default function SystemStatusBar() {
           {time}
         </span>
         <span className="statusbar-refresh">15s auto-refresh</span>
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => setMode(isDark ? 'light' : 'dark')}
+          aria-pressed={isDark}
+          aria-label={isDark ? 'Activate light theme' : 'Activate dark theme'}
+          data-theme-toggle
+        >
+          {isDark ? 'Use light theme' : 'Use dark theme'}
+        </Button>
       </div>
     </div>
   );

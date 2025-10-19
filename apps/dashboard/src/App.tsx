@@ -1,6 +1,6 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 
-import ThemeProvider, { useTheme } from './ui/ThemeProvider';
+import ThemeProvider from './ui/ThemeProvider';
 import ToastProvider from './context/ToastContext';
 import Tabs from './ui/Tabs';
 import TicketsPage from './pages/Tickets';
@@ -10,13 +10,9 @@ import MetricsPage from './pages/Metrics';
 import Worklist from './pages/Worklist';
 import StatusPage from './pages/Status';
 import { Card, CardBody } from './ui/Card';
-import Button from './ui/Button';
 import SystemStatusBar from './components/SystemStatusBar';
 
 function Header() {
-  const { mode, setMode } = useTheme();
-  const isDark = mode === 'dark';
-
   return (
     <div className="dashboard-stack">
       <div>
@@ -24,18 +20,6 @@ function Header() {
         <p style={{ color: 'var(--apex-text-muted)', fontSize: '14px' }}>
           Shared shell for tickets, positions, reports, and metrics.
         </p>
-      </div>
-      <div className="dashboard-countdown" style={{ justifyContent: 'space-between', flexWrap: 'wrap' }}>
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={() => setMode(isDark ? 'light' : 'dark')}
-          aria-pressed={isDark}
-          aria-label={isDark ? 'Activate light theme' : 'Activate dark theme'}
-          data-theme-toggle
-        >
-          {isDark ? 'Use light theme' : 'Use dark theme'}
-        </Button>
       </div>
     </div>
   );
