@@ -1,15 +1,13 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import Kpi from '../ui/Kpi';
-import CopyOcoButton from '../components/CopyOcoButton';
 import { Card, CardBody } from '../ui/Card';
 import DataTable, { type DataTableColumn } from '../ui/DataTable';
 import FiltersBar from '../ui/FiltersBar';
 import Badge from '../ui/Badge';
-import Button from '../ui/Button';
 import { fmtUtc } from '../utils/time';
 import { fmtPrice, fmtR, fmtPnlUSD } from '../utils/number';
 import { tooltipPnL, tooltipDist } from '../utils/ticks';
-import { fetchSymbols, fetchTickets, completeTicket, type TicketRow } from '../lib/api';
+import { fetchSymbols, fetchTickets, type TicketRow } from '../lib/api';
 import { useToast } from '../context/ToastContext';
 
 type Filters = {
@@ -55,7 +53,6 @@ export default function TicketsPage() {
   const [error, setError] = useState<string | null>(null);
   const limit = 20;
   const [offset, setOffset] = useState(0);
-  const [busyId, setBusyId] = useState<string | null>(null);
   const [filters, setFilters] = useState<Filters>({
     symbol: 'ALL',
     strategy: 'ALL',
@@ -211,52 +208,7 @@ export default function TicketsPage() {
         </div>
       ),
     },
-    {
-      key: 'actions',
-      header: '',
-      className: 'text-right',
-      render: (row) => {
-        const id = row.id ? String(row.id) : undefined;
-        const disabled = !id || row.direction !== 'LONG' || row.status !== 'OPEN' || !row.actionable || busyId === id;
-        return (
-          <div className="flex justify-end gap-2">
-            <CopyOcoButton
-              symbol={row.symbol}
-              direction={row.direction as 'LONG' | 'SHORT'}
-              entry={row.entry_price}
-              stop={row.stop_price}
-              target={row.target_price}
-              rr={deriveR(row) ?? undefined}
-              disabled={row.direction !== 'LONG'}
-            />
-            <Button
-              size="sm"
-              variant="primary"
-              title={row.direction === 'SHORT' ? 'Short tickets are view-only right now' : 'Mark as complete'}
-              disabled={disabled}
-              onClick={async () => {
-                if (!id) return;
-                try {
-                  setBusyId(id);
-                  const updated = await completeTicket(id, { user: 'operator' });
-                  toast('Ticket marked complete');
-                  setRows((prev) => prev.map((entry) => (entry.id === id ? { ...entry, ...updated } : entry)));
-                } catch (err) {
-                  setError(err instanceof Error ? err.message : String(err));
-                } finally {
-                  setBusyId(null);
-                }
-              }}
-            >
-              Mark complete
-            </Button>
-          </div>
-        );
-      },
-    },
   ];
-
-  const nextDisabled = rows.length < limit;
 
   return (
     <div className="dashboard-stack">
