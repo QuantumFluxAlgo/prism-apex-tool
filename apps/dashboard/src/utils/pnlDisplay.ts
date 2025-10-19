@@ -1,5 +1,4 @@
-import { computePnL, round2, type Direction } from '@prism-apex/shared/pnl';
-import { getSpecByYahooSymbol } from '@prism-apex/shared/contracts';
+import { computePnL, round2, type Direction, getSpecByYahooSymbol } from '@prism-apex/shared';
 
 export interface DisplayPnL {
   showNumbers: boolean;

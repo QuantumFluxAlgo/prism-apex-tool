@@ -7,6 +7,8 @@ import Button from '../ui/Button';
 import Badge from '../ui/Badge';
 import { Card, CardBody } from '../ui/Card';
 import { fetchTickets, completeTicket, fetchSymbols, type TicketRow } from '../lib/api';
+import { SymbolCoverage } from '../components/SymbolCoverage';
+import { WorklistPnLCell } from '../components/WorklistPnLCell';
 import { fmtUtc } from '../utils/time';
 import { useToast } from '../context/ToastContext';
 import { fmtPrice, fmtR, fmtPnlUSD } from '../utils/number';
@@ -203,6 +205,19 @@ export default function Worklist() {
     ),
     },
     {
+      key: 'plan_pnl',
+      header: 'Plan PnL',
+      render: (row) => (
+        <WorklistPnLCell
+          symbol={row.symbol}
+          entry={row.entry_price}
+          target={row.target_price}
+          stop={row.stop_price}
+          direction={(row.direction ?? 'LONG') === 'SHORT' ? 'SHORT' : 'LONG'}
+        />
+      ),
+    },
+    {
       key: 'rr',
       header: 'R:R',
       align: 'right',
@@ -267,6 +282,9 @@ export default function Worklist() {
 
   return (
     <div className="dashboard-stack">
+      <div className="mb-3">
+        <SymbolCoverage />
+      </div>
       <Card>
         <CardBody className="dashboard-card__body stack">
           <FiltersBar

@@ -180,3 +180,24 @@ export async function completeTicket(id: string, body: { user?: string; note?: s
   const json = await res.json();
   return json.row as TicketRow;
 }
+
+// ---- symbols v2 (config-backed) ----
+export type SymbolSpecV2 = {
+  symbol: string;
+  description?: string;
+  tickSize: number | null;
+  tickValueUSD: number | null;
+  contractType: 'standard' | 'micro' | 'spot' | 'index';
+  feedAvailable: boolean;
+  tickSpecVerified: boolean;
+};
+
+export async function getSymbolSpecsV2(): Promise<SymbolSpecV2[]> {
+  const res = await fetch('/api/symbols/v2', { credentials: 'include' });
+  if (!res.ok) {
+    const text = await res.text().catch(() => '');
+    throw new Error(`Failed to load symbol specs${text ? `: ${text}` : ''}`);
+  }
+  const data = await res.json();
+  return Array.isArray((data as any).symbols) ? ((data as any).symbols as SymbolSpecV2[]) : [];
+}
