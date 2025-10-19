@@ -195,7 +195,7 @@ export default function Worklist() {
     },
     {
       key: 'rr',
-      header: 'R',
+      header: 'R:R',
       align: 'right',
       render: (row) => fmtR(deriveR(row)),
     },
