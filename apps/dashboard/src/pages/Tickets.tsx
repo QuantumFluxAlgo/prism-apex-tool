@@ -132,16 +132,6 @@ export default function TicketsPage() {
       render: (row) => fmtUtc(row.opened_at_utc),
     },
     {
-      key: 'symbol',
-      header: 'Symbol',
-      render: (row) => row.symbol,
-    },
-    {
-      key: 'strategy',
-      header: 'Strat',
-      render: (row) => row.strategy,
-    },
-    {
       key: 'direction',
       header: 'Dir',
       render: (row) => (
@@ -152,6 +142,16 @@ export default function TicketsPage() {
           {row.direction}
         </Badge>
       ),
+    },
+    {
+      key: 'symbol',
+      header: 'Symbol',
+      render: (row) => <Badge tone="blue">{row.symbol}</Badge>,
+    },
+    {
+      key: 'strategy',
+      header: 'Strat',
+      render: (row) => row.strategy,
     },
     {
       key: 'entry_price',
@@ -181,7 +181,7 @@ export default function TicketsPage() {
     },
     {
       key: 'rr',
-      header: 'R',
+      header: 'R:R',
       align: 'right',
       render: (row) => fmtR(deriveR(row)),
     },
