@@ -67,6 +67,10 @@
         color: var(--muted, #9ca3af);
         font-size: 12px;
       }
+      .pa-time {
+        font-variant-numeric: tabular-nums;
+        letter-spacing: 0.02em;
+      }
     `;
     document.head.appendChild(style);
 
@@ -79,6 +83,7 @@
       <div class="pa-chip" title="Tickets cron (1m)"><span class="pa-dot" id="dot-tickets"></span><span>Tickets</span></div>
       <div class="pa-chip" title="Gapfill cron"><span class="pa-dot" id="dot-gapfill"></span><span>Gapfill</span></div>
       <div class="pa-right">
+        <span class="pa-time" id="pa-time"></span>
         <span class="pa-muted">15s auto-refresh</span>
         <a class="pa-link" id="status-link">Details</a>
       </div>
@@ -97,6 +102,16 @@
     document.getElementById('status-link')?.addEventListener('click', () => {
       window.location.href = '/status/';
     });
+
+    const timeEl = document.getElementById('pa-time');
+
+    function updateTime() {
+      if (!timeEl) return;
+      const now = new Date();
+      const iso = now.toISOString();
+      const time = iso.slice(11, 19);
+      timeEl.textContent = `${time} GMT`;
+    }
 
     function setDot(el, health) {
       if (!el) return;
@@ -151,6 +166,8 @@
     }
 
     tick();
+    updateTime();
+    setInterval(updateTime, 1000);
     setInterval(tick, REFRESH_MS);
   };
 

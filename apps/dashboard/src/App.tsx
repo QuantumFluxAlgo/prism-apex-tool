@@ -3,7 +3,6 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import ThemeProvider, { useTheme } from './ui/ThemeProvider';
 import ToastProvider from './context/ToastContext';
 import Tabs from './ui/Tabs';
-import SessionCountdown from './ui/SessionCountdown';
 import TicketsPage from './pages/Tickets';
 import PositionsPage from './pages/Positions';
 import ReportsPage from './pages/Reports';
@@ -26,7 +25,6 @@ function Header() {
         </p>
       </div>
       <div className="dashboard-countdown" style={{ justifyContent: 'space-between', flexWrap: 'wrap' }}>
-        <SessionCountdown />
         <Button
           variant="ghost"
           size="sm"
