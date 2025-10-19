@@ -19,7 +19,7 @@ docker build -t prism-apex:ingress-dev -f apps/ingress-yahoo-dev/Dockerfile .
 
 # Up service
 echo "🚀 Starting compose service…"
-docker compose -f docker-compose.ingress.yml up -d --remove-orphans
+docker compose --profile local up -d ingress-yahoo
 
 # Health check
 echo "⏳ Waiting for /health…"
@@ -31,7 +31,7 @@ for i in {1..20}; do
   fi
   if [ "$i" -eq 20 ]; then
     echo "❌ Health endpoint not responding" >&2
-    docker compose -f docker-compose.ingress.yml logs --no-log-prefix ingress-yahoo || true
+    docker compose --profile local logs --no-log-prefix ingress-yahoo || true
     exit 1
   fi
   done

@@ -1,8 +1,0 @@
-services:
-  ingest-once:
-    environment:
-      # Comma-separated Yahoo symbols
-      YF_SYMBOLS: "ES=F,NQ=F,YM=F,RTY=F,GC=F,CL=F,^GDAXI,6E=F"
-      # Time window and interval
-      YF_DAYS: "28"
-      YF_INTERVAL: "1m"

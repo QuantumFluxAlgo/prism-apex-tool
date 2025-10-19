@@ -432,7 +432,7 @@ Caches, build outputs, and scratch data should be ignored by Git. Limiting delet
 2. Execute locally: `DRY_RUN=0 ./safe_cleanup.sh` (confirm when prompted)
 3. Execute in CI/script: `AUTO_YES=1 DRY_RUN=0 ./safe_cleanup.sh | tee cleanup_real.log`
 4. Verify: `git status -sb` (no unintended changes) and skim `docs/YAHOO_DATA_CLEANUP.md`
-5. Optional: rerun Docker stack (`docker compose --env-file .env.example.local up -d --build`)
+5. Optional: rerun Docker stack (`make up`)
 6. Operate: follow the tickets-only posture; copy tickets into Tradovate manually
 
 ---
@@ -455,11 +455,11 @@ Caches, build outputs, and scratch data should be ignored by Git. Limiting delet
   git status -sb
   tail -n 40 docs/YAHOO_DATA_CLEANUP.md
   ```
-- **Optional follow-up (stack + tickets-sync logs):**
+- **Optional follow-up (stack + tickets-cron logs):**
   ```bash
-  docker compose --env-file .env.example.local up -d --build \
+  make up \
     && sleep 8 \
-    && docker compose --env-file .env.example.local logs --no-color tickets-sync | tail -n 120
+    && docker compose logs --no-color tickets-cron | tail -n 120
   ```
 
 ---
@@ -634,6 +634,5 @@ Done.
 
 [↩︎ Back to top](#safe-cleanup-script-safe_cleanupsh)
 <!-- END: SAFE_CLEANUP_DOC -->
-
 
 
