@@ -1,6 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import DataTable, { type DataTableColumn } from '../ui/DataTable';
-import ReasonLegend from '../components/ReasonLegend';
 import CopyOcoButton from '../components/CopyOcoButton';
 import FiltersBar from '../ui/FiltersBar';
 import Kpi from '../ui/Kpi';
@@ -308,7 +307,6 @@ export default function Worklist() {
               Refresh
             </Button>
           </FiltersBar>
-          <ReasonLegend />
         </CardBody>
       </Card>
 
