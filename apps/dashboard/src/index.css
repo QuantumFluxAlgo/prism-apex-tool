@@ -406,6 +406,87 @@ a {
   font-size: 13px;
 }
 
+.status-page {
+  gap: 20px;
+}
+
+.status-grid {
+  display: grid;
+  gap: 16px;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+}
+
+.status-card__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.status-card__identity {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.status-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 999px;
+  background: var(--apex-symbol-card-label);
+}
+
+.status-dot.status-green {
+  background: var(--apex-green);
+}
+
+.status-dot.status-amber {
+  background: var(--apex-amber);
+}
+
+.status-dot.status-red {
+  background: var(--apex-red);
+}
+
+.status-dot.status-grey {
+  background: var(--apex-button-border);
+}
+
+.status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px;
+  border-radius: var(--apex-radius-pill);
+  border: 1px solid var(--apex-button-border);
+  background: var(--apex-button-bg);
+  color: var(--apex-text);
+  font-size: 12px;
+}
+
+.status-detail {
+  color: var(--apex-text-muted);
+  font-size: 13px;
+}
+
+.status-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+  color: var(--apex-text-muted);
+  font-size: 12px;
+}
+
+.status-error {
+  background: var(--apex-error-bg);
+  border: 1px solid var(--apex-error-border);
+  color: var(--apex-error-text);
+  border-radius: var(--apex-radius);
+  padding: 16px;
+  font-size: 13px;
+}
+
 .symbol-chip {
   border: 1px solid rgba(147, 197, 253, 0.35);
 }

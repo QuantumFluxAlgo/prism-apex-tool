@@ -8,6 +8,7 @@ const items = [
   { path: '/positions', label: 'Positions' },
   { path: '/reports', label: 'Reports' },
   { path: '/metrics', label: 'Metrics' },
+  { path: '/status', label: 'Status' },
 ];
 
 export default function Tabs() {

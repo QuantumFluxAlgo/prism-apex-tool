@@ -9,6 +9,7 @@ import PositionsPage from './pages/Positions';
 import ReportsPage from './pages/Reports';
 import MetricsPage from './pages/Metrics';
 import Worklist from './pages/Worklist';
+import StatusPage from './pages/Status';
 import { Card, CardBody } from './ui/Card';
 import Button from './ui/Button';
 
@@ -65,6 +66,7 @@ export default function App() {
                   <Route path="/positions" element={<PositionsPage />} />
                   <Route path="/reports" element={<ReportsPage />} />
                   <Route path="/metrics" element={<MetricsPage />} />
+                  <Route path="/status/*" element={<StatusPage />} />
                   <Route path="/" element={<Navigate to="/worklist" replace />} />
                   <Route path="*" element={<Navigate to="/worklist" replace />} />
                 </Routes>
