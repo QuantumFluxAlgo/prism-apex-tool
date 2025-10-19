@@ -30,8 +30,11 @@ function Header() {
           variant="ghost"
           size="sm"
           onClick={() => setMode(isDark ? 'light' : 'dark')}
+          aria-pressed={isDark}
+          aria-label={isDark ? 'Activate light theme' : 'Activate dark theme'}
+          data-theme-toggle
         >
-          {isDark ? 'Switch to light' : 'Switch to dark'}
+          {isDark ? 'Use light theme' : 'Use dark theme'}
         </Button>
       </div>
     </div>

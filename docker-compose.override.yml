@@ -26,27 +26,13 @@ services:
       - ./data:/data
 
   tickets-sync:
-    # Force CommonJS execution of syncTickets by copying .js -> .cjs then running it.
-    command: >
-      sh -lc "
-        set -e;
-        TS_JS=/app/apps/api/dist/scripts/syncTickets.js;
-        TS_CJS=/app/apps/api/dist/scripts/syncTickets.cjs;
-        if [ -f \"$$TS_JS\" ]; then cp \"$$TS_JS\" \"$$TS_CJS\"; fi;
-        node \"$$TS_CJS\"
-      "
-    environment:
-      TICKETS_ONLY: "${TICKETS_ONLY:-true}"
-      ORDERS_DISABLED: "${ORDERS_DISABLED:-true}"
-      DATABASE_URL: "${DATABASE_URL:-postgresql://apex:apex@db:5432/prismapex?schema=public}"
-      NODE_ENV: "${NODE_ENV:-development}"
-      LOG_LEVEL: "${LOG_LEVEL:-info}"
-    depends_on:
-      db:
-        condition: service_healthy
-    volumes:
-      - ./data:/app/data
-      - ./data:/data
+    image: alpine:3.20
+    profiles:
+      - disabled
+    command:
+      - /bin/sh
+      - -lc
+      - sleep infinity
 
   db:
     image: postgres:16-alpine
