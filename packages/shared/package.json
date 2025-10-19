@@ -10,7 +10,6 @@
     ".": {
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js",
-      "require": "./dist/index.cjs",
       "default": "./dist/index.js"
     }
   },
@@ -18,7 +17,7 @@
     "dist"
   ],
   "scripts": {
-    "build": "tsup src/index.ts --format esm,cjs --dts",
+    "build": "tsc -p tsconfig.build.json",
     "lint": "eslint . --ext .ts",
     "test": "vitest --run --config vitest.config.mts",
     "typecheck": "tsc -p tsconfig.json --noEmit"

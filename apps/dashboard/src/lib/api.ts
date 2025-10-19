@@ -1,3 +1,5 @@
+import { apiGet } from './apiBase';
+
 export type ComplianceSnapshot = {
   eodState: string;
   stopRequired: boolean;
@@ -193,11 +195,6 @@ export type SymbolSpecV2 = {
 };
 
 export async function getSymbolSpecsV2(): Promise<SymbolSpecV2[]> {
-  const res = await fetch('/api/symbols/v2', { credentials: 'include' });
-  if (!res.ok) {
-    const text = await res.text().catch(() => '');
-    throw new Error(`Failed to load symbol specs${text ? `: ${text}` : ''}`);
-  }
-  const data = await res.json();
+  const data = await apiGet<{ symbols: unknown[] }>('/api/symbols/v2');
   return Array.isArray((data as any).symbols) ? ((data as any).symbols as SymbolSpecV2[]) : [];
 }
