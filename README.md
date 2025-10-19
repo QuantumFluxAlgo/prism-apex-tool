@@ -85,10 +85,23 @@
 
 ## Quick Start
 
-- Docker required
+- Docker Desktop (or compatible) with Compose v2
 - `pnpm install --frozen-lockfile`
-- `docker compose up -d
+- `make up` (starts the local stack – db, api, dashboard, ingress, cron)
 - `pnpm docs:lint`
+
+### Docker Profiles at a Glance
+
+| Scenario            | Command                              | Services (profile)                             |
+|---------------------|--------------------------------------|------------------------------------------------|
+| Local parity        | `make up`                            | `db`, `api`, `dashboard-full`, `ingress-yahoo`, cron jobs (`local`) |
+| Local seed (one-off)| `make seed`                          | Runs ingest/gapfill/tickets jobs (`jobs`)      |
+| Stop local stack    | `make down`                          |                                                |
+| Dashboard dev (Vite)| `make up-dev` / `make down-dev`      | `dashboard-dev` (`dev`)                        |
+| Production          | `make prod-up` / `make prod-down`    | `db`, `api`, `dashboard-full`, cron (`prod`)   |
+| Production seed     | `make prod-seed`                     | One-time ingest/gapfill/tickets jobs (`prod` + `jobs`) |
+
+All of the above run against the unified `docker-compose.yml`; additional profiles can be combined with `docker compose --profile ...` if you need finer control.
 
 ## Docs Map
 
@@ -246,7 +259,7 @@ JSON logs; no PII; CORS allow-list via env; health/readiness/metrics present.
 
 ## Run
 ```bash
-docker compose up -d
+make up
 docker compose ps
 
 Verify
@@ -289,9 +302,10 @@ Dev workflow (hot reload, if scripts exist)
 
 
 Prod-like workflow (Docker)
-docker compose up -d
+make up
 
-docker compose -f docker-compose.yml -f docker-compose.dashboard-full.yml up -d --build
+# optional: one-time data seed
+make seed
 
 Sanity checks
 curl -fsS http://localhost:3000/health
@@ -491,38 +505,38 @@ Run the local pipeline end-to-end without placing real orders: Yahoo → Postgre
 
 ## Prerequisites
 - Docker Desktop (or compatible) with Compose
-- Checked-out branch `fix/tickets-sync-cjs-and-local-db`
-- Files in repo root: `docker-compose.yml`, `docker-compose.override.yml`, `.env.example.local`
+- Files in repo root: `docker-compose.yml`, `.env.example.local`
 
 ## 1. Start the stack (Postgres on host **55433**)
 ```bash
-docker compose --env-file .env.example.local up -d --build
+make up
 ```
 
 What spins up:
-- **api** – serves on http://localhost:3000 with a Node-based healthcheck (no curl dependency)
-- **tickets-sync** – copies `syncTickets.js` → `.cjs` and runs it under Node 20
+- **api** – serves on http://localhost:3000 with healthcheck
+- **dashboard-full** – Nginx bundle on http://localhost:5180
+- **ingress-yahoo** – local ingress on http://localhost:8080
+- **gapfill-cron**, **tickets-cron** – background maintenance jobs
 - **db** – postgres:16-alpine bound host 55433 → container 5432
 
 ## 2. Verify everything is healthy
 ```bash
-docker compose ps
-docker inspect --format '{{json .State.Health}}' $(docker compose ps -q api)
-docker compose logs --no-color tickets-sync | tail -n 60
+docker compose --profile local ps | grep api
+docker compose logs --no-color tickets-cron | tail -n 60
 docker compose exec -T api sh -lc 'tail -n 10 /app/data/tickets.jsonl || tail -n 10 /data/tickets.jsonl || true'
 ```
-You should see new rows in `data/tickets.jsonl`, and the API healthcheck should report `"Status":"healthy"` once `/health` or `/` returns 200.
+You should see new rows in `data/tickets.jsonl`, and the API healthcheck should report `"Status":"ok"` once `/health` returns 200.
 
 ## 3. Stop the stack
 ```bash
-docker compose down        # keep the Postgres volume
-# docker compose down -v   # wipe volumes for a clean slate
+make down        # keep the Postgres volume
+# docker compose --profile local down -v   # wipe volumes for a clean slate
 ```
 
 ## Notes
 - Tickets-only posture is enforced: `TICKETS_ONLY=true`, `ORDERS_DISABLED=true`
 - Generated artifacts under `data/` (e.g., `tickets.jsonl`) are now ignored by Git
-- If port 55433 conflicts, override `POSTGRES_PORT` when invoking `docker compose`
+- If port 55433 conflicts, override `PGHOSTPORT` when invoking `make up` or `docker compose`
 
 ## Cleanup (SAFE / dry-run)
 Preview what would be removed (no deletions):
@@ -569,13 +583,9 @@ Operations — Daily Checklist
 
 Start services
 
-API: docker compose up -d
+API/UI: `make up`
 
-UI: choose one
-
-
-
-Full: add -f docker-compose.dashboard-full.yml
+Optional dev UI: `make up-dev`
 
 Verify health
 
@@ -638,11 +648,11 @@ Reminder: Tickets-only is a hard requirement. CI rejects any code introducing or
 Ran `DRY_RUN=1 tools/cleanup_yahoo_data.sh` (no deletions). See `docs/YAHOO_DATA_CLEANUP.md` for tracked candidates.
 
 ## Docker smoke
-- `docker compose --env-file .env.example.local up -d --build`
+- `make up`
 - API health reached `healthy`
-- `docker compose --env-file .env.example.local logs --no-color tickets-sync | tail -n 80`
+- `docker compose logs --no-color tickets-cron | tail -n 80`
 - `tail -n 10 data/tickets.jsonl`
-- `docker compose --env-file .env.example.local down`
+- `make down`
 
 
 
@@ -1673,8 +1683,8 @@ Alerts refresh automatically every 5 seconds.
 ## Docker
 
 ```bash
-docker compose build
-docker compose up -d
+make up
+# optional: make seed
 ```
 
 ## GitHub Actions
@@ -3073,7 +3083,7 @@ Caches, build outputs, and scratch data should be ignored by Git. Limiting delet
 2. Execute locally: `DRY_RUN=0 ./safe_cleanup.sh` (confirm when prompted)
 3. Execute in CI/script: `AUTO_YES=1 DRY_RUN=0 ./safe_cleanup.sh | tee cleanup_real.log`
 4. Verify: `git status -sb` (no unintended changes) and skim `docs/YAHOO_DATA_CLEANUP.md`
-5. Optional: rerun Docker stack (`docker compose --env-file .env.example.local up -d --build`)
+5. Optional: rerun Docker stack (`make up`)
 6. Operate: follow the tickets-only posture; copy tickets into Tradovate manually
 
 ---
@@ -3096,11 +3106,11 @@ Caches, build outputs, and scratch data should be ignored by Git. Limiting delet
   git status -sb
   tail -n 40 docs/YAHOO_DATA_CLEANUP.md
   ```
-- **Optional follow-up (stack + tickets-sync logs):**
+- **Optional follow-up (stack + tickets-cron logs):**
   ```bash
-  docker compose --env-file .env.example.local up -d --build \
+  make up \
     && sleep 8 \
-    && docker compose --env-file .env.example.local logs --no-color tickets-sync | tail -n 120
+    && docker compose logs --no-color tickets-cron | tail -n 120
   ```
 
 ---
@@ -3555,4 +3565,3 @@ pnpm --filter @prism-apex/api test
 (Optional) create var/pnl/daily.json and curl:
 curl -s "http://localhost:3000/report/consistency?window=8
 " | jq .
-

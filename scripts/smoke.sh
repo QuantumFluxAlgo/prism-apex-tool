@@ -28,20 +28,17 @@ for p in range(start, start+300):
 PY
 }
 
-export POSTGRES_PORT="${POSTGRES_PORT:-$(pick_port 55433)}"
+export PGHOSTPORT="${PGHOSTPORT:-$(pick_port 55433)}"
+export POSTGRES_PORT="$PGHOSTPORT"
 export API_PORT="${API_PORT:-$(pick_port 3000)}"
-kv "POSTGRES_PORT" "$POSTGRES_PORT"
+kv "PGHOSTPORT" "$PGHOSTPORT"
 kv "API_PORT" "$API_PORT"
 hr
 
 # 2) boot DB + API
-COMPOSE="-f docker-compose.yml"
-[ -f docker-compose.override.yml ] && COMPOSE="$COMPOSE -f docker-compose.override.yml"
-[ -f docker-compose.api.override.yml ] && COMPOSE="$COMPOSE -f docker-compose.api.override.yml"
-
-docker compose $COMPOSE up -d db || true
+docker compose --profile local up -d db || true
 sleep 3
-docker compose $COMPOSE up -d api || true
+docker compose --profile local up -d api || true
 sleep 4
 
 # 3) probe API health

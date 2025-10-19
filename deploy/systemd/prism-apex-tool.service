@@ -7,11 +7,8 @@ Wants=network-online.target
 Type=oneshot
 RemainAfterExit=yes
 WorkingDirectory=/Users/seankeane/code/prism-apex-tool
-Environment=COMPOSE_FILE=docker-compose.yml:docker-compose.override.yml:docker-compose.db.yml:docker-compose.dashboard-full.yml:docker-compose.ingress.yml:docker-compose.api.override.yml:docker-compose.override.local.yml:docker-compose.local.patch.yml:docker-compose.local.instruments.yml:docker-compose.local.ports.yml:docker-compose.tickets-cron.yml
-ExecStart=/usr/bin/docker compose up -d db
-ExecStart=/usr/bin/docker compose exec -T db bash -lc 'until pg_isready -h 127.0.0.1 -p 5432 >/dev/null 2>&1; do sleep 1; done'
-ExecStart=/usr/bin/docker compose up -d --build api dashboard-full ingress-yahoo gapfill-cron tickets-cron
-ExecStop=/usr/bin/docker compose down
+ExecStart=/usr/bin/docker compose --profile prod up -d
+ExecStop=/usr/bin/docker compose --profile prod down
 TimeoutStartSec=0
 
 [Install]
