@@ -21,6 +21,21 @@ type Filters = {
   showShorts?: boolean;
 };
 
+const DEFAULT_SYMBOL_OPTIONS = [
+  'ALL',
+  'ES=F',
+  'MES=F',
+  'NQ=F',
+  'MNQ=F',
+  'YM=F',
+  'RTY=F',
+  'GC=F',
+  'CL=F',
+  '6E=F',
+  'EURUSD=X',
+  '^GDAXI',
+];
+
 const deriveR = (row: TicketRow) => {
   if (row.rr !== null && row.rr !== undefined && !Number.isNaN(row.rr)) return row.rr;
   const entry = row.entry_price;
@@ -45,7 +60,7 @@ export default function TicketsPage() {
     symbol: 'ALL',
     strategy: 'ALL',
     status: 'ALL',
-    showShorts: true,
+    showShorts: false,
   });
 
   useEffect(() => {
@@ -244,16 +259,9 @@ export default function TicketsPage() {
   const nextDisabled = rows.length < limit;
 
   return (
-    <div className="space-y-4 p-4">
-      <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
-        <Kpi label="Tickets (open)" value={statusCounts.open} />
-        <Kpi label="Tickets (complete)" value={statusCounts.complete} />
-        <Kpi label="Page size" value={limit} />
-        <Kpi label="Total (all filters)" value={total} />
-      </div>
-
+    <div className="dashboard-stack">
       <Card>
-        <CardBody>
+        <CardBody className="dashboard-card__body stack">
           <FiltersBar
             dateRange={{
               from: filters.from,
@@ -267,7 +275,7 @@ export default function TicketsPage() {
               {
                 label: 'Symbol',
                 value: filters.symbol ?? 'ALL',
-                options: ['ALL', ...symbols],
+                options: ['ALL', ...(symbols.length ? symbols : DEFAULT_SYMBOL_OPTIONS.slice(1))],
                 onChange: (value) => {
                   setOffset(0);
                   setFilters((prev) => ({ ...prev, symbol: value }));
@@ -305,6 +313,13 @@ export default function TicketsPage() {
           />
         </CardBody>
       </Card>
+
+      <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
+        <Kpi label="Tickets (open)" value={statusCounts.open} />
+        <Kpi label="Tickets (complete)" value={statusCounts.complete} />
+        <Kpi label="Page size" value={limit} />
+        <Kpi label="Total (all filters)" value={total} />
+      </div>
 
       <Card>
         <CardBody>

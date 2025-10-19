@@ -11,9 +11,9 @@ const ITEMS: Array<[string, string]> = [
 
 export default function ReasonLegend() {
   return (
-    <div className="rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-xs text-amber-200">
-      <div className="mb-1 font-semibold text-amber-100">Reason legend</div>
-      <div className="flex flex-wrap gap-2">
+    <div className="dashboard-legend">
+      <div className="font-semibold">Reason legend</div>
+      <div className="dashboard-legend__items">
         {ITEMS.map(([label, tip]) => (
           <span key={label} title={tip} className="flex items-center gap-1">
             <Badge tone="amber">{label}</Badge>

@@ -6,7 +6,8 @@ import FiltersBar from '../ui/FiltersBar';
 import Kpi from '../ui/Kpi';
 import Button from '../ui/Button';
 import Badge from '../ui/Badge';
-import { fetchTickets, completeTicket, type TicketRow } from '../lib/api';
+import { Card, CardBody } from '../ui/Card';
+import { fetchTickets, completeTicket, fetchSymbols, type TicketRow } from '../lib/api';
 import { fmtUtc } from '../utils/time';
 import { useToast } from '../context/ToastContext';
 import { fmtPrice, fmtR, fmtPnlUSD } from '../utils/number';
@@ -28,28 +29,91 @@ const deriveR = (row: ActionableRow) => {
   return Math.abs((target - entry) / (entry - stop));
 };
 
+type Filters = {
+  from?: string;
+  to?: string;
+  symbol?: string;
+  strategy?: string;
+  status?: string;
+  showShorts?: boolean;
+};
+
+const DEFAULT_SYMBOL_OPTIONS = [
+  'ALL',
+  'ES=F',
+  'MES=F',
+  'NQ=F',
+  'MNQ=F',
+  'YM=F',
+  'RTY=F',
+  'GC=F',
+  'CL=F',
+  '6E=F',
+  'EURUSD=X',
+  '^GDAXI',
+];
+
+const limit = 200;
+
 export default function Worklist() {
   const { toast } = useToast();
   const [rows, setRows] = useState<ActionableRow[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [symbols, setSymbols] = useState<string[]>([]);
+  const [filters, setFilters] = useState<Filters>({
+    symbol: 'ALL',
+    strategy: 'ALL',
+    status: 'OPEN',
+    showShorts: false,
+  });
+
+  useEffect(() => {
+    let cancelled = false;
+    fetchSymbols()
+      .then((list) => {
+        if (!cancelled && Array.isArray(list)) {
+          setSymbols(list);
+        }
+      })
+      .catch(() => {
+        if (!cancelled) setSymbols([]);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const load = useCallback(async () => {
-    let ok = false;
+    setLoading((prev) => (prev ? prev : true));
+    setError(null);
     try {
-      setLoading(true);
-      setError(null);
-      const res = await fetchTickets({ scope: 'actionable', status: 'OPEN', direction: 'LONG', limit: 200 });
-      setRows(res.rows ?? []);
-      ok = true;
+      const query = {
+        limit,
+        scope: filters.status === 'COMPLETE' ? undefined : 'actionable',
+        from: filters.from || undefined,
+        to: filters.to || undefined,
+        symbol: filters.symbol && filters.symbol !== 'ALL' ? filters.symbol : undefined,
+        strategy: filters.strategy && filters.strategy !== 'ALL' ? filters.strategy : undefined,
+        status: filters.status && filters.status !== 'ALL' ? filters.status : undefined,
+        direction: filters.showShorts ? undefined : 'LONG',
+      };
+
+      const res = await fetchTickets(query);
+      const rawRows = res.rows ?? [];
+      const filteredRows = filters.showShorts
+        ? rawRows
+        : rawRows.filter((row) => (row.direction ?? 'LONG') === 'LONG');
+      setRows(filteredRows);
+      return true;
     } catch (err) {
       setRows([]);
       setError(err instanceof Error ? err.message : String(err));
+      return false;
     } finally {
       setLoading(false);
     }
-    return ok;
-  }, []);
+  }, [filters]);
 
   useEffect(() => {
     let cancelled = false;
@@ -73,12 +137,26 @@ export default function Worklist() {
   }, [load]);
 
   const symbolCount = useMemo(() => new Set(rows.map((row) => row.symbol)).size, [rows]);
+  const actionableCount = useMemo(() => rows.filter((row) => row.actionable).length, [rows]);
+  const shortCount = useMemo(() => rows.filter((row) => row.direction === 'SHORT').length, [rows]);
 
   const columns: DataTableColumn<ActionableRow>[] = [
     {
       key: 'opened_at_utc',
       header: 'Opened (UTC/GMT)',
       render: (row) => fmtUtc(row.opened_at_utc),
+    },
+    {
+      key: 'direction',
+      header: 'Dir',
+      render: (row) => (
+        <Badge
+          tone={row.direction === 'LONG' ? 'green' : 'gray'}
+          title={row.direction === 'LONG' ? 'Long (actionable)' : 'Short (view only)'}
+        >
+          {row.direction}
+        </Badge>
+      ),
     },
     {
       key: 'symbol',
@@ -179,31 +257,81 @@ export default function Worklist() {
   ];
 
   return (
-    <div className="space-y-4">
-      <ReasonLegend />
-      <FiltersBar>
-        <div className="flex w-full items-center justify-between">
-          <div className="text-sm font-medium text-gray-700 dark:text-gray-200">Actionable Worklist</div>
-          <Button size="sm" variant="ghost" onClick={() => { void load(); }}>
-            Refresh
-          </Button>
-        </div>
-      </FiltersBar>
+    <div className="dashboard-stack">
+      <Card>
+        <CardBody className="dashboard-card__body stack">
+          <FiltersBar
+            dateRange={{
+              from: filters.from,
+              to: filters.to,
+              onChange: (from, to) => {
+                setFilters((prev) => ({ ...prev, from, to }));
+              },
+            }}
+            selects={[
+              {
+                label: 'Symbol',
+                value: filters.symbol ?? 'ALL',
+                options: ['ALL', ...(symbols.length ? symbols : DEFAULT_SYMBOL_OPTIONS.slice(1))],
+                onChange: (value) => {
+                  setFilters((prev) => ({ ...prev, symbol: value }));
+                },
+              },
+              {
+                label: 'Strategy',
+                value: filters.strategy ?? 'ALL',
+                options: ['ALL', 'ORR'],
+                onChange: (value) => {
+                  setFilters((prev) => ({ ...prev, strategy: value }));
+                },
+              },
+              {
+                label: 'Status',
+                value: filters.status ?? 'OPEN',
+                options: ['ALL', 'OPEN', 'COMPLETE'],
+                onChange: (value) => {
+                  setFilters((prev) => ({ ...prev, status: value }));
+                },
+              },
+            ]}
+            toggles={[
+              {
+                label: 'Show SHORTs (view-only)',
+                checked: Boolean(filters.showShorts),
+                onChange: (checked) => {
+                  setFilters((prev) => ({ ...prev, showShorts: checked }));
+                },
+              },
+            ]}
+          >
+            <Button size="sm" variant="ghost" onClick={() => void load()}>
+              Refresh
+            </Button>
+          </FiltersBar>
+          <ReasonLegend />
+        </CardBody>
+      </Card>
 
       <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
-        <Kpi label="Open Actionable" value={rows.length} />
+        <Kpi label="Open Actionable" value={actionableCount} />
+        <Kpi label="Visible Tickets" value={rows.length} />
         <Kpi label="Symbols" value={symbolCount} />
+        <Kpi label="Shorts (view-only)" value={shortCount} />
       </div>
 
-      {error && <div className="text-sm text-red-400">{error}</div>}
+      {error && <div className="dashboard-error">{error}</div>}
 
-      <DataTable
-        columns={columns}
-        rows={rows}
-        loading={loading}
-        emptyMessage="No actionable tickets at the moment."
-        rowKey={(row, index) => (row.id ? String(row.id) : index)}
-      />
+      <Card>
+        <CardBody>
+          <DataTable
+            columns={columns}
+            rows={rows}
+            loading={loading}
+            emptyMessage="No actionable tickets at the moment."
+            rowKey={(row, index) => (row.id ? String(row.id) : index)}
+          />
+        </CardBody>
+      </Card>
     </div>
   );
 }

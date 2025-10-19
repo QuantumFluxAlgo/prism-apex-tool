@@ -37,36 +37,34 @@ export default function DataTable<T = unknown>({
     const colSpan = resolvedColumns.length || 1;
 
     return (
-      <div className={`overflow-auto ${className}`}>
-        <table className="min-w-full text-sm">
-          <thead className="bg-gray-50 text-left text-gray-600 dark:bg-zinc-800 dark:text-gray-300">
+      <div className={`dashboard-table-wrapper ${className}`.trim()}>
+        <table className="dashboard-table">
+          <thead>
             <tr>
               {resolvedColumns.map((column) => (
                 <th
                   key={column.key}
-                  className={`px-3 py-2 font-medium ${column.className ?? ''} ${
+                  className={`${
                     column.align === 'right'
                       ? 'text-right'
                       : column.align === 'center'
                       ? 'text-center'
                       : 'text-left'
-                  }`}
+                  } ${column.className ?? ''}`.trim()}
                 >
                   {column.header}
                 </th>
               ))}
             </tr>
           </thead>
-          <tbody className="divide-y divide-gray-100 text-gray-900 dark:divide-zinc-800 dark:text-gray-100">
+          <tbody>
             {loading ? (
               <tr>
-                <td className="px-3 py-3" colSpan={colSpan}>
-                  Loading…
-                </td>
+                <td colSpan={colSpan}>Loading…</td>
               </tr>
             ) : resolvedRows.length === 0 ? (
               <tr>
-                <td className="px-3 py-3 text-gray-500 dark:text-gray-400" colSpan={colSpan}>
+                <td colSpan={colSpan} style={{ color: 'var(--apex-text-muted)' }}>
                   {emptyMessage}
                 </td>
               </tr>
@@ -76,13 +74,13 @@ export default function DataTable<T = unknown>({
                   {resolvedColumns.map((column) => (
                     <td
                       key={column.key}
-                      className={`px-3 py-2 ${
+                      className={`${
                         column.align === 'right'
                           ? 'text-right'
                           : column.align === 'center'
                           ? 'text-center'
                           : 'text-left'
-                      } ${column.className ?? ''}`}
+                      } ${column.className ?? ''}`.trim()}
                     >
                       {column.render(row, index)}
                     </td>
@@ -101,12 +99,10 @@ export default function DataTable<T = unknown>({
   }
 
   return (
-    <div className={`overflow-auto ${className}`}>
-      <table className="min-w-full text-sm">
-        <thead className="bg-gray-50 text-left text-gray-600 dark:bg-zinc-800 dark:text-gray-300">{headers}</thead>
-        <tbody className="divide-y divide-gray-100 text-gray-900 dark:divide-zinc-800 dark:text-gray-100">
-          {children}
-        </tbody>
+    <div className={`dashboard-table-wrapper ${className}`.trim()}>
+      <table className="dashboard-table">
+        <thead>{headers}</thead>
+        <tbody>{children}</tbody>
       </table>
     </div>
   );

@@ -31,28 +31,22 @@ export default function FiltersBar({ dateRange, selects = [], toggles = [], chil
 
   if (!hasDynamicContent) {
     return (
-      <div className="flex flex-wrap items-center gap-2 border-b border-gray-200 p-3 dark:border-zinc-800">
-        <span className="text-xs text-gray-500">UTC (GMT)</span>
-        <input
-          type="date"
-          className="rounded border border-gray-300 bg-white px-2 py-1 dark:border-zinc-700 dark:bg-zinc-900"
-        />
-        <input
-          type="date"
-          className="rounded border border-gray-300 bg-white px-2 py-1 dark:border-zinc-700 dark:bg-zinc-900"
-        />
-        <select className="rounded border border-gray-300 bg-white px-2 py-1 dark:border-zinc-700 dark:bg-zinc-900">
+      <div className="dashboard-filters">
+        <span>UTC (GMT)</span>
+        <input type="date" />
+        <input type="date" />
+        <select>
           <option>All Symbols</option>
           <option>ES=F</option>
           <option>NQ=F</option>
           <option>GC=F</option>
           <option>CL=F</option>
         </select>
-        <select className="rounded border border-gray-300 bg-white px-2 py-1 dark:border-zinc-700 dark:bg-zinc-900">
+        <select>
           <option>All Strategies</option>
           <option>ORR</option>
         </select>
-        <select className="rounded border border-gray-300 bg-white px-2 py-1 dark:border-zinc-700 dark:bg-zinc-900">
+        <select>
           <option>Any Status</option>
           <option>OPEN</option>
           <option>CLOSED</option>
@@ -63,33 +57,27 @@ export default function FiltersBar({ dateRange, selects = [], toggles = [], chil
   }
 
   return (
-    <div className="flex flex-wrap items-center gap-3 border-b border-gray-200 p-3 text-sm dark:border-zinc-800">
-      <span className="text-xs uppercase tracking-wide text-gray-500">UTC (GMT)</span>
+    <div className="dashboard-filters">
+      <span>UTC (GMT)</span>
       {dateRange && (
         <>
           <input
             type="date"
             value={dateRange.from ?? ''}
             onChange={(event) => dateRange.onChange(event.target.value || undefined, dateRange.to)}
-            className="rounded border border-gray-300 bg-white px-2 py-1 dark:border-zinc-700 dark:bg-zinc-900"
           />
           <input
             type="date"
             value={dateRange.to ?? ''}
             onChange={(event) => dateRange.onChange(dateRange.from, event.target.value || undefined)}
-            className="rounded border border-gray-300 bg-white px-2 py-1 dark:border-zinc-700 dark:bg-zinc-900"
           />
         </>
       )}
 
       {selects.map((select) => (
-        <label key={select.label} className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
-          <span className="uppercase">{select.label}</span>
-          <select
-            value={select.value}
-            onChange={(event) => select.onChange(event.target.value)}
-            className="rounded border border-gray-300 bg-white px-2 py-1 text-sm text-gray-700 dark:border-zinc-700 dark:bg-zinc-900 dark:text-gray-200"
-          >
+        <label key={select.label}>
+          <span>{select.label}</span>
+          <select value={select.value} onChange={(event) => select.onChange(event.target.value)}>
             {select.options.map((option) => (
               <option key={option} value={option}>
                 {option}
@@ -100,16 +88,8 @@ export default function FiltersBar({ dateRange, selects = [], toggles = [], chil
       ))}
 
       {toggles.map((toggle) => (
-        <label
-          key={toggle.label}
-          className="flex items-center gap-2 rounded-full border border-gray-200 px-3 py-1 text-xs text-gray-600 dark:border-zinc-700 dark:text-gray-300"
-        >
-          <input
-            type="checkbox"
-            checked={toggle.checked}
-            onChange={(event) => toggle.onChange(event.target.checked)}
-            className="h-3 w-3 accent-blue-500"
-          />
+        <label key={toggle.label} className="dashboard-toggle">
+          <input type="checkbox" checked={toggle.checked} onChange={(event) => toggle.onChange(event.target.checked)} />
           {toggle.label}
         </label>
       ))}

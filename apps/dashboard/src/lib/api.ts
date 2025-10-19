@@ -107,11 +107,28 @@ export const api = {
 };
 
 export async function fetchSymbols(): Promise<string[]> {
-  const res = await request(DIRECT_BASE, '/api/symbols');
-  if (Array.isArray((res as any).symbols)) {
-    return (res as any).symbols as string[];
+  const fallback = [
+    'ES=F',
+    'MES=F',
+    'NQ=F',
+    'MNQ=F',
+    'YM=F',
+    'RTY=F',
+    'GC=F',
+    'CL=F',
+    '6E=F',
+    'EURUSD=X',
+    '^GDAXI',
+  ];
+  try {
+    const res = await request(DIRECT_BASE, '/api/symbols');
+    if (Array.isArray((res as any).symbols) && (res as any).symbols.length) {
+      return (res as any).symbols as string[];
+    }
+  } catch {
+    // ignore and return fallback
   }
-  return [];
+  return fallback;
 }
 
 export async function fetchTickets(params: {

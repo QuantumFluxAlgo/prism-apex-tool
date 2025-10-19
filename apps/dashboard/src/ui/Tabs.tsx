@@ -13,18 +13,14 @@ const items = [
 export default function Tabs() {
   const { pathname } = useLocation();
   return (
-    <div className="flex gap-2 border-b border-gray-200 dark:border-zinc-800 px-2">
+    <div className="dashboard-tabs">
       {items.map((it) => {
         const active = it.path === '/' ? pathname === '/' : pathname.startsWith(it.path);
         return (
           <Link
             key={it.path}
             to={it.path}
-            className={`px-3 py-2 rounded-t-lg text-sm ${
-              active
-                ? 'bg-gray-100 dark:bg-zinc-800 text-gray-900 dark:text-white'
-                : 'text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white'
-            }`}
+            className={`dashboard-tab${active ? ' is-active' : ''}`}
           >
             {it.label}
           </Link>

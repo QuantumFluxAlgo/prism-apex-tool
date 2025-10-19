@@ -28,6 +28,7 @@ import jobsBoot from './jobs/boot.js';
 import strategyAlias from './plugins/strategy-alias.js';
 import metricsRoute from './routes/metrics.js';
 import symbolsRoute from './routes/symbols.js';
+import statusRoute from './routes/status.js';
 
 const cfg = getConfig();
 
@@ -92,13 +93,22 @@ export function buildServer() {
   app.register(cors, { origin: true });
   
 // Public paths (no auth/rate-limit)
-  const publicPaths = ['/health', '/ready', '/openapi.json', '/version', '/webhooks/tradingview'];
+  const publicPaths = [
+    '/health',
+    '/ready',
+    '/status',
+    '/api/status',
+    '/openapi.json',
+    '/version',
+    '/webhooks/tradingview',
+  ];
 
   app.register(authPlugin, { publicPaths });
   app.register(rateLimit, { publicPaths });
 
   app.register(readyRoute);
   app.register(healthRoute);
+  app.register(statusRoute);
   
   app.register(ticketsRoute);
   app.register(ticketCompleteRoute);
