@@ -33,9 +33,11 @@ function applyMode(mode: Mode) {
   if (mode === 'light') {
     root.setAttribute('data-theme', 'light');
     root.style.colorScheme = 'light';
+    root.classList.remove('dark');
   } else {
     root.removeAttribute('data-theme');
     root.style.colorScheme = 'dark';
+    root.classList.add('dark');
   }
 }
 
