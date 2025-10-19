@@ -321,9 +321,10 @@ export default function TicketsPage() {
         <Kpi label="Total (all filters)" value={total} />
       </div>
 
+      {error && <div className="dashboard-error">{error}</div>}
+
       <Card>
         <CardBody>
-          {error && <div className="mb-2 text-sm text-red-400">{error}</div>}
           <DataTable
             columns={columns}
             rows={rows}
