@@ -359,6 +359,21 @@ The codebase must never introduce broker order placement (tickets-only). CI enfo
 - `docs/` — Architecture notes, cleanup/report artifacts, runbooks.
 - `docker-compose*.yml` / `Dockerfile*` — Docker-first runtime definition. Keep docs aligned with exposed ports.
 
+## Tick Spec & PnL mapping
+- Source of truth: `config/contracts-spec.json`
+- Captures tick size, USD tick value, and feed availability flags per symbol.
+- `tickSpecVerified` stays `false` until a Trader/Analyst confirms the spec.
+- Update `metadata.updatedAt` with the confirmation date and include the reviewer in commit notes.
+- Downstream consumers (upcoming `computePnL` helper and dashboard panels) will use these values to normalise profit reporting.
+
+### Short vs Long PnL
+- Per-contract PnL is computed via `@prism-apex/shared/pnl` using tick size and tick value USD.
+- The helper is direction-aware: LONG requires `target > entry`; SHORT requires `target < entry`.
+- Missing or unverified specs surface as warnings and disable projected PnL in the dashboard.
+
+### API
+- `/api/symbols/v2` exposes the config-backed symbol specs for UIs and tooling.
+
 ---
 
 ## Guardrails & Compliance Reminders

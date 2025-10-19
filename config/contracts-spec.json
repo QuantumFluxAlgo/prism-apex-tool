@@ -1,0 +1,109 @@
+{
+  "metadata": {
+    "revision": 1,
+    "updatedAt": "TODO-YYYY-MM-DD",
+    "reviewer": "TODO-Analyst",
+    "notes": "Populate tick size/value and verification flags once Trader/Analyst signs off."
+  },
+  "symbols": [
+    {
+      "symbol": "ES=F",
+      "description": "E-mini S&P 500",
+      "tickSize": 0.25,
+      "tickValueUSD": 12.5,
+      "contractType": "standard",
+      "feedAvailable": true,
+      "tickSpecVerified": false
+    },
+    {
+      "symbol": "MES=F",
+      "description": "Micro E-mini S&P 500",
+      "tickSize": 0.25,
+      "tickValueUSD": 1.25,
+      "contractType": "micro",
+      "feedAvailable": true,
+      "tickSpecVerified": false
+    },
+    {
+      "symbol": "NQ=F",
+      "description": "E-mini Nasdaq-100",
+      "tickSize": 0.25,
+      "tickValueUSD": 5,
+      "contractType": "standard",
+      "feedAvailable": true,
+      "tickSpecVerified": false
+    },
+    {
+      "symbol": "MNQ=F",
+      "description": "Micro E-mini Nasdaq-100",
+      "tickSize": 0.25,
+      "tickValueUSD": 0.5,
+      "contractType": "micro",
+      "feedAvailable": true,
+      "tickSpecVerified": false
+    },
+    {
+      "symbol": "YM=F",
+      "description": "E-mini Dow ($5)",
+      "tickSize": 1,
+      "tickValueUSD": 5,
+      "contractType": "standard",
+      "feedAvailable": true,
+      "tickSpecVerified": false
+    },
+    {
+      "symbol": "RTY=F",
+      "description": "E-mini Russell 2000",
+      "tickSize": 0.1,
+      "tickValueUSD": 5,
+      "contractType": "standard",
+      "feedAvailable": true,
+      "tickSpecVerified": false
+    },
+    {
+      "symbol": "GC=F",
+      "description": "Gold Futures",
+      "tickSize": 0.1,
+      "tickValueUSD": 10,
+      "contractType": "standard",
+      "feedAvailable": true,
+      "tickSpecVerified": false
+    },
+    {
+      "symbol": "CL=F",
+      "description": "Crude Oil Futures",
+      "tickSize": 0.01,
+      "tickValueUSD": 10,
+      "contractType": "standard",
+      "feedAvailable": true,
+      "tickSpecVerified": false
+    },
+    {
+      "symbol": "6E=F",
+      "description": "Euro FX Futures",
+      "tickSize": 0.0001,
+      "tickValueUSD": 12.50,
+      "contractType": "standard",
+      "feedAvailable": true,
+      "tickSpecVerified": true
+    },
+    {
+      "symbol": "EURUSD=X",
+      "description": "Euro / US Dollar Spot",
+      "tickSize": null,
+      "tickValueUSD": null,
+      "contractType": "spot",
+      "feedAvailable": true,
+      "tickSpecVerified": false
+    },
+    {
+      "symbol": "^GDAXI",
+      "description": "DAX Futures (Eurex)",
+      "tickSize": 0.5,
+      "tickValueUSD": null,
+      "contractType": "standard",
+      "feedAvailable": true,
+      "tickSpecVerified": false
+    }
+  ]
+}

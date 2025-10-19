@@ -28,6 +28,7 @@ import jobsBoot from './jobs/boot.js';
 import strategyAlias from './plugins/strategy-alias.js';
 import metricsRoute from './routes/metrics.js';
 import symbolsRoute from './routes/symbols.js';
+import symbolsV2Route from './routes/symbols.v2.js';
 import statusRoute from './routes/status.js';
 
 const cfg = getConfig();
@@ -152,6 +153,7 @@ export function buildServer() {
     await jobManager.stopAll();
   });
   app.register(openapiRoutes);
+  app.register(symbolsV2Route);
 
   return app;
 }

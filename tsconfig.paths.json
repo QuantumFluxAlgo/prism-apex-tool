@@ -30,6 +30,8 @@
       "@prism-apex/rules/*": ["packages/rules/src/*"],
       "@prism-apex/runtime": ["packages/runtime/src"],
       "@prism-apex/runtime/*": ["packages/runtime/src/*"],
+      "@prism-apex/shared": ["packages/shared/src"],
+      "@prism-apex/shared/*": ["packages/shared/src/*"],
       "@prism-apex/sdk": ["packages/sdk/src"],
       "@prism-apex/sdk/*": ["packages/sdk/src/*"],
       "@prism-apex/signals": ["packages/signals/src"],

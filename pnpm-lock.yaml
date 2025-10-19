@@ -116,6 +116,9 @@ importers:
       '@prism-apex/runtime':
         specifier: workspace:*
         version: link:../../packages/runtime
+      '@prism-apex/shared':
+        specifier: workspace:*
+        version: link:../../packages/shared
       '@prism-apex/signals':
         specifier: workspace:*
         version: link:../../packages/signals
@@ -180,6 +183,9 @@ importers:
 
   apps/dashboard:
     dependencies:
+      '@prism-apex/shared':
+        specifier: workspace:*
+        version: link:../../packages/shared
       react:
         specifier: 18.2.0
         version: 18.2.0
@@ -595,6 +601,46 @@ importers:
       vitest:
         specifier: ^2.0.0
         version: 2.1.9(@types/node@20.19.11)(jsdom@27.0.0(postcss@8.5.6))(lightningcss@1.30.2)
+
+  packages/shared:
+    optionalDependencies:
+      '@rollup/rollup-darwin-arm64':
+        specifier: ^4.47.1
+        version: 4.47.1
+      '@rollup/rollup-darwin-x64':
+        specifier: ^4.47.1
+        version: 4.47.1
+      '@rollup/rollup-linux-x64-gnu':
+        specifier: ^4.47.1
+        version: 4.47.1
+    devDependencies:
+      '@eslint/js':
+        specifier: ^9.37.0
+        version: 9.37.0
+      eslint:
+        specifier: ^9.37.0
+        version: 9.37.0(jiti@2.6.1)
+      prettier:
+        specifier: ^3.3.3
+        version: 3.6.2
+      rollup:
+        specifier: ^4.47.1
+        version: 4.47.1
+      tsup:
+        specifier: ^8.3.0
+        version: 8.5.0(jiti@2.6.1)(postcss@8.5.6)(tsx@4.20.4)(typescript@5.9.3)(yaml@2.8.1)
+      tsx:
+        specifier: ^4.20.0
+        version: 4.20.4
+      typescript:
+        specifier: ^5.9.3
+        version: 5.9.3
+      typescript-eslint:
+        specifier: ^8.45.0
+        version: 8.45.0(eslint@9.37.0(jiti@2.6.1))(typescript@5.9.3)
+      vitest:
+        specifier: ^3.2.4
+        version: 3.2.4(@types/node@20.19.11)(jsdom@27.0.0(postcss@8.5.6))(lightningcss@1.30.2)
 
   packages/signals:
     devDependencies:

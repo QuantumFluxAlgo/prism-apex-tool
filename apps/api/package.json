@@ -43,6 +43,7 @@
     "@prism-apex/metrics": "workspace:*",
     "@prism-apex/rules-apex": "workspace:*",
     "@prism-apex/runtime": "workspace:*",
+    "@prism-apex/shared": "workspace:*",
     "@prism-apex/signals": "workspace:*",
     "@prism-apex/strategies": "workspace:*",
     "@prism-apex/strategy-apx-ddb01": "workspace:*",
