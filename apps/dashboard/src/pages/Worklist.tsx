@@ -86,8 +86,7 @@ export default function Worklist() {
   }, []);
 
   const load = useCallback(async () => {
-    setLoading((prev) => (prev ? prev : true));
-    setError(null);
+    setLoading(true);
     try {
       const query = {
         limit,
