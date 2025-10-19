@@ -52,11 +52,13 @@ const DEFAULT_SYMBOL_OPTIONS = [
   '^GDAXI',
 ];
 
-const limit = 200;
+const limit = 20;
 
 export default function Worklist() {
   const { toast } = useToast();
   const [rows, setRows] = useState<ActionableRow[]>([]);
+  const [total, setTotal] = useState(0);
+  const [offset, setOffset] = useState(0);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [symbols, setSymbols] = useState<string[]>([]);
@@ -83,12 +85,15 @@ export default function Worklist() {
     };
   }, []);
 
-  const load = useCallback(async () => {
-    setLoading((prev) => (prev ? prev : true));
-    setError(null);
+  const load = useCallback(async (withSpinner = false) => {
+    if (withSpinner) {
+      setLoading(true);
+      setError(null);
+    }
     try {
       const query = {
         limit,
+        offset,
         scope: filters.status === 'COMPLETE' ? undefined : 'actionable',
         from: filters.from || undefined,
         to: filters.to || undefined,
@@ -104,30 +109,33 @@ export default function Worklist() {
         ? rawRows
         : rawRows.filter((row) => (row.direction ?? 'LONG') === 'LONG');
       setRows(filteredRows);
+      setTotal(typeof res.total === 'number' ? res.total : rawRows.length);
+      setError(null);
       return true;
     } catch (err) {
       setRows([]);
+      setTotal(0);
       setError(err instanceof Error ? err.message : String(err));
       return false;
     } finally {
-      setLoading(false);
+      if (withSpinner) setLoading(false);
     }
-  }, [filters]);
+  }, [filters, offset]);
 
   useEffect(() => {
     let cancelled = false;
     let timer: ReturnType<typeof setTimeout> | undefined;
     let delay = 5000;
 
-    const tick = async () => {
+    const run = async (withSpinner: boolean) => {
       if (cancelled) return;
-      const ok = await load();
+      const ok = await load(withSpinner);
       delay = ok ? 5000 : Math.min(60000, delay * 2);
       if (cancelled) return;
-      timer = setTimeout(tick, delay);
+      timer = setTimeout(() => run(false), delay);
     };
 
-    void tick();
+    void run(true);
 
     return () => {
       cancelled = true;
@@ -138,6 +146,7 @@ export default function Worklist() {
   const symbolCount = useMemo(() => new Set(rows.map((row) => row.symbol)).size, [rows]);
   const actionableCount = useMemo(() => rows.filter((row) => row.actionable).length, [rows]);
   const shortCount = useMemo(() => rows.filter((row) => row.direction === 'SHORT').length, [rows]);
+  const nextDisabled = offset + limit >= total;
 
   const columns: DataTableColumn<ActionableRow>[] = [
     {
@@ -195,7 +204,7 @@ export default function Worklist() {
     },
     {
       key: 'rr',
-      header: 'R',
+      header: 'R:R',
       align: 'right',
       render: (row) => fmtR(deriveR(row)),
     },
@@ -243,6 +252,7 @@ export default function Worklist() {
                 const updated = await completeTicket(String(row.id), { user: 'operator', note: 'worklist' });
                 toast('Ticket marked complete');
                 setRows((prev) => prev.filter((entry) => entry.id !== updated.id));
+                setTotal((prev) => Math.max(0, prev - 1));
               } catch (err) {
                 setError(err instanceof Error ? err.message : String(err));
               }
@@ -264,6 +274,7 @@ export default function Worklist() {
               from: filters.from,
               to: filters.to,
               onChange: (from, to) => {
+                setOffset(0);
                 setFilters((prev) => ({ ...prev, from, to }));
               },
             }}
@@ -273,6 +284,7 @@ export default function Worklist() {
                 value: filters.symbol ?? 'ALL',
                 options: ['ALL', ...(symbols.length ? symbols : DEFAULT_SYMBOL_OPTIONS.slice(1))],
                 onChange: (value) => {
+                  setOffset(0);
                   setFilters((prev) => ({ ...prev, symbol: value }));
                 },
               },
@@ -281,6 +293,7 @@ export default function Worklist() {
                 value: filters.strategy ?? 'ALL',
                 options: ['ALL', 'ORR'],
                 onChange: (value) => {
+                  setOffset(0);
                   setFilters((prev) => ({ ...prev, strategy: value }));
                 },
               },
@@ -289,6 +302,7 @@ export default function Worklist() {
                 value: filters.status ?? 'OPEN',
                 options: ['ALL', 'OPEN', 'COMPLETE'],
                 onChange: (value) => {
+                  setOffset(0);
                   setFilters((prev) => ({ ...prev, status: value }));
                 },
               },
@@ -298,12 +312,13 @@ export default function Worklist() {
                 label: 'Show SHORTs (view-only)',
                 checked: Boolean(filters.showShorts),
                 onChange: (checked) => {
+                  setOffset(0);
                   setFilters((prev) => ({ ...prev, showShorts: checked }));
                 },
               },
             ]}
           >
-            <Button size="sm" variant="ghost" onClick={() => void load()}>
+            <Button size="sm" variant="ghost" onClick={() => void load(true)} disabled={loading}>
               Refresh
             </Button>
           </FiltersBar>
@@ -328,6 +343,19 @@ export default function Worklist() {
             emptyMessage="No actionable tickets at the moment."
             rowKey={(row, index) => (row.id ? String(row.id) : index)}
           />
+          <div className="mt-3 flex items-center justify-between">
+            <div className="text-xs text-gray-400">
+              Entry/Stop/Target and R are ORR-derived. SHORTs are visible but not actionable.
+            </div>
+            <div className="flex gap-2">
+              <Button size="sm" disabled={offset === 0} onClick={() => setOffset(Math.max(0, offset - limit))}>
+                Prev
+              </Button>
+              <Button size="sm" disabled={nextDisabled} onClick={() => setOffset(offset + limit)}>
+                Next
+              </Button>
+            </div>
+          </div>
         </CardBody>
       </Card>
     </div>

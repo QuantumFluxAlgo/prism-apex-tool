@@ -3,15 +3,9 @@ import React from 'react';
 export type ButtonSize = 'sm' | 'md';
 export type ButtonVariant = 'default' | 'primary' | 'ghost';
 
-type ButtonProps = {
-  children: React.ReactNode;
-  onClick?: () => void;
-  disabled?: boolean;
+type ButtonProps = React.ButtonHTMLAttributes<HTMLButtonElement> & {
   size?: ButtonSize;
   variant?: ButtonVariant;
-  className?: string;
-  title?: string;
-  type?: 'button' | 'submit' | 'reset';
 };
 
 export default function Button({
@@ -23,6 +17,7 @@ export default function Button({
   className = '',
   title,
   type = 'button',
+  ...rest
 }: ButtonProps) {
   const classes = ['dashboard-button'];
   if (size === 'sm') classes.push('sm');
@@ -31,7 +26,14 @@ export default function Button({
   if (className) classes.push(className);
 
   return (
-    <button type={type} disabled={disabled} onClick={onClick} className={classes.join(' ')} title={title}>
+    <button
+      type={type}
+      disabled={disabled}
+      onClick={onClick}
+      className={classes.join(' ')}
+      title={title}
+      {...rest}
+    >
       {children}
     </button>
   );

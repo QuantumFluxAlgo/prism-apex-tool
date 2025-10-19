@@ -1,21 +1,18 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 
-import ThemeProvider, { useTheme } from './ui/ThemeProvider';
+import ThemeProvider from './ui/ThemeProvider';
 import ToastProvider from './context/ToastContext';
 import Tabs from './ui/Tabs';
-import SessionCountdown from './ui/SessionCountdown';
 import TicketsPage from './pages/Tickets';
 import PositionsPage from './pages/Positions';
 import ReportsPage from './pages/Reports';
 import MetricsPage from './pages/Metrics';
 import Worklist from './pages/Worklist';
+import StatusPage from './pages/Status';
 import { Card, CardBody } from './ui/Card';
-import Button from './ui/Button';
+import SystemStatusBar from './components/SystemStatusBar';
 
 function Header() {
-  const { mode, setMode } = useTheme();
-  const isDark = mode === 'dark';
-
   return (
     <div className="dashboard-stack">
       <div>
@@ -23,16 +20,6 @@ function Header() {
         <p style={{ color: 'var(--apex-text-muted)', fontSize: '14px' }}>
           Shared shell for tickets, positions, reports, and metrics.
         </p>
-      </div>
-      <div className="dashboard-countdown" style={{ justifyContent: 'space-between', flexWrap: 'wrap' }}>
-        <SessionCountdown />
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={() => setMode(isDark ? 'light' : 'dark')}
-        >
-          {isDark ? 'Switch to light' : 'Switch to dark'}
-        </Button>
       </div>
     </div>
   );
@@ -45,6 +32,7 @@ export default function App() {
         <BrowserRouter>
           <div className="dashboard-shell">
             <div className="dashboard-wrapper">
+              <SystemStatusBar />
               <Card>
                 <CardBody className="dashboard-card__body stack">
                   <Header />
@@ -62,6 +50,7 @@ export default function App() {
                   <Route path="/positions" element={<PositionsPage />} />
                   <Route path="/reports" element={<ReportsPage />} />
                   <Route path="/metrics" element={<MetricsPage />} />
+                  <Route path="/status/*" element={<StatusPage />} />
                   <Route path="/" element={<Navigate to="/worklist" replace />} />
                   <Route path="*" element={<Navigate to="/worklist" replace />} />
                 </Routes>

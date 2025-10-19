@@ -1,6 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import Kpi from '../ui/Kpi';
-import CopyOcoButton from '../components/CopyOcoButton';
 import { Card, CardBody } from '../ui/Card';
 import DataTable, { type DataTableColumn } from '../ui/DataTable';
 import FiltersBar from '../ui/FiltersBar';
@@ -9,8 +8,7 @@ import Button from '../ui/Button';
 import { fmtUtc } from '../utils/time';
 import { fmtPrice, fmtR, fmtPnlUSD } from '../utils/number';
 import { tooltipPnL, tooltipDist } from '../utils/ticks';
-import { fetchSymbols, fetchTickets, completeTicket, type TicketRow } from '../lib/api';
-import { useToast } from '../context/ToastContext';
+import { fetchSymbols, fetchTickets, type TicketRow } from '../lib/api';
 
 type Filters = {
   from?: string;
@@ -18,7 +16,6 @@ type Filters = {
   symbol?: string;
   strategy?: string;
   status?: string;
-  showShorts?: boolean;
 };
 
 const DEFAULT_SYMBOL_OPTIONS = [
@@ -47,7 +44,6 @@ const deriveR = (row: TicketRow) => {
 };
 
 export default function TicketsPage() {
-  const { toast } = useToast();
   const [rows, setRows] = useState<TicketRow[]>([]);
   const [total, setTotal] = useState<number>(0);
   const [symbols, setSymbols] = useState<string[]>([]);
@@ -55,12 +51,10 @@ export default function TicketsPage() {
   const [error, setError] = useState<string | null>(null);
   const limit = 20;
   const [offset, setOffset] = useState(0);
-  const [busyId, setBusyId] = useState<string | null>(null);
   const [filters, setFilters] = useState<Filters>({
     symbol: 'ALL',
     strategy: 'ALL',
     status: 'ALL',
-    showShorts: false,
   });
 
   useEffect(() => {
@@ -96,8 +90,7 @@ export default function TicketsPage() {
       .then((response) => {
         if (cancelled) return;
         const rawRows = response.rows ?? [];
-        const filteredRows = filters.showShorts ? rawRows : rawRows.filter((row) => row.direction === 'LONG');
-        setRows(filteredRows);
+        setRows(rawRows);
         setTotal(typeof response.total === 'number' ? response.total : rawRows.length);
       })
       .catch((err) => {
@@ -112,7 +105,7 @@ export default function TicketsPage() {
     return () => {
       cancelled = true;
     };
-  }, [limit, offset, filters.from, filters.to, filters.symbol, filters.strategy, filters.status, filters.showShorts]);
+  }, [limit, offset, filters.from, filters.to, filters.symbol, filters.strategy, filters.status]);
 
   const statusCounts = useMemo(() => {
     return rows.reduce(
@@ -132,16 +125,6 @@ export default function TicketsPage() {
       render: (row) => fmtUtc(row.opened_at_utc),
     },
     {
-      key: 'symbol',
-      header: 'Symbol',
-      render: (row) => row.symbol,
-    },
-    {
-      key: 'strategy',
-      header: 'Strat',
-      render: (row) => row.strategy,
-    },
-    {
       key: 'direction',
       header: 'Dir',
       render: (row) => (
@@ -152,6 +135,16 @@ export default function TicketsPage() {
           {row.direction}
         </Badge>
       ),
+    },
+    {
+      key: 'symbol',
+      header: 'Symbol',
+      render: (row) => <Badge tone="blue">{row.symbol}</Badge>,
+    },
+    {
+      key: 'strategy',
+      header: 'Strat',
+      render: (row) => row.strategy,
     },
     {
       key: 'entry_price',
@@ -181,7 +174,7 @@ export default function TicketsPage() {
     },
     {
       key: 'rr',
-      header: 'R',
+      header: 'R:R',
       align: 'right',
       render: (row) => fmtR(deriveR(row)),
     },
@@ -211,52 +204,9 @@ export default function TicketsPage() {
         </div>
       ),
     },
-    {
-      key: 'actions',
-      header: '',
-      className: 'text-right',
-      render: (row) => {
-        const id = row.id ? String(row.id) : undefined;
-        const disabled = !id || row.direction !== 'LONG' || row.status !== 'OPEN' || !row.actionable || busyId === id;
-        return (
-          <div className="flex justify-end gap-2">
-            <CopyOcoButton
-              symbol={row.symbol}
-              direction={row.direction as 'LONG' | 'SHORT'}
-              entry={row.entry_price}
-              stop={row.stop_price}
-              target={row.target_price}
-              rr={deriveR(row) ?? undefined}
-              disabled={row.direction !== 'LONG'}
-            />
-            <Button
-              size="sm"
-              variant="primary"
-              title={row.direction === 'SHORT' ? 'Short tickets are view-only right now' : 'Mark as complete'}
-              disabled={disabled}
-              onClick={async () => {
-                if (!id) return;
-                try {
-                  setBusyId(id);
-                  const updated = await completeTicket(id, { user: 'operator' });
-                  toast('Ticket marked complete');
-                  setRows((prev) => prev.map((entry) => (entry.id === id ? { ...entry, ...updated } : entry)));
-                } catch (err) {
-                  setError(err instanceof Error ? err.message : String(err));
-                } finally {
-                  setBusyId(null);
-                }
-              }}
-            >
-              Mark complete
-            </Button>
-          </div>
-        );
-      },
-    },
   ];
 
-  const nextDisabled = rows.length < limit;
+  const nextDisabled = offset + limit >= total;
 
   return (
     <div className="dashboard-stack">
@@ -300,16 +250,7 @@ export default function TicketsPage() {
                 },
               },
             ]}
-            toggles={[
-              {
-                label: 'Show SHORTs (view-only)',
-                checked: Boolean(filters.showShorts),
-                onChange: (checked) => {
-                  setOffset(0);
-                  setFilters((prev) => ({ ...prev, showShorts: checked }));
-                },
-              },
-            ]}
+            toggles={[]}
           />
         </CardBody>
       </Card>
@@ -321,9 +262,10 @@ export default function TicketsPage() {
         <Kpi label="Total (all filters)" value={total} />
       </div>
 
+      {error && <div className="dashboard-error">{error}</div>}
+
       <Card>
         <CardBody>
-          {error && <div className="mb-2 text-sm text-red-400">{error}</div>}
           <DataTable
             columns={columns}
             rows={rows}
