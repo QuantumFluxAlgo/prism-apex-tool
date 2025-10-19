@@ -144,28 +144,28 @@ a {
   padding: 4px 10px;
   font-size: 12px;
   letter-spacing: 0.02em;
-  background: rgba(99, 102, 241, 0.18);
-  color: #dbeafe;
+  background: var(--badge-default-bg);
+  color: var(--badge-default-fg);
 }
 
 .dashboard-badge.green {
-  background: rgba(34, 197, 94, 0.22);
-  color: #bbf7d0;
+  background: var(--badge-green-bg);
+  color: var(--badge-green-fg);
 }
 
 .dashboard-badge.amber {
-  background: rgba(245, 158, 11, 0.22);
-  color: #fde68a;
+  background: var(--badge-amber-bg);
+  color: var(--badge-amber-fg);
 }
 
 .dashboard-badge.red {
-  background: rgba(248, 113, 113, 0.24);
-  color: #fecaca;
+  background: var(--badge-red-bg);
+  color: var(--badge-red-fg);
 }
 
 .dashboard-badge.neutral {
-  background: rgba(148, 163, 184, 0.24);
-  color: #e2e8f0;
+  background: var(--badge-neutral-bg);
+  color: var(--badge-neutral-fg);
 }
 
 .dashboard-kpi {

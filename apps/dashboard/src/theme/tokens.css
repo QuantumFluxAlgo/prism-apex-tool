@@ -67,6 +67,17 @@
   --apex-symbol-card-border: rgba(147, 197, 253, 0.15);
   --apex-symbol-card-shadow: 0 10px 28px rgba(15, 23, 42, 0.4);
   --apex-symbol-card-label: rgba(203, 213, 225, 0.7);
+
+  --badge-default-bg: rgba(99, 102, 241, 0.18);
+  --badge-default-fg: #dbeafe;
+  --badge-green-bg: rgba(34, 197, 94, 0.22);
+  --badge-green-fg: #bbf7d0;
+  --badge-amber-bg: rgba(245, 158, 11, 0.22);
+  --badge-amber-fg: #fde68a;
+  --badge-red-bg: rgba(248, 113, 113, 0.24);
+  --badge-red-fg: #fecaca;
+  --badge-neutral-bg: rgba(148, 163, 184, 0.24);
+  --badge-neutral-fg: #e2e8f0;
 }
 
 :root[data-theme='light'] {
@@ -129,4 +140,15 @@
   --apex-symbol-card-border: rgba(203, 213, 225, 0.75);
   --apex-symbol-card-shadow: 0 8px 26px rgba(15, 23, 42, 0.12);
   --apex-symbol-card-label: rgba(100, 116, 139, 0.9);
+
+  --badge-default-bg: rgba(219, 234, 254, 0.9);
+  --badge-default-fg: #1d4ed8;
+  --badge-green-bg: rgba(187, 247, 208, 0.9);
+  --badge-green-fg: #047857;
+  --badge-amber-bg: rgba(254, 243, 199, 0.95);
+  --badge-amber-fg: #92400e;
+  --badge-red-bg: rgba(254, 226, 226, 0.95);
+  --badge-red-fg: #b91c1c;
+  --badge-neutral-bg: rgba(226, 232, 240, 0.9);
+  --badge-neutral-fg: #1f2937;
 }
