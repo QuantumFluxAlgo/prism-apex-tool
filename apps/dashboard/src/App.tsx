@@ -9,6 +9,7 @@ import ReportsPage from './pages/Reports';
 import MetricsPage from './pages/Metrics';
 import Worklist from './pages/Worklist';
 import StatusPage from './pages/Status';
+import DemoPnL from './pages/DemoPnL';
 import { Card, CardBody } from './ui/Card';
 import SystemStatusBar from './components/SystemStatusBar';
 
@@ -51,6 +52,8 @@ export default function App() {
                   <Route path="/reports" element={<ReportsPage />} />
                   <Route path="/metrics" element={<MetricsPage />} />
                   <Route path="/status/*" element={<StatusPage />} />
+                  <Route path="/demo/pnl" element={<DemoPnL />} />
+                  <Route path="/demo/pnl" element={<DemoPnL />} />
                   <Route path="/" element={<Navigate to="/worklist" replace />} />
                   <Route path="*" element={<Navigate to="/worklist" replace />} />
                 </Routes>
