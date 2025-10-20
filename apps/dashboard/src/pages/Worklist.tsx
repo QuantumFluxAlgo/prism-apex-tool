@@ -56,21 +56,60 @@ const DEFAULT_SYMBOL_OPTIONS = [
 
 const limit = 20;
 
+function pickNum<T extends Record<string, any>>(row: T | undefined | null, keys: string[]): number | null {
+  if (!row) return null;
+  for (const key of keys) {
+    const value = row[key];
+    if (typeof value === 'number' && Number.isFinite(value)) return value;
+    if (typeof value === 'string' && value.trim().length) {
+      const num = Number(value);
+      if (!Number.isNaN(num)) return num;
+    }
+  }
+  return null;
+}
+
+function renderPnLCell(row: ActionableRow | Record<string, any>) {
+  const source = (row ?? {}) as Record<string, any>;
+  const symbol =
+    source.symbol ??
+    source.symbol_root ??
+    source.symbolRoot ??
+    source.yahooSymbol ??
+    source.instrument ??
+    'UNKNOWN';
+  const direction = String(source.direction ?? source.dir ?? 'LONG').toUpperCase();
+  const entry = pickNum(source, ['entry_price', 'entry', 'entryPrice']);
+  const stop = pickNum(source, ['stop_price', 'stop', 'stopPrice']);
+  const target = pickNum(source, ['target_price', 'target', 'targetPrice']);
+
+  console.debug('[WorklistPnLCell]', {
+    id: source.id,
+    symbol,
+    direction,
+    entry,
+    stop,
+    target,
+  });
+
+  return (
+    <WorklistPnLCell
+      symbol={symbol}
+      direction={direction === 'SHORT' ? 'SHORT' : 'LONG'}
+      entry={entry}
+      stop={stop}
+      target={target}
+    />
+  );
+}
+
 function ensurePnLColumn(columns: DataTableColumn<ActionableRow>[]): DataTableColumn<ActionableRow>[] {
   const arr = Array.isArray(columns) ? [...columns] : [];
   const pnlColumn: DataTableColumn<ActionableRow> = {
     key: 'pnl',
     header: 'PnL (beta)',
     align: 'right',
-    render: (row) => (
-      <WorklistPnLCell
-        symbol={row.symbol}
-        entry={row.entry_price}
-        target={row.target_price}
-        stop={row.stop_price}
-        direction={(row.direction ?? 'LONG') === 'SHORT' ? 'SHORT' : 'LONG'}
-      />
-    ),
+    render: (row) => renderPnLCell(row),
   };
 
   const existingIndex = arr.findIndex((col) => col.key === 'pnl');
@@ -239,15 +278,7 @@ export default function Worklist() {
     {
       key: 'pnl',
       header: 'PnL (beta)',
-      render: (row) => (
-        <WorklistPnLCell
-          symbol={row.symbol}
-          entry={row.entry_price}
-          target={row.target_price}
-          stop={row.stop_price}
-          direction={(row.direction ?? 'LONG') === 'SHORT' ? 'SHORT' : 'LONG'}
-        />
-      ),
+      render: (row) => renderPnLCell(row),
     },
     {
       key: 'reason',
