@@ -56,6 +56,32 @@ const DEFAULT_SYMBOL_OPTIONS = [
 
 const limit = 20;
 
+function ensurePnLColumn(columns: DataTableColumn<ActionableRow>[]): DataTableColumn<ActionableRow>[] {
+  const arr = Array.isArray(columns) ? [...columns] : [];
+  const pnlColumn: DataTableColumn<ActionableRow> = {
+    key: 'pnl',
+    header: 'PnL (beta)',
+    align: 'right',
+    render: (row) => (
+      <WorklistPnLCell
+        symbol={row.symbol}
+        entry={row.entry_price}
+        target={row.target_price}
+        stop={row.stop_price}
+        direction={(row.direction ?? 'LONG') === 'SHORT' ? 'SHORT' : 'LONG'}
+      />
+    ),
+  };
+
+  const existingIndex = arr.findIndex((col) => col.key === 'pnl');
+  if (existingIndex >= 0) {
+    arr[existingIndex] = { ...arr[existingIndex], ...pnlColumn };
+    return arr;
+  }
+
+  return [pnlColumn, ...arr];
+}
+
 export default function Worklist() {
   const { toast } = useToast();
   const [rows, setRows] = useState<ActionableRow[]>([]);
@@ -266,6 +292,8 @@ export default function Worklist() {
     },
   ];
 
+  const columnsWithPnl = useMemo(() => ensurePnLColumn(columns), [columns]);
+
   return (
     <div className="dashboard-stack">
       <div className="mb-3">
@@ -341,7 +369,7 @@ export default function Worklist() {
       <Card>
         <CardBody>
           <DataTable
-            columns={columns}
+            columns={columnsWithPnl}
             rows={rows}
             loading={loading}
             emptyMessage="No actionable tickets at the moment."
