@@ -29,11 +29,26 @@ export default function DataTable<T = unknown>({
   children,
   className = '',
 }: DataTableProps<T>) {
+  const finalColumns = React.useMemo(() => {
+    if (Array.isArray(columns)) {
+      try {
+        console.debug(
+          'DataTable: using provided columns',
+          columns.map((col) => col?.header ?? col?.key ?? 'unknown'),
+        );
+      } catch {
+        // console may be unavailable (SSR); ignore
+      }
+      return columns;
+    }
+    return [];
+  }, [columns]);
+
   const isStructured = Array.isArray(columns) && Array.isArray(rows);
 
   if (isStructured) {
     const resolvedRows = rows ?? [];
-    const resolvedColumns = columns ?? [];
+    const resolvedColumns = finalColumns;
     const colSpan = resolvedColumns.length || 1;
 
     return (
