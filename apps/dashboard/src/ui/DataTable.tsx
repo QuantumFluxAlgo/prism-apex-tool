@@ -3,6 +3,7 @@ import React from 'react';
 export type DataTableColumn<T> = {
   key: string;
   header: React.ReactNode;
+  accessorKey?: string;
   render: (row: T, index: number) => React.ReactNode;
   className?: string;
   align?: 'left' | 'right' | 'center';

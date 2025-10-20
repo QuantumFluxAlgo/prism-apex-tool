@@ -69,56 +69,57 @@ function pickNum<T extends Record<string, any>>(row: T | undefined | null, keys:
   return null;
 }
 
-function renderPnLCell(row: ActionableRow | Record<string, any>) {
-  const source = (row ?? {}) as Record<string, any>;
+function renderComputedPnLCell(info: any) {
+  const row: Record<string, any> = (info?.row?.original ?? info ?? {}) as Record<string, any>;
   const symbol =
-    source.symbol ??
-    source.symbol_root ??
-    source.symbolRoot ??
-    source.yahooSymbol ??
-    source.instrument ??
+    row.symbol ??
+    row.symbol_root ??
+    row.symbolRoot ??
+    row.yahooSymbol ??
+    row.instrument ??
     'UNKNOWN';
-  const direction = String(source.direction ?? source.dir ?? 'LONG').toUpperCase();
-  const entry = pickNum(source, ['entry_price', 'entry', 'entryPrice']);
-  const stop = pickNum(source, ['stop_price', 'stop', 'stopPrice']);
-  const target = pickNum(source, ['target_price', 'target', 'targetPrice']);
+  const direction = (row.direction ?? row.dir ?? 'LONG').toString().toUpperCase() === 'SHORT' ? 'SHORT' : 'LONG';
+  const entry = pickNum(row, ['entry_price', 'entry', 'entryPrice']);
+  const stop = pickNum(row, ['stop_price', 'stop', 'stopPrice']);
+  const target = pickNum(row, ['target_price', 'target', 'targetPrice']);
 
-  console.debug('[WorklistPnLCell]', {
-    id: source.id,
-    symbol,
-    direction,
-    entry,
-    stop,
-    target,
-  });
+  console.debug('[pnlComputed] row', { id: row.id, symbol, direction, entry, stop, target });
 
-  return (
-    <WorklistPnLCell
-      symbol={symbol}
-      direction={direction === 'SHORT' ? 'SHORT' : 'LONG'}
-      entry={entry}
-      stop={stop}
-      target={target}
-    />
-  );
+  return <WorklistPnLCell symbol={symbol} direction={direction} entry={entry} stop={stop} target={target} />;
 }
 
-function ensurePnLColumn(columns: DataTableColumn<ActionableRow>[]): DataTableColumn<ActionableRow>[] {
-  const arr = Array.isArray(columns) ? [...columns] : [];
+function ensureComputedPnLColumn(columns: DataTableColumn<ActionableRow>[]): DataTableColumn<ActionableRow>[] {
+  const source = Array.isArray(columns) ? [...columns] : [];
+  const cleaned = source.filter((col) => !(col?.key === 'pnl' || col?.accessorKey === 'pnl'));
+
   const pnlColumn: DataTableColumn<ActionableRow> = {
-    key: 'pnl',
-    header: 'PnL (beta)',
+    key: 'pnlComputed',
+    header: 'PnL (per contract)',
     align: 'right',
-    render: (row) => renderPnLCell(row),
+    render: (row) => renderComputedPnLCell(row),
   };
 
-  const existingIndex = arr.findIndex((col) => col.key === 'pnl');
-  if (existingIndex >= 0) {
-    arr[existingIndex] = { ...arr[existingIndex], ...pnlColumn };
-    return arr;
+  const rrIndex = cleaned.findIndex((col) => {
+    const header = (col?.header ?? '').toString().toLowerCase();
+    return col?.key === 'rr' || col?.accessorKey === 'rr' || header === 'r:r' || header.includes('risk');
+  });
+
+  if (rrIndex >= 0) {
+    cleaned.splice(rrIndex + 1, 0, pnlColumn);
+  } else {
+    cleaned.unshift(pnlColumn);
   }
 
-  return [pnlColumn, ...arr];
+  try {
+    console.debug(
+      '[Worklist] final columns:',
+      cleaned.map((col) => col?.header ?? col?.key ?? col?.accessorKey ?? 'unknown'),
+    );
+  } catch {
+    // ignore if console is unavailable (SSR)
+  }
+
+  return cleaned;
 }
 
 export default function Worklist() {
@@ -276,11 +277,6 @@ export default function Worklist() {
       render: (row) => fmtR(deriveR(row)),
     },
     {
-      key: 'pnl',
-      header: 'PnL (beta)',
-      render: (row) => renderPnLCell(row),
-    },
-    {
       key: 'reason',
       header: 'Warning',
       render: (row) => (row.reason ? <Badge tone="amber">{row.reason}</Badge> : '—'),
@@ -323,12 +319,31 @@ export default function Worklist() {
     },
   ];
 
-  const columnsWithPnl = useMemo(() => ensurePnLColumn(columns), [columns]);
+  const columnsWithComputedPnL = useMemo(() => ensureComputedPnLColumn(columns), [columns]);
 
   return (
     <div className="dashboard-stack">
       <div className="mb-3">
         <SymbolCoverage />
+      </div>
+      <div
+        data-testid="pnl-beta-banner"
+        style={{
+          marginBottom: 8,
+          opacity: 0.85,
+        }}
+      >
+        <span
+          style={{
+            padding: '4px 8px',
+            borderRadius: 6,
+            background: '#1e293b',
+            color: '#93c5fd',
+            fontSize: 12,
+          }}
+        >
+          PnL Beta Active — tick-based per-contract
+        </span>
       </div>
       <Card>
         <CardBody className="dashboard-card__body stack">
@@ -400,7 +415,7 @@ export default function Worklist() {
       <Card>
         <CardBody>
           <DataTable
-            columns={columnsWithPnl}
+            columns={columnsWithComputedPnL}
             rows={rows}
             loading={loading}
             emptyMessage="No actionable tickets at the moment."
