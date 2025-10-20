@@ -205,8 +205,14 @@ export default function Worklist() {
     ),
     },
     {
-      key: 'plan_pnl',
-      header: 'Plan PnL',
+      key: 'rr',
+      header: 'R:R',
+      align: 'right',
+      render: (row) => fmtR(deriveR(row)),
+    },
+    {
+      key: 'pnl',
+      header: 'PnL (beta)',
       render: (row) => (
         <WorklistPnLCell
           symbol={row.symbol}
@@ -216,26 +222,6 @@ export default function Worklist() {
           direction={(row.direction ?? 'LONG') === 'SHORT' ? 'SHORT' : 'LONG'}
         />
       ),
-    },
-    {
-      key: 'rr',
-      header: 'R:R',
-      align: 'right',
-      render: (row) => fmtR(deriveR(row)),
-    },
-    {
-      key: 'pnl',
-      header: 'PnL',
-      align: 'right',
-      render: (row) => {
-        const pnl = row.pnl ?? null;
-        const tone = pnl === null ? 'neutral' : pnl > 0 ? 'green' : pnl < 0 ? 'red' : 'neutral';
-        return (
-          <Badge tone={tone} title={tooltipPnL(row.symbol, row.entry_price ?? null, row.exit_price ?? null)}>
-            {fmtPnlUSD(pnl)}
-          </Badge>
-        );
-      },
     },
     {
       key: 'reason',
