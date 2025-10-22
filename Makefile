@@ -56,3 +56,9 @@ prod-seed:
 
 smoke:
 	./scripts/smoke.sh
+
+quick-up:
+	docker compose up -d db
+	sleep 2
+	docker compose up -d api
+	docker compose ps

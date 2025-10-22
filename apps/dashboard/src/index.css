@@ -28,7 +28,8 @@ a {
 }
 
 .dashboard-wrapper {
-  max-width: 1200px;
+  max-width: 1800px;
+  width: 100%;
   margin: 0 auto;
   padding: 36px 20px 64px;
   display: flex;
@@ -261,6 +262,7 @@ a {
   width: 100%;
   border-collapse: collapse;
   font-size: 13px;
+  table-layout: fixed;
 }
 
 .dashboard-table thead {
@@ -272,9 +274,11 @@ a {
 }
 
 .dashboard-table thead th {
-  padding: 14px 16px;
+  padding: 10px 12px;
   border-bottom: 1px solid var(--apex-table-border);
   text-align: left;
+  white-space: normal;
+  word-break: break-word;
 }
 
 .dashboard-table tbody tr {
@@ -286,9 +290,169 @@ a {
 }
 
 .dashboard-table tbody td {
-  padding: 12px 16px;
+  padding: 10px 12px;
   border-bottom: 1px solid var(--apex-table-divider);
   color: var(--apex-text);
+  white-space: normal;
+  word-break: break-word;
+  vertical-align: middle;
+}
+
+.col-opened {
+  width: 140px;
+  white-space: nowrap;
+}
+
+.col-dir {
+  width: 70px;
+  text-align: center;
+}
+
+.col-dir .dashboard-badge {
+  margin: 0 auto;
+}
+
+.col-symbol {
+  width: 100px;
+}
+
+.col-strategy {
+  width: 110px;
+}
+
+.col-price {
+  width: 100px;
+}
+
+.col-narrow {
+  width: 110px;
+}
+
+.col-wide {
+  width: 160px;
+  white-space: normal;
+  word-break: break-word;
+}
+
+.col-actions {
+  width: 160px;
+}
+
+.col-status {
+  width: 170px;
+  white-space: normal;
+  word-break: break-word;
+}
+
+.dashboard-table-wrapper.worklist-table,
+.dashboard-table-wrapper.tickets-table {
+  overflow-x: auto;
+}
+
+.dashboard-table-wrapper.worklist-table .dashboard-table,
+.dashboard-table-wrapper.tickets-table .dashboard-table {
+  width: 100%;
+  table-layout: auto;
+  font-size: 12px;
+}
+
+.dashboard-table-wrapper.worklist-table thead th,
+.dashboard-table-wrapper.tickets-table thead th,
+.dashboard-table-wrapper.worklist-table tbody td,
+.dashboard-table-wrapper.tickets-table tbody td {
+  white-space: nowrap;
+  word-break: keep-all;
+  padding: 8px 10px;
+  text-align: center;
+}
+
+.dashboard-table-wrapper.worklist-table thead th,
+.dashboard-table-wrapper.tickets-table thead th {
+  font-size: 11px;
+  letter-spacing: 0.06em;
+}
+
+.dashboard-table-wrapper.worklist-table tbody td,
+.dashboard-table-wrapper.tickets-table tbody td {
+  font-size: 12px;
+}
+
+.dashboard-table-wrapper.worklist-table .col-opened,
+.dashboard-table-wrapper.tickets-table .col-opened {
+  width: 120px;
+}
+
+.dashboard-table-wrapper.worklist-table .col-dir,
+.dashboard-table-wrapper.tickets-table .col-dir {
+  width: 64px;
+}
+
+.dashboard-table-wrapper.worklist-table .col-symbol,
+.dashboard-table-wrapper.tickets-table .col-symbol {
+  width: 92px;
+}
+
+.dashboard-table-wrapper.worklist-table .col-strategy,
+.dashboard-table-wrapper.tickets-table .col-strategy {
+  width: 96px;
+}
+
+.dashboard-table-wrapper.worklist-table .col-price,
+.dashboard-table-wrapper.tickets-table .col-price {
+  width: 92px;
+}
+
+.dashboard-table-wrapper.worklist-table .col-narrow,
+.dashboard-table-wrapper.tickets-table .col-narrow {
+  width: 96px;
+}
+
+.dashboard-table-wrapper.worklist-table .col-wide,
+.dashboard-table-wrapper.tickets-table .col-wide {
+  width: 180px;
+  white-space: normal;
+  word-break: break-word;
+}
+
+.dashboard-table-wrapper.worklist-table .col-actions,
+.dashboard-table-wrapper.tickets-table .col-actions {
+  width: 150px;
+}
+
+.dashboard-table-wrapper.worklist-table .col-symbol .dashboard-badge,
+.dashboard-table-wrapper.tickets-table .col-symbol .dashboard-badge,
+.dashboard-table-wrapper.worklist-table .col-dir .dashboard-badge,
+.dashboard-table-wrapper.tickets-table .col-dir .dashboard-badge {
+  padding: 2px 6px;
+}
+
+.dashboard-table-wrapper.worklist-table .worklist-pnl {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  line-height: 1.1;
+  text-align: center;
+}
+
+.dashboard-table-wrapper.worklist-table .worklist-pnl__ticks {
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.dashboard-table-wrapper.worklist-table .worklist-pnl__usd {
+  font-size: 11px;
+  color: var(--apex-text-muted);
+}
+
+.dashboard-table-wrapper.worklist-table .worklist-pnl--positive .worklist-pnl__ticks,
+.dashboard-table-wrapper.worklist-table .worklist-pnl--positive .worklist-pnl__usd {
+  color: #15803d;
+}
+
+.dashboard-table-wrapper.worklist-table .worklist-pnl--negative .worklist-pnl__ticks,
+.dashboard-table-wrapper.worklist-table .worklist-pnl--negative .worklist-pnl__usd {
+  color: #b91c1c;
 }
 
 .dashboard-legend {

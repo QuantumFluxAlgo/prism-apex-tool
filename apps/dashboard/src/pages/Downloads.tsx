@@ -1,7 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import Badge from '../ui/Badge';
 import Button from '../ui/Button';
-import { getApiBase } from '../lib/apiBase';
+import { API_BASE } from '../lib/apiBase';
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 const MAX_RANGE_MS = 28 * DAY_MS;
@@ -31,7 +31,7 @@ function toLocalInput(iso: string) {
 }
 
 export default function Downloads() {
-  const apiBase = getApiBase();
+  const apiBase = API_BASE;
 
   const [symbol, setSymbol] = useState('ES=F');
   const [allSymbols, setAllSymbols] = useState(false);

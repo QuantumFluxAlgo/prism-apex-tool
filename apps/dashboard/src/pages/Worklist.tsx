@@ -7,10 +7,14 @@ import Button from '../ui/Button';
 import Badge from '../ui/Badge';
 import { Card, CardBody } from '../ui/Card';
 import { fetchTickets, completeTicket, fetchSymbols, type TicketRow } from '../lib/api';
+import { SymbolCoverage } from '../components/SymbolCoverage';
 import { fmtUtc } from '../utils/time';
 import { useToast } from '../context/ToastContext';
-import { fmtPrice, fmtR, fmtPnlUSD } from '../utils/number';
-import { tooltipPnL, tooltipDist } from '../utils/ticks';
+import { fmtPrice, fmtR } from '../utils/number';
+import { prefetchTickSpec, tooltipDist } from '../utils/ticks';
+import { Tooltip } from '../ui/Tooltip';
+import type { DisplayPnL } from '../utils/pnlDisplay';
+import { buildPnLDisplay } from '../utils/pnlDisplay';
 
 type ActionableRow = TicketRow & {
   rr?: number | null;
@@ -54,6 +58,223 @@ const DEFAULT_SYMBOL_OPTIONS = [
 
 const limit = 20;
 
+function pickNum<T extends Record<string, any>>(row: T | undefined | null, keys: string[]): number | null {
+  if (!row) return null;
+  for (const key of keys) {
+    const value = row[key];
+    if (typeof value === 'number' && Number.isFinite(value)) return value;
+    if (typeof value === 'string' && value.trim().length) {
+      const num = Number(value);
+      if (!Number.isNaN(num)) return num;
+    }
+  }
+  return null;
+}
+
+type Direction = 'LONG' | 'SHORT';
+
+type PnlInputs = {
+  key: string;
+  symbol: string;
+  direction: Direction;
+  entry: number | null;
+  stop: number | null;
+  target: number | null;
+};
+
+export type PnlCellState =
+  | { status: 'loading' }
+  | { status: 'invalid' }
+  | { status: 'pending'; reason?: string }
+  | { status: 'error'; reason?: string }
+  | { status: 'ready'; data: DisplayPnL };
+
+export const WorklistPnLContext = React.createContext<Record<string, PnlCellState>>({});
+
+function normaliseDirection(value: unknown): Direction {
+  return value && value.toString().toUpperCase() === 'SHORT' ? 'SHORT' : 'LONG';
+}
+
+function resolveSymbol(row: Record<string, any>): string {
+  return (
+    row.symbol ??
+    row.symbol_root ??
+    row.symbolRoot ??
+    row.yahooSymbol ??
+    row.instrument ??
+    'UNKNOWN'
+  );
+}
+
+function derivePnLInputs(row: Record<string, any>): PnlInputs {
+  const symbol = resolveSymbol(row);
+  const direction = normaliseDirection(row.direction ?? row.dir);
+  const entry = pickNum(row, ['entry_price', 'entry', 'entryPrice']);
+  const stop = pickNum(row, ['stop_price', 'stop', 'stopPrice']);
+  const target = pickNum(row, ['target_price', 'target', 'targetPrice']);
+
+  prefetchTickSpec(symbol);
+
+  return {
+    key: `${symbol}|${direction}|${entry ?? 'null'}|${stop ?? 'null'}|${target ?? 'null'}`,
+    symbol,
+    direction,
+    entry,
+    stop,
+    target,
+  };
+}
+
+function hasCompleteInputs(inputs: PnlInputs): inputs is PnlInputs & {
+  entry: number;
+  stop: number;
+  target: number;
+} {
+  return [inputs.entry, inputs.stop, inputs.target].every((value) => typeof value === 'number' && Number.isFinite(value));
+}
+
+const USD = new Intl.NumberFormat('en-US', {
+  style: 'currency',
+  currency: 'USD',
+  minimumFractionDigits: 2,
+  maximumFractionDigits: 2,
+});
+
+function formatCurrency(value: number | null | undefined): string {
+  if (value === null || value === undefined || Number.isNaN(value)) return '—';
+  return USD.format(value);
+}
+
+type TickPnlDisplay = { tickText: string; usdText: string };
+
+function resolveTickAndPnl(ticks: number | null | undefined, pnl: number | null | undefined): TickPnlDisplay | null {
+  if (ticks === null || ticks === undefined || pnl === null || pnl === undefined) return null;
+  const signedTicks = Math.sign(pnl || 0) === 0 ? ticks : Math.sign(pnl) * Math.abs(ticks);
+  if (!Number.isFinite(signedTicks)) return null;
+  const usdText = formatCurrency(pnl);
+  if (usdText === '—') return null;
+  return {
+    tickText: signedTicks.toString(),
+    usdText,
+  };
+}
+
+function resolvePnlState(row: ActionableRow, map: Record<string, PnlCellState>) {
+  const inputs = derivePnLInputs(row as Record<string, any>);
+  return { inputs, state: map[inputs.key] } as const;
+}
+
+export function PnLDataCell({ row, field }: { row: ActionableRow; field: 'tick' | 'target' | 'stop' }) {
+  const stateMap = React.useContext(WorklistPnLContext);
+  const { inputs, state } = React.useMemo(() => resolvePnlState(row, stateMap), [row, stateMap]);
+
+  if (!hasCompleteInputs(inputs)) {
+    return (
+      <Tooltip text="Entry, Stop, and Target required">
+        <span className="text-xs text-gray-400">—</span>
+      </Tooltip>
+    );
+  }
+
+  if (!state || state.status === 'loading') {
+    return <span className="text-xs text-gray-400">loading…</span>;
+  }
+
+  if (state.status === 'invalid') {
+    return (
+      <Tooltip text="Entry, Stop, and Target required">
+        <span className="text-xs text-gray-400">—</span>
+      </Tooltip>
+    );
+  }
+
+  if (state.status === 'pending') {
+    if (field !== 'tick') {
+      return (
+        <Tooltip text={state.reason ?? 'Tick spec pending verification'}>
+          <span className="text-xs text-gray-400">—</span>
+        </Tooltip>
+      );
+    }
+    return (
+      <Tooltip text={state.reason ?? 'Tick spec pending verification'}>
+        <Badge tone="amber">Spec pending</Badge>
+      </Tooltip>
+    );
+  }
+
+  if (state.status === 'error') {
+    if (field !== 'tick') {
+      return (
+        <Tooltip text={state.reason ?? 'Unable to compute PnL'}>
+          <span className="text-xs text-gray-400">—</span>
+        </Tooltip>
+      );
+    }
+    return (
+      <Tooltip text={state.reason ?? 'Unable to compute PnL'}>
+        <Badge tone="red">Error</Badge>
+      </Tooltip>
+    );
+  }
+
+  const display = state.data;
+
+  if (field === 'tick') {
+    return <span className="text-sm font-medium text-gray-900">{formatCurrency(display.tickValueUSD)}</span>;
+  }
+
+  if (field === 'target') {
+    const resolved = resolveTickAndPnl(display.ticksToTarget, display.pnlTargetUSD);
+    if (!resolved) {
+      return <span className="text-xs text-gray-400">—</span>;
+    }
+    return (
+      <div
+        className="worklist-pnl worklist-pnl--positive"
+        title={`${resolved.tickText} ticks = ${resolved.usdText}`}
+      >
+        <span className="worklist-pnl__ticks">{resolved.tickText}</span>
+        <span className="worklist-pnl__usd">{resolved.usdText}</span>
+      </div>
+    );
+  }
+
+  const resolved = resolveTickAndPnl(display.ticksToStop, display.pnlStopUSD);
+  if (!resolved) {
+    return <span className="text-xs text-gray-400">—</span>;
+  }
+  return (
+    <div
+      className="worklist-pnl worklist-pnl--negative"
+      title={`${resolved.tickText} ticks = ${resolved.usdText}`}
+    >
+      <span className="worklist-pnl__ticks">{resolved.tickText}</span>
+      <span className="worklist-pnl__usd">{resolved.usdText}</span>
+    </div>
+  );
+}
+
+export function PnLRRCell({ row }: { row: ActionableRow }) {
+  const stateMap = React.useContext(WorklistPnLContext);
+  const { inputs, state } = React.useMemo(() => resolvePnlState(row, stateMap), [row, stateMap]);
+
+  if (!hasCompleteInputs(inputs)) {
+    return fmtR(deriveR(row));
+  }
+
+  if (!state || state.status !== 'ready') {
+    return fmtR(deriveR(row));
+  }
+
+  const rr = state.data.rr;
+  if (rr === null || rr === undefined || Number.isNaN(rr)) {
+    return fmtR(deriveR(row));
+  }
+
+  return fmtR(rr);
+}
+
 export default function Worklist() {
   const { toast } = useToast();
   const [rows, setRows] = useState<ActionableRow[]>([]);
@@ -68,6 +289,7 @@ export default function Worklist() {
     status: 'OPEN',
     showShorts: false,
   });
+  const [pnlState, setPnlState] = useState<Record<string, PnlCellState>>({});
 
   useEffect(() => {
     let cancelled = false;
@@ -143,130 +365,237 @@ export default function Worklist() {
     };
   }, [load]);
 
+  useEffect(() => {
+    let cancelled = false;
+    const inputsList = rows.map((row) => derivePnLInputs(row as Record<string, any>));
+
+    const initialState: Record<string, PnlCellState> = {};
+    for (const inputs of inputsList) {
+      initialState[inputs.key] = hasCompleteInputs(inputs) ? { status: 'loading' } : { status: 'invalid' };
+    }
+    setPnlState(initialState);
+
+    const validInputs = inputsList.filter(hasCompleteInputs);
+    if (validInputs.length === 0) {
+      return () => {
+        cancelled = true;
+      };
+    }
+
+    void (async () => {
+      const results = await Promise.all(
+        validInputs.map(async (inputs) => {
+          try {
+            const display = await buildPnLDisplay(
+              inputs.symbol,
+              inputs.entry,
+              inputs.target,
+              inputs.stop,
+              inputs.direction,
+              1,
+            );
+            if (!display.showNumbers) {
+              return {
+                key: inputs.key,
+                state: { status: 'pending', reason: display.reason } as PnlCellState,
+              };
+            }
+            return {
+              key: inputs.key,
+              state: { status: 'ready', data: display } as PnlCellState,
+            };
+          } catch (err) {
+            const reason = err instanceof Error ? err.message : String(err);
+            return {
+              key: inputs.key,
+              state: { status: 'error', reason } as PnlCellState,
+            };
+          }
+        }),
+      );
+
+      if (cancelled) return;
+      setPnlState((prev) => {
+        const next = { ...prev };
+        for (const { key, state } of results) {
+          next[key] = state;
+        }
+        return next;
+      });
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [rows]);
+
   const symbolCount = useMemo(() => new Set(rows.map((row) => row.symbol)).size, [rows]);
   const actionableCount = useMemo(() => rows.filter((row) => row.actionable).length, [rows]);
   const shortCount = useMemo(() => rows.filter((row) => row.direction === 'SHORT').length, [rows]);
   const nextDisabled = offset + limit >= total;
 
   const columns: DataTableColumn<ActionableRow>[] = [
-    {
-      key: 'opened_at_utc',
-      header: 'Opened (UTC/GMT)',
-      render: (row) => fmtUtc(row.opened_at_utc),
-    },
-    {
-      key: 'direction',
-      header: 'Dir',
-      render: (row) => (
-        <Badge
-          tone={row.direction === 'LONG' ? 'green' : 'gray'}
-          title={row.direction === 'LONG' ? 'Long (actionable)' : 'Short (view only)'}
-        >
-          {row.direction}
-        </Badge>
-      ),
-    },
-    {
-      key: 'symbol',
-      header: 'Symbol',
-      render: (row) => <Badge tone="blue">{row.symbol}</Badge>,
-    },
-    {
-      key: 'strategy',
-      header: 'Strat',
-      render: (row) => row.strategy,
-    },
-    {
-      key: 'entry_price',
-      header: 'Entry',
-      align: 'right',
-      render: (row) => fmtPrice(row.entry_price ?? undefined),
-    },
-    {
-      key: 'stop_price',
-      header: 'Stop',
-      align: 'right',
-      render: (row) => (
+  {
+    key: 'opened_at_utc',
+    header: 'Opened',
+    align: 'center',
+    className: 'col-opened text-center',
+    render: (row) => fmtUtc(row.opened_at_utc),
+  },
+  {
+    key: 'direction',
+    header: 'Dir',
+    align: 'center',
+    className: 'col-dir text-center',
+    render: (row) => (
+      <Badge
+        tone={row.direction === 'LONG' ? 'green' : 'gray'}
+        title={row.direction === 'LONG' ? 'Long (actionable)' : 'Short (view only)'}
+      >
+        {row.direction}
+      </Badge>
+    ),
+  },
+  {
+    key: 'symbol',
+    header: 'Symbol',
+    align: 'center',
+    className: 'col-symbol text-center',
+    render: (row) => <Badge tone="blue">{row.symbol}</Badge>,
+  },
+  {
+    key: 'strategy',
+    header: 'Strat',
+    align: 'center',
+    className: 'col-strategy text-center',
+    render: (row) => row.strategy,
+  },
+  {
+    key: 'entry_price',
+    header: 'Entry',
+    align: 'center',
+    className: 'col-price text-center',
+    render: (row) => fmtPrice(row.entry_price ?? undefined),
+  },
+  {
+    key: 'stop_price',
+    header: 'Stop',
+    align: 'center',
+    className: 'col-price text-center',
+    render: (row) => (
       <span title={tooltipDist(row.symbol, row.entry_price ?? null, row.stop_price ?? null, 'Stop Δ')}>
         {fmtPrice(row.stop_price ?? undefined)}
       </span>
     ),
-    },
-    {
-      key: 'target_price',
-      header: 'Target',
-      align: 'right',
-      render: (row) => (
+  },
+  {
+    key: 'target_price',
+    header: 'Target',
+    align: 'center',
+    className: 'col-price text-center',
+    render: (row) => (
       <span title={tooltipDist(row.symbol, row.entry_price ?? null, row.target_price ?? null, 'Target Δ')}>
         {fmtPrice(row.target_price ?? undefined)}
       </span>
     ),
-    },
-    {
-      key: 'rr',
-      header: 'R:R',
-      align: 'right',
-      render: (row) => fmtR(deriveR(row)),
-    },
-    {
-      key: 'pnl',
-      header: 'PnL',
-      align: 'right',
-      render: (row) => {
-        const pnl = row.pnl ?? null;
-        const tone = pnl === null ? 'neutral' : pnl > 0 ? 'green' : pnl < 0 ? 'red' : 'neutral';
-        return (
-          <Badge tone={tone} title={tooltipPnL(row.symbol, row.entry_price ?? null, row.exit_price ?? null)}>
-            {fmtPnlUSD(pnl)}
-          </Badge>
-        );
-      },
-    },
-    {
-      key: 'reason',
-      header: 'Warning',
-      render: (row) => (row.reason ? <Badge tone="amber">{row.reason}</Badge> : '—'),
-    },
-    {
-      key: 'action',
-      header: '',
-      className: 'text-right',
-      render: (row) => (
-        <div className="flex justify-end gap-2">
-          <CopyOcoButton
-            symbol={row.symbol}
-            direction={row.direction as 'LONG' | 'SHORT'}
-            entry={row.entry_price}
-            stop={row.stop_price}
-            target={row.target_price}
-            rr={deriveR(row) ?? undefined}
-            disabled={row.direction !== 'LONG'}
-          />
-          <Button
-            size="sm"
-            variant="primary"
-            disabled={!row.actionable || row.direction !== 'LONG' || row.status !== 'OPEN'}
-            onClick={async () => {
-              if (!row.id) return;
-              try {
-                const updated = await completeTicket(String(row.id), { user: 'operator', note: 'worklist' });
-                toast('Ticket marked complete');
-                setRows((prev) => prev.filter((entry) => entry.id !== updated.id));
-                setTotal((prev) => Math.max(0, prev - 1));
-              } catch (err) {
-                setError(err instanceof Error ? err.message : String(err));
-              }
-            }}
-          >
-            Mark Complete
-          </Button>
-        </div>
-      ),
-    },
+  },
+  {
+    key: 'rr',
+    header: 'R:R',
+    align: 'center',
+    className: 'col-narrow text-center',
+    render: (row) => <PnLRRCell row={row} />, 
+  },
+  {
+    key: 'pnlTickValue',
+    header: 'Tick $',
+    align: 'center',
+    className: 'col-narrow text-center',
+    render: (row) => <PnLDataCell row={row} field="tick" />, 
+  },
+  {
+    key: 'pnlTarget',
+    header: 'Target (t/$)',
+    align: 'center',
+    className: 'col-narrow text-center',
+    render: (row) => <PnLDataCell row={row} field="target" />, 
+  },
+  {
+    key: 'pnlStop',
+    header: 'Stop (t/$)',
+    align: 'center',
+    className: 'col-narrow text-center',
+    render: (row) => <PnLDataCell row={row} field="stop" />, 
+  },
+  {
+    key: 'reason',
+    header: 'Warning',
+    align: 'center',
+    className: 'col-wide text-center',
+    render: (row) => (row.reason ? <Badge tone="amber">{row.reason}</Badge> : '—'),
+  },
+  {
+    key: 'action',
+    header: '',
+    className: 'col-actions text-right',
+    render: (row) => (
+      <div className="flex justify-end gap-2">
+        <CopyOcoButton
+          symbol={row.symbol}
+          direction={row.direction as 'LONG' | 'SHORT'}
+          entry={row.entry_price}
+          stop={row.stop_price}
+          target={row.target_price}
+          rr={deriveR(row) ?? undefined}
+          disabled={row.direction !== 'LONG'}
+        />
+        <Button
+          size="sm"
+          variant="primary"
+          disabled={!row.actionable || row.direction !== 'LONG' || row.status !== 'OPEN'}
+          onClick={async () => {
+            if (!row.id) return;
+            try {
+              const updated = await completeTicket(String(row.id), { user: 'operator', note: 'worklist' });
+              toast('Ticket marked complete');
+              setRows((prev) => prev.filter((entry) => entry.id !== updated.id));
+              setTotal((prev) => Math.max(0, prev - 1));
+            } catch (err) {
+              setError(err instanceof Error ? err.message : String(err));
+            }
+          }}
+        >
+          Mark Complete
+        </Button>
+      </div>
+    ),
+  },
   ];
 
   return (
     <div className="dashboard-stack">
+      <div className="mb-3">
+        <SymbolCoverage />
+      </div>
+      <div
+        data-testid="pnl-beta-banner"
+        style={{
+          marginBottom: 8,
+          opacity: 0.85,
+        }}
+      >
+        <span
+          style={{
+            padding: '4px 8px',
+            borderRadius: 6,
+            background: '#1e293b',
+            color: '#93c5fd',
+            fontSize: 12,
+          }}
+        >
+          PnL Beta Active — tick-based per-contract
+        </span>
+      </div>
       <Card>
         <CardBody className="dashboard-card__body stack">
           <FiltersBar
@@ -336,13 +665,16 @@ export default function Worklist() {
 
       <Card>
         <CardBody>
-          <DataTable
-            columns={columns}
-            rows={rows}
-            loading={loading}
-            emptyMessage="No actionable tickets at the moment."
-            rowKey={(row, index) => (row.id ? String(row.id) : index)}
-          />
+          <WorklistPnLContext.Provider value={pnlState}>
+            <DataTable
+              className="worklist-table"
+              columns={columns}
+              rows={rows}
+              loading={loading}
+              emptyMessage="No actionable tickets at the moment."
+              rowKey={(row, index) => (row.id ? String(row.id) : index)}
+            />
+          </WorklistPnLContext.Provider>
           <div className="mt-3 flex items-center justify-between">
             <div className="text-xs text-gray-400">
               Entry/Stop/Target and R are ORR-derived. SHORTs are visible but not actionable.

@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 import { defineConfig } from 'vitest/config';
 // eslint-disable-next-line import/no-extraneous-dependencies
 

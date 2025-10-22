@@ -191,12 +191,10 @@ async function main() {
     );
   `);
 
-  let total = 0;
   for (const s of SYMBOLS) {
     console.log(`[ingest] fetching ${s} ${RANGE}/${INTERVAL} ...`);
     const rows = await fetchBars(s);
     const written = await upsertBars(pg, s, rows);
-    total += written;
     console.log(`[ingest] ${s} upserted ${written} bars (of ${rows.length})`);
     await sleep(200); // be gentle
   }

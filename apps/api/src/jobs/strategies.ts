@@ -315,7 +315,7 @@ function maybeEmitDdbSuggestion(
     priorHigh,
     bufferTicks,
     minStopTicks,
-    rr: config.rr,
+    rr: config.rr ?? 2,
   });
   if (!plan) return;
 
@@ -327,7 +327,7 @@ function maybeEmitDdbSuggestion(
   const target = roundPrice(entry + targetTicks * tick.tickSize);
 
   const meta: Suggestion['meta'] = {
-    strategy: 'ORR',
+    strategy: 'APX-DDB-01',
     rr: plan.rr,
     notes: plan.notes,
     weeklyVwap,

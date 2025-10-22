@@ -16,6 +16,7 @@ type Filters = {
   symbol?: string;
   strategy?: string;
   status?: string;
+  showShorts?: boolean;
 };
 
 const DEFAULT_SYMBOL_OPTIONS = [
@@ -55,6 +56,7 @@ export default function TicketsPage() {
     symbol: 'ALL',
     strategy: 'ALL',
     status: 'ALL',
+    showShorts: false,
   });
 
   useEffect(() => {
@@ -84,13 +86,15 @@ export default function TicketsPage() {
       symbol: filters.symbol && filters.symbol !== 'ALL' ? filters.symbol : undefined,
       strategy: filters.strategy && filters.strategy !== 'ALL' ? filters.strategy : undefined,
       status: filters.status && filters.status !== 'ALL' ? filters.status : undefined,
+      direction: filters.showShorts ? undefined : 'LONG',
     };
 
     fetchTickets(query)
       .then((response) => {
         if (cancelled) return;
         const rawRows = response.rows ?? [];
-        setRows(rawRows);
+        const filteredRows = filters.showShorts ? rawRows : rawRows.filter((row) => (row.direction ?? 'LONG') === 'LONG');
+        setRows(filteredRows);
         setTotal(typeof response.total === 'number' ? response.total : rawRows.length);
       })
       .catch((err) => {
@@ -105,7 +109,7 @@ export default function TicketsPage() {
     return () => {
       cancelled = true;
     };
-  }, [limit, offset, filters.from, filters.to, filters.symbol, filters.strategy, filters.status]);
+  }, [limit, offset, filters.from, filters.to, filters.symbol, filters.strategy, filters.status, filters.showShorts]);
 
   const statusCounts = useMemo(() => {
     return rows.reduce(
@@ -121,12 +125,16 @@ export default function TicketsPage() {
   const columns: DataTableColumn<TicketRow>[] = [
     {
       key: 'opened_at_utc',
-      header: 'Opened (UTC/GMT)',
+      header: 'Opened',
+      align: 'center',
+      className: 'col-opened text-center',
       render: (row) => fmtUtc(row.opened_at_utc),
     },
     {
       key: 'direction',
       header: 'Dir',
+      align: 'center',
+      className: 'col-dir text-center',
       render: (row) => (
         <Badge
           tone={row.direction === 'LONG' ? 'green' : 'gray'}
@@ -139,23 +147,29 @@ export default function TicketsPage() {
     {
       key: 'symbol',
       header: 'Symbol',
+      align: 'center',
+      className: 'col-symbol text-center',
       render: (row) => <Badge tone="blue">{row.symbol}</Badge>,
     },
     {
       key: 'strategy',
       header: 'Strat',
+      align: 'center',
+      className: 'col-strategy text-center',
       render: (row) => row.strategy,
     },
     {
       key: 'entry_price',
       header: 'Entry',
-      align: 'right',
+      align: 'center',
+      className: 'col-price text-center',
       render: (row) => fmtPrice(row.entry_price),
     },
     {
       key: 'stop_price',
       header: 'Stop',
-      align: 'right',
+      align: 'center',
+      className: 'col-price text-center',
       render: (row) => (
         <span title={tooltipDist(row.symbol, row.entry_price ?? null, row.stop_price ?? null, 'Stop Δ')}>
           {fmtPrice(row.stop_price)}
@@ -165,7 +179,8 @@ export default function TicketsPage() {
     {
       key: 'target_price',
       header: 'Target',
-      align: 'right',
+      align: 'center',
+      className: 'col-price text-center',
       render: (row) => (
         <span title={tooltipDist(row.symbol, row.entry_price ?? null, row.target_price ?? null, 'Target Δ')}>
           {fmtPrice(row.target_price)}
@@ -175,13 +190,15 @@ export default function TicketsPage() {
     {
       key: 'rr',
       header: 'R:R',
-      align: 'right',
+      align: 'center',
+      className: 'col-narrow text-center',
       render: (row) => fmtR(deriveR(row)),
     },
     {
       key: 'pnl',
       header: 'PnL',
-      align: 'right',
+      align: 'center',
+      className: 'col-narrow text-center',
       render: (row) => {
         const pnl = row.pnl ?? null;
         const tone = pnl === null ? 'neutral' : pnl > 0 ? 'green' : pnl < 0 ? 'red' : 'neutral';
@@ -195,8 +212,10 @@ export default function TicketsPage() {
     {
       key: 'status',
       header: 'Status',
+      align: 'center',
+      className: 'col-status text-center',
       render: (row) => (
-        <div className="flex flex-col gap-1">
+        <div className="flex flex-col items-center gap-1">
           <Badge tone={row.status === 'COMPLETE' ? 'blue' : row.actionable ? 'green' : 'amber'}>{row.status ?? '—'}</Badge>
           {!row.actionable && row.reason ? (
             <Badge tone="amber">{row.reason}</Badge>
@@ -250,7 +269,16 @@ export default function TicketsPage() {
                 },
               },
             ]}
-            toggles={[]}
+            toggles={[
+              {
+                label: 'Show SHORTs (view-only)',
+                checked: Boolean(filters.showShorts),
+                onChange: (checked) => {
+                  setOffset(0);
+                  setFilters((prev) => ({ ...prev, showShorts: checked }));
+                },
+              },
+            ]}
           />
         </CardBody>
       </Card>
@@ -267,6 +295,7 @@ export default function TicketsPage() {
       <Card>
         <CardBody>
           <DataTable
+            className="tickets-table"
             columns={columns}
             rows={rows}
             loading={loading}

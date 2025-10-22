@@ -1,3 +1,5 @@
+import { API_BASE, fetchJson } from './apiBase';
+
 export type ComplianceSnapshot = {
   eodState: string;
   stopRequired: boolean;
@@ -81,29 +83,11 @@ export type Order = {
   ocoGroupId?: string | null;
 };
 
-const COMPAT_BASE =
-  typeof window === 'undefined' ? 'http://localhost:3000/api/compat' : '/api/compat';
-
-const DIRECT_BASE =
-  typeof window === 'undefined' ? 'http://localhost:3000' : window.location.origin;
-
-async function request(base: string, path: string, init?: RequestInit) {
-  const res = await fetch(`${base}${path}`, init);
-  if (!res.ok) {
-    const text = await res.text().catch(() => '');
-    throw new Error(`API error ${res.status}${text ? `: ${text}` : ''}`);
-  }
-  return res.json();
-}
-
 export const api = {
-  get: (path: string) => request(COMPAT_BASE, path),
+  get: (path: string) => fetchJson(`/api/compat${path}`),
   tickets: (date: string, cursor?: string) =>
-    request(
-      DIRECT_BASE,
-      `/api/tickets?date=${date}&strategy=ORR${cursor ? `&cursor=${cursor}` : ''}`,
-    ),
-  ready: () => request(DIRECT_BASE, '/ready'),
+    fetchJson(`/api/tickets?date=${date}&strategy=ORR${cursor ? `&cursor=${cursor}` : ''}`),
+  ready: () => fetchJson('/ready'),
 };
 
 export async function fetchSymbols(): Promise<string[]> {
@@ -121,9 +105,10 @@ export async function fetchSymbols(): Promise<string[]> {
     '^GDAXI',
   ];
   try {
-    const res = await request(DIRECT_BASE, '/api/symbols');
-    if (Array.isArray((res as any).symbols) && (res as any).symbols.length) {
-      return (res as any).symbols as string[];
+    const res = (await fetchJson('/api/symbols')) as { symbols?: unknown };
+    const symbols = (res as any).symbols;
+    if (Array.isArray(symbols) && symbols.length) {
+      return symbols as string[];
     }
   } catch {
     // ignore and return fallback
@@ -142,8 +127,7 @@ export async function fetchTickets(params: {
   limit?: number;
   offset?: number;
 }): Promise<TicketsResponse> {
-  const base = typeof window === 'undefined' ? 'http://localhost:3000' : window.location.origin;
-  const url = new URL('/api/tickets', base);
+  const url = new URL('/api/tickets', API_BASE);
   const search = url.searchParams;
 
   if (params.from) search.set('from', params.from);
@@ -157,13 +141,7 @@ export async function fetchTickets(params: {
   search.set('limit', String(params.limit ?? 25));
   search.set('offset', String(params.offset ?? 0));
 
-  const response = await fetch(url.toString());
-  if (!response.ok) {
-    const text = await response.text().catch(() => '');
-    throw new Error(`Failed tickets: ${response.status}${text ? ` ${text}` : ''}`);
-  }
-
-  const data = (await response.json()) as TicketsResponse;
+  const data = (await fetchJson(url.toString())) as TicketsResponse;
   return {
     total: typeof data.total === 'number' ? data.total : data.rows?.length ?? 0,
     rows: Array.isArray(data.rows) ? data.rows : [],
@@ -171,12 +149,26 @@ export async function fetchTickets(params: {
 }
 
 export async function completeTicket(id: string, body: { user?: string; note?: string }) {
-  const res = await fetch(`/api/tickets/${encodeURIComponent(id)}/complete`, {
+  const json = (await fetchJson(`/api/tickets/${encodeURIComponent(id)}/complete`, {
     method: 'PATCH',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(body ?? {}),
-  });
-  if (!res.ok) throw new Error(`HTTP ${res.status}`);
-  const json = await res.json();
-  return json.row as TicketRow;
+  })) as { row: TicketRow };
+  return json.row;
+}
+
+// ---- symbols v2 (config-backed) ----
+export type SymbolSpecV2 = {
+  symbol: string;
+  description?: string;
+  tickSize: number | null;
+  tickValueUSD: number | null;
+  contractType: 'standard' | 'micro' | 'spot' | 'index';
+  feedAvailable: boolean;
+  tickSpecVerified: boolean;
+};
+
+export async function getSymbolSpecsV2(): Promise<SymbolSpecV2[]> {
+  const data = (await fetchJson('/api/symbols/v2')) as { symbols?: unknown[] };
+  return Array.isArray((data as any).symbols) ? ((data as any).symbols as SymbolSpecV2[]) : [];
 }

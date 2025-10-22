@@ -13,7 +13,7 @@ import { notifyRoutes } from './routes/notify.js';
 import { jobsRoutes } from './routes/jobs.js';
 import { compatRoutes } from './routes/compat.js';
 import healthRoute from './routes/health.js';
-import versionRoute from './routes/version.js';
+// import versionRoute from './routes/version.js';
 import { analyticsRoutes } from './routes/analytics.js';
 import { auditRoutes } from './routes/audit.js';
 import { accountsRoutes } from './routes/accounts.js';
@@ -28,6 +28,7 @@ import jobsBoot from './jobs/boot.js';
 import strategyAlias from './plugins/strategy-alias.js';
 import metricsRoute from './routes/metrics.js';
 import symbolsRoute from './routes/symbols.js';
+import symbolsV2Route from './routes/symbols.v2.js';
 import statusRoute from './routes/status.js';
 
 const cfg = getConfig();
@@ -152,6 +153,7 @@ export function buildServer() {
     await jobManager.stopAll();
   });
   app.register(openapiRoutes);
+  app.register(symbolsV2Route);
 
   return app;
 }

@@ -1,4 +1,4 @@
-import type { FastifyInstance } from 'fastify';
+import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
 import { Client } from 'pg';
 
 type Query = {
@@ -13,6 +13,7 @@ type Query = {
   scope?: string;
 };
 
+const ORR_STRATEGY_ID = 'APX-DDB-01';
 const STRATEGY_ALIASES = new Set([
   'orr',
   'open-range-retest',
@@ -25,11 +26,13 @@ const STRATEGY_ALIASES = new Set([
 function normalizeStrategy(s?: string | null) {
   if (!s) return undefined;
   const key = s.trim().toLowerCase();
-  return STRATEGY_ALIASES.has(key) ? 'ORR' : s;
+  return STRATEGY_ALIASES.has(key) ? ORR_STRATEGY_ID : s;
 }
 
+type TicketsRequest = FastifyRequest<{ Querystring: Query }>;
+
 export default async function ticketsRoute(app: FastifyInstance) {
-  const handler = async (req: { query?: Query }, reply: any) => {
+  const handler = async (req: TicketsRequest, reply: FastifyReply) => {
     const q = req.query ?? {};
 
     const limit = Math.max(0, Math.min(500, Number(q.limit ?? 50)));
