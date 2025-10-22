@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Card, CardBody, CardHeader } from '../ui/Card';
 import Button from '../ui/Button';
+import { fetchJson } from '../lib/apiBase';
 
 type ServiceKey = 'db' | 'api' | 'yahoo' | 'tickets_cron' | 'gapfill_cron';
 type HealthState = 'green' | 'amber' | 'red' | 'grey' | string | undefined;
@@ -82,9 +83,7 @@ export default function StatusPage() {
     if (!mountedRef.current) return;
     setIsRefreshing(true);
     try {
-      const res = await fetch(STATUS_ENDPOINT, { cache: 'no-store' });
-      if (!res.ok) throw new Error(`Request failed with ${res.status}`);
-      const payload: StatusPayload = await res.json();
+      const payload = (await fetchJson(STATUS_ENDPOINT)) as StatusPayload;
       if (!mountedRef.current) return;
       setStatus(payload);
       setError(null);

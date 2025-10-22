@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import Button from '../ui/Button';
+import { fetchJson } from '../lib/apiBase';
 import { useTheme } from '../ui/ThemeProvider';
 
 type Health = 'green' | 'amber' | 'red' | 'grey' | string | undefined | null;
@@ -42,9 +43,7 @@ export default function SystemStatusBar() {
     let cancelled = false;
     async function fetchStatus() {
       try {
-        const res = await fetch('/api/status', { cache: 'no-store' });
-        if (!res.ok) throw new Error(`status ${res.status}`);
-        const json: StatusResponse = await res.json();
+        const json = (await fetchJson('/api/status')) as StatusResponse;
         if (cancelled) return;
         setStatus(json);
         setError(false);
