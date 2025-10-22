@@ -10,7 +10,7 @@ export function fmtUtc(value?: string | null) {
   const hours = pad(date.getUTCHours());
   const minutes = pad(date.getUTCMinutes());
 
-  return `${year}-${month}-${day} ${hours}:${minutes} UTC (GMT)`;
+  return `${year}-${month}-${day} ${hours}:${minutes}`;
 }
 
 export function num(val?: number | null, digits = 2) {

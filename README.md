@@ -360,19 +360,28 @@ The codebase must never introduce broker order placement (tickets-only). CI enfo
 - `docker-compose*.yml` / `Dockerfile*` — Docker-first runtime definition. Keep docs aligned with exposed ports.
 
 ## Tick Spec & PnL mapping
-- Source of truth: `config/contracts-spec.json`
+- Source of truth: `config/contracts-spec.json`.
 - Captures tick size, USD tick value, and feed availability flags per symbol.
-- `tickSpecVerified` stays `false` until a Trader/Analyst confirms the spec.
-- Update `metadata.updatedAt` with the confirmation date and include the reviewer in commit notes.
-- Downstream consumers (upcoming `computePnL` helper and dashboard panels) will use these values to normalise profit reporting.
+- `tickSpecVerified` must stay `false` until a Trader/Analyst signs off; flip to `true` only after review and note the reviewer in `metadata.reviewer`.
+- Refresh `metadata.updatedAt` on every spec change so operators can see the latest audit trail.
+- Downstream consumers (API `/api/symbols/v2`, shared `@prism-apex/shared/contracts`, dashboard Worklist) read this file directly, so changes are instantly reflected after a redeploy.
 
 ### Short vs Long PnL
 - Per-contract PnL is computed via `@prism-apex/shared/pnl` using tick size and tick value USD.
 - The helper is direction-aware: LONG requires `target > entry`; SHORT requires `target < entry`.
 - Missing or unverified specs surface as warnings and disable projected PnL in the dashboard.
+- Operators should keep `tickSpecVerified=false` until contracts are fully vetted to avoid showing misleading numbers.
 
 ### API
 - `/api/symbols/v2` exposes the config-backed symbol specs for UIs and tooling.
+- Update `VITE_API_BASE` (dashboard env) if the API origin differs from the default `http://127.0.0.1:3000`.
+
+### Worklist PnL Beta
+- Dashboard Worklist now renders a **PnL (per contract)** column using the shared contracts spec.
+- Unverified specs display `Spec pending`; once verified, the cell shows tick value, target, stop, and R:R strings.
+- Tooltips for Stop/Target deltas are also powered by the shared contracts loader to keep messaging consistent.
+- Record verification dates and reviewers so operators know when PnL data is safe to trust.
+- After editing `config/contracts-spec.json`, run `docker compose build api dashboard-full` so local containers pick up the new spec.
 
 ---
 

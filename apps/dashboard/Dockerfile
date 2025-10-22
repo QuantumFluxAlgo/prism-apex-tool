@@ -11,6 +11,7 @@ COPY apps/dashboard/package.json apps/dashboard/package.json
 COPY apps apps
 COPY packages packages
 COPY tests tests
+COPY config config
 COPY tsconfig.base.json tsconfig.base.json
 COPY tsconfig.paths.json tsconfig.paths.json
 COPY types types

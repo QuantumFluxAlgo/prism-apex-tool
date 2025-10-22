@@ -1,16 +1,42 @@
-const DIRECT_BASE =
-  typeof window === 'undefined' ? 'http://localhost:3000' : window.location.origin;
+export const API_BASE =
+  (typeof import.meta !== 'undefined' && (import.meta as any)?.env?.VITE_API_BASE) ||
+  (typeof window !== 'undefined'
+    ? `${window.location.protocol}//${window.location.hostname}:3000`
+    : 'http://localhost:3000');
 
-export function getApiBase(): string {
-  return DIRECT_BASE;
-}
+type FetchJsonOpts = RequestInit & { expected?: number[] };
 
-export async function apiGet<T>(path: string, init: RequestInit = {}): Promise<T> {
-  const url = path.startsWith('http') ? path : `${getApiBase()}${path}`;
-  const res = await fetch(url, { credentials: 'include', ...init });
-  if (!res.ok) {
+export async function fetchJson(path: string, opts: FetchJsonOpts = {}) {
+  const url = path.startsWith('http') ? path : `${API_BASE}${path}`;
+  const expected = opts.expected ?? [200];
+  const res = await fetch(url, {
+    method: 'GET',
+    mode: 'cors',
+    credentials: 'omit',
+    cache: 'no-store',
+    redirect: 'follow',
+    ...opts,
+    headers: {
+      Accept: 'application/json',
+      ...(opts.headers ?? {}),
+    },
+  });
+
+  if (!expected.includes(res.status)) {
     const text = await res.text().catch(() => '');
-    throw new Error(`GET ${url} -> ${res.status}${text ? ` ${text}` : ''}`);
+    const hint = res.headers.get('content-type') || '(no content-type)';
+    throw new Error(
+      `[API] ${res.status} ${res.statusText} for ${url} — content-type: ${hint} — body: ${text.slice(0, 300)}`,
+    );
   }
-  return (await res.json()) as T;
+
+  const ct = (res.headers.get('content-type') || '').toLowerCase();
+  if (!ct.includes('application/json')) {
+    const text = await res.text().catch(() => '');
+    throw new Error(
+      `[API] Expected JSON from ${url} but got ${ct || 'unknown'} — body starts: ${text.slice(0, 120)}`,
+    );
+  }
+
+  return res.json();
 }

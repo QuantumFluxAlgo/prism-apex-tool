@@ -1,11 +1,3 @@
-// FENCED: tickets-only build; executable trading disabled
-function disabledTrading(..._args: any[]): never {
-  const e: any = new Error("Tickets-only build: trading disabled");
-  e.code = "ORDERS_DISABLED";
-  try { console.log(JSON.stringify({ event: "tickets.only_call", fn: "disabledTrading", ts: Date.now() })); } catch (_) {}
-  throw e;
-}
-
 import { getAccounts } from '@prism-apex/accounts';
 import type { AccountRecord } from '@prism-apex/accounts';
 import { guardApexFundingRules } from '@prism-apex/rules/apex.js';

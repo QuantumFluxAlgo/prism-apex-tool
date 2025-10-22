@@ -3,7 +3,8 @@ import { login, AuthEnv } from './auth.js';
 import { MarketDataWS } from './ws.js';
 import { getContractMeta } from './contracts.js';
 import { BarAggregator } from './bars.js';
-export { createTelemetryClient, TelemetrySnapshot } from './telemetry.js';
+export { createTelemetryClient } from './telemetry.js';
+export type { TelemetrySnapshot } from './telemetry.js';
 
 export interface TradovateClient {
   subscribeBars(symbol: string, interval: '1m' | '5m', cb: (bar: Bar) => void): void;

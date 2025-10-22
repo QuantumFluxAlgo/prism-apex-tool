@@ -94,8 +94,9 @@ export default function StatusPage() {
       const message = err instanceof Error ? err.message : String(err);
       setError(`Failed to load status: ${message}`);
     } finally {
-      if (!mountedRef.current) return;
-      setIsRefreshing(false);
+      if (mountedRef.current) {
+        setIsRefreshing(false);
+      }
     }
   }, []);
 

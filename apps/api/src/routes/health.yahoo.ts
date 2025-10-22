@@ -1,4 +1,4 @@
-import type { FastifyInstance } from 'fastify';
+import type { FastifyInstance, FastifyReply } from 'fastify';
 import { Client } from 'pg';
 
 function num(v: string | undefined, dflt: number): number {
@@ -59,7 +59,7 @@ export async function yahooHealthRoutes(app: FastifyInstance) {
     }
   }
 
-  async function handle(reply: any) {
+  async function handle(reply: FastifyReply) {
     const rows = await queryRows();
 
     // Optional: if it’s the weekend and everything is very stale, call it "paused"

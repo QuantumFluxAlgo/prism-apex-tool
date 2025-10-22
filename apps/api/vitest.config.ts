@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 import { defineConfig } from 'vitest/config';
 
 export default defineConfig(async () => {

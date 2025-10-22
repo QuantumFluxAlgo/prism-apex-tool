@@ -48,7 +48,7 @@ export default function SystemStatusBar() {
         if (cancelled) return;
         setStatus(json);
         setError(false);
-      } catch (err) {
+      } catch (_err) {
         if (cancelled) return;
         setError(true);
         setStatus(null);

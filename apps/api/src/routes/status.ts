@@ -63,7 +63,7 @@ function parseSymbolList(): string[] {
       .forEach((symbol) => seeded.add(symbol));
   }
 
-  const ordered = [...DEFAULT_SYMBOLS];
+  const ordered: string[] = [...DEFAULT_SYMBOLS];
   const remainder = Array.from(seeded)
     .filter((symbol) => !ordered.includes(symbol))
     .sort((a, b) => a.localeCompare(b));

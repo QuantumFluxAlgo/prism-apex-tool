@@ -13,7 +13,7 @@ import { notifyRoutes } from './routes/notify.js';
 import { jobsRoutes } from './routes/jobs.js';
 import { compatRoutes } from './routes/compat.js';
 import healthRoute from './routes/health.js';
-import versionRoute from './routes/version.js';
+// import versionRoute from './routes/version.js';
 import { analyticsRoutes } from './routes/analytics.js';
 import { auditRoutes } from './routes/audit.js';
 import { accountsRoutes } from './routes/accounts.js';
