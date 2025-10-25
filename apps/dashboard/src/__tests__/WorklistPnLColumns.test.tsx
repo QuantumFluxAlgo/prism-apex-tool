@@ -9,7 +9,8 @@ vi.mock('../utils/ticks', () => ({
 }));
 
 import type { DisplayPnL } from '../utils/pnlDisplay';
-import { PnLDataCell, PnLRRCell, WorklistPnLContext } from '../pages/Worklist';
+import { WorklistPnLContext } from '../hooks/usePnLState';
+import { PnLDataCell, PnLRRCell } from '../pages/Worklist';
 
 const baseRow = {
   symbol: 'ES=F',
