@@ -20,6 +20,7 @@ import { accountsRoutes } from './routes/accounts.js';
 import yahooHealthRoutes from './routes/health.yahoo.js';
 import { exportRoutes } from './routes/export.js';
 import ticketsRoute from './routes/tickets.js';
+import ticketsDebugRoute from './routes/tickets.debug.js';
 import ticketCompleteRoute from './routes/ticket.complete.js';
 import { tradingviewWebhookRoutes } from './routes/webhooks.tradingview.js';
 import readyRoute from './routes/ready.js';
@@ -112,6 +113,7 @@ export function buildServer() {
   app.register(statusRoute);
   
   app.register(ticketsRoute);
+  app.register(ticketsDebugRoute);
   app.register(ticketCompleteRoute);
   app.register(metricsRoute);
   app.register(analyticsRoutes);

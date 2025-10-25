@@ -1,7 +1,9 @@
-import type { FastifyInstance } from 'fastify';
+import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
 import { Client } from 'pg';
 import fs from 'node:fs';
 import { join } from 'node:path';
+import { exportTickets as exportFromStore } from '../store/tickets.js';
+import { isMockDbEnabled } from '../utils/testMode.js';
 
 const FOURTEEN_DAYS_MS = 28 * 24 * 60 * 60 * 1000; // now 28-day window
 const DEFAULT_ROW_LIMIT = 50000;
@@ -159,7 +161,7 @@ export async function exportRoutes(app: FastifyInstance) {
     }
   });
 
-  app.get('/api/export/tickets.csv', async (request, reply) => {
+  const ticketsHandler = async (request: FastifyRequest, reply: FastifyReply) => {
     const { strategy, status, direction, source, start, end, limit, symbol } = (request.query ?? {}) as {
       strategy?: string;
       status?: string;
@@ -169,6 +171,7 @@ export async function exportRoutes(app: FastifyInstance) {
       end?: string;
       limit?: string;
       symbol?: string;
+      date?: string;
     };
 
     const startIso = asUtcIso(start);
@@ -176,6 +179,37 @@ export async function exportRoutes(app: FastifyInstance) {
     const range = startIso && endIso ? clampWindow14d(startIso, endIso) : ensureRange(startIso, endIso);
 
     const rowLimit = Math.max(1, Math.min(DEFAULT_ROW_LIMIT, Number(limit ?? DEFAULT_ROW_LIMIT)));
+
+    if (isMockDbEnabled()) {
+      const date = (request.query as Record<string, string | undefined>).date;
+      if (!date) {
+        reply.code(400);
+        return reply.send({ error: 'date query param required in mock mode' });
+      }
+      const tickets = exportFromStore(date).slice(0, rowLimit);
+      const rows = tickets.map((ticket) => ({
+        symbol: ticket.symbol,
+        strategy: ticket.meta.strategy,
+        direction: ticket.side,
+        status: ticket.accepted ? 'ACCEPTED' : 'REJECTED',
+        opened_at_utc: ticket.timestampUtc,
+        'meta.strategy': ticket.meta.strategy,
+        'meta.rr': ticket.meta.rr ?? '',
+      }));
+      const csv = buildCsv(rows, [
+        { key: 'symbol', label: 'symbol' },
+        { key: 'strategy', label: 'strategy' },
+        { key: 'direction', label: 'direction' },
+        { key: 'status', label: 'status' },
+        { key: 'opened_at_utc', label: 'opened_at_utc' },
+        { key: 'meta.strategy', label: 'meta.strategy' },
+        { key: 'meta.rr', label: 'meta.rr' },
+      ]);
+      reply
+        .header('Content-Type', 'text/csv; charset=utf-8')
+        .header('Content-Disposition', `attachment; filename="tickets-${date}.csv"`);
+      return reply.send(csv);
+    }
 
     const clauses: string[] = [];
     const params: unknown[] = [];
@@ -239,7 +273,10 @@ export async function exportRoutes(app: FastifyInstance) {
     } finally {
       await client.end();
     }
-  });
+  };
+
+  app.get('/api/export/tickets.csv', ticketsHandler);
+  app.get('/export/tickets', ticketsHandler);
 }
 
 export default exportRoutes;

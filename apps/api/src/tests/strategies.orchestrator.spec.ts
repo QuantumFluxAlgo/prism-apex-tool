@@ -83,12 +83,54 @@ vi.mock('@prism-apex/strategies', () => ({
   },
 }));
 
+let ddbEmitted = false;
+vi.mock('@prism-apex/strategy-apx-ddb01', () => ({
+  planLongOnlyRetest: (opts: { currentPrice: number; tickSize: number }) => {
+    if (ddbEmitted || opts.currentPrice < 103) return null;
+    ddbEmitted = true;
+    return {
+      entry: opts.currentPrice,
+      stopTicks: 12,
+      rr: 3,
+      notes: 'mock-ddb',
+    };
+  },
+}));
+
 const fixturesDir = fileURLToPath(new URL('../../fixtures', import.meta.url));
 const configPath = join(fixturesDir, 'strategies.config.json');
 
+const FALLBACK_FIXTURES: Record<string, string> = {
+  'session_a.csv': [
+    'symbol,contract,ts,open,high,low,close,volume,session',
+    'ES,ESZ4,2024-01-01T14:30:00Z,100,101,99.5,100,1000,RTH',
+    'ES,ESZ4,2024-01-01T14:31:00Z,100,101.5,99.8,100.5,1000,RTH',
+    'ES,ESZ4,2024-01-01T14:32:00Z,100.5,101.8,100,100.8,1000,RTH',
+    'ES,ESZ4,2024-01-01T14:33:00Z,100.8,102,100.4,101.2,1000,RTH',
+    'ES,ESZ4,2024-01-01T14:34:00Z,101.2,102.2,100.7,101.5,1000,RTH',
+    'ES,ESZ4,2024-01-01T14:35:00Z,101.5,103,100.9,102,1000,RTH',
+    'ES,ESZ4,2024-01-01T14:36:00Z,102,103,100.5,101,1000,RTH',
+  ].join('\n'),
+  'session_b.csv': [
+    'symbol,contract,ts,open,high,low,close,volume,session',
+    'ES,ESZ4,2024-01-02T14:30:00Z,100,101,99.4,100,1000,RTH',
+    'ES,ESZ4,2024-01-02T14:31:00Z,100,101,99,100.2,1000,RTH',
+    'ES,ESZ4,2024-01-02T14:32:00Z,100.2,101,99.2,100.1,1000,RTH',
+    'ES,ESZ4,2024-01-02T14:33:00Z,100.1,100.9,99,100,1000,RTH',
+    'ES,ESZ4,2024-01-02T14:34:00Z,100,101,98.8,100.05,1000,RTH',
+    'ES,ESZ4,2024-01-02T14:35:00Z,100.05,100.5,97.5,98,1000,RTH',
+    'ES,ESZ4,2024-01-02T14:36:00Z,98,99,97.5,99,1000,RTH',
+    'ES,ESZ4,2024-01-02T14:37:00Z,99,104,98.5,103,1000,RTH',
+  ].join('\n'),
+};
+
 function loadCsv(name: string): BarMessage[] {
-  const lines = fs
-    .readFileSync(join(fixturesDir, name), 'utf8')
+  const path = join(fixturesDir, name);
+  const source = fs.existsSync(path) ? fs.readFileSync(path, 'utf8') : FALLBACK_FIXTURES[name];
+  if (!source) {
+    throw new Error(`fixture ${name} missing and no fallback content provided`);
+  }
+  const lines = source
     .trim()
     .split(/\n/)
     .slice(1);
@@ -115,6 +157,7 @@ describe('strategy orchestrator', () => {
 
   beforeAll(async () => {
     process.env.STRATEGIES_CONFIG_PATH = configPath;
+    ddbEmitted = false;
     await startStrategies();
     unsub = subscribe('suggestion', (s) => suggestions.push(s));
   });
@@ -125,6 +168,7 @@ describe('strategy orchestrator', () => {
   });
 
   it('replays fixtures and publishes suggestions once per direction', () => {
+    suggestions.length = 0;
     const a = loadCsv('session_a.csv');
     for (const b of a) publish('bars.1m', b);
     const b = loadCsv('session_b.csv');

@@ -108,10 +108,17 @@ interface Ddb01Config {
 interface Config {
   VWAP_FT: Record<string, any>;
   OSB: Record<string, any>;
-  'ORR': Ddb01Config;
+  DDB01: Ddb01Config;
 }
 
-let cfg: Config = { VWAP_FT: {}, OSB: {}, 'ORR': {} };
+type RawConfig = {
+  VWAP_FT?: Record<string, any>;
+  OSB?: Record<string, any>;
+  'APX-DDB-01'?: Ddb01Config;
+  ORR?: Ddb01Config;
+};
+
+let cfg: Config = { VWAP_FT: {}, OSB: {}, DDB01: {} };
 
 function loadConfig(): Config {
   const defaultPath =
@@ -121,11 +128,12 @@ function loadConfig(): Config {
     ? defaultPath
     : path.join(process.cwd(), '../../configs/strategies.default.json');
   const txt = fs.readFileSync(p, 'utf8');
-  const parsed = JSON.parse(txt) as Partial<Config>;
+  const parsed = JSON.parse(txt) as RawConfig;
+  const ddbConfig = parsed?.['APX-DDB-01'] ?? parsed?.ORR ?? {};
   return {
     VWAP_FT: parsed?.VWAP_FT ?? {},
     OSB: parsed?.OSB ?? {},
-    'ORR': parsed?.['ORR'] ?? {},
+    DDB01: ddbConfig ?? {},
   };
 }
 
@@ -215,7 +223,7 @@ function onBar(bar: BarMessage): void {
   }
 
   updateDdbState(cs, bar, wkey);
-  maybeEmitDdbSuggestion(bar, cs, tick, cfg['ORR']);
+  maybeEmitDdbSuggestion(bar, cs, tick, cfg.DDB01);
 
   swings(cs.bars as any, 3); // computed for side-effects (debug)
 

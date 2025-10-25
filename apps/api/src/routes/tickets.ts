@@ -1,5 +1,8 @@
 import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
 import { Client } from 'pg';
+import { listTickets } from '../store/tickets.js';
+import { isMockDbEnabled } from '../utils/testMode.js';
+import { TICKET_STRATEGIES, type TicketStrategy } from '../schemas/ticket.js';
 
 type Query = {
   limit?: string;
@@ -11,6 +14,8 @@ type Query = {
   status?: string;
   direction?: string;
   scope?: string;
+  date?: string;
+  cursor?: string;
 };
 
 const ORR_STRATEGY_ID = 'APX-DDB-01';
@@ -44,6 +49,11 @@ export default async function ticketsRoute(app: FastifyInstance) {
     const strategy = normalizeStrategy(q.strategy);
     const from = q.from;
     const to = q.to;
+
+    if (strategy && !TICKET_STRATEGIES.includes(strategy as TicketStrategy)) {
+      reply.code(400);
+      return reply.send({ error: 'Invalid query' });
+    }
 
     const where: string[] = [];
     const params: any[] = [];
@@ -93,6 +103,23 @@ export default async function ticketsRoute(app: FastifyInstance) {
       ) AS distinct_rows
     `;
 
+    if (isMockDbEnabled()) {
+      const date = q.date || q.from?.slice(0, 10);
+      if (!date) {
+        reply.code(400);
+        return reply.send({ error: 'date query param required in mock mode' });
+      }
+      const cursor = Math.max(0, Number(q.cursor ?? offset ?? 0));
+      const { items, nextCursor } = listTickets(date, cursor, limit, strategy);
+      const payload = {
+        total: items.length,
+        rows: items,
+        tickets: items,
+        nextCursor: nextCursor ?? null,
+      };
+      return reply.send(payload);
+    }
+
     const client = new Client({ connectionString: process.env.DATABASE_URL });
     await client.connect();
 
@@ -102,7 +129,7 @@ export default async function ticketsRoute(app: FastifyInstance) {
         client.query(countSql, params),
       ]);
       const total = countResult.rows[0]?.n ?? 0;
-      return reply.send({ total, rows: rowsResult.rows });
+      return reply.send({ total, rows: rowsResult.rows, tickets: rowsResult.rows });
     } finally {
       await client.end();
     }
