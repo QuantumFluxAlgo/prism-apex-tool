@@ -6,9 +6,11 @@ import FiltersBar from '../ui/FiltersBar';
 import Badge from '../ui/Badge';
 import Button from '../ui/Button';
 import { fmtUtc } from '../utils/time';
-import { fmtPrice, fmtR, fmtPnlUSD } from '../utils/number';
-import { tooltipPnL, tooltipDist } from '../utils/ticks';
+import { fmtPrice } from '../utils/number';
+import { tooltipDist } from '../utils/ticks';
 import { fetchSymbols, fetchTickets, type TicketRow } from '../lib/api';
+import { WorklistPnLContext, usePnLState } from '../hooks/usePnLState';
+import { PnLDataCell, PnLRRCell, type ActionableRow } from './Worklist';
 
 type Filters = {
   from?: string;
@@ -33,16 +35,6 @@ const DEFAULT_SYMBOL_OPTIONS = [
   'EURUSD=X',
   '^GDAXI',
 ];
-
-const deriveR = (row: TicketRow) => {
-  if (row.rr !== null && row.rr !== undefined && !Number.isNaN(row.rr)) return row.rr;
-  const entry = row.entry_price;
-  const stop = row.stop_price;
-  const target = row.target_price;
-  if (entry === null || entry === undefined || stop === null || stop === undefined || target === null || target === undefined) return null;
-  if (entry === stop) return null;
-  return Math.abs((target - entry) / (entry - stop));
-};
 
 export default function TicketsPage() {
   const [rows, setRows] = useState<TicketRow[]>([]);
@@ -110,6 +102,8 @@ export default function TicketsPage() {
       cancelled = true;
     };
   }, [limit, offset, filters.from, filters.to, filters.symbol, filters.strategy, filters.status, filters.showShorts]);
+
+  const pnlState = usePnLState(rows);
 
   const statusCounts = useMemo(() => {
     return rows.reduce(
@@ -192,22 +186,28 @@ export default function TicketsPage() {
       header: 'R:R',
       align: 'center',
       className: 'col-narrow text-center',
-      render: (row) => fmtR(deriveR(row)),
+      render: (row) => <PnLRRCell row={row as ActionableRow} />, 
     },
     {
-      key: 'pnl',
-      header: 'PnL',
+      key: 'pnlTickValue',
+      header: 'Tick $',
       align: 'center',
       className: 'col-narrow text-center',
-      render: (row) => {
-        const pnl = row.pnl ?? null;
-        const tone = pnl === null ? 'neutral' : pnl > 0 ? 'green' : pnl < 0 ? 'red' : 'neutral';
-        return (
-          <Badge tone={tone} title={tooltipPnL(row.symbol, row.entry_price ?? null, row.exit_price ?? null)}>
-            {fmtPnlUSD(pnl)}
-          </Badge>
-        );
-      },
+      render: (row) => <PnLDataCell row={row as ActionableRow} field="tick" />, 
+    },
+    {
+      key: 'pnlTarget',
+      header: 'Target (t/$)',
+      align: 'center',
+      className: 'col-narrow text-center',
+      render: (row) => <PnLDataCell row={row as ActionableRow} field="target" />, 
+    },
+    {
+      key: 'pnlStop',
+      header: 'Stop (t/$)',
+      align: 'center',
+      className: 'col-narrow text-center',
+      render: (row) => <PnLDataCell row={row as ActionableRow} field="stop" />, 
     },
     {
       key: 'status',
@@ -294,14 +294,16 @@ export default function TicketsPage() {
 
       <Card>
         <CardBody>
-          <DataTable
-            className="tickets-table"
-            columns={columns}
-            rows={rows}
-            loading={loading}
-            emptyMessage="No tickets match your filters."
-            rowKey={(row, index) => (row.id ? String(row.id) : index)}
-          />
+          <WorklistPnLContext.Provider value={pnlState}>
+            <DataTable
+              className="tickets-table"
+              columns={columns}
+              rows={rows}
+              loading={loading}
+              emptyMessage="No tickets match your filters."
+              rowKey={(row, index) => (row.id ? String(row.id) : index)}
+            />
+          </WorklistPnLContext.Provider>
           <div className="mt-3 flex items-center justify-between">
             <div className="text-xs text-gray-400">
               Entry/Stop/Target and R are ORR-derived. SHORTs are visible but not actionable.

@@ -11,12 +11,17 @@ import { SymbolCoverage } from '../components/SymbolCoverage';
 import { fmtUtc } from '../utils/time';
 import { useToast } from '../context/ToastContext';
 import { fmtPrice, fmtR } from '../utils/number';
-import { prefetchTickSpec, tooltipDist } from '../utils/ticks';
+import { tooltipDist } from '../utils/ticks';
 import { Tooltip } from '../ui/Tooltip';
-import type { DisplayPnL } from '../utils/pnlDisplay';
-import { buildPnLDisplay } from '../utils/pnlDisplay';
+import {
+  WorklistPnLContext,
+  hasCompleteInputs,
+  usePnLState,
+  derivePnLInputs,
+  type PnlCellState,
+} from '../hooks/usePnLState';
 
-type ActionableRow = TicketRow & {
+export type ActionableRow = TicketRow & {
   rr?: number | null;
   actionable?: boolean | null;
   reason?: string | null;
@@ -57,81 +62,6 @@ const DEFAULT_SYMBOL_OPTIONS = [
 ];
 
 const limit = 20;
-
-function pickNum<T extends Record<string, any>>(row: T | undefined | null, keys: string[]): number | null {
-  if (!row) return null;
-  for (const key of keys) {
-    const value = row[key];
-    if (typeof value === 'number' && Number.isFinite(value)) return value;
-    if (typeof value === 'string' && value.trim().length) {
-      const num = Number(value);
-      if (!Number.isNaN(num)) return num;
-    }
-  }
-  return null;
-}
-
-type Direction = 'LONG' | 'SHORT';
-
-type PnlInputs = {
-  key: string;
-  symbol: string;
-  direction: Direction;
-  entry: number | null;
-  stop: number | null;
-  target: number | null;
-};
-
-export type PnlCellState =
-  | { status: 'loading' }
-  | { status: 'invalid' }
-  | { status: 'pending'; reason?: string }
-  | { status: 'error'; reason?: string }
-  | { status: 'ready'; data: DisplayPnL };
-
-export const WorklistPnLContext = React.createContext<Record<string, PnlCellState>>({});
-
-function normaliseDirection(value: unknown): Direction {
-  return value && value.toString().toUpperCase() === 'SHORT' ? 'SHORT' : 'LONG';
-}
-
-function resolveSymbol(row: Record<string, any>): string {
-  return (
-    row.symbol ??
-    row.symbol_root ??
-    row.symbolRoot ??
-    row.yahooSymbol ??
-    row.instrument ??
-    'UNKNOWN'
-  );
-}
-
-function derivePnLInputs(row: Record<string, any>): PnlInputs {
-  const symbol = resolveSymbol(row);
-  const direction = normaliseDirection(row.direction ?? row.dir);
-  const entry = pickNum(row, ['entry_price', 'entry', 'entryPrice']);
-  const stop = pickNum(row, ['stop_price', 'stop', 'stopPrice']);
-  const target = pickNum(row, ['target_price', 'target', 'targetPrice']);
-
-  prefetchTickSpec(symbol);
-
-  return {
-    key: `${symbol}|${direction}|${entry ?? 'null'}|${stop ?? 'null'}|${target ?? 'null'}`,
-    symbol,
-    direction,
-    entry,
-    stop,
-    target,
-  };
-}
-
-function hasCompleteInputs(inputs: PnlInputs): inputs is PnlInputs & {
-  entry: number;
-  stop: number;
-  target: number;
-} {
-  return [inputs.entry, inputs.stop, inputs.target].every((value) => typeof value === 'number' && Number.isFinite(value));
-}
 
 const USD = new Intl.NumberFormat('en-US', {
   style: 'currency',
@@ -289,7 +219,7 @@ export default function Worklist() {
     status: 'OPEN',
     showShorts: false,
   });
-  const [pnlState, setPnlState] = useState<Record<string, PnlCellState>>({});
+  const pnlState = usePnLState(rows);
 
   useEffect(() => {
     let cancelled = false;
@@ -364,70 +294,6 @@ export default function Worklist() {
       if (timer) clearTimeout(timer);
     };
   }, [load]);
-
-  useEffect(() => {
-    let cancelled = false;
-    const inputsList = rows.map((row) => derivePnLInputs(row as Record<string, any>));
-
-    const initialState: Record<string, PnlCellState> = {};
-    for (const inputs of inputsList) {
-      initialState[inputs.key] = hasCompleteInputs(inputs) ? { status: 'loading' } : { status: 'invalid' };
-    }
-    setPnlState(initialState);
-
-    const validInputs = inputsList.filter(hasCompleteInputs);
-    if (validInputs.length === 0) {
-      return () => {
-        cancelled = true;
-      };
-    }
-
-    void (async () => {
-      const results = await Promise.all(
-        validInputs.map(async (inputs) => {
-          try {
-            const display = await buildPnLDisplay(
-              inputs.symbol,
-              inputs.entry,
-              inputs.target,
-              inputs.stop,
-              inputs.direction,
-              1,
-            );
-            if (!display.showNumbers) {
-              return {
-                key: inputs.key,
-                state: { status: 'pending', reason: display.reason } as PnlCellState,
-              };
-            }
-            return {
-              key: inputs.key,
-              state: { status: 'ready', data: display } as PnlCellState,
-            };
-          } catch (err) {
-            const reason = err instanceof Error ? err.message : String(err);
-            return {
-              key: inputs.key,
-              state: { status: 'error', reason } as PnlCellState,
-            };
-          }
-        }),
-      );
-
-      if (cancelled) return;
-      setPnlState((prev) => {
-        const next = { ...prev };
-        for (const { key, state } of results) {
-          next[key] = state;
-        }
-        return next;
-      });
-    })();
-
-    return () => {
-      cancelled = true;
-    };
-  }, [rows]);
 
   const symbolCount = useMemo(() => new Set(rows.map((row) => row.symbol)).size, [rows]);
   const actionableCount = useMemo(() => rows.filter((row) => row.actionable).length, [rows]);
