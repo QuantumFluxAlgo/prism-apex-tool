@@ -90,6 +90,52 @@
 - `make up` (starts the local stack – db, api, dashboard, ingress, cron)
 - `pnpm docs:lint`
 
+## Deployment (Local & Server)
+
+### Canonical Ports
+- API (DB mode): **3000**
+- API (mock mode): **8000**
+- Dashboard dev (Vite): **5173**
+- Dashboard prod (compose): **5180**
+- Postgres (host-mapped): **55433**
+
+See [PORTS.md](./PORTS.md) for the canonical matrix and guardrail script.
+
+### Local Mock Stack (fast dev loop)
+```bash
+# Start Fastify mock API (:8000) + Vite dashboard (:5173)
+bash scripts/local-up.sh
+
+# Quick smoke (health + tickets JSON/CSV)
+bash scripts/local-smoke.sh
+
+# Stop everything
+bash scripts/local-down.sh
+```
+
+### Local DB Mode (compose db + API, dev dashboard)
+```bash
+# 1) Database (host:55433 → db:5432)
+docker compose up -d db
+
+# 2) API (compose)
+DATABASE_URL=postgresql://apex:apex@db:5432/prismapex docker compose up -d api
+# Health: http://localhost:3000/health
+
+# 3) Dashboard (dev helper pointing to API :3000)
+API_URL=http://localhost:3000 bash scripts/dev-web-8000.sh
+# Open http://localhost:5173
+```
+
+### Server / Production-ish Bring-Up (from a tag)
+```bash
+# From a clone on the server (defaults to v1.0.0)
+TAG=v1.0.0 bash scripts/server-up.sh
+# DB: host:55433, API: http://<server>:3000, Web: http://<server>:5180
+```
+
+All flows reuse existing scripts/compose services; no new workflows were introduced.
+
 ### Docker Profiles at a Glance
 
 | Scenario            | Command                              | Services (profile)                             |
