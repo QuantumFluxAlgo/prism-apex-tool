@@ -1,8 +1,9 @@
 import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
 import { Client } from 'pg';
 import { listTickets } from '../store/tickets.js';
-import { isMockDbEnabled } from '../utils/testMode.js';
+import { isMockDbEnabled, isTestMode } from '../utils/testMode.js';
 import { TICKET_STRATEGIES, type TicketStrategy } from '../schemas/ticket.js';
+import { readTickets } from '../utils/mockStore.js';
 
 type Query = {
   limit?: string;
@@ -53,6 +54,16 @@ export default async function ticketsRoute(app: FastifyInstance) {
     if (strategy && !TICKET_STRATEGIES.includes(strategy as TicketStrategy)) {
       reply.code(400);
       return reply.send({ error: 'Invalid query' });
+    }
+
+    if (isTestMode() && !q.date && !q.from && !q.to) {
+      const cursorIso = typeof q.cursor === 'string' && q.cursor ? q.cursor : undefined;
+      const after = cursorIso ? Date.parse(cursorIso) : undefined;
+      const all = readTickets(limit + 1);
+      const filtered = after ? all.filter((t) => Date.parse(t.ts) > after) : all;
+      const page = filtered.slice(0, limit);
+      const nextCursor = filtered.length > page.length ? page[page.length - 1]?.ts ?? null : null;
+      return reply.send({ total: filtered.length, rows: page, tickets: page, nextCursor });
     }
 
     const where: string[] = [];
