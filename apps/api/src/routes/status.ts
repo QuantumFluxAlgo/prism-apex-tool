@@ -136,7 +136,7 @@ function healthFromAge(ageMs: number, relaxed: boolean): Health {
 }
 
 async function fetchIngressHealth(timeoutMs: number): Promise<Health> {
-  const url = process.env.INGRESS_HEALTH_URL ?? 'http://ingress:8080/health';
+  const url = process.env.INGRESS_HEALTH_URL ?? 'http://ingress-yahoo:8080/health';
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeoutMs);
   try {

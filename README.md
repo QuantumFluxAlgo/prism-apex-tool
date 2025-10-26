@@ -138,14 +138,14 @@ All flows reuse existing scripts/compose services; no new workflows were introdu
 
 ### Docker Profiles at a Glance
 
-| Scenario            | Command                              | Services (profile)                             |
+| Scenario            | Command                              | Services (profile) / Notes                     |
 |---------------------|--------------------------------------|------------------------------------------------|
-| Local parity        | `make up`                            | `db`, `api`, `dashboard-full`, `ingress-yahoo`, cron jobs (`local`) |
-| Local seed (one-off)| `make seed`                          | Runs ingest/gapfill/tickets jobs (`jobs`)      |
+| Local parity        | `make up`                            | Boots stack and automatically runs ingest/gapfill/tickets (`local` + `jobs`) |
+| Manual local reseed | `make seed`                          | Re-run ingest/gapfill/tickets on demand        |
 | Stop local stack    | `make down`                          |                                                |
 | Dashboard dev (Vite)| `make up-dev` / `make down-dev`      | `dashboard-dev` (`dev`)                        |
-| Production          | `make prod-up` / `make prod-down`    | `db`, `api`, `dashboard-full`, cron (`prod`)   |
-| Production seed     | `make prod-seed`                     | One-time ingest/gapfill/tickets jobs (`prod` + `jobs`) |
+| Production          | `make prod-up` / `make prod-down`    | Boots prod profile and automatically runs `prod-seed` |
+| Manual prod reseed  | `make prod-seed`                     | Re-run ingest/gapfill/tickets jobs (`prod` + `jobs`) |
 
 All of the above run against the unified `docker-compose.yml`; additional profiles can be combined with `docker compose --profile ...` if you need finer control.
 
@@ -350,7 +350,8 @@ Dev workflow (hot reload, if scripts exist)
 Prod-like workflow (Docker)
 make up
 
-# optional: one-time data seed
+# automatic: `make up` already runs the ingest/gapfill/tickets seed
+# rerun manually if you wiped volumes
 make seed
 
 Sanity checks
@@ -1754,7 +1755,8 @@ Alerts refresh automatically every 5 seconds.
 
 ```bash
 make up
-# optional: make seed
+# seeding runs automatically (rerun manually only if needed)
+# make seed
 ```
 
 ## GitHub Actions
@@ -1829,6 +1831,7 @@ This guide gives you three one-liners to prove the MVP works locally without rea
 ---
 
 ## 1) Seed the API store (safe demo state)
+*(Automatically runs during `make up`; re-run manually if you nuked data.)*
 
 ```bash
 make seed
@@ -1874,7 +1877,7 @@ Builds CLI, runs backtest, writes results to `./out`.
 
 **QUALITY GATES (must pass)**
 
-- `make seed` creates `.data/state.json` without errors.
+- `make seed` (also run automatically via `make up`) creates `.data/state.json` without errors.
 - `make backtest` writes `out/es_orb_sample.*` files and prints a JSON summary.
 - `make demo` runs end-to-end without external dependencies.
 - All new TS compiles with `tsc` (strict) and no `any`.
