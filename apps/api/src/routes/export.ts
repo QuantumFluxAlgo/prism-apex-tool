@@ -4,6 +4,7 @@ import fs from 'node:fs';
 import { join } from 'node:path';
 import { exportTickets as exportFromStore } from '../store/tickets.js';
 import { isMockDbEnabled } from '../utils/testMode.js';
+import { readTickets, toCsv } from '../utils/mockStore.js';
 
 const FOURTEEN_DAYS_MS = 28 * 24 * 60 * 60 * 1000; // now 28-day window
 const DEFAULT_ROW_LIMIT = 50000;
@@ -275,8 +276,22 @@ export async function exportRoutes(app: FastifyInstance) {
     }
   };
 
-  app.get('/api/export/tickets.csv', ticketsHandler);
+  const ticketsCsvMockHandler = async (request: FastifyRequest, reply: FastifyReply) => {
+    if (isMockDbEnabled() && !(request.query as Record<string, string | undefined>)?.date) {
+      const rows = readTickets(5000);
+      const csv = toCsv(rows);
+      reply
+        .header('Content-Type', 'text/csv; charset=utf-8')
+        .header('Content-Disposition', 'attachment; filename="tickets.csv"');
+      return reply.send(csv);
+    }
+
+    return ticketsHandler(request, reply);
+  };
+
   app.get('/export/tickets', ticketsHandler);
+  app.get('/api/export/tickets.csv', ticketsCsvMockHandler);
+  app.get('/export/tickets.csv', ticketsCsvMockHandler);
 }
 
 export default exportRoutes;
