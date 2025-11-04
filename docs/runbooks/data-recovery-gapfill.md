@@ -51,3 +51,19 @@ curl -sS "http://localhost:5190/api/tickets?limit=5" | jq .
 - If Yahoo returns data yet ceilings don’t move, verify schema/table names.
 
 No helper scripts required—compose overrides live with the repo.
+
+### If your compose file doesn’t define `db`
+Use `compose.gapfill-once.nodeps.yml` instead of `compose.gapfill-once.override.yml`.
+This variant removes `depends_on` so you can run gapfill against the live `DATABASE_URL` regardless of service names.
+Example:
+```bash
+API_ID=$(docker ps --format '{{.ID}} {{.Names}}' | awk 'tolower($0) ~ /(^|-)api(-| |$)/{print $1;exit}')
+DBURL=$(docker inspect -f '{{range .Config.Env}}{{println .}}{{end}}' "$API_ID" | awk -F= '$1=="DATABASE_URL"{print $2;exit}')
+export FROM_DATE="2025-10-31T00:00:00Z"
+export TO_DATE="2025-11-05T00:00:00Z"
+export SYMBOLS="ES=F,NQ=F,CL=F,EURUSD=X"
+docker compose -f docker-compose.yml \
+  -f compose.ingress-db.override.yml \
+  -f compose.gapfill-once.nodeps.yml \
+  run --rm -e DATABASE_URL="$DBURL" -e FROM_DATE -e TO_DATE -e SYMBOLS gapfill-once
+```
