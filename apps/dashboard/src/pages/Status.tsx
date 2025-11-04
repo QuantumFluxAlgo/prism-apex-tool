@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Card, CardBody, CardHeader } from '../ui/Card';
 import Button from '../ui/Button';
 import { fetchJson } from '../lib/apiBase';
+import RealtimeOpsCard from '../components/RealtimeOpsCard';
 
 type ServiceKey = 'db' | 'api' | 'yahoo' | 'tickets_cron' | 'gapfill_cron';
 type HealthState = 'green' | 'amber' | 'red' | 'grey' | string | undefined;
@@ -148,6 +149,8 @@ export default function StatusPage() {
           </div>
         </CardBody>
       </Card>
+
+      <RealtimeOpsCard />
 
       {error && <div className="status-error">{error}</div>}
 

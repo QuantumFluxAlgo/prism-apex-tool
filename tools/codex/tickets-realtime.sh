@@ -4,6 +4,10 @@ set -euo pipefail
 echo "[tickets-rt] starting realtime orchestrator"
 corepack enable || true
 
+HEARTBEAT_DIR="${HEARTBEAT_DIR:-/app/apps/api/data/ops}"
+HEARTBEAT_PATH="$HEARTBEAT_DIR/tickets-realtime.heartbeat"
+mkdir -p "$HEARTBEAT_DIR"
+
 build_safe() {
   # build once per loop to pick up any new artifacts
   pnpm -r --filter @prism-apex/tickets build || true
@@ -32,6 +36,7 @@ run_once() {
     echo "[tickets-rt] executing: node $JS"
     node "$JS" || true
   done
+  date -u +%FT%TZ > "$HEARTBEAT_PATH" || true
 }
 
 # main loop

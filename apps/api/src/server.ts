@@ -31,6 +31,7 @@ import metricsRoute from './routes/metrics.js';
 import symbolsRoute from './routes/symbols.js';
 import symbolsV2Route from './routes/symbols.v2.js';
 import statusRoute from './routes/status.js';
+import opsStatusRoute from './routes/opsStatus.js';
 
 const cfg = getConfig();
 
@@ -111,6 +112,7 @@ export function buildServer() {
   app.register(readyRoute);
   app.register(healthRoute);
   app.register(statusRoute);
+  app.register(opsStatusRoute);
   
   app.register(ticketsRoute);
   app.register(ticketsDebugRoute);
