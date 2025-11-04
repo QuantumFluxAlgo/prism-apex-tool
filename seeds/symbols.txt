@@ -1,0 +1,6 @@
+# Put one symbol per line to force-include on backfill even if not yet in DB.
+# Example:
+# ES=F
+# NQ=F
+# CL=F
+# EURUSD=X

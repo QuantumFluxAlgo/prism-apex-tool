@@ -78,3 +78,14 @@ pnpm run ops:postdeploy:gapfill
 ```
 
 CI Auto-Run: `.github/workflows/postdeploy-gapfill.yml` runs this step on pushes to Test/main only on a self-hosted runner with Docker. Configure your runner and (optional) repo var COMPOSE_FILE.
+
+### Hardening notes (post-deploy)
+- **Single entrypoint:** `tools/codex/postdeploy-gapfill.sh` (Bash-3.2 safe).
+- **Window:** defaults to last 14 days; override `FROM_DATE`/`TO_DATE`.
+- **Symbols:** DB ∪ seeds (`seeds/symbols.txt` or `SEED_SYMBOLS` env).
+- **Resilience:** chunking, 5x retry with exponential backoff, pause between chunks.
+- **Fallback:** `docker run` on API network if compose service isn’t present.
+- **Locking:** prevents concurrent runs (lock at `/tmp/prism-apex-postdeploy-gapfill.lock`).
+- **Outputs:** metrics at `apps/api/data/ops/backfill-metrics.json`, ceilings at `apps/api/data/ops/*.txt`.
+- **Verification:** `tools/codex/verify-stack.sh` (read-only).
+- **CI:** `.github/workflows/postdeploy-gapfill.yml` triggers on Test/main or via dispatch with inputs.

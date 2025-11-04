@@ -13,7 +13,8 @@
     "build:api": "pnpm -r --filter @prism-apex/api build",
     "test:e2e": "playwright test",
     "typecheck:api": "pnpm -r --filter @prism-apex/api typecheck",
-    "ops:postdeploy:gapfill": "tools/codex/postdeploy-gapfill.sh"
+    "ops:postdeploy:gapfill": "tools/codex/postdeploy-gapfill.sh",
+    "ops:verify": "tools/codex/verify-stack.sh"
   },
   "engines": {
     "node": ">=20 <21"
