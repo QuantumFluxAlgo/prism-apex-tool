@@ -67,3 +67,14 @@ docker compose -f docker-compose.yml \
   -f compose.gapfill-once.nodeps.yml \
   run --rm -e DATABASE_URL="$DBURL" -e FROM_DATE -e TO_DATE -e SYMBOLS gapfill-once
 ```
+
+## Standard post-deploy
+Use the single entrypoint to backfill **all** symbols every time (local/server):
+```bash
+export COMPOSE_FILE=/path/to/docker-compose.yml
+export FROM_DATE="2025-10-31T00:00:00Z"
+export TO_DATE="2025-11-05T00:00:00Z"
+pnpm run ops:postdeploy:gapfill
+```
+
+CI Auto-Run: `.github/workflows/postdeploy-gapfill.yml` runs this step on pushes to Test/main only on a self-hosted runner with Docker. Configure your runner and (optional) repo var COMPOSE_FILE.

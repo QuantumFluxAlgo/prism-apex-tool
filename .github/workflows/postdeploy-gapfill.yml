@@ -1,0 +1,24 @@
+name: Post-Deploy Gapfill
+on:
+  push:
+    branches: [ Test, main ]
+  workflow_dispatch: {}
+jobs:
+  gapfill:
+    if: ${{ runner.environment != '' || contains(join(runner.labels, ','), 'self-hosted') }}
+    runs-on: self-hosted
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Ensure pnpm
+        run: corepack enable
+      - name: Run postdeploy gapfill (docker host required)
+        env:
+          COMPOSE_FILE: ${{ vars.COMPOSE_FILE || '' }}
+          FROM_DATE: ${{ inputs.FROM_DATE || '' }}
+          TO_DATE: ${{ inputs.TO_DATE || '' }}
+          BATCH_SIZE: "6"
+          PAUSE_SECS: "10"
+        run: |
+          chmod +x tools/codex/postdeploy-gapfill.sh
+          tools/codex/postdeploy-gapfill.sh
