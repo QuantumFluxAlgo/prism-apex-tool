@@ -1,0 +1,5 @@
+services:
+  ingress-yahoo:
+    environment:
+      - DATABASE_URL
+      - NODE_PATH=/app/apps/ingest/node_modules
