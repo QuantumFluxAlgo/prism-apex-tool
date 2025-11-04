@@ -13,9 +13,12 @@ PAUSE_SECS="${PAUSE_SECS:-10}"
 ALLOW_REGEX="${ALLOW_REGEX:-.*}"
 DENY_REGEX="${DENY_REGEX:-^$}"
 
-if [[ -n "${COMPOSE_FILE:-}" && -f "$COMPOSE_FILE" ]]; then BASE="$COMPOSE_FILE"
+if [[ -n "${COMPOSE_FILE:-}" && -f "$COMPOSE_FILE" ]]; then
+  BASE="$COMPOSE_FILE"
 else
-  for c in docker-compose.yml docker-compose.yaml compose.yml compose.yaml; do [[ -f "$c" ]] && BASE="$c" && break; done
+  for c in docker-compose.yml docker-compose.yaml compose.yml compose.yaml; do
+    if [[ -f "$c" ]]; then BASE="$c"; break; fi
+  done
 fi
 [[ -z "${BASE:-}" ]] && { echo "❌ No compose file found"; exit 1; }
 
@@ -28,10 +31,9 @@ DBURL="$(docker inspect -f '{{range .Config.Env}}{{println .}}{{end}}' "$API_ID"
 [[ -z "${DBURL}" ]] && { echo "❌ DATABASE_URL missing on API"; exit 4; }
 
 mask(){ sed -E 's#://([^:]+):[^@]+@#://\1:***@#'; }
-BYTES=$(printf "%s" "$DBURL" | mask)
 echo "[postdeploy] BASE=$BASE"
-echo "[postdeploy] WINDOW: $FROM_DATE -> $TO_DATE  | batch=$BATCH_SIZE pause=${PAUSE_SECS}s"
-echo "[postdeploy] DATABASE_URL: $BYTES"
+echo "[postdeploy] WINDOW: $FROM_DATE -> $TO_DATE | batch=$BATCH_SIZE pause=${PAUSE_SECS}s"
+echo "[postdeploy] DATABASE_URL: $(printf "%s" "$DBURL" | mask)"
 
 docker compose -f "$BASE" -f compose.ingress-db.override.yml up -d ingress-yahoo >/dev/null
 
@@ -41,31 +43,38 @@ SQL='with s1 as (select distinct symbol from public.bars_1m),
      union
      select symbol from s2
      order by 1;'
-SYMS_RAW="$(docker exec "$DB_ID" sh -lc "psql -U apex -d prismapex -t -A -c \"$SQL\"" | sed '/^$/d')"
-[[ -z "${SYMS_RAW}" ]] && { echo "❌ No symbols discovered"; exit 5; }
-SYMS_FILTERED="$(echo "$SYMS_RAW" | awk -v A="$ALLOW_REGEX" -v D="$DENY_REGEX" 'tolower($0) ~ tolower(A) && tolower($0) !~ tolower(D)')"
-mapfile -t SYM_ARR < <(echo "$SYMS_FILTERED")
-TOTAL="${#SYM_ARR[@]}"; [[ "$TOTAL" -eq 0 ]] && { echo "❌ Zero symbols after filtering"; exit 6; }
-echo "[postdeploy] Symbols ($TOTAL):"; printf '  - %s\n' "${SYM_ARR[@]}"
+SYMS_FILTERED="$(docker exec "$DB_ID" sh -lc "psql -U apex -d prismapex -t -A -c \"$SQL\"" \
+  | sed '/^$/d' \
+  | awk -v A="$ALLOW_REGEX" -v D="$DENY_REGEX" 'tolower($0) ~ tolower(A) && tolower($0) !~ tolower(D)')"
+[[ -z "$SYMS_FILTERED" ]] && { echo "❌ Zero symbols after filtering"; exit 5; }
+TOTAL=$(printf "%s\n" "$SYMS_FILTERED" | wc -l | awk '{print $1}')
 
-i=0; b=1
-while (( i < TOTAL )); do
-  j=$(( i + BATCH_SIZE )); (( j > TOTAL )) && j=$TOTAL
-  CHUNK=("${SYM_ARR[@]:i:j-i}")
-  CHUNK_STR="$(IFS=,; echo "${CHUNK[*]}")"
-  echo; echo "[postdeploy] BATCH $b: ${CHUNK[*]}"
-  docker compose -f "$BASE" \
-    -f compose.ingress-db.override.yml \
-    -f compose.gapfill-once.nodeps.yml \
-    run --rm \
-      -e DATABASE_URL="$DBURL" \
-      -e FROM_DATE="$FROM_DATE" \
-      -e TO_DATE="$TO_DATE" \
-      -e SYMBOLS="$CHUNK_STR" \
-      gapfill-once || true
-  echo "[postdeploy] pause ${PAUSE_SECS}s..."; sleep "$PAUSE_SECS"
-  i=$j; b=$((b+1))
-done
+echo "[postdeploy] Symbols:"; printf '  - %s\n' "$SYMS_FILTERED"
+echo "[postdeploy] batching symbols (total=$TOTAL size=${BATCH_SIZE})..."
+
+printf "%s\n" "$SYMS_FILTERED" \
+| awk -v n="${BATCH_SIZE}" 'BEGIN{batch=0}
+    {
+      if (cnt==0){chunk=$0; cnt=1}
+      else {chunk=chunk","$0; cnt++}
+      if (cnt==n){batch++; printf "%d:%s\n", batch, chunk; chunk=""; cnt=0}
+    }
+    END { if (cnt>0){batch++; printf "%d:%s\n", batch, chunk;} }'
+| while IFS=: read -r BNUM CHUNK_STR; do
+    [ -z "$CHUNK_STR" ] && continue
+    echo
+    echo "[postdeploy] BATCH $BNUM: $(echo "$CHUNK_STR" | tr ',' ' ')"
+    docker compose -f "$BASE" \
+      -f compose.ingress-db.override.yml \
+      -f compose.gapfill-once.nodeps.yml \
+      run --rm \
+        -e DATABASE_URL="$DBURL" \
+        -e FROM_DATE="$FROM_DATE" \
+        -e TO_DATE="$TO_DATE" \
+        -e SYMBOLS="$CHUNK_STR" \
+        gapfill-once || true
+    echo "[postdeploy] pause ${PAUSE_SECS}s..."; sleep "$PAUSE_SECS"
+  done
 
 CRON_ID="$(cid 'tickets.*cron')" || true
 if [[ -n "${CRON_ID}" ]]; then
