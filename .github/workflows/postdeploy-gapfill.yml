@@ -1,0 +1,32 @@
+name: Post-Deploy Backfill
+on:
+  push:
+    branches: [ Test, main ]
+  workflow_dispatch:
+    inputs:
+      FROM_DATE:
+        description: ISO8601 start
+        required: false
+      TO_DATE:
+        description: ISO8601 end
+        required: false
+      SEED_SYMBOLS:
+        description: Comma list of extra symbols to include
+        required: false
+jobs:
+  backfill:
+    # Only run on self-hosted runners that have Docker & access to the compose host
+    runs-on: self-hosted
+    steps:
+      - uses: actions/checkout@v4
+      - name: Enable corepack
+        run: corepack enable || true
+      - name: Run hardened postdeploy backfill
+        env:
+          COMPOSE_FILE: ${{ vars.COMPOSE_FILE || '' }}
+          FROM_DATE: ${{ github.event.inputs.FROM_DATE || '' }}
+          TO_DATE: ${{ github.event.inputs.TO_DATE || '' }}
+          SEED_SYMBOLS: ${{ github.event.inputs.SEED_SYMBOLS || '' }}
+        run: |
+          chmod +x tools/codex/postdeploy-gapfill.sh
+          tools/codex/postdeploy-gapfill.sh

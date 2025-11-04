@@ -12,7 +12,9 @@
     "scan:dead": "depcheck --ignores=\"@typescript-eslint/*,@eslint/js,@types/react,@types/react-dom,eslint-config-prettier,eslint-plugin-import,eslint-plugin-prettier,eslint-plugin-simple-import-sort,globals,rimraf,ts-node,typescript-eslint\"",
     "build:api": "pnpm -r --filter @prism-apex/api build",
     "test:e2e": "playwright test",
-    "typecheck:api": "pnpm -r --filter @prism-apex/api typecheck"
+    "typecheck:api": "pnpm -r --filter @prism-apex/api typecheck",
+    "ops:postdeploy:gapfill": "tools/codex/postdeploy-gapfill.sh",
+    "ops:verify": "tools/codex/verify-stack.sh"
   },
   "engines": {
     "node": ">=20 <21"
