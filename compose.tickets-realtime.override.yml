@@ -1,0 +1,22 @@
+services:
+  tickets-realtime:
+    image: prism-apex/api:latest
+    container_name: prism-apex-tool-tickets-realtime
+    restart: unless-stopped
+    environment:
+      - NODE_ENV=production
+      - TZ=UTC
+      - DATABASE_URL=${DATABASE_URL:-postgresql://apex:apex@db:5432/prismapex?schema=public}
+      # keep in sync with API/session settings so strategies align with the active session
+      - SESSION_OPEN_UTC=${SESSION_OPEN_UTC:-23:05}
+      - SESSION_CLOSE_UTC=${SESSION_CLOSE_UTC:-21:55}
+    volumes:
+      # Mount our orchestrator script into the container
+      - ./tools/codex/tickets-realtime.sh:/app/tools/codex/tickets-realtime.sh:ro
+    command:
+      - /bin/sh
+      - -lc
+      - |
+        set -e
+        cd /app
+        /app/tools/codex/tickets-realtime.sh
