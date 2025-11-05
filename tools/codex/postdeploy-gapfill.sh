@@ -84,7 +84,8 @@ DB_SYMS="$(docker exec "$DB_ID" sh -lc "psql -U apex -d prismapex -t -A -c \"$SQ
 SEED_SYMS_ENV="${SEED_SYMBOLS:-}"
 SEED_SYMS_FILE=""
 if [ -f "seeds/symbols.txt" ]; then
-  SEED_SYMS_FILE="$(grep -v '^[[:space:]]*#' seeds/symbols.txt | sed '/^$/d' | tr '\n' ',' | sed 's/,$//')"
+  # Strip comments/blank lines without tripping -e when file contains only comments.
+  SEED_SYMS_FILE="$(sed -e 's/#.*$//' -e '/^[[:space:]]*$/d' seeds/symbols.txt | tr '\n' ',' | sed 's/,$//')"
 fi
 
 TMP_SYMS="$(mktemp -t syms.XXXXXX)"
@@ -113,21 +114,53 @@ awk -v n="$BATCH_SIZE" '
 # ---- runner: compose first, docker-run fallback (API network) ----
 run_chunk() {
   CHUNK_STR="$1"
-  # compose path
+
+  # try running inside the existing API container first (fast-path)
   set +e
-  docker compose -f "$BASE" \
-    -f compose.ingress-db.override.yml \
-    -f compose.gapfill-once.nodeps.yml \
-    run --rm \
-      -e DATABASE_URL="$DATABASE_URL" \
-      -e FROM_DATE="$FROM_DATE" \
-      -e TO_DATE="$TO_DATE" \
-      -e SYMBOLS="$CHUNK_STR" \
-      gapfill-once \
-      /bin/sh -lc "corepack enable || true; pnpm -r --filter @prism-apex/ingest build || true; npx -y ts-node apps/ingest/src/gapfill.ts --from \"$FROM_DATE\" --to \"$TO_DATE\" --symbols \"$CHUNK_STR\""
+  docker exec \
+    -e TZ=UTC \
+    -e DATABASE_URL="$DATABASE_URL" \
+    -e FROM_DATE="$FROM_DATE" \
+    -e TO_DATE="$TO_DATE" \
+    -e SYMBOLS="$CHUNK_STR" \
+    "$API_ID" \
+    /bin/sh -lc 'set -e; cd /app; corepack enable || true; pnpm --filter @prism-apex/ingest build || true; if [ -f apps/ingest/dist/gapfill.js ]; then node apps/ingest/dist/gapfill.js --from "$FROM_DATE" --to "$TO_DATE" --symbols "$SYMBOLS"; else pnpm --filter @prism-apex/ingest exec node --loader ts-node/esm src/gapfill.ts --from "$FROM_DATE" --to "$TO_DATE" --symbols "$SYMBOLS"; fi'
   rc=$?
   set -e
   if [ $rc -eq 0 ]; then return 0; fi
+  echo "[postdeploy] api container exec failed (rc=$rc); trying compose..."
+
+  # compose path (respect COMPOSE_PROFILES if set)
+  set +e
+  PROFILES_ARGS=""
+  if [ -n "${COMPOSE_PROFILES:-}" ]; then
+    for profile in $(printf "%s" "$COMPOSE_PROFILES" | tr ',' ' '); do
+      [ -n "$profile" ] && PROFILES_ARGS="$PROFILES_ARGS --profile $profile"
+    done
+  elif docker compose -f "$BASE" config --profiles >/dev/null 2>&1; then
+    PROFILES_LIST="$(docker compose -f "$BASE" config --profiles 2>/dev/null | tr -d '\r')"
+    if printf "%s\n" "$PROFILES_LIST" | grep -qx local; then
+      PROFILES_ARGS="--profile local"
+    elif printf "%s\n" "$PROFILES_LIST" | grep -qx prod; then
+      PROFILES_ARGS="--profile prod"
+    fi
+  fi
+  ( export DATABASE_URL="$DATABASE_URL";
+    docker compose $PROFILES_ARGS \
+      -f "$BASE" \
+      -f compose.ingress-db.override.yml \
+      -f compose.gapfill-once.nodeps.yml \
+      run --rm \
+        -e FROM_DATE="$FROM_DATE" \
+        -e TO_DATE="$TO_DATE" \
+        -e SYMBOLS="$CHUNK_STR" \
+        gapfill-once \
+        /bin/sh -lc 'set -e; corepack enable || true; pnpm -r --filter @prism-apex/ingest build || true; if [ -f apps/ingest/dist/gapfill.js ]; then node apps/ingest/dist/gapfill.js --from "$FROM_DATE" --to "$TO_DATE" --symbols "$SYMBOLS"; else pnpm --filter @prism-apex/ingest exec node --loader ts-node/esm src/gapfill.ts --from "$FROM_DATE" --to "$TO_DATE" --symbols "$SYMBOLS"; fi'
+  )
+  rc=$?
+  set -e
+  if [ $rc -eq 0 ]; then return 0; fi
+  echo "[postdeploy] compose fallback failed (rc=$rc); trying docker run..."
 
   # docker run fallback
   API_NET="$(docker inspect "$API_ID" -f '{{range $k,$v := .NetworkSettings.Networks}}{{println $k}}{{end}}' | head -n1)"
@@ -140,7 +173,7 @@ run_chunk() {
     -e TO_DATE="$TO_DATE" \
     -e SYMBOLS="$CHUNK_STR" \
     prism-apex:ingress-dev \
-    /bin/sh -lc "corepack enable || true; pnpm -r --filter @prism-apex/ingest build || true; npx -y ts-node apps/ingest/src/gapfill.ts --from \"$FROM_DATE\" --to \"$TO_DATE\" --symbols \"$CHUNK_STR\""
+    /bin/sh -lc 'set -e; corepack enable || true; pnpm -r --filter @prism-apex/ingest build || true; if [ -f apps/ingest/dist/gapfill.js ]; then node apps/ingest/dist/gapfill.js --from "$FROM_DATE" --to "$TO_DATE" --symbols "$SYMBOLS"; else pnpm --filter @prism-apex/ingest exec node --loader ts-node/esm src/gapfill.ts --from "$FROM_DATE" --to "$TO_DATE" --symbols "$SYMBOLS"; fi'
 }
 
 # ---- Execute batches with retries/backoff ----

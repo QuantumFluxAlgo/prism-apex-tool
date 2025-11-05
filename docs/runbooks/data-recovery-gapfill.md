@@ -4,7 +4,7 @@ Use the existing ingress job and one-shot compose service to backfill minute bar
 
 ## Prerequisites
 - Stack running (`api`, `db`, `ingress-yahoo`, `tickets-cron`).
-- `compose.ingress-db.override.yml` and `compose.gapfill-once.override.yml` present.
+- `compose.ingress-db.override.yml` and `compose.gapfill-once.nodeps.yml` present.
 
 ## 1. Capture `DATABASE_URL`
 ```bash
@@ -20,7 +20,7 @@ export SYMBOLS="ES=F,NQ=F,CL=F,EURUSD=X"
 
 docker compose -f docker-compose.yml \
   -f compose.ingress-db.override.yml \
-  -f compose.gapfill-once.override.yml \
+  -f compose.gapfill-once.nodeps.yml \
   run --rm \
   -e DATABASE_URL="$DBURL" -e FROM_DATE -e TO_DATE -e SYMBOLS \
   gapfill-once
@@ -53,8 +53,7 @@ curl -sS "http://localhost:5190/api/tickets?limit=5" | jq .
 No helper scripts required—compose overrides live with the repo.
 
 ### If your compose file doesn’t define `db`
-Use `compose.gapfill-once.nodeps.yml` instead of `compose.gapfill-once.override.yml`.
-This variant removes `depends_on` so you can run gapfill against the live `DATABASE_URL` regardless of service names.
+`compose.gapfill-once.nodeps.yml` skips `depends_on` so you can run gapfill against the live `DATABASE_URL` regardless of service names.
 Example:
 ```bash
 API_ID=$(docker ps --format '{{.ID}} {{.Names}}' | awk 'tolower($0) ~ /(^|-)api(-| |$)/{print $1;exit}')
@@ -69,15 +68,17 @@ docker compose -f docker-compose.yml \
 ```
 
 ## Standard post-deploy
-Use the single entrypoint to backfill **all** symbols every time (local/server):
+Use the single entrypoint to backfill the last 14 days (defaults) across all symbols discovered from the DB.
+The runner includes late symbols from `seeds/symbols.txt` and `SEED_SYMBOLS` if provided, and it prefers running inside the live API container, with compose/docker-run fallbacks.
+
 ```bash
-export COMPOSE_FILE=/path/to/docker-compose.yml
-export FROM_DATE="2025-10-31T00:00:00Z"
-export TO_DATE="2025-11-05T00:00:00Z"
+export COMPOSE_FILE=/path/to/docker-compose.yml    # optional; script auto-discovers docker-compose.yml otherwise
+export FROM_DATE="$(date -u -d '14 days ago 00:00:00' +%FT%TZ 2>/dev/null || date -u -v-14d +%Y-%m-%dT00:00:00Z)"
+export TO_DATE="$(date -u +%FT%TZ)"
 pnpm run ops:postdeploy:gapfill
 ```
 
-CI Auto-Run: `.github/workflows/postdeploy-gapfill.yml` runs this step on pushes to Test/main only on a self-hosted runner with Docker. Configure your runner and (optional) repo var COMPOSE_FILE.
+CI Auto-Run: `.github/workflows/postdeploy-gapfill.yml` runs this step on pushes to Test/main on a self-hosted runner with Docker. Configure your runner and (optional) repo var `COMPOSE_FILE`.
 
 ### Hardening notes (post-deploy)
 - **Single entrypoint:** `tools/codex/postdeploy-gapfill.sh` (Bash-3.2 safe).

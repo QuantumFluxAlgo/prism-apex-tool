@@ -1,0 +1,20 @@
+services:
+  gapfill-realtime:
+    image: prism-apex:ingress-dev
+    container_name: prism-apex-tool-gapfill-realtime
+    restart: unless-stopped
+    environment:
+      - TZ=UTC
+      - DATABASE_URL=${DATABASE_URL:-postgresql://apex:apex@db:5432/prismapex?schema=public}
+      - HEARTBEAT_DIR=/data/ops
+      # DATABASE_URL will be inherited via compose.ingress-db.override.yml
+    volumes:
+      - ./tools/codex/gapfill-realtime.sh:/app/tools/codex/gapfill-realtime.sh:ro
+      - api_data:/data
+    command:
+      - /bin/sh
+      - -lc
+      - |
+        set -e
+        cd /app
+        sh /app/tools/codex/gapfill-realtime.sh

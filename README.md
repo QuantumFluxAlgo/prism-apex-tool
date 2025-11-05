@@ -3638,3 +3638,29 @@ pnpm --filter @prism-apex/api test
 (Optional) create var/pnl/daily.json and curl:
 curl -s "http://localhost:3000/report/consistency?window=8
 " | jq .
+
+## Realtime mode (ops-only)
+
+Prism-Apex can run in realtime without changing strategy code.
+
+**Enable (local/server):**
+```bash
+# Optional: point COMPOSE_FILE at your bundle if not docker-compose.yml
+# export COMPOSE_FILE=/path/to/your-compose.yml
+TOOLS="tools/codex"
+$TOOLS/enable-realtime.sh
+```
+
+**Disable:**
+```bash
+$TOOLS/disable-realtime.sh
+```
+
+**Verify (bars → tickets → API):**
+```bash
+$TOOLS/check-realtime.sh
+```
+
+- `gapfill-realtime` keeps `bars_1m` current (today → now) every 60s.
+- `tickets-realtime` discovers all `apps/tickets/dist/backfill-*.js` runners and executes each every minute so every strategy emits tickets continuously.
+- Works on macOS and Linux hosts; reads `DATABASE_URL` from the live API container (or your compose env).
