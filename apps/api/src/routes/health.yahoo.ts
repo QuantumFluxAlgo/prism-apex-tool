@@ -1,23 +1,6 @@
 import type { FastifyInstance, FastifyReply } from 'fastify';
 import { Client } from 'pg';
-
-function num(v: string | undefined, dflt: number): number {
-  const n = Number(v);
-  return Number.isFinite(n) && n > 0 ? n : dflt;
-}
-
-/**
- * Thresholds (minutes)
- * - OK if every symbol < OK_LAG
- * - DEGRADED if some < DEGRADED_LAG (but not all < OK_LAG)
- * - DOWN if any >= DEGRADED_LAG
- *
- * Tune via env:
- *   YAHOO_OK_LAG_MIN (default 25)
- *   YAHOO_DEGRADED_LAG_MIN (default 90)
- */
-const OK_LAG = num(process.env.YAHOO_OK_LAG_MIN, 25);
-const DEG_LAG = num(process.env.YAHOO_DEGRADED_LAG_MIN, 90);
+import { classifyYahooStatus } from '../lib/yahooHealth';
 
 export async function yahooHealthRoutes(app: FastifyInstance) {
   const databaseUrl = process.env.DATABASE_URL;
@@ -61,30 +44,8 @@ export async function yahooHealthRoutes(app: FastifyInstance) {
 
   async function handle(reply: FastifyReply) {
     const rows = await queryRows();
-
-    // Optional: if it’s the weekend and everything is very stale, call it "paused"
-    const now = new Date();
-    const isWeekend = now.getUTCDay() === 0 || now.getUTCDay() === 6;
-    const allVeryStale = rows.length > 0 && rows.every((r) => r.minutes_behind >= 720); // 12h+
-    let status: 'ok' | 'degraded' | 'down' | 'paused';
-
-    if (isWeekend && allVeryStale) {
-      status = 'paused';
-    } else if (rows.every((r) => r.minutes_behind < OK_LAG)) {
-      status = 'ok';
-    } else if (rows.some((r) => r.minutes_behind < DEG_LAG)) {
-      status = 'degraded';
-    } else {
-      status = 'down';
-    }
-
-    return reply.send({
-      status,
-      ok_lag_min: OK_LAG,
-      degraded_lag_min: DEG_LAG,
-      rows,
-      now_utc: now.toISOString(),
-    });
+    const summary = classifyYahooStatus(rows);
+    return reply.send(summary);
   }
 
   app.get('/api/health/yahoo', async (_req, reply) => handle(reply));

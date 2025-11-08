@@ -1,5 +1,6 @@
 import type { FastifyInstance } from 'fastify';
 import { Client } from 'pg';
+import { classifyYahooStatus, yahooStatusToService } from '../lib/yahooHealth';
 
 type Health = 'green' | 'amber' | 'red' | 'grey';
 
@@ -44,6 +45,11 @@ type StatusResponse = {
     gapfill_cron: Health;
   };
   symbols: SymbolStatus[];
+  yahoo_summary?: {
+    status: string;
+    ok_lag_min: number;
+    degraded_lag_min: number;
+  };
 };
 
 function parseSymbolList(): string[] {
@@ -135,20 +141,6 @@ function healthFromAge(ageMs: number, relaxed: boolean): Health {
   return 'red';
 }
 
-async function fetchIngressHealth(timeoutMs: number): Promise<Health> {
-  const url = process.env.INGRESS_HEALTH_URL ?? 'http://ingress-yahoo:8080/health';
-  const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), timeoutMs);
-  try {
-    const res = await fetch(url, { signal: controller.signal });
-    return res.ok ? 'green' : 'red';
-  } catch {
-    return 'red';
-  } finally {
-    clearTimeout(timer);
-  }
-}
-
 export default async function statusRoute(app: FastifyInstance) {
   const symbolsList = parseSymbolList();
   const databaseUrl = process.env.DATABASE_URL ?? DEFAULT_DATABASE_URL;
@@ -169,6 +161,7 @@ export default async function statusRoute(app: FastifyInstance) {
     let dbHealth: Health = 'grey';
     let ticketsHealth: Health = relaxed ? 'grey' : 'red';
     let gapfillHealth: Health = 'grey';
+    const yahooRows: { symbol: string; last_bar_utc: string; minutes_behind: number }[] = [];
 
     const client = new Client({ connectionString: databaseUrl });
     try {
@@ -207,6 +200,13 @@ export default async function statusRoute(app: FastifyInstance) {
           }
           entry.last_utc = last ? last.toISOString() : null;
           entry.age_ms = age;
+          if (last) {
+            yahooRows.push({
+              symbol: row.symbol,
+              last_bar_utc: last.toISOString(),
+              minutes_behind: age / 60_000,
+            });
+          }
           entry.health = age === null ? (relaxed ? 'grey' : 'red') : healthFromAge(age, relaxed);
         }
       } catch {
@@ -251,7 +251,8 @@ export default async function statusRoute(app: FastifyInstance) {
       await client.end().catch(() => {});
     }
 
-    const yahooHealth = await fetchIngressHealth(3000);
+    const yahooSummary = classifyYahooStatus(yahooRows, now);
+    const yahooHealth = yahooStatusToService(yahooSummary.status);
 
     return {
       generated_at_utc: now.toISOString(),
@@ -264,6 +265,11 @@ export default async function statusRoute(app: FastifyInstance) {
         gapfill_cron: gapfillHealth,
       },
       symbols,
+      yahoo_summary: {
+        status: yahooSummary.status,
+        ok_lag_min: yahooSummary.ok_lag_min,
+        degraded_lag_min: yahooSummary.degraded_lag_min,
+      },
     };
   }
 
