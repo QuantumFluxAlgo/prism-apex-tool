@@ -181,19 +181,6 @@ export default function MarketDataPage() {
     chartApiRef.current?.timeScale().fitContent();
   }, [bars]);
 
-  const barsTable = useMemo(() => {
-    if (!summary?.bars) return [];
-    return Object.entries(summary.bars)
-      .map(([symbol, stats]) => ({
-        symbol,
-        count: stats.count,
-        min: stats.minTsUtc,
-        max: stats.maxTsUtc,
-        ageMinutes: stats.maxTsUtc ? ageInMinutes(stats.maxTsUtc) : null,
-      }))
-      .sort((a, b) => a.symbol.localeCompare(b.symbol));
-  }, [summary]);
-
   const latestCandle = bars[bars.length - 1];
 
   return (
@@ -211,63 +198,6 @@ export default function MarketDataPage() {
         {summaryError && <p className="px-6 pb-4 text-sm text-red-400">Error loading summary: {summaryError}</p>}
       </Card>
 
-      <Card>
-        <CardHeader>
-          <div className="flex items-center justify-between flex-wrap gap-3">
-            <strong>Symbol Coverage</strong>
-            <Button size="sm" variant="ghost" onClick={fetchSummary} disabled={isSummaryLoading}>
-              {isSummaryLoading ? 'Refreshing…' : 'Refresh'}
-            </Button>
-          </div>
-        </CardHeader>
-        <CardBody className="overflow-x-auto">
-          <table className="min-w-full text-sm">
-            <thead className="text-xs uppercase tracking-wide text-slate-400">
-              <tr>
-                <th className="py-2 text-left">Symbol</th>
-                <th className="py-2 text-left">Coverage Window</th>
-                <th className="py-2 text-left">Last Bar</th>
-                <th className="py-2 text-left">Staleness</th>
-              </tr>
-            </thead>
-            <tbody>
-              {barsTable.length === 0 ? (
-                <tr>
-                  <td colSpan={5} className="py-6 text-center text-slate-500">
-                    {summaryError ? 'Unable to load symbol stats.' : 'No bar data yet.'}
-                  </td>
-                </tr>
-              ) : (
-                barsTable.map((row) => (
-                  <tr key={row.symbol} className="border-b border-slate-800/80 last:border-0">
-                    <td className="py-2 font-semibold">{row.symbol}</td>
-                    <td className="py-2">
-                      <div className="text-xs text-slate-400">First</div>
-                      <div className="text-sm">{row.min ? formatUtc(row.min) : '—'}</div>
-                      <div className="mt-1 text-xs text-slate-400">Bars</div>
-                      <div className="text-sm">{row.count.toLocaleString()}</div>
-                    </td>
-                    <td className="py-2">{row.max ? formatUtc(row.max) : '—'}</td>
-                    <td className="py-2">
-                      {row.ageMinutes !== null ? (
-                        <span
-                          className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-semibold ${stalenessClass(
-                            row.ageMinutes,
-                          )}`}
-                        >
-                          {formatAge(row.ageMinutes)}
-                        </span>
-                      ) : (
-                        '—'
-                      )}
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </CardBody>
-      </Card>
 
       <Card>
         <CardHeader>
