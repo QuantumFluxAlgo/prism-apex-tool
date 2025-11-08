@@ -7,7 +7,7 @@ const items = [
   { path: '/tickets', label: 'Tickets' },
   { path: '/positions', label: 'Positions' },
   { path: '/reports', label: 'Reports' },
-  { path: '/metrics', label: 'Metrics' },
+  { path: '/market-data', label: 'Market Data' },
   { path: '/status', label: 'Status' },
 ];
 

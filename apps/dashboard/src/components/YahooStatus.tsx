@@ -47,16 +47,6 @@ export default function YahooStatus() {
         <span className="text-xs uppercase tracking-wide">{meta.text}</span>
       </div>
       {meta.detail && <span className="text-xs opacity-90">{meta.detail}</span>}
-      {health.rows?.length > 0 && (
-        <div className="text-xs bg-black/10 rounded-xl p-2 mt-1">
-          {health.rows.slice(0, 4).map((row) => (
-            <div key={row.symbol} className="flex items-center justify-between">
-              <span>{row.symbol}</span>
-              <span>{Math.round(row.minutes_behind)} min behind</span>
-            </div>
-          ))}
-        </div>
-      )}
     </div>
   );
 }

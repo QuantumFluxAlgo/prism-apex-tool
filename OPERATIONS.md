@@ -92,6 +92,16 @@ docker compose logs --tail=20 gapfill-cron
   ```
 - This ensures every deployment gets governed curl (`/opt/codex/bin/curl`), the Node fetch hook, and the expanded `YAHOO_SYMBOLS` default (ES/NQ micros, YM, RTY, GC, CL, 6E, EURUSD, BTC) without relying on manual env tweaks.
 
+## Dashboard checks (Market Data + Reports)
+- **Market data view**
+  - Confirm the resolution selector (1m/5m/15m) is present next to the symbol dropdown. Each option maps to `/api/metrics/bars?granularity=<period>`; run a quick `curl` if the chart looks stale.
+  - Toggle VWAP/ATR/Range in the legend. VWAP (yellow) overlays a session VWAP, ATR (purple) draws the rolling 14-bar ATR, and Range (blue) renders high/low histograms. Toggling should immediately show/hide the overlays; if not, refresh the dashboard and file a bug.
+  - Hover over the chart and ensure the tooltip shows price deltas, VWAP, ATR, and Range with the new solid background for readability.
+- **Reports view**
+  - Filters now support date range, symbol, strategy, and bucket interval (hour/day). Changing a filter should refetch `/api/reports/dashboard` and update KPI tiles plus the newest-first activity table.
+  - Ticket insights can be toggled off when you only need price context; verify the summary/tables hide when disabled.
+  - For smoke tests, hit `http://localhost:3000/api/reports/dashboard?symbol=ES%3DF&interval=day&from=$(date -u +%Y-%m-01)&to=$(date -u +%Y-%m-%d)` and confirm `symbolCoverage`, `priceSeries`, and `ticketSummary` are populated.
+
 
 
 

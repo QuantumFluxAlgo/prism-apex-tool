@@ -6,10 +6,12 @@ type DateRangeConfig = {
   onChange: (from?: string, to?: string) => void;
 };
 
+type SelectOption = string | { label: string; value: string };
+
 type SelectConfig = {
   label: string;
   value: string;
-  options: string[];
+  options: SelectOption[];
   onChange: (value: string) => void;
 };
 
@@ -25,6 +27,13 @@ type FiltersBarProps = {
   toggles?: ToggleConfig[];
   children?: React.ReactNode;
 };
+
+function normalizeOption(option: SelectOption): { label: string; value: string } {
+  if (typeof option === 'string') {
+    return { label: option, value: option };
+  }
+  return { label: option.label, value: option.value };
+}
 
 export default function FiltersBar({ dateRange, selects = [], toggles = [], children }: FiltersBarProps = {}) {
   const hasDynamicContent = Boolean(dateRange || selects.length || toggles.length || children);
@@ -78,11 +87,14 @@ export default function FiltersBar({ dateRange, selects = [], toggles = [], chil
         <label key={select.label}>
           <span>{select.label}</span>
           <select value={select.value} onChange={(event) => select.onChange(event.target.value)}>
-            {select.options.map((option) => (
-              <option key={option} value={option}>
-                {option}
-              </option>
-            ))}
+            {select.options.map((option) => {
+              const normalized = normalizeOption(option);
+              return (
+                <option key={normalized.value} value={normalized.value}>
+                  {normalized.label}
+                </option>
+              );
+            })}
           </select>
         </label>
       ))}
