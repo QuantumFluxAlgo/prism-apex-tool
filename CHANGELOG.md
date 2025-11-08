@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 - DB: add `tickets.source` (and `ticket_events.source`) for CSV export compatibility.
 
+## [1.0.3] - 2025-11-08
+### Added
+- Codex Yahoo governor bundle (curl wrapper + Node hook) wired into compose/CI so realtime ingest is throttled and observable everywhere.
+- GitHub Actions realtime smoke test that boots the governed stack, runs `tools/codex/check-realtime.sh`, and tears it down.
+- Dashboard Yahoo badge now surfaces explicit states (“Live”, “Delays”, “Session paused”) with the stalest symbols highlighted.
+
+### Changed
+- Default `YAHOO_SYMBOLS` list now covers ES/NQ macros and micros, YM, RTY, GC, CL, 6E, EURUSD, and BTC across apps, cron jobs, and docs.
+- `make up` / `make prod-up` automatically call `tools/codex/enable-realtime.sh` so local and server deploys always include the governed services.
+- `/api/status` shares the same Yahoo health classification as `/api/health/yahoo`, and Ops docs cover both `gapfill-cron` and `tickets-cron`.
+
 ## [1.0.2] - 2025-10-26
 ### Changed
 - `make up`/`make prod-up` now block on Postgres, run ingest/gapfill/tickets seeds automatically, and document the behavior for both local and server deploys.
