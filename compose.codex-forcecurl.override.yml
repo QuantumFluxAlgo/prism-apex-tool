@@ -1,0 +1,8 @@
+version: "3.9"
+services:
+  gapfill-realtime:
+    volumes:
+      - ./tools/codex/bin/curl:/usr/local/bin/curl:ro
+  tickets-realtime:
+    volumes:
+      - ./tools/codex/bin/curl:/usr/local/bin/curl:ro

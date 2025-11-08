@@ -2,8 +2,26 @@ import { Client } from 'pg';
 import { setTimeout as sleep } from 'timers/promises';
 
 const DATABASE_URL = process.env.DATABASE_URL!;
-const SYMBOLS = (process.env.YAHOO_SYMBOLS ?? 'ES=F,NQ=F,GC=F,CL=F').split(',').map(s => s.trim()).filter(Boolean);
+const argv = process.argv.slice(2);
+
+const argValue = (flag: string) => {
+  const idx = argv.indexOf(`--${flag}`);
+  if (idx === -1 || idx + 1 >= argv.length) return undefined;
+  const val = argv[idx + 1];
+  return val && val.length > 0 ? val : undefined;
+};
+
+const rawSymbols =
+  argValue('symbols') ??
+  (process.env.SYMBOLS && process.env.SYMBOLS.length > 0 ? process.env.SYMBOLS : undefined) ??
+  process.env.YAHOO_SYMBOLS ??
+  'ES=F,NQ=F,GC=F,CL=F,BTC-USD';
+const SYMBOLS = rawSymbols.split(',').map(s => s.trim()).filter(Boolean);
 const INTERVAL = process.env.YAHOO_INTERVAL ?? '1m';
+const WINDOW_FROM =
+  argValue('from') ?? process.env.FROM_DATE ?? process.env.YF_FROM_DATE ?? undefined;
+const WINDOW_TO =
+  argValue('to') ?? process.env.TO_DATE ?? process.env.YF_TO_DATE ?? undefined;
 
 const MAX_CHUNK_MS = 6 * 24 * 60 * 60 * 1000;
 
@@ -79,6 +97,38 @@ async function upsertBars(pg: Client, symbol: string, rows: Awaited<ReturnType<t
 async function main() {
   const pg = new Client({ connectionString: DATABASE_URL });
   await pg.connect();
+
+  if (WINDOW_FROM && WINDOW_TO) {
+    const from = new Date(WINDOW_FROM);
+    const to = new Date(WINDOW_TO);
+    if (Number.isNaN(from.getTime()) || Number.isNaN(to.getTime())) {
+      throw new Error(`Invalid window dates: from=${WINDOW_FROM} to=${WINDOW_TO}`);
+    }
+    const startMs = from.getTime();
+    const endMs = to.getTime();
+    console.log(
+      `[gapfill] window mode ${from.toISOString()} -> ${to.toISOString()} symbols=${SYMBOLS.join(
+        ',',
+      )}`,
+    );
+    for (const sym of SYMBOLS) {
+      console.log(`[gapfill] ${sym} -> window execution`);
+      for (let winStart = startMs; winStart < endMs; winStart += MAX_CHUNK_MS) {
+        const winEnd = Math.min(endMs, winStart + MAX_CHUNK_MS);
+        const rows = await fetchWindow(sym, winStart, winEnd);
+        const n = await upsertBars(pg, sym, rows);
+        console.log(
+          `[gapfill]   ${sym} ${new Date(winStart).toISOString()} → ${new Date(
+            winEnd,
+          ).toISOString()} upserted=${n}`,
+        );
+        await sleep(200);
+      }
+    }
+    await pg.end();
+    console.log('[gapfill] window mode done.');
+    return;
+  }
 
   const sinceSql = `
     SELECT

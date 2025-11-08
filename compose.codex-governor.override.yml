@@ -1,0 +1,24 @@
+version: "3.9"
+services:
+  gapfill-realtime:
+    volumes:
+      - ./tools/codex:/opt/codex:ro
+    environment:
+      - "SYMBOLS=${GAPFILL_SYMBOLS:-ES=F,NQ=F,GC=F,CL=F,BTC-USD}"
+      - "GOV_PATH=/opt/codex/lib/yahoo_governor.sh"
+      - "NODE_OPTIONS=--require /opt/codex/lib/node-hook.js"
+      - "YF_METRICS_PATH=${YF_METRICS_PATH:-/data/ops/yahoo-metrics.jsonl}"
+      - "YF_MAX_RETRIES=${YF_MAX_RETRIES:-6}"
+      - "YF_JITTER_MS=${YF_JITTER_MS:-1000}"
+      - "YF_429_COOLDOWN_SEC=${YF_429_COOLDOWN_SEC:-600}"
+  tickets-realtime:
+    volumes:
+      - ./tools/codex:/opt/codex:ro
+    environment:
+      - "SYMBOLS=${GAPFILL_SYMBOLS:-ES=F,NQ=F,GC=F,CL=F,BTC-USD}"
+      - "GOV_PATH=/opt/codex/lib/yahoo_governor.sh"
+      - "NODE_OPTIONS=--require /opt/codex/lib/node-hook.js"
+      - "YF_METRICS_PATH=${YF_METRICS_PATH:-/data/ops/yahoo-metrics.jsonl}"
+      - "YF_MAX_RETRIES=${YF_MAX_RETRIES:-6}"
+      - "YF_JITTER_MS=${YF_JITTER_MS:-1000}"
+      - "YF_429_COOLDOWN_SEC=${YF_429_COOLDOWN_SEC:-600}"
