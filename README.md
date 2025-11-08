@@ -3664,3 +3664,4 @@ $TOOLS/check-realtime.sh
 - `gapfill-realtime` keeps `bars_1m` current (today → now) every 60s.
 - `tickets-realtime` discovers all `apps/tickets/dist/backfill-*.js` runners and executes each every minute so every strategy emits tickets continuously.
 - Works on macOS and Linux hosts; reads `DATABASE_URL` from the live API container (or your compose env).
+- The helper bundles these compose overlays automatically: `compose.ingress-db.override.yml`, `compose.gapfill-realtime.override.yml`, `compose.tickets-realtime.override.yml`, `compose.codex-governor.override.yml`, and `compose.codex-forcecurl.override.yml`. If you prefer calling `docker compose` manually (e.g., via CI/server automation), include the same overlays when starting `gapfill-realtime`/`tickets-realtime`.

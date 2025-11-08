@@ -4,7 +4,7 @@ import { z } from 'zod';
 
 // Config via env
 const DATABASE_URL = process.env.DATABASE_URL ?? 'postgres://apex:apex@db:5432/prismapex';
-const SYMBOLS = (process.env.YAHOO_SYMBOLS ?? 'ES=F,NQ=F,GC=F,CL=F').split(',').map(s => s.trim()).filter(Boolean);
+const SYMBOLS = (process.env.YAHOO_SYMBOLS ?? 'ES=F,NQ=F,MES=F,MNQ=F,YM=F,RTY=F,GC=F,CL=F,6E=F,EURUSD=X,BTC-USD').split(',').map(s => s.trim()).filter(Boolean);
 const RANGE = process.env.YAHOO_RANGE ?? '30d';
 const INTERVAL = process.env.YAHOO_INTERVAL ?? '1m';
 

@@ -16,7 +16,7 @@ type EnvConfig = {
 
 const cfg: EnvConfig = {
   databaseUrl: process.env.DATABASE_URL ?? 'postgres://apex:apex@db:5432/prismapex',
-  symbols: (process.env.YAHOO_SYMBOLS ?? 'ES=F,NQ=F,GC=F,CL=F').split(',').map((s) => s.trim()).filter(Boolean),
+  symbols: (process.env.YAHOO_SYMBOLS ?? 'ES=F,NQ=F,MES=F,MNQ=F,YM=F,RTY=F,GC=F,CL=F,6E=F,EURUSD=X,BTC-USD').split(',').map((s) => s.trim()).filter(Boolean),
   days: Math.min(Math.max(Number(process.env.TICKETS_DAYS ?? '30'), 1), 30),
   openingRangeMinutes: Math.max(Number(process.env.ORR_OR_MIN ?? '5'), 1),
   reversalWindowMinutes: Math.max(Number(process.env.ORR_WINDOW_MIN ?? '60'), 1),

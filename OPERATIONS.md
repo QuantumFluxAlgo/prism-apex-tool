@@ -68,6 +68,30 @@ docker compose --profile local up -d gapfill-cron
 docker compose logs --tail=20 gapfill-cron
 ```
 
+## Ticket maintenance (ORR strategy)
+- `tickets-cron` runs `apps/tickets/dist/backfill-orr.js` on a rolling basis (loop every 60 s) so each session’s tickets are generated automatically after bars land. It uses the same `YAHOO_SYMBOLS` set as the ingest jobs (ES/NQ micros, YM, RTY, GC, CL, 6E, EURUSD, BTC).
+- Bring it up the same way as the gapfill cron:
+  ```bash
+  docker compose --profile local up -d tickets-cron
+  docker compose logs --tail=20 tickets-cron
+  ```
+- In a server deploy, leave both cron services running; `gapfill-cron` handles the daily bar sweep, and `tickets-cron` ensures the ORR strategy backfills without manual intervention.
+
+## Realtime bars & tickets (Yahoo-governed)
+- The ops helper `tools/codex/enable-realtime.sh` now wraps the full compose bundle so every host (local laptop or server) brings up `gapfill-realtime` + `tickets-realtime` with the governor, curl shim, and symbol defaults.
+- Equivalent manual compose invocation if you prefer explicit commands:
+  ```bash
+  docker compose \
+    -f docker-compose.yml \
+    -f compose.ingress-db.override.yml \
+    -f compose.gapfill-realtime.override.yml \
+    -f compose.tickets-realtime.override.yml \
+    -f compose.codex-governor.override.yml \
+    -f compose.codex-forcecurl.override.yml \
+    up -d gapfill-realtime tickets-realtime
+  ```
+- This ensures every deployment gets governed curl (`/opt/codex/bin/curl`), the Node fetch hook, and the expanded `YAHOO_SYMBOLS` default (ES/NQ micros, YM, RTY, GC, CL, 6E, EURUSD, BTC) without relying on manual env tweaks.
+
 
 
 

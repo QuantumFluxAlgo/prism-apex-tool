@@ -11,13 +11,22 @@ fi
 [ -z "$BASE" ] && { echo "❌ No compose file found"; exit 1; }
 
 echo "[realtime] Using compose: $BASE"
-# Ensure ingress picks up DATABASE_URL (from API container env) if present
-EXTRA="-f compose.ingress-db.override.yml"
-[ -f compose.gapfill-realtime.override.yml ] || { echo "❌ compose.gapfill-realtime.override.yml missing"; exit 2; }
-[ -f compose.tickets-realtime.override.yml ] || { echo "❌ compose.tickets-realtime.override.yml missing"; exit 3; }
-
-docker compose -f "$BASE" $EXTRA -f compose.gapfill-realtime.override.yml up -d gapfill-realtime
-docker compose -f "$BASE" $EXTRA -f compose.tickets-realtime.override.yml up -d tickets-realtime
+OVERLAYS=(
+  compose.ingress-db.override.yml
+  compose.gapfill-realtime.override.yml
+  compose.tickets-realtime.override.yml
+  compose.codex-governor.override.yml
+  compose.codex-forcecurl.override.yml
+)
+for f in "${OVERLAYS[@]}"; do
+  [ -f "$f" ] || { echo "❌ missing $f"; exit 2; }
+done
+ARGS=(-f "$BASE")
+for f in "${OVERLAYS[@]}"; do
+  ARGS+=(-f "$f")
+done
+echo "[realtime] Applying overlays: ${OVERLAYS[*]}"
+docker compose "${ARGS[@]}" up -d gapfill-realtime tickets-realtime
 
 echo "[realtime] Services up:"
 docker ps --format 'table {{.Names}}\t{{.Status}}\t{{.Image}}' | egrep 'tickets-realtime|gapfill-realtime|api|db' || true
