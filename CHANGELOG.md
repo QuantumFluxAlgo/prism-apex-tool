@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 - DB: add `tickets.source` (and `ticket_events.source`) for CSV export compatibility.
 
+## [1.1.0] - 2025-11-08
+### Added
+- Market data chart upgrades: 1m/5m/15m granularity selector, per-session VWAP overlay, toggleable ATR line, range histogram, and a solid tooltip that surfaces deltas/VWAP/ATR/range across both candlesticks and BTC/EURUSD line mode.
+- `/api/reports/dashboard` endpoint providing symbol coverage, price buckets, and ticket summaries with filter support for symbol, dates, strategy, and bucket interval.
+- Reports page rework consuming the new endpoint, including KPI tiles, newest-first activity table, symbol coverage grid, ticket summaries, and ticket trend views, plus dashboard docs describing the new flows.
+
+### Changed
+- README and OPERATIONS runbooks now document the new market-data controls, report filters, and the verification steps ops should run after deployments.
+
 ## [1.0.3] - 2025-11-08
 ### Added
 - Codex Yahoo governor bundle (curl wrapper + Node hook) wired into compose/CI so realtime ingest is throttled and observable everywhere.
