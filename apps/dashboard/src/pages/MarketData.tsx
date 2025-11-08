@@ -136,18 +136,10 @@ export default function MarketDataPage() {
       wickDownColor: '#dc2626',
       borderVisible: false,
     });
-    const volumeSeries = chart.addHistogramSeries({
-      color: '#38bdf8',
-      priceFormat: { type: 'volume' },
-      priceScaleId: '',
-    });
-    volumeSeries.priceScale().applyOptions({
-      scaleMargins: { top: 0.8, bottom: 0 },
-    });
 
     chartApiRef.current = chart;
     candleSeriesRef.current = candleSeries;
-    volumeSeriesRef.current = volumeSeries;
+    volumeSeriesRef.current = null;
 
     const handleResize = () => {
       if (!chartContainerRef.current) return;
@@ -170,14 +162,6 @@ export default function MarketDataPage() {
       close: point.close,
     }));
     candleSeriesRef.current.setData(candleData);
-    if (volumeSeriesRef.current) {
-      const volumeData = bars.map((point) => ({
-        time: Math.floor(new Date(point.ts).getTime() / 1000),
-        value: point.volume ?? 0,
-        color: point.close >= point.open ? '#16a34a55' : '#dc262655',
-      }));
-      volumeSeriesRef.current.setData(volumeData);
-    }
     chartApiRef.current?.timeScale().fitContent();
   }, [bars]);
 
