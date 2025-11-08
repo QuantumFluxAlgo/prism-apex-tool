@@ -116,7 +116,16 @@ export default function MarketDataPage() {
       },
       height: 420,
       width: chartContainerRef.current.clientWidth,
-      timeScale: { secondsVisible: false, borderVisible: false },
+      localization: {
+        dateFormat: 'MMM dd',
+        timeFormatter: (timestamp: number) =>
+          new Date(timestamp * 1000).toLocaleTimeString(undefined, {
+            hour12: false,
+            hour: '2-digit',
+            minute: '2-digit',
+          }),
+      },
+      timeScale: { secondsVisible: false, timeVisible: true, borderVisible: false },
       rightPriceScale: { borderVisible: false },
       crosshair: { mode: 1 },
     });
@@ -215,11 +224,10 @@ export default function MarketDataPage() {
           <table className="min-w-full text-sm">
             <thead className="text-xs uppercase tracking-wide text-slate-400">
               <tr>
-                <th className="text-left py-2">Symbol</th>
-                <th className="text-left py-2">Bars</th>
-                <th className="text-left py-2">First Bar (UTC)</th>
-                <th className="text-left py-2">Last Bar (UTC)</th>
-                <th className="text-left py-2">Age</th>
+                <th className="py-2 text-left">Symbol</th>
+                <th className="py-2 text-left">Coverage Window</th>
+                <th className="py-2 text-left">Last Bar</th>
+                <th className="py-2 text-left">Staleness</th>
               </tr>
             </thead>
             <tbody>
@@ -233,10 +241,26 @@ export default function MarketDataPage() {
                 barsTable.map((row) => (
                   <tr key={row.symbol} className="border-b border-slate-800/80 last:border-0">
                     <td className="py-2 font-semibold">{row.symbol}</td>
-                    <td className="py-2">{row.count.toLocaleString()}</td>
-                    <td className="py-2">{row.min ? new Date(row.min).toISOString() : '—'}</td>
-                    <td className="py-2">{row.max ? new Date(row.max).toISOString() : '—'}</td>
-                    <td className="py-2">{row.ageMinutes !== null ? formatAge(row.ageMinutes) : '—'}</td>
+                    <td className="py-2">
+                      <div className="text-xs text-slate-400">First</div>
+                      <div className="text-sm">{row.min ? formatUtc(row.min) : '—'}</div>
+                      <div className="mt-1 text-xs text-slate-400">Bars</div>
+                      <div className="text-sm">{row.count.toLocaleString()}</div>
+                    </td>
+                    <td className="py-2">{row.max ? formatUtc(row.max) : '—'}</td>
+                    <td className="py-2">
+                      {row.ageMinutes !== null ? (
+                        <span
+                          className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-semibold ${stalenessClass(
+                            row.ageMinutes,
+                          )}`}
+                        >
+                          {formatAge(row.ageMinutes)}
+                        </span>
+                      ) : (
+                        '—'
+                      )}
+                    </td>
                   </tr>
                 ))
               )}
@@ -330,4 +354,20 @@ function formatAge(minutes: number) {
   const hours = Math.floor(minutes / 60);
   const mins = minutes % 60;
   return `${hours}h ${mins}m`;
+}
+
+function stalenessClass(minutes: number) {
+  if (minutes <= 5) return 'bg-emerald-500/20 text-emerald-200';
+  if (minutes <= 30) return 'bg-yellow-500/20 text-yellow-200';
+  return 'bg-red-500/20 text-red-200';
+}
+
+function formatUtc(iso: string) {
+  return new Date(iso).toLocaleString(undefined, {
+    hour12: false,
+    month: 'short',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+  });
 }
