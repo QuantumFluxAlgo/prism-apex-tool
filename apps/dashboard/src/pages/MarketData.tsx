@@ -54,10 +54,10 @@ export default function MarketDataPage() {
   const [isChartLoading, setIsChartLoading] = useState(false);
   const [lastChartUpdate, setLastChartUpdate] = useState<Date | null>(null);
 
-  const chartContainerRef = useRef<HTMLDivElement | null>(null);
-  const chartApiRef = useRef<IChartApi | null>(null);
-  const candleSeriesRef = useRef<ISeriesApi<'Candlestick'> | null>(null);
-  const volumeSeriesRef = useRef<ISeriesApi<'Histogram'> | null>(null);
+const chartContainerRef = useRef<HTMLDivElement | null>(null);
+const chartApiRef = useRef<IChartApi | null>(null);
+const candleSeriesRef = useRef<ISeriesApi<'Candlestick'> | null>(null);
+const volumeSeriesRef = useRef<ISeriesApi<'Histogram'> | null>(null);
 
   const fetchSummary = useCallback(async () => {
     setIsSummaryLoading(true);
@@ -125,7 +125,20 @@ export default function MarketDataPage() {
             minute: '2-digit',
           }),
       },
-      timeScale: { secondsVisible: false, timeVisible: true, borderVisible: false },
+      watermark: { visible: false },
+      timeScale: {
+        secondsVisible: false,
+        timeVisible: true,
+        borderVisible: false,
+        tickMarkFormatter: (time: Time) =>
+          typeof time === 'number'
+            ? new Date(time * 1000).toLocaleTimeString(undefined, {
+                hour12: false,
+                hour: '2-digit',
+                minute: '2-digit',
+              })
+            : '',
+      },
       rightPriceScale: { borderVisible: false },
       crosshair: { mode: 1 },
     });
@@ -136,10 +149,52 @@ export default function MarketDataPage() {
       wickDownColor: '#dc2626',
       borderVisible: false,
     });
+    const volumeSeries = chart.addHistogramSeries({
+      color: '#38bdf8',
+      priceFormat: { type: 'volume' },
+      priceScaleId: '',
+    });
+    volumeSeries.priceScale().applyOptions({ scaleMargins: { top: 0.8, bottom: 0 } });
 
     chartApiRef.current = chart;
     candleSeriesRef.current = candleSeries;
-    volumeSeriesRef.current = null;
+    volumeSeriesRef.current = volumeSeries;
+
+    const tooltip = document.createElement('div');
+    tooltip.className =
+      'absolute pointer-events-none rounded-xl bg-slate-900/95 text-slate-100 text-xs px-3 py-2 shadow-xl border border-slate-700 hidden';
+    chartContainerRef.current.style.position = 'relative';
+    chartContainerRef.current.appendChild(tooltip);
+
+    const moveTooltip = (x: number, y: number) => {
+      tooltip.style.left = `${x + 12}px`;
+      tooltip.style.top = `${y + 12}px`;
+    };
+
+    const handleCrosshairMove = (param: any) => {
+      if (param.time === undefined || !param.point) {
+        tooltip.classList.add('hidden');
+        return;
+      }
+      const candle = candleSeriesRef.current
+        ? (param.seriesData.get(candleSeriesRef.current) as any)
+        : null;
+      const vol = volumeSeriesRef.current
+        ? (param.seriesData.get(volumeSeriesRef.current) as any)
+        : null;
+      tooltip.innerHTML = `
+        <div class="font-semibold text-slate-200">${formatTooltipTime(param.time)}</div>
+        <div>O ${formatNumber(candle?.open)}</div>
+        <div>H ${formatNumber(candle?.high)}</div>
+        <div>L ${formatNumber(candle?.low)}</div>
+        <div>C ${formatNumber(candle?.close)}</div>
+        <div class="mt-1 text-sky-300">Vol ${vol?.value ? Number(vol.value).toLocaleString() : '—'}</div>
+      `;
+      tooltip.classList.remove('hidden');
+      moveTooltip(param.point.x, param.point.y);
+    };
+
+    chart.subscribeCrosshairMove(handleCrosshairMove);
 
     const handleResize = () => {
       if (!chartContainerRef.current) return;
@@ -148,6 +203,8 @@ export default function MarketDataPage() {
     window.addEventListener('resize', handleResize);
     return () => {
       window.removeEventListener('resize', handleResize);
+      chart.unsubscribeCrosshairMove(handleCrosshairMove);
+      tooltip.remove();
       chart.remove();
     };
   }, []);
@@ -162,6 +219,14 @@ export default function MarketDataPage() {
       close: point.close,
     }));
     candleSeriesRef.current.setData(candleData);
+    if (volumeSeriesRef.current) {
+      const volumeData = bars.map((point) => ({
+        time: Math.floor(new Date(point.ts).getTime() / 1000),
+        value: point.volume ?? 0,
+        color: point.close >= point.open ? '#16a34a55' : '#dc262655',
+      }));
+      volumeSeriesRef.current.setData(volumeData);
+    }
     chartApiRef.current?.timeScale().fitContent();
   }, [bars]);
 
@@ -258,30 +323,17 @@ function Stat({
   );
 }
 
-function ageInMinutes(iso: string) {
-  const diff = Date.now() - new Date(iso).getTime();
-  return Math.floor(diff / 60000);
-}
-
-function formatAge(minutes: number) {
-  if (minutes < 60) return `${minutes}m`;
-  const hours = Math.floor(minutes / 60);
-  const mins = minutes % 60;
-  return `${hours}h ${mins}m`;
-}
-
-function stalenessClass(minutes: number) {
-  if (minutes <= 5) return 'bg-emerald-500/20 text-emerald-200';
-  if (minutes <= 30) return 'bg-yellow-500/20 text-yellow-200';
-  return 'bg-red-500/20 text-red-200';
-}
-
-function formatUtc(iso: string) {
-  return new Date(iso).toLocaleString(undefined, {
+function formatTooltipTime(time: Time) {
+  if (typeof time !== 'number') return '';
+  return new Date(time * 1000).toLocaleString(undefined, {
     hour12: false,
     month: 'short',
     day: '2-digit',
     hour: '2-digit',
     minute: '2-digit',
   });
+}
+
+function formatNumber(value?: number) {
+  return typeof value === 'number' ? value.toFixed(2) : '—';
 }
