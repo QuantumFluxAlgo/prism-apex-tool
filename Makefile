@@ -4,12 +4,16 @@ LOCAL_PROFILES := --profile local
 PROD_PROFILES  := --profile prod
 DEV_PROFILES   := --profile dev
 JOBS_PROFILE   := --profile jobs
+TOOLS_DIR      := tools/codex
+ENABLE_RT      := $(TOOLS_DIR)/enable-realtime.sh
 
 .PHONY: up down ps logs health seed up-dev down-dev prod-up prod-down prod-logs prod-seed smoke wait-db-local wait-db-prod
 
 up:
 	@echo "Bringing up local stack (db, api, dashboard, ingress, cron jobs)..."
 	docker compose $(LOCAL_PROFILES) up -d
+	@echo "Wiring governed realtime services..."
+	@COMPOSE_PROFILES=local $(ENABLE_RT)
 	@$(MAKE) seed
 	@$(MAKE) health
 
@@ -43,6 +47,8 @@ down-dev:
 prod-up:
 	@echo "Bringing up production stack..."
 	docker compose $(PROD_PROFILES) up -d
+	@echo "Wiring governed realtime services (prod)..."
+	@COMPOSE_PROFILES=prod $(ENABLE_RT)
 	@$(MAKE) prod-seed
 
 prod-down:

@@ -87,7 +87,7 @@
 
 - Docker Desktop (or compatible) with Compose v2
 - `pnpm install --frozen-lockfile`
-- `make up` (starts the local stack – db, api, dashboard, ingress, cron)
+- `make up` (starts the local stack – db, api, dashboard, ingress, cron – **and** automatically wires the governed realtime services via `tools/codex/enable-realtime.sh`)
 - `pnpm docs:lint`
 
 ## Deployment (Local & Server)
