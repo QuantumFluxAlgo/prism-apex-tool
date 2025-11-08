@@ -147,7 +147,7 @@ const volumeSeriesRef = useRef<ISeriesApi<'Histogram'> | null>(null);
       rightPriceScale: { borderVisible: false },
       crosshair: { mode: 1 },
     });
-    const candleSeries = chart.addCandlestickSeries({
+    const candleSeries = chart.addCandlestickSeries({ watermark: { visible: false }, 
       upColor: '#16a34a',
       downColor: '#dc2626',
       wickUpColor: '#16a34a',
