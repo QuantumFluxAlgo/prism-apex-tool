@@ -6,7 +6,7 @@ import Tabs from './ui/Tabs';
 import TicketsPage from './pages/Tickets';
 import PositionsPage from './pages/Positions';
 import ReportsPage from './pages/Reports';
-import MetricsPage from './pages/Metrics';
+import MarketDataPage from './pages/MarketData';
 import Worklist from './pages/Worklist';
 import StatusPage from './pages/Status';
 import DemoPnL from './pages/DemoPnL';
@@ -50,7 +50,7 @@ export default function App() {
                   <Route path="/tickets" element={<TicketsPage />} />
                   <Route path="/positions" element={<PositionsPage />} />
                   <Route path="/reports" element={<ReportsPage />} />
-                  <Route path="/metrics" element={<MetricsPage />} />
+                  <Route path="/market-data" element={<MarketDataPage />} />
                   <Route path="/status/*" element={<StatusPage />} />
                   <Route path="/demo/pnl" element={<DemoPnL />} />
                   <Route path="/demo/pnl" element={<DemoPnL />} />

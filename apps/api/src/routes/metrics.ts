@@ -1,4 +1,4 @@
-import type { FastifyInstance } from 'fastify';
+import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
 import { Client } from 'pg';
 
 type BarsSummary = Record<string, {
@@ -12,6 +12,11 @@ type Metrics = {
   tickets: { total: number | null; today: number | null };
   lastIngestUtc: string | null;
   dbConnected: boolean;
+};
+
+type BarsQuery = {
+  symbol?: string;
+  limit?: string;
 };
 
 async function fetchMetrics(): Promise<Metrics> {
@@ -86,4 +91,55 @@ export default async function metricsRoute(app: FastifyInstance) {
   const handler = async () => fetchMetrics();
   app.get('/metrics', handler);
   app.get('/api/metrics', handler);
+
+  app.get(
+    '/metrics/bars',
+    async (req: FastifyRequest<{ Querystring: BarsQuery }>, reply) => fetchBars(req, reply),
+  );
+  app.get(
+    '/api/metrics/bars',
+    async (req: FastifyRequest<{ Querystring: BarsQuery }>, reply) => fetchBars(req, reply),
+  );
+}
+
+async function fetchBars(req: FastifyRequest<{ Querystring: BarsQuery }>, reply: FastifyReply) {
+  const DATABASE_URL = process.env.DATABASE_URL ?? 'postgres://apex:apex@db:5432/prismapex';
+  const symbol = (req.query.symbol ?? 'ES=F').trim();
+  const limitRaw = Number(req.query.limit ?? 360);
+  const limit = Math.min(1440, Math.max(30, Number.isFinite(limitRaw) ? limitRaw : 360));
+
+  const client = new Client({ connectionString: DATABASE_URL });
+  try {
+    await client.connect();
+    const result = await client.query(
+      `
+        SELECT ts_utc AS ts, open, high, low, close, volume
+        FROM bars_1m
+        WHERE symbol = $1
+        ORDER BY ts_utc DESC
+        LIMIT $2
+      `,
+      [symbol, limit],
+    );
+    const rows = result.rows
+      .reverse()
+      .map((row) => ({
+        ts: new Date(row.ts).toISOString(),
+        open: Number(row.open),
+        high: Number(row.high),
+        low: Number(row.low),
+        close: Number(row.close),
+        volume: row.volume === null ? null : Number(row.volume),
+      }))
+      .filter((row) => Number.isFinite(row.open));
+    return reply.send({ symbol, points: rows });
+  } catch (err) {
+    return reply.status(500).send({ symbol, points: [], error: (err as Error).message });
+  } finally {
+    try {
+      await client.end();
+    } catch {
+      // ignore
+    }
+  }
 }
