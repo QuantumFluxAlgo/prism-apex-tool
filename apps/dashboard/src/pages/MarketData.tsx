@@ -125,7 +125,6 @@ const volumeSeriesRef = useRef<ISeriesApi<'Histogram'> | null>(null);
             minute: '2-digit',
           }),
       },
-      watermark: { visible: false },
       timeScale: {
         secondsVisible: false,
         timeVisible: true,
