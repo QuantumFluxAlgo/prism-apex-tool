@@ -68,3 +68,87 @@ jobs:
 
       - name: Build (API)
         run: pnpm run build:api || true
+
+  realtime-check:
+    needs: qa
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' || github.event.pull_request.head.repo.full_name == github.repository
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Docker (Compose V2)
+        uses: docker/setup-buildx-action@v3
+
+      - name: Launch realtime stack (governed)
+        run: |
+          set -euxo pipefail
+          corepack enable
+          corepack prepare pnpm@9.0.0 --activate
+          pnpm install --frozen-lockfile
+          docker compose -f docker-compose.yml \
+            -f compose.ingress-db.override.yml \
+            -f compose.gapfill-realtime.override.yml \
+            -f compose.tickets-realtime.override.yml \
+            -f compose.codex-governor.override.yml \
+            -f compose.codex-forcecurl.override.yml \
+            up -d gapfill-realtime tickets-realtime db api
+
+      - name: Wait for API health
+        run: |
+          set -euxo pipefail
+          for i in $(seq 1 30); do
+            if curl -fsS http://localhost:3000/health >/dev/null; then exit 0; fi
+            sleep 5
+          done
+          echo "::error::API never became healthy" && exit 1
+
+      - name: Run codex realtime check
+        run: tools/codex/check-realtime.sh
+
+      - name: Tear down realtime stack
+        if: always()
+        run: |
+          docker compose -f docker-compose.yml \
+            -f compose.ingress-db.override.yml \
+            -f compose.gapfill-realtime.override.yml \
+            -f compose.tickets-realtime.override.yml \
+            -f compose.codex-governor.override.yml \
+            -f compose.codex-forcecurl.override.yml \
+            down -v
+      - name: Launch realtime stack (governed)
+        run: |
+          set -euxo pipefail
+          corepack enable
+          corepack prepare pnpm@9.0.0 --activate
+          pnpm install --frozen-lockfile
+          docker compose -f docker-compose.yml \
+            -f compose.ingress-db.override.yml \
+            -f compose.gapfill-realtime.override.yml \
+            -f compose.tickets-realtime.override.yml \
+            -f compose.codex-governor.override.yml \
+            -f compose.codex-forcecurl.override.yml \
+            up -d gapfill-realtime tickets-realtime db api
+
+      - name: Wait for API health
+        run: |
+          set -euxo pipefail
+          for i in $(seq 1 30); do
+            if curl -fsS http://localhost:3000/health >/dev/null; then exit 0; fi
+            sleep 5
+          done
+          echo "::error::API never became healthy" && exit 1
+
+      - name: Run codex realtime check
+        run: tools/codex/check-realtime.sh
+
+      - name: Tear down realtime stack
+        if: always()
+        run: |
+          docker compose -f docker-compose.yml \
+            -f compose.ingress-db.override.yml \
+            -f compose.gapfill-realtime.override.yml \
+            -f compose.tickets-realtime.override.yml \
+            -f compose.codex-governor.override.yml \
+            -f compose.codex-forcecurl.override.yml \
+            down -v
