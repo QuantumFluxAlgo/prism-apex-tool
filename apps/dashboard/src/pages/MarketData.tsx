@@ -43,6 +43,10 @@ const SYMBOL_OPTIONS = [
   'BTC-USD',
 ];
 
+const SESSION_OPEN_UTC = '23:05';
+const SESSION_CLOSE_UTC = '21:55';
+const DAY_MS = 24 * 60 * 60 * 1000;
+
 export default function MarketDataPage() {
   const [summary, setSummary] = useState<MarketDataPayload | null>(null);
   const [summaryError, setSummaryError] = useState<string | null>(null);
@@ -125,6 +129,8 @@ const volumeSeriesRef = useRef<ISeriesApi<'Histogram'> | null>(null);
             minute: '2-digit',
           }),
       },
+      logo: { visible: false },
+      watermark: { visible: false },
       timeScale: {
         secondsVisible: false,
         timeVisible: true,
@@ -200,9 +206,15 @@ const volumeSeriesRef = useRef<ISeriesApi<'Histogram'> | null>(null);
       chart.applyOptions({ width: chartContainerRef.current.clientWidth });
     };
     window.addEventListener('resize', handleResize);
+
+    const brandingObserver = new MutationObserver(() => stripBranding(chartContainerRef.current));
+    stripBranding(chartContainerRef.current);
+    brandingObserver.observe(chartContainerRef.current, { childList: true, subtree: true });
+
     return () => {
       window.removeEventListener('resize', handleResize);
       chart.unsubscribeCrosshairMove(handleCrosshairMove);
+      brandingObserver.disconnect();
       tooltip.remove();
       chart.remove();
     };
@@ -230,6 +242,24 @@ const volumeSeriesRef = useRef<ISeriesApi<'Histogram'> | null>(null);
   }, [bars]);
 
   const latestCandle = bars[bars.length - 1];
+  const sessionBounds = useMemo(() => {
+    if (!latestCandle) return null;
+    return computeSessionBounds(new Date(latestCandle.ts));
+  }, [latestCandle]);
+
+  const sessionVolume = useMemo(() => {
+    if (!sessionBounds) return { total: null, average: null };
+    const startMs = sessionBounds.start.getTime();
+    const endMs = sessionBounds.end.getTime();
+    const sessionBars = bars.filter((point) => {
+      const ts = new Date(point.ts).getTime();
+      return ts >= startMs && ts <= endMs;
+    });
+    if (sessionBars.length === 0) return { total: null, average: null };
+    const total = sessionBars.reduce((sum, point) => sum + (point.volume ?? 0), 0);
+    const avg = total / sessionBars.length;
+    return { total, average: avg };
+  }, [bars, sessionBounds]);
 
   return (
     <div className="space-y-4">
@@ -285,14 +315,19 @@ const volumeSeriesRef = useRef<ISeriesApi<'Histogram'> | null>(null);
               <span className="text-lg font-semibold">{latestCandle ? latestCandle.close.toFixed(2) : '—'}</span>
             </div>
             <div>
-              <span className="text-slate-400 block text-xs uppercase tracking-wide">Range</span>
+              <span className="text-slate-400 block text-xs uppercase tracking-wide">Session Window (UTC)</span>
               <span className="text-lg font-semibold">
-                {latestCandle ? `${latestCandle.low.toFixed(2)} → ${latestCandle.high.toFixed(2)}` : '—'}
+                {sessionBounds ? `${formatUtc(sessionBounds.start)} → ${formatUtc(sessionBounds.end)}` : '—'}
               </span>
             </div>
             <div>
               <span className="text-slate-400 block text-xs uppercase tracking-wide">Volume</span>
-              <span className="text-lg font-semibold">{latestCandle?.volume ? latestCandle.volume.toLocaleString() : '—'}</span>
+              <span className="text-lg font-semibold">
+                {sessionVolume.total !== null ? sessionVolume.total.toLocaleString() : '—'}
+              </span>
+              <div className="text-xs text-slate-400">
+                Avg/min {sessionVolume.average !== null ? sessionVolume.average.toFixed(0) : '—'}
+              </div>
             </div>
           </div>
           <div ref={chartContainerRef} className="w-full h-[420px]" />
@@ -335,4 +370,42 @@ function formatTooltipTime(time: Time) {
 
 function formatNumber(value?: number) {
   return typeof value === 'number' ? value.toFixed(2) : '—';
+}
+
+function computeSessionBounds(ts: Date) {
+  const [openH, openM] = parseHm(SESSION_OPEN_UTC);
+  const [closeH, closeM] = parseHm(SESSION_CLOSE_UTC);
+  let open = Date.UTC(ts.getUTCFullYear(), ts.getUTCMonth(), ts.getUTCDate(), openH, openM, 0, 0);
+  let close = Date.UTC(ts.getUTCFullYear(), ts.getUTCMonth(), ts.getUTCDate(), closeH, closeM, 0, 0);
+  if (close <= open) close += DAY_MS;
+  const nowMs = ts.getTime();
+  if (nowMs < open) {
+    open -= DAY_MS;
+    close -= DAY_MS;
+  }
+  return { start: new Date(open), end: new Date(close) };
+}
+
+function parseHm(value: string) {
+  const [h, m] = value.split(':').map((n) => Number.parseInt(n, 10));
+  return [Number.isFinite(h) ? h : 0, Number.isFinite(m) ? m : 0];
+}
+
+function formatUtc(date: Date) {
+  return date.toLocaleString(undefined, {
+    hour12: false,
+    month: 'short',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+  });
+}
+
+function stripBranding(container: HTMLDivElement | null) {
+  if (!container) return;
+  container.querySelectorAll('a').forEach((node) => {
+    if (node instanceof HTMLAnchorElement && node.href.includes('tradingview')) {
+      node.remove();
+    }
+  });
 }
