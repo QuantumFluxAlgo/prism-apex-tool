@@ -1719,6 +1719,16 @@ The dashboard is the operator's command center. It displays:
 - **Alerts** for Apex violations, EOD requirements, and scaling notices.
 - **Reports** summarizing historical performance.
 
+### Market Data View (Candles tab)
+- Per-symbol **resolution selector** (1m / 5m / 15m) backed by `/api/metrics/bars?granularity=…`.
+- Session-based **VWAP overlay** (yellow) plus toggleable **ATR** (purple) and **Range** histograms (blue) so operators can size up volatility without leaving the page.
+- Upgraded tooltip with solid background that surfaces price, deltas vs. baseline, VWAP, ATR, and range values whether you are in candlestick mode or the BTC/EURUSD line mode.
+
+### Reports View
+- Backed by the new `/api/reports/dashboard` endpoint which aggregates symbol coverage, price buckets, and ticket summaries in a single payload.
+- Filter by date range, symbol, strategy, and bucket interval (hour/day), then review KPI tiles, market-activity table (newest buckets first), coverage grid, ticket summary, and ticket trend tables.
+- Toggle ticket insights on/off when you only need market context; the filters stay in sync with the backend filters shown in `appliedFilters`.
+
 ## How to Use
 
 1. Open the dashboard in your browser.

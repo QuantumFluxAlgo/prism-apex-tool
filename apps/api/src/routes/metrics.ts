@@ -17,7 +17,14 @@ type Metrics = {
 type BarsQuery = {
   symbol?: string;
   limit?: string;
+  granularity?: string;
 };
+
+const GRANULARITY_MINUTES = new Map<string, number>([
+  ['1m', 1],
+  ['5m', 5],
+  ['15m', 15],
+]);
 
 async function fetchMetrics(): Promise<Metrics> {
   const DATABASE_URL = process.env.DATABASE_URL ?? 'postgres://apex:apex@db:5432/prismapex';
@@ -107,21 +114,81 @@ async function fetchBars(req: FastifyRequest<{ Querystring: BarsQuery }>, reply:
   const symbol = (req.query.symbol ?? 'ES=F').trim();
   const limitRaw = Number(req.query.limit ?? 360);
   const limit = Math.min(1440, Math.max(30, Number.isFinite(limitRaw) ? limitRaw : 360));
+  const granularityKey = (req.query.granularity ?? '1m').toLowerCase();
+  const granularityMinutes = GRANULARITY_MINUTES.get(granularityKey) ?? 1;
+  const bucketSeconds = granularityMinutes * 60;
 
   const client = new Client({ connectionString: DATABASE_URL });
   try {
     await client.connect();
-    const result = await client.query(
-      `
-        SELECT ts_utc AS ts, open, high, low, close, volume
-        FROM bars_1m
-        WHERE symbol = $1
-        ORDER BY ts_utc DESC
-        LIMIT $2
-      `,
-      [symbol, limit],
-    );
-    const rows = result.rows
+    let rows: Array<{
+      ts: Date;
+      open: number | null;
+      high: number | null;
+      low: number | null;
+      close: number | null;
+      volume: number | null;
+    }> = [];
+
+    if (granularityMinutes === 1) {
+      const result = await client.query(
+        `
+          SELECT ts_utc AS ts, open, high, low, close, volume
+          FROM bars_1m
+          WHERE symbol = $1
+          ORDER BY ts_utc DESC
+          LIMIT $2
+        `,
+        [symbol, limit],
+      );
+      rows = result.rows;
+    } else {
+      const baseLimit = limit * granularityMinutes;
+      const result = await client.query(
+        `
+        WITH buckets AS (
+          SELECT
+            to_timestamp(floor(extract(epoch FROM ts_utc) / $3) * $3) AT TIME ZONE 'UTC' AS bucket,
+            ts_utc,
+            open,
+            high,
+            low,
+            close,
+            volume
+          FROM bars_1m
+          WHERE symbol = $1
+          ORDER BY ts_utc DESC
+          LIMIT $2
+        ),
+        grouped AS (
+          SELECT
+            bucket,
+            ARRAY_AGG(open ORDER BY ts_utc) AS opens,
+            ARRAY_AGG(close ORDER BY ts_utc) AS closes,
+            MAX(high) AS high,
+            MIN(low) AS low,
+            SUM(volume) AS volume
+          FROM buckets
+          GROUP BY bucket
+          ORDER BY bucket DESC
+          LIMIT $4
+        )
+        SELECT
+          bucket AS ts,
+          (opens)[1] AS open,
+          high,
+          low,
+          (closes)[array_length(closes, 1)] AS close,
+          volume
+        FROM grouped
+        ORDER BY ts DESC
+        `,
+        [symbol, baseLimit, bucketSeconds, limit],
+      );
+      rows = result.rows;
+    }
+
+    const normalized = rows
       .reverse()
       .map((row) => ({
         ts: new Date(row.ts).toISOString(),
@@ -132,7 +199,7 @@ async function fetchBars(req: FastifyRequest<{ Querystring: BarsQuery }>, reply:
         volume: row.volume === null ? null : Number(row.volume),
       }))
       .filter((row) => Number.isFinite(row.open));
-    return reply.send({ symbol, points: rows });
+    return reply.send({ symbol, points: normalized });
   } catch (err) {
     return reply.status(500).send({ symbol, points: [], error: (err as Error).message });
   } finally {
