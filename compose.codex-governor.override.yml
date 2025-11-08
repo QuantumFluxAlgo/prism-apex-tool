@@ -1,10 +1,9 @@
-version: "3.9"
 services:
   gapfill-realtime:
     volumes:
       - ./tools/codex:/opt/codex:ro
     environment:
-      - "SYMBOLS=${GAPFILL_SYMBOLS:-ES=F,NQ=F,GC=F,CL=F,BTC-USD}"
+      - "SYMBOLS=${GAPFILL_SYMBOLS:-ES=F,NQ=F,MES=F,MNQ=F,YM=F,RTY=F,GC=F,CL=F,6E=F,EURUSD=X,BTC-USD}"
       - "GOV_PATH=/opt/codex/lib/yahoo_governor.sh"
       - "NODE_OPTIONS=--require /opt/codex/lib/node-hook.js"
       - "YF_METRICS_PATH=${YF_METRICS_PATH:-/data/ops/yahoo-metrics.jsonl}"
@@ -15,7 +14,7 @@ services:
     volumes:
       - ./tools/codex:/opt/codex:ro
     environment:
-      - "SYMBOLS=${GAPFILL_SYMBOLS:-ES=F,NQ=F,GC=F,CL=F,BTC-USD}"
+      - "SYMBOLS=${GAPFILL_SYMBOLS:-ES=F,NQ=F,MES=F,MNQ=F,YM=F,RTY=F,GC=F,CL=F,6E=F,EURUSD=X,BTC-USD}"
       - "GOV_PATH=/opt/codex/lib/yahoo_governor.sh"
       - "NODE_OPTIONS=--require /opt/codex/lib/node-hook.js"
       - "YF_METRICS_PATH=${YF_METRICS_PATH:-/data/ops/yahoo-metrics.jsonl}"

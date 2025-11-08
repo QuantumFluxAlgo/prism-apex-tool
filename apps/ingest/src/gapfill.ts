@@ -15,7 +15,7 @@ const rawSymbols =
   argValue('symbols') ??
   (process.env.SYMBOLS && process.env.SYMBOLS.length > 0 ? process.env.SYMBOLS : undefined) ??
   process.env.YAHOO_SYMBOLS ??
-  'ES=F,NQ=F,GC=F,CL=F,BTC-USD';
+  'ES=F,NQ=F,MES=F,MNQ=F,YM=F,RTY=F,GC=F,CL=F,6E=F,EURUSD=X,BTC-USD';
 const SYMBOLS = rawSymbols.split(',').map(s => s.trim()).filter(Boolean);
 const INTERVAL = process.env.YAHOO_INTERVAL ?? '1m';
 const WINDOW_FROM =
