@@ -15,6 +15,8 @@ function makeTicket(overrides: Partial<MinimalTicket> = {}): MinimalTicket {
     stopPrice: 4997.5,
     targetPrice: 5005,
     riskDollars: 250,
+    rewardDollars: 500,
+    rrMultiple: 2,
     engineTimestamp: '2025-01-15T14:30:00Z',
     engineVersion: '0.5.0-orr-osb-vwapft',
     riskEngineVersion: '1.0.0',
@@ -76,7 +78,15 @@ describe('mapEngineTicketsToRows', () => {
     expect(row.contracts).toBeGreaterThan(0);
     expect(row.riskDollars).toBeGreaterThan(0);
     expect(row.rejectionReason).toBeNull();
-    expect(row.meta).toEqual({ source: 'unit-test', riskEngineVersion: '1.0.0', strategyConfigVersion: 42 });
+    expect(row.meta).toEqual({
+      source: 'unit-test',
+      riskEngineVersion: '1.0.0',
+      strategyConfigVersion: 42,
+      contracts: 2,
+      riskDollars: 250,
+      rewardDollars: 500,
+      rrMultiple: 2,
+    });
   });
 
   test('maps rejected entries with zero size and reason', () => {
@@ -90,6 +100,13 @@ describe('mapEngineTicketsToRows', () => {
     expect(row.contracts).toBe(0);
     expect(row.riskDollars).toBe(0);
     expect(row.rejectionReason).toBe('too much risk');
+    expect(row.meta).toEqual({
+      source: 'unit-test',
+      riskEngineVersion: '1.0.0',
+      strategyConfigVersion: 42,
+      contracts: 0,
+      riskDollars: 0,
+    });
   });
 
   test('handles mixed approved + rejected rows', () => {

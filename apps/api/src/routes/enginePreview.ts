@@ -10,17 +10,7 @@ export default async function enginePreviewRoutes(
   app: FastifyInstance,
   _opts: FastifyPluginOptions,
 ): Promise<void> {
-  app.post(
-    '/preview',
-    {
-      schema: {
-        body: enginePreviewRequestSchema,
-        response: {
-          200: enginePreviewResponseSchema,
-        },
-      },
-    },
-    async (request, reply) => {
+  app.post('/preview', async (request, reply) => {
       try {
         const parsed = enginePreviewRequestSchema.parse(request.body) as EnginePreviewRequest;
         const result = await runEnginePreview(parsed);
@@ -41,6 +31,5 @@ export default async function enginePreviewRoutes(
         );
         return reply.status(500).send({ error: 'Engine preview failed' });
       }
-    },
-  );
+    });
 }

@@ -13,6 +13,9 @@ import { WorklistPnLContext, usePnLState } from '../hooks/usePnLState';
 import { PnLDataCell, PnLRRCell, type ActionableRow } from './Worklist';
 import { RiskCell } from '../components/RiskCell';
 import { useToast } from '../context/ToastContext';
+import { TicketQualityFilterBar } from '../components/tickets/TicketQualityFilterBar';
+import type { TicketQualityFilterState } from '../types/ticketQualityFilters';
+import { buildTicketQualityQuery } from '../utils/ticketQualityQuery';
 
 type Filters = {
   from?: string;
@@ -55,6 +58,12 @@ export default function TicketsPage() {
     status: 'ALL',
     showShorts: false,
   });
+  const [qualityFilters, setQualityFilters] = useState<TicketQualityFilterState>({});
+  const [appliedQualityFilters, setAppliedQualityFilters] = useState<TicketQualityFilterState>({});
+  const appliedQualityQuery = useMemo(
+    () => buildTicketQualityQuery(appliedQualityFilters),
+    [appliedQualityFilters],
+  );
 
   useEffect(() => {
     let cancelled = false;
@@ -84,6 +93,7 @@ export default function TicketsPage() {
       strategy: filters.strategy && filters.strategy !== 'ALL' ? filters.strategy : undefined,
       status: filters.status && filters.status !== 'ALL' ? filters.status : undefined,
       direction: filters.showShorts ? undefined : 'LONG',
+      ...appliedQualityQuery,
     };
 
     fetchTickets(query)
@@ -106,7 +116,18 @@ export default function TicketsPage() {
     return () => {
       cancelled = true;
     };
-  }, [limit, offset, filters.from, filters.to, filters.symbol, filters.strategy, filters.status, filters.showShorts, refreshTick]);
+  }, [
+    limit,
+    offset,
+    filters.from,
+    filters.to,
+    filters.symbol,
+    filters.strategy,
+    filters.status,
+    filters.showShorts,
+    refreshTick,
+    appliedQualityQuery,
+  ]);
 
   const handleOperatorAction = useCallback(
     async (row: TicketRow) => {
@@ -284,10 +305,28 @@ export default function TicketsPage() {
 
   const nextDisabled = offset + limit >= total;
 
+  const handleApplyQualityFilters = useCallback((nextFilters: TicketQualityFilterState) => {
+    setQualityFilters(nextFilters);
+    setAppliedQualityFilters(nextFilters);
+    setOffset(0);
+  }, []);
+
+  const handleClearQualityFilters = useCallback(() => {
+    setQualityFilters({});
+    setAppliedQualityFilters({});
+    setOffset(0);
+  }, []);
+
   return (
     <div className="dashboard-stack">
       <Card>
         <CardBody className="dashboard-card__body stack">
+          <TicketQualityFilterBar
+            value={qualityFilters}
+            onChange={setQualityFilters}
+            onApply={handleApplyQualityFilters}
+            onClear={handleClearQualityFilters}
+          />
           <FiltersBar
             dateRange={{
               from: filters.from,

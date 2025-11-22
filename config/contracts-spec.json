@@ -1,106 +1,137 @@
 {
   "metadata": {
-    "revision": 1,
-    "updatedAt": "TODO-YYYY-MM-DD",
-    "reviewer": "TODO-Analyst",
-    "notes": "Populate tick size/value and verification flags once Trader/Analyst signs off."
+    "revision": 2,
+    "updatedAt": "2025-01-25",
+    "reviewer": "ops-risk",
+    "notes": "Canonical contract specs with normalized symbols, aliases, and multipliers."
   },
   "symbols": [
     {
-      "symbol": "ES=F",
+      "symbol": "ES",
+      "aliases": ["ES=F", "ES1!"],
       "description": "E-mini S&P 500",
       "tickSize": 0.25,
       "tickValueUSD": 12.5,
+      "contractMultiplier": 50,
       "contractType": "standard",
       "feedAvailable": true,
-      "tickSpecVerified": true
+      "tickSpecVerified": true,
+      "minContracts": 1
     },
     {
-      "symbol": "MES=F",
+      "symbol": "MES",
+      "aliases": ["MES=F"],
       "description": "Micro E-mini S&P 500",
       "tickSize": 0.25,
       "tickValueUSD": 1.25,
+      "contractMultiplier": 5,
       "contractType": "micro",
       "feedAvailable": true,
-      "tickSpecVerified": true
+      "tickSpecVerified": true,
+      "minContracts": 1
     },
     {
-      "symbol": "NQ=F",
+      "symbol": "NQ",
+      "aliases": ["NQ=F", "NQ1!"],
       "description": "E-mini Nasdaq-100",
       "tickSize": 0.25,
       "tickValueUSD": 5,
+      "contractMultiplier": 20,
       "contractType": "standard",
       "feedAvailable": true,
-      "tickSpecVerified": true
+      "tickSpecVerified": true,
+      "minContracts": 1
     },
     {
-      "symbol": "MNQ=F",
+      "symbol": "MNQ",
+      "aliases": ["MNQ=F"],
       "description": "Micro E-mini Nasdaq-100",
       "tickSize": 0.25,
       "tickValueUSD": 0.5,
+      "contractMultiplier": 2,
       "contractType": "micro",
       "feedAvailable": true,
-      "tickSpecVerified": true
+      "tickSpecVerified": true,
+      "minContracts": 1
     },
     {
-      "symbol": "YM=F",
+      "symbol": "YM",
+      "aliases": ["YM=F"],
       "description": "E-mini Dow ($5)",
       "tickSize": 1,
       "tickValueUSD": 5,
+      "contractMultiplier": 5,
       "contractType": "standard",
       "feedAvailable": true,
-      "tickSpecVerified": true
+      "tickSpecVerified": true,
+      "minContracts": 1
     },
     {
-      "symbol": "RTY=F",
+      "symbol": "RTY",
+      "aliases": ["RTY=F"],
       "description": "E-mini Russell 2000",
       "tickSize": 0.1,
       "tickValueUSD": 5,
+      "contractMultiplier": 50,
       "contractType": "standard",
       "feedAvailable": true,
-      "tickSpecVerified": true
+      "tickSpecVerified": true,
+      "minContracts": 1
     },
     {
-      "symbol": "GC=F",
+      "symbol": "GC",
+      "aliases": ["GC=F"],
       "description": "Gold Futures",
       "tickSize": 0.1,
       "tickValueUSD": 10,
+      "contractMultiplier": 100,
       "contractType": "standard",
       "feedAvailable": true,
-      "tickSpecVerified": true
+      "tickSpecVerified": true,
+      "minContracts": 1
     },
     {
-      "symbol": "CL=F",
+      "symbol": "CL",
+      "aliases": ["CL=F"],
       "description": "Crude Oil Futures",
       "tickSize": 0.01,
       "tickValueUSD": 10,
+      "contractMultiplier": 1000,
       "contractType": "standard",
       "feedAvailable": true,
-      "tickSpecVerified": true
+      "tickSpecVerified": true,
+      "minContracts": 1
     },
     {
-      "symbol": "6E=F",
+      "symbol": "6E",
+      "aliases": ["6E=F"],
       "description": "Euro FX Futures",
       "tickSize": 0.0001,
       "tickValueUSD": 12.5,
+      "contractMultiplier": 125000,
       "contractType": "standard",
       "feedAvailable": true,
-      "tickSpecVerified": true
+      "tickSpecVerified": true,
+      "minContracts": 1
     },
     {
-      "symbol": "EURUSD=X",
+      "symbol": "EURUSD",
+      "aliases": ["EURUSD=X"],
       "description": "Euro / US Dollar Spot",
       "tickSize": null,
       "tickValueUSD": null,
+      "contractMultiplier": null,
       "contractType": "spot",
       "feedAvailable": true,
       "tickSpecVerified": false
     },
     {
-      "symbol": "^GDAXI",
+      "symbol": "GDAXI",
+      "aliases": ["^GDAXI"],
       "description": "DAX Futures (Eurex)",
       "tickSize": null,
       "tickValueUSD": null,
+      "contractMultiplier": null,
       "contractType": "standard",
       "feedAvailable": true,
       "tickSpecVerified": false

@@ -21,7 +21,22 @@ function makePreviewResponse() {
     symbol: 'ES',
     sessionDate: '2025-01-15',
     configVersion: 42,
-    signals: [],
+    signals: [
+      {
+        id: 'sig-1',
+        timestamp: '2025-01-15T14:30:00Z',
+        direction: 'LONG',
+        price: 5000,
+        reason: 'test-signal',
+        entryPrice: 5000,
+        stopPrice: 4998,
+        targetPrice: 5002,
+        ticksToStop: 8,
+        ticksToTarget: 8,
+        riskPerContractUSD: 100,
+        rewardPerContractUSD: 100,
+      },
+    ],
     meta: {
       engineVersion: '0.5.0-orr-osb-vwapft',
       riskEngineVersion: '2.0.0-risk',
@@ -66,6 +81,13 @@ describe('POST /api/engine/preview', () => {
         engineVersion: '0.5.0-orr-osb-vwapft',
       }),
     });
+    expect(Array.isArray(body.signals)).toBe(true);
+    const signal = body.signals?.[0];
+    expect(signal).toBeDefined();
+    expect(signal.ticksToStop).toBeDefined();
+    expect(typeof signal.ticksToStop).toBe('number');
+    expect(signal.riskPerContractUSD).toBeDefined();
+    expect(typeof signal.riskPerContractUSD).toBe('number');
   });
 
   it('returns 400 when payload validation fails', async () => {

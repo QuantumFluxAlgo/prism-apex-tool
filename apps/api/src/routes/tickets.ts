@@ -18,6 +18,8 @@ import {
   type SessionFlagsSummary,
 } from '../jobs/session-metrics/session-flags-service.js';
 import type { TicketRiskDecisionDto } from './dto/riskDecisionDto.js';
+import { applyQualityFilters, parseTicketQualityFilters } from './ticketQualityFilters.js';
+import { emitTicketQualityTelemetry } from '../services/tickets/ticketsTelemetry.js';
 
 type Query = {
   limit?: string;
@@ -31,6 +33,14 @@ type Query = {
   scope?: string;
   date?: string;
   cursor?: string;
+  minEntryRR?: string;
+  maxEntryRR?: string;
+  minActualRR?: string;
+  maxActualRR?: string;
+  minRiskDollars?: string;
+  maxRiskDollars?: string;
+  minActualPnLDollars?: string;
+  maxActualPnLDollars?: string;
 };
 
 const ORR_STRATEGY_ID = 'APX-DDB-01';
@@ -57,6 +67,10 @@ export type TicketRowDto = {
   sessionMetrics: SessionMetricsSummary | null;
   sessionFlags: SessionFlagsSummary | null;
   riskDecision?: TicketRiskDecisionDto | null;
+  contracts?: number | null;
+  riskDollars?: number | null;
+  rewardDollars?: number | null;
+  rrMultiple?: number | null;
 } & Record<string, unknown>;
 
 const DEFAULT_RISK_DECISION: TicketRiskDecisionDto = {
@@ -67,6 +81,36 @@ const DEFAULT_RISK_DECISION: TicketRiskDecisionDto = {
   warnings: [],
 };
 
+function toNumber(value: unknown): number | null {
+  if (typeof value === 'number' && Number.isFinite(value)) return value;
+  if (typeof value === 'string' && value.trim().length) {
+    const parsed = Number(value);
+    return Number.isFinite(parsed) ? parsed : null;
+  }
+  return null;
+}
+
+function attachRiskFields(row: any): any {
+  const meta = row?.meta && typeof row.meta === 'object' ? (row.meta as Record<string, unknown>) : {};
+  const contracts = row.contracts ?? toNumber(meta.contracts);
+  const riskDollars =
+    row.riskDollars ?? row.risk_dollars ?? toNumber(meta.riskDollars ?? meta.risk_dollars);
+  const rewardDollars =
+    row.rewardDollars ?? row.reward_dollars ?? toNumber(meta.rewardDollars ?? meta.reward_dollars);
+  const rrMultiple =
+    row.rrMultiple ??
+    row.rr_multiple ??
+    toNumber(meta.rrMultiple ?? meta.rr_multiple ?? meta.rr ?? row.rr);
+
+  return {
+    ...row,
+    contracts: contracts ?? null,
+    riskDollars: riskDollars ?? null,
+    rewardDollars: rewardDollars ?? null,
+    rrMultiple: rrMultiple ?? null,
+  };
+}
+
 export default async function ticketsRoute(app: FastifyInstance) {
   const handler = async (req: TicketsRequest, reply: FastifyReply) => {
     const q = req.query ?? {};
@@ -74,8 +118,9 @@ export default async function ticketsRoute(app: FastifyInstance) {
     const limit = Math.max(0, Math.min(500, Number(q.limit ?? 50)));
     const offset = Math.max(0, Number(q.offset ?? 0));
     const scope = (q.scope ?? 'all').toLowerCase();
-    const symbol = q.symbol && q.symbol !== 'ALL' ? q.symbol : undefined;
-    const direction = q.direction && q.direction !== 'ALL' ? q.direction : undefined;
+    const symbol = q.symbol && q.symbol !== 'ALL' ? q.symbol.trim() : undefined;
+    const direction =
+      q.direction && q.direction !== 'ALL' ? q.direction.trim().toUpperCase() : undefined;
     const status = q.status && q.status !== 'ALL' ? q.status : undefined;
     const strategy = normalizeStrategy(q.strategy);
     const from = q.from;
@@ -85,6 +130,8 @@ export default async function ticketsRoute(app: FastifyInstance) {
       reply.code(400);
       return reply.send({ error: 'Invalid query' });
     }
+
+    const qualityFilters = parseTicketQualityFilters(q);
 
     if (isTestMode() && !q.date && !q.from && !q.to) {
       const cursorIso = typeof q.cursor === 'string' && q.cursor ? q.cursor : undefined;
@@ -169,9 +216,21 @@ export default async function ticketsRoute(app: FastifyInstance) {
         client.query(rowsSql, params),
         client.query(countSql, params),
       ]);
-      const total = countResult.rows[0]?.n ?? 0;
       const ticketsWithMetrics = await populateSessionMetricsForTickets(rowsResult.rows);
-      return reply.send({ total, rows: ticketsWithMetrics, tickets: ticketsWithMetrics });
+      const filteredTickets = applyQualityFilters(ticketsWithMetrics, qualityFilters);
+      const total = filteredTickets.length;
+
+      emitTicketQualityTelemetry({
+        route: 'tickets',
+        filters: qualityFilters,
+        totalBefore: ticketsWithMetrics.length,
+        totalAfter: total,
+        symbol,
+        direction,
+        status,
+      });
+
+      return reply.send({ total, rows: filteredTickets, tickets: filteredTickets });
     } finally {
       await client.end();
     }
@@ -208,12 +267,15 @@ function getSessionFlagsForRow(row: any): SessionFlagsSummary {
 }
 
 async function populateSessionMetricsForTickets(rows: any[]): Promise<TicketRowDto[]> {
-  const baseTickets = rows.map((row) => ({
-    ...row,
-    sessionMetrics: null,
-    sessionFlags: getSessionFlagsForRow(row),
-    riskDecision: (row.riskDecision as TicketRiskDecisionDto | null) ?? DEFAULT_RISK_DECISION,
-  })) as TicketRowDto[];
+  const baseTickets = rows.map((row) => {
+    const withRisk = attachRiskFields(row);
+    return {
+      ...withRisk,
+      sessionMetrics: null,
+      sessionFlags: getSessionFlagsForRow(withRisk),
+      riskDecision: (withRisk.riskDecision as TicketRiskDecisionDto | null) ?? DEFAULT_RISK_DECISION,
+    } as TicketRowDto;
+  });
 
   const keyList: SessionMetricsKey[] = [];
   const seen = new Set<string>();

@@ -62,6 +62,21 @@ export interface GovernanceAlertPayloads {
     totalSafetyEnvelopeDropped: number;
     totalHardStopRejected: number;
   };
+  tickets_quality_summary: {
+    route: 'tickets' | 'tickets-debug';
+    filters: Record<string, unknown>;
+    totals: {
+      before: number;
+      after: number;
+      filteredOut: number;
+    };
+    scope: {
+      symbol: string | null;
+      direction: string | null;
+      status: string | null;
+    };
+    timestamp: string;
+  };
 }
 
 export type GovernanceAlertEvent = keyof GovernanceAlertPayloads;

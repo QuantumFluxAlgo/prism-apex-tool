@@ -85,6 +85,10 @@ export type TicketRow = {
   operatorSizing?: OperatorSizing | null;
   pnlAmount?: number | null;
   pnlRatio?: number | null;
+  contracts?: number | null;
+  riskDollars?: number | null;
+  rewardDollars?: number | null;
+  rrMultiple?: number | null;
 };
 
 export type TicketsResponse = {

@@ -1,5 +1,6 @@
 import React from 'react';
 import type { TicketRow } from '../lib/api';
+import { fmtR } from '../utils/number';
 
 type RiskDisplayState = 'NOT_EVALUATED' | 'OK' | 'WARN' | 'BLOCKED';
 
@@ -116,6 +117,12 @@ export interface RiskCellProps {
 
 export const RiskCell: React.FC<RiskCellProps> = ({ row }) => {
   const risk = normaliseRisk(row);
+  const contracts = normaliseNumber(row.contracts ?? (row.meta as any)?.contracts);
+  const riskDollars = normaliseNumber(row.riskDollars ?? (row.meta as any)?.riskDollars);
+  const rewardDollars = normaliseNumber(row.rewardDollars ?? (row.meta as any)?.rewardDollars);
+  const rrMultiple =
+    normaliseNumber(row.rrMultiple ?? row.rr ?? (row.meta as any)?.rrMultiple ?? (row.meta as any)?.rr) ?? null;
+  const hasMetrics = contracts || riskDollars || rewardDollars || rrMultiple;
 
   return (
     <div className="flex flex-col gap-0.5 min-w-[90px]">
@@ -130,8 +137,48 @@ export const RiskCell: React.FC<RiskCellProps> = ({ row }) => {
       {risk.state === 'NOT_EVALUATED' && !risk.detail ? (
         <span className="text-[10px] text-slate-400">Waiting for risk…</span>
       ) : null}
+      {hasMetrics ? (
+        <div className="text-[10px] leading-tight text-slate-600" data-cell="RiskCell-metrics">
+          {contracts ? (
+            <div>
+              {contracts}× {row.symbol}
+            </div>
+          ) : null}
+          {riskDollars || rewardDollars ? (
+            <div>
+              {riskDollars ? `Risk ${formatUsd(riskDollars)}` : null}
+              {riskDollars && rewardDollars ? ' · ' : null}
+              {rewardDollars ? `Reward ${formatUsd(rewardDollars)}` : null}
+            </div>
+          ) : null}
+          {rrMultiple ? <div>RR {fmtR(rrMultiple)}</div> : null}
+        </div>
+      ) : null}
     </div>
   );
 };
 
 export default RiskCell;
+
+function normaliseNumber(value: unknown): number | null {
+  if (typeof value === 'number' && Number.isFinite(value)) return value;
+  if (typeof value === 'string' && value.trim()) {
+    const parsed = Number(value);
+    if (Number.isFinite(parsed)) return parsed;
+  }
+  return null;
+}
+
+const USD = new Intl.NumberFormat('en-US', {
+  style: 'currency',
+  currency: 'USD',
+  minimumFractionDigits: 2,
+  maximumFractionDigits: 2,
+});
+
+function formatUsd(value: number | null): string {
+  if (value === null || Number.isNaN(value)) {
+    return '—';
+  }
+  return USD.format(value);
+}

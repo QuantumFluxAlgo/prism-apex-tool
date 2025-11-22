@@ -19,6 +19,8 @@ export interface MinimalTicket {
   stopPrice: number;
   targetPrice: number | null;
   riskDollars: number;
+  rewardDollars?: number;
+  rrMultiple?: number;
   engineTimestamp: string;
   engineVersion: string;
   riskEngineVersion: string;
@@ -106,6 +108,16 @@ export function buildTicketsFromSignals(ctx: TicketBuildContext): TicketBuildRes
 
     if (decision.approved && decision.contracts > 0 && decision.riskDollars > 0) {
       const id = `${strategy}-${symbol}-${signal.timestamp}`;
+      const rewardPerContract =
+        typeof signal.rewardPerContractUSD === 'number' && Number.isFinite(signal.rewardPerContractUSD)
+          ? signal.rewardPerContractUSD
+          : null;
+      const rewardDollars =
+        rewardPerContract !== null ? rewardPerContract * decision.contracts : null;
+      const rrMultiple =
+        rewardDollars !== null && decision.riskDollars > 0
+          ? rewardDollars / decision.riskDollars
+          : null;
       tickets.push({
         id,
         symbol,
@@ -116,6 +128,8 @@ export function buildTicketsFromSignals(ctx: TicketBuildContext): TicketBuildRes
         stopPrice: stopPrice as number,
         targetPrice: typeof signal.targetPrice === 'number' ? signal.targetPrice : null,
         riskDollars: decision.riskDollars,
+        rewardDollars: rewardDollars ?? undefined,
+        rrMultiple: rrMultiple ?? undefined,
         engineTimestamp: signal.timestamp,
         engineVersion,
         riskEngineVersion,

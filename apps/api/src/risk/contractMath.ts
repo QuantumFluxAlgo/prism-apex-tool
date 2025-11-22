@@ -1,8 +1,12 @@
+import {
+  getContractSpec as getSharedContractSpec,
+  ticksToDollars as specTicksToDollars,
+  priceDiffToTicks as specPriceDiffToTicks,
+  type ContractSpec,
+} from './contractsShim.js';
+
 /**
- * Unified contract & risk math utilities.
- *
- * Acts as the single source of truth for tick/dollar/contract conversions
- * so strategies, risk engine, and UI can stay consistent.
+ * Unified contract & risk math utilities backed by the shared contracts spec.
  */
 export class ContractMathError extends Error {
   constructor(message: string) {
@@ -13,50 +17,38 @@ export class ContractMathError extends Error {
 
 export interface InstrumentSpec {
   symbol: string;
-  tickSize: number; // Minimum price increment
-  dollarsPerTick: number; // Dollar value per tick per contract
-  minContracts: number; // Smallest tradable size
-  maxContracts?: number; // Optional soft clamp for downstream risk checks
+  tickSize: number;
+  dollarsPerTick: number;
+  minContracts: number;
+  maxContracts?: number;
 }
 
-const INSTRUMENT_SPECS: Record<string, InstrumentSpec> = {
-  ES: {
-    symbol: 'ES',
-    tickSize: 0.25,
-    dollarsPerTick: 12.5,
-    minContracts: 1,
-  },
-  NQ: {
-    symbol: 'NQ',
-    tickSize: 0.25,
-    dollarsPerTick: 5,
-    minContracts: 1,
-  },
-};
-
-function normalizeSymbol(symbol: string): string {
-  const trimmed = symbol?.trim().toUpperCase();
-  if (!trimmed) {
-    throw new ContractMathError('symbol is required');
+function resolveContractSpec(symbol: string): ContractSpec {
+  try {
+    return getSharedContractSpec(symbol);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Unknown contract spec';
+    throw new ContractMathError(message);
   }
-  return trimmed;
 }
 
 export function getInstrumentSpec(symbol: string): InstrumentSpec {
-  const normalized = normalizeSymbol(symbol);
-  const spec = INSTRUMENT_SPECS[normalized];
-  if (!spec) {
-    throw new ContractMathError(`Unknown instrument symbol: ${symbol}`);
-  }
-  return spec;
+  const spec = resolveContractSpec(symbol);
+  return {
+    symbol: spec.symbol,
+    tickSize: spec.tickSize,
+    dollarsPerTick: spec.tickValueUSD,
+    minContracts: spec.minContracts,
+    maxContracts: spec.maxContracts,
+  };
 }
 
 export function ticksToDollars(symbol: string, ticks: number): number {
   if (!Number.isFinite(ticks)) {
     throw new ContractMathError('ticks must be a finite number');
   }
-  const spec = getInstrumentSpec(symbol);
-  return ticks * spec.dollarsPerTick;
+  resolveContractSpec(symbol); // ensure known
+  return specTicksToDollars(symbol, ticks);
 }
 
 export function dollarsToContracts(symbol: string, riskDollars: number, stopDistanceTicks: number): number {
@@ -67,20 +59,20 @@ export function dollarsToContracts(symbol: string, riskDollars: number, stopDist
     throw new ContractMathError('stopDistanceTicks must be > 0');
   }
 
-  const spec = getInstrumentSpec(symbol);
-  const riskPerContract = ticksToDollars(spec.symbol, stopDistanceTicks);
+  const spec = resolveContractSpec(symbol);
+  const riskPerContract = Math.abs(specTicksToDollars(symbol, stopDistanceTicks));
   if (riskPerContract <= 0) {
     throw new ContractMathError('riskPerContract must be > 0');
   }
 
-  const contracts = Math.floor(riskDollars / riskPerContract);
-  if (contracts <= 0) {
+  const rawContracts = Math.floor(riskDollars / riskPerContract);
+  if (rawContracts <= 0) {
     return 0;
   }
 
-  const min = spec.minContracts;
-  const max = spec.maxContracts ?? Number.MAX_SAFE_INTEGER;
-  return Math.max(min, Math.min(contracts, max));
+  const maxContracts = spec.maxContracts ?? Number.MAX_SAFE_INTEGER;
+  const clamped = Math.min(rawContracts, maxContracts);
+  return Math.max(spec.minContracts, clamped);
 }
 
 export function computeTradeRisk(symbol: string, contracts: number, stopDistanceTicks: number): number {
@@ -94,8 +86,8 @@ export function computeTradeRisk(symbol: string, contracts: number, stopDistance
     return 0;
   }
 
-  const spec = getInstrumentSpec(symbol);
-  const riskPerContract = ticksToDollars(spec.symbol, stopDistanceTicks);
+  resolveContractSpec(symbol);
+  const riskPerContract = Math.abs(specTicksToDollars(symbol, stopDistanceTicks));
   return contracts * riskPerContract;
 }
 
@@ -110,9 +102,16 @@ export function computePnlDollars(symbol: string, entryPrice: number, exitPrice:
     return 0;
   }
 
-  const spec = getInstrumentSpec(symbol);
-  const priceDiff = exitPrice - entryPrice;
-  const ticksMoved = priceDiff / spec.tickSize;
-  const pnlPerContract = ticksToDollars(spec.symbol, ticksMoved);
+  const spec = resolveContractSpec(symbol);
+  const ticksMoved = specPriceDiffToTicks(symbol, entryPrice, exitPrice);
+  const pnlPerContract = specTicksToDollars(symbol, ticksMoved);
   return pnlPerContract * contracts;
+}
+
+export function priceDiffToTicks(symbol: string, fromPrice: number, toPrice: number): number {
+  if (!Number.isFinite(fromPrice) || !Number.isFinite(toPrice)) {
+    throw new ContractMathError('prices must be finite numbers');
+  }
+  resolveContractSpec(symbol);
+  return specPriceDiffToTicks(symbol, fromPrice, toPrice);
 }

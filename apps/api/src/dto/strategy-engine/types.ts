@@ -26,6 +26,10 @@ export const engineSignalSchema = z.object({
   entryPrice: z.number().optional(),
   stopPrice: z.number().optional(),
   targetPrice: z.number().optional(),
+  ticksToStop: z.number().optional(),
+  ticksToTarget: z.number().optional(),
+  riskPerContractUSD: z.number().optional(),
+  rewardPerContractUSD: z.number().optional(),
 });
 
 export type EngineSignal = z.infer<typeof engineSignalSchema>;

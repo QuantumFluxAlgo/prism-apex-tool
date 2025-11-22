@@ -12,6 +12,10 @@ function makeSignal(overrides: Partial<EngineSignal> = {}): EngineSignal {
     stopPrice: 4997.5, // 10 ticks with 0.25 size
     targetPrice: 5005,
     reason: 'test-signal',
+    ticksToStop: 10,
+    ticksToTarget: 20,
+    riskPerContractUSD: 125,
+    rewardPerContractUSD: 250,
   };
   return { ...base, ...overrides };
 }
@@ -49,6 +53,8 @@ describe('buildTicketsFromSignals', () => {
     expect(ticket.targetPrice).toBeCloseTo(5005);
     expect(ticket.engineTimestamp).toBe('2025-01-15T14:30:00Z');
     expect(ticket.id).toContain('orr-ES-');
+    expect(ticket.rewardDollars).toBeGreaterThan(0);
+    expect(ticket.rrMultiple).toBeGreaterThan(0);
   });
 
   test('rejects when risk budget is too small', () => {
@@ -90,5 +96,18 @@ describe('buildTicketsFromSignals', () => {
       expect(ticket.contracts).toBeGreaterThan(0);
       expect(ticket.riskDollars).toBeGreaterThan(0);
     }
+  });
+
+  test('does not set reward fields when signal lacks reward metadata', () => {
+    const ctx = makeContext({
+      signals: [
+        makeSignal({
+          rewardPerContractUSD: undefined,
+        }),
+      ],
+    });
+    const { tickets } = buildTicketsFromSignals(ctx);
+    expect(tickets[0].rewardDollars).toBeUndefined();
+    expect(tickets[0].rrMultiple).toBeUndefined();
   });
 });

@@ -56,6 +56,18 @@ export function mapEngineTicketsToRows(ctx: EngineTicketPersistContext): EngineT
   const rows: EngineTicketRow[] = [];
 
   for (const ticket of tickets) {
+    const metaPayload: Record<string, unknown> = sharedMeta ? { ...sharedMeta } : {};
+    metaPayload.riskEngineVersion = riskEngineVersion;
+    metaPayload.strategyConfigVersion = strategyConfigVersion;
+    metaPayload.contracts = ticket.contracts;
+    metaPayload.riskDollars = ticket.riskDollars;
+    if (typeof ticket.rewardDollars === 'number' && Number.isFinite(ticket.rewardDollars)) {
+      metaPayload.rewardDollars = ticket.rewardDollars;
+    }
+    if (typeof ticket.rrMultiple === 'number' && Number.isFinite(ticket.rrMultiple)) {
+      metaPayload.rrMultiple = ticket.rrMultiple;
+    }
+
     rows.push({
       symbol,
       strategy,
@@ -70,16 +82,7 @@ export function mapEngineTicketsToRows(ctx: EngineTicketPersistContext): EngineT
       status: 'approved',
       rejectionReason: null,
       engineVersion,
-      meta: sharedMeta
-        ? {
-            ...sharedMeta,
-            riskEngineVersion,
-            strategyConfigVersion,
-          }
-        : {
-            riskEngineVersion,
-            strategyConfigVersion,
-          },
+      meta: metaPayload,
     });
   }
 
@@ -97,6 +100,12 @@ export function mapEngineTicketsToRows(ctx: EngineTicketPersistContext): EngineT
         ? signal.targetPrice
         : null;
 
+    const metaPayload: Record<string, unknown> = sharedMeta ? { ...sharedMeta } : {};
+    metaPayload.riskEngineVersion = riskEngineVersion;
+    metaPayload.strategyConfigVersion = strategyConfigVersion;
+    metaPayload.contracts = 0;
+    metaPayload.riskDollars = 0;
+
     rows.push({
       symbol,
       strategy,
@@ -111,16 +120,7 @@ export function mapEngineTicketsToRows(ctx: EngineTicketPersistContext): EngineT
       status: 'rejected',
       rejectionReason: decision.reason ?? null,
       engineVersion,
-      meta: sharedMeta
-        ? {
-            ...sharedMeta,
-            riskEngineVersion,
-            strategyConfigVersion,
-          }
-        : {
-            riskEngineVersion,
-            strategyConfigVersion,
-          },
+      meta: metaPayload,
     });
   }
 

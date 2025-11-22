@@ -15,6 +15,10 @@ const { fetchTicketsMock, fetchSymbolsMock, recordOperatorActionMock } = vi.hois
       entry_price: 4800,
       stop_price: 4798,
       target_price: 4804,
+      contracts: 3,
+      riskDollars: 375,
+      rewardDollars: 750,
+      rrMultiple: 2,
     },
     {
       id: 't-short',
@@ -26,6 +30,10 @@ const { fetchTicketsMock, fetchSymbolsMock, recordOperatorActionMock } = vi.hois
       entry_price: 15000,
       stop_price: 15010,
       target_price: 14980,
+      contracts: 1,
+      riskDollars: 200,
+      rewardDollars: 400,
+      rrMultiple: 2,
     },
   ];
   const fetchTicketsMock = vi.fn().mockResolvedValue({ rows: sampleTickets, total: sampleTickets.length });
@@ -99,5 +107,12 @@ describe('TicketsPage', () => {
     await waitFor(() => expect(recordOperatorActionMock).toHaveBeenCalled());
     expect(await screen.findByText('Operator action failed; please retry.')).toBeInTheDocument();
     expect(fetchTicketsMock).toHaveBeenCalledTimes(1);
+  });
+
+  it('renders risk metrics for each ticket', async () => {
+    renderTickets();
+    expect(await screen.findByText(/Risk \$375\.00/i)).toBeInTheDocument();
+    expect(screen.getByText(/Reward \$750\.00/i)).toBeInTheDocument();
+    expect(screen.getByText(/RR \+2\.00R/i)).toBeInTheDocument();
   });
 });

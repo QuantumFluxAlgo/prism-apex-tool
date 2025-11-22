@@ -9,8 +9,61 @@ import { applyHardStopToSignals } from '../../risk/engineHardStop.js';
 import { getPromotedStrategyVersion } from '../strategy-config/promotion.js';
 import { RISK_ENGINE_VERSION } from '../risk/version.js';
 import { applySafetyEnvelope } from './safetyEnvelope.js';
+import {
+  ContractMathError,
+  priceDiffToTicks,
+  ticksToDollars,
+} from '../../risk/contractMath.js';
 
 export const ENGINE_VERSION = '0.5.0-orr-osb-vwapft';
+
+function enrichSignalWithRisk(symbol: string, signal: EngineSignal): EngineSignal {
+  const enriched: EngineSignal = { ...signal };
+  try {
+    const entry =
+      typeof signal.entryPrice === 'number' && Number.isFinite(signal.entryPrice)
+        ? signal.entryPrice
+        : signal.price;
+    const stop = signal.stopPrice;
+
+    if (Number.isFinite(entry) && typeof stop === 'number' && Number.isFinite(stop)) {
+      const ticksToStop = Math.abs(priceDiffToTicks(symbol, entry, stop));
+      if (Number.isFinite(ticksToStop) && ticksToStop > 0) {
+        enriched.ticksToStop = ticksToStop;
+        const riskPerContract = ticksToDollars(symbol, ticksToStop);
+        if (Number.isFinite(riskPerContract)) {
+          enriched.riskPerContractUSD = riskPerContract;
+        }
+      }
+    }
+
+    if (
+      typeof signal.targetPrice === 'number' &&
+      Number.isFinite(signal.targetPrice)
+    ) {
+      const entryForTarget =
+        typeof signal.entryPrice === 'number' && Number.isFinite(signal.entryPrice)
+          ? signal.entryPrice
+          : signal.price;
+      if (Number.isFinite(entryForTarget)) {
+        const ticksToTarget = Math.abs(priceDiffToTicks(symbol, entryForTarget, signal.targetPrice));
+        if (Number.isFinite(ticksToTarget) && ticksToTarget > 0) {
+          enriched.ticksToTarget = ticksToTarget;
+          const rewardPerContract = ticksToDollars(symbol, ticksToTarget);
+          if (Number.isFinite(rewardPerContract)) {
+            enriched.rewardPerContractUSD = rewardPerContract;
+          }
+        }
+      }
+    }
+  } catch (error) {
+    if (!(error instanceof ContractMathError)) {
+      // swallow unexpected errors but avoid leaking details
+      // intentional no-op
+    }
+  }
+  return enriched;
+}
 
 export async function runEnginePreview(
   input: EnginePreviewRequest,
@@ -86,6 +139,7 @@ export async function runEnginePreview(
     signals: safeSignals,
     config: { maxRiskDollarsPerTrade: maxRisk },
   });
+  const enrichedSignals = approvedSignals.map((signal) => enrichSignalWithRisk(symbol, signal));
 
   const gatingNote =
     maxRisk !== null
@@ -102,7 +156,7 @@ export async function runEnginePreview(
     symbol,
     sessionDate,
     configVersion: configVersion ?? undefined,
-    signals: approvedSignals,
+    signals: enrichedSignals,
     meta: {
       engineVersion: ENGINE_VERSION,
       riskEngineVersion: RISK_ENGINE_VERSION,

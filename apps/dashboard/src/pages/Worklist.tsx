@@ -8,6 +8,7 @@ import Badge from '../ui/Badge';
 import { Card, CardBody } from '../ui/Card';
 import { fetchTickets, completeTicket, fetchSymbols, type TicketRow } from '../lib/api';
 import { SymbolCoverage } from '../components/SymbolCoverage';
+import { RiskCell } from '../components/RiskCell';
 import { fmtUtc } from '../utils/time';
 import { useToast } from '../context/ToastContext';
 import { fmtPrice, fmtR } from '../utils/number';
@@ -407,6 +408,13 @@ const Worklist: React.FC = () => {
           {fmtPrice(row.target_price)}
         </span>
       ),
+    },
+    {
+      key: 'risk',
+      header: 'Risk',
+      align: 'center',
+      className: 'col-risk text-center',
+      render: (row) => <RiskCell row={row} />,
     },
     {
       key: 'rr',

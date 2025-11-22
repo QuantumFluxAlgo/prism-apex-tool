@@ -6,27 +6,31 @@ import {
   dollarsToContracts,
   computeTradeRisk,
   computePnlDollars,
+  priceDiffToTicks,
 } from './contractMath.js';
 
 describe('contractMath', () => {
-  it('returns known instrument specs', () => {
+  it('normalizes symbols and exposes shared specs', () => {
     const es = getInstrumentSpec('es');
     expect(es.symbol).toBe('ES');
     expect(es.tickSize).toBe(0.25);
     expect(es.dollarsPerTick).toBe(12.5);
 
+    const alias = getInstrumentSpec('ES=F');
+    expect(alias.symbol).toBe('ES');
+
     const nq = getInstrumentSpec('NQ');
-    expect(nq.symbol).toBe('NQ');
+    expect(nq.tickSize).toBe(0.25);
   });
 
-  it('converts ticks to dollars by instrument', () => {
+  it('converts ticks to dollars across instruments', () => {
     expect(ticksToDollars('ES', 4)).toBeCloseTo(50);
     expect(ticksToDollars('NQ', 4)).toBeCloseTo(20);
+    expect(ticksToDollars('CL', 5)).toBeCloseTo(50);
   });
 
   it('computes contracts from dollars and stop distance', () => {
-    // 10 ticks risk = 125 dollars per contract
-    const contracts = dollarsToContracts('ES', 500, 10);
+    const contracts = dollarsToContracts('ES', 500, 10); // 10 ticks = $125 risk/contract
     expect(contracts).toBe(4);
   });
 
@@ -35,9 +39,11 @@ describe('contractMath', () => {
     expect(contracts).toBe(0);
   });
 
-  it('computes per-trade risk', () => {
-    const risk = computeTradeRisk('ES', 3, 5);
-    expect(risk).toBeCloseTo(3 * ticksToDollars('ES', 5));
+  it('computes per-trade risk for equity and energy futures', () => {
+    const esRisk = computeTradeRisk('ES', 3, 5);
+    expect(esRisk).toBeCloseTo(3 * ticksToDollars('ES', 5));
+    const clRisk = computeTradeRisk('CL', 2, 15);
+    expect(clRisk).toBeCloseTo(2 * ticksToDollars('CL', 15));
   });
 
   it('computes pnl dollars with correct sign', () => {
@@ -47,6 +53,11 @@ describe('contractMath', () => {
     expect(lose).toBeLessThan(0);
   });
 
+  it('derives ticks from price differences deterministically', () => {
+    expect(priceDiffToTicks('ES', 5000, 5001)).toBeCloseTo(4);
+    expect(priceDiffToTicks('NQ', 15000, 14999)).toBeCloseTo(-4);
+  });
+
   it('throws on invalid inputs', () => {
     expect(() => getInstrumentSpec('UNK')).toThrow(ContractMathError);
     expect(() => ticksToDollars('ES', Number.NaN)).toThrow(ContractMathError);
@@ -54,5 +65,6 @@ describe('contractMath', () => {
     expect(() => dollarsToContracts('ES', 100, -1)).toThrow(ContractMathError);
     expect(() => computeTradeRisk('ES', -1, 5)).toThrow(ContractMathError);
     expect(() => computePnlDollars('ES', Number.NaN, 1, 1)).toThrow(ContractMathError);
+    expect(() => priceDiffToTicks('ES', Number.NaN, 1)).toThrow(ContractMathError);
   });
 });

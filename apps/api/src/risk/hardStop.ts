@@ -1,6 +1,6 @@
 import {
   ContractMathError,
-  getInstrumentSpec,
+  priceDiffToTicks,
   dollarsToContracts,
   computeTradeRisk,
 } from './contractMath.js';
@@ -46,8 +46,7 @@ export function evaluateHardStop(input: HardStopInput): HardStopDecision {
   }
 
   try {
-    const spec = getInstrumentSpec(symbol);
-    const stopDistanceTicks = Math.abs(entryPrice - stopPrice) / spec.tickSize;
+    const stopDistanceTicks = Math.abs(priceDiffToTicks(symbol, entryPrice, stopPrice));
 
     if (!Number.isFinite(stopDistanceTicks) || stopDistanceTicks <= 0) {
       return rejectDecision(input, 'Invalid stop distance');
