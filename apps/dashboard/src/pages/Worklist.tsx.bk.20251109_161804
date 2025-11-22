@@ -1,0 +1,64 @@
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import DataTable, { type DataTableColumn } from '../ui/DataTable';
+import CopyOcoButton from '../components/CopyOcoButton';
+import FiltersBar from '../ui/FiltersBar';
+import Kpi from '../ui/Kpi';
+import Button from '../ui/Button';
+import Badge from '../ui/Badge';
+import { Card, CardBody } from '../ui/Card';
+import { fetchTickets, completeTicket, fetchSymbols, type TicketRow } from '../lib/api';
+import { SymbolCoverage } from '../components/SymbolCoverage';
+import { fmtUtc } from '../utils/time';
+import { tooltipDist } from '../utils/ticks';
+import { useToast } from "../context/ToastContext";
+import { fmtPrice, fmtR } from "../utils/number";
+
+import { WorklistPnLContext, hasCompleteInputs, usePnLState, derivePnLInputs } from "../hooks/usePnLState";
+import type { PnlCellState } from "../hooks/usePnLState";
+import { Tooltip } from "../ui/Tooltip";
+
+
+/* =============================================================================
+   Compatibility exports for Tickets.tsx (restored after refactors)
+   These are minimal pass-through components/types to satisfy imports:
+   - OperatorSizingCell
+   - PnLDataCell
+   - PnLRRCell
+   - type ActionableRow
+   You can replace these with the richer implementations later.
+============================================================================= */
+
+export type ActionableRow = TicketRow;
+
+export const OperatorSizingCell: React.FC<{ row: TicketRow }> = ({ row }) => {
+  const qty = row?.operatorSizing?.qty ?? '—';
+  return <span data-cell="OperatorSizingCell">{qty}</span>;
+};
+
+export const PnLDataCell: React.FC<{ state?: any }> = ({ state }) => {
+  // Expecting something like { rr, riskUsd, pnlUsd } – render simply for now
+  const rr = state?.rr ?? null;
+  const txt = rr == null ? '—' : String(rr);
+  return <span data-cell="PnLDataCell">{txt}</span>;
+};
+
+export const PnLRRCell: React.FC<{ state?: any }> = ({ state }) => {
+  const rr = state?.rr;
+  const txt =
+    rr == null
+      ? '—'
+      : (typeof rr === 'number' && Number.isFinite(rr))
+        ? `${rr.toFixed(2)} R`
+        : String(rr);
+  return <span data-cell="PnLRRCell">{txt}</span>;
+};
+
+
+export { OperatorSizingCell, PnLDataCell, PnLRRCell };
+
+/** Fallback wrapper to unblock build; replace with real page component when ready. */
+import React from "react";
+const WorklistFallback: React.FC = () => (
+  <div style={{padding:12}}>Worklist page fallback</div>
+);
+export default WorklistFallback;

@@ -1,0 +1,26 @@
+# Prism-Apex – STATE
+
+- Current phase: **Phase 3 – Risk & Guardrails Foundations**
+- Last completed step: **3.1 – Risk engine v2 (design + skeleton + basic tests)**
+    - Design: `docs/PRISM_APEX_RISK_ENGINE_V2_DESIGN.md` describes a pure, read-only risk engine that evaluates ticket drafts from the Strategy Orchestrator.
+    - Engine: `apps/api/src/risk/risk-engine-v2.ts` exposes `createRiskEngineV2()` with:
+        - Hard block when `accountConfig.tradingDisabled` is true (`TRADING_DISABLED`).
+        - Hard block when the session has a news flag and the strategy has `blockOnNews: true` (`NEWS_HARD_BLOCK`).
+        - `evaluateBatch()` that aggregates decisions/summaries without external side effects.
+    - Tests: `apps/api/src/risk/risk-engine-v2.test.ts` cover happy-path `OK`, trading-disabled, news block, and batch summary aggregation.
+    - Tooling (2025-11-15 RUN gate): `docker compose build api`, `pnpm lint`, `pnpm typecheck`, and vitest for `risk-engine-v2` + OSB + VWAP FT + ORR v3 + orchestrator (5 files / 27 tests) all passed.
+
+- Current step: **3.2 – Per-strategy risk hooks & caps**
+    - Extend Risk Engine v2 so it enforces:
+        - `maxContractsPerTicket` and `maxContractsPerSession` from `strategyConfigs[strategyId]`.
+        - Session exposure using `sessionStateSnapshot.contractsOpenByStrategy[strategyId] + draft.contracts`.
+    - Decision codes: `STRATEGY_TICKET_SIZE_CAP`, `STRATEGY_SESSION_CONTRACT_CAP`.
+    - Tests: extend `risk-engine-v2.test.ts` for ticket-size clamping, session cap blocks, and mixed batches.
+
+- Next Codex task:
+    1. Update `apps/api/src/risk/risk-engine-v2.ts` to enforce per-ticket/session caps (pure logic only).
+    2. Add corresponding tests.
+    3. Run `pnpm lint`, `pnpm typecheck`, `pnpm vitest` (risk + strategies + orchestrator) inside the api container.
+
+- Last OUTCOME REPORT:
+    - 2025-11-15 RUN gate — `pnpm lint`, `pnpm typecheck`, vitest for `risk-engine-v2`, OSB, VWAP FT, ORR v3, and orchestrator (5 files / 27 tests) all green.

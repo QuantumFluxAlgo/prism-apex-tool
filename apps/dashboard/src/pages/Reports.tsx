@@ -181,7 +181,8 @@ export default function ReportsPage() {
   const activityRows = useMemo(() => {
     if (!data) return [];
     const map = new Map<string, TicketSeriesPoint>();
-    data.ticketSeries.points.forEach((point) => map.set(point.bucket, point));
+    const ticketPoints = data.ticketSeries?.points ?? [];
+    ticketPoints.forEach((point) => map.set(point.bucket, point));
     return data.priceSeries.points.map((point, index, arr) => {
       const previous = index > 0 ? arr[index - 1].close : null;
       const delta =
@@ -220,6 +221,9 @@ export default function ReportsPage() {
       ),
     [activityRows],
   );
+
+  const ticketSeriesPoints = data?.ticketSeries?.points ?? [];
+  const hasTicketSeriesPoints = ticketSeriesPoints.length > 0;
 
   const selects = [
     {
@@ -472,8 +476,8 @@ export default function ReportsPage() {
               <strong>Ticket trend</strong>
             </CardHeader>
             <CardBody>
-              {!data?.ticketSeries.points?.length && <p className="text-sm text-slate-400">No tickets for range.</p>}
-              {data?.ticketSeries.points?.length > 0 && (
+              {!hasTicketSeriesPoints && <p className="text-sm text-slate-400">No tickets for range.</p>}
+              {hasTicketSeriesPoints && (
                 <div className="overflow-x-auto">
                   <table className="w-full text-sm">
                     <thead>
@@ -484,7 +488,7 @@ export default function ReportsPage() {
                       </tr>
                     </thead>
                     <tbody>
-                      {data.ticketSeries.points.map((point) => (
+                      {ticketSeriesPoints.map((point) => (
                         <tr key={point.bucket} className="border-t border-slate-800/40">
                           <td className="py-2 pr-3">{formatDateLabel(point.bucket, 'day')}</td>
                           <td className="py-2 pr-3">{point.trades.toLocaleString()}</td>

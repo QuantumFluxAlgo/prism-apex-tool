@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState, useCallback } from 'react';
 import Kpi from '../ui/Kpi';
 import { Card, CardBody } from '../ui/Card';
 import DataTable, { type DataTableColumn } from '../ui/DataTable';
@@ -8,9 +8,11 @@ import Button from '../ui/Button';
 import { fmtUtc } from '../utils/time';
 import { fmtPrice } from '../utils/number';
 import { tooltipDist } from '../utils/ticks';
-import { fetchSymbols, fetchTickets, type TicketRow } from '../lib/api';
+import { fetchSymbols, fetchTickets, recordOperatorAction, type TicketRow } from '../lib/api';
 import { WorklistPnLContext, usePnLState } from '../hooks/usePnLState';
 import { PnLDataCell, PnLRRCell, type ActionableRow } from './Worklist';
+import { RiskCell } from '../components/RiskCell';
+import { useToast } from '../context/ToastContext';
 
 type Filters = {
   from?: string;
@@ -44,6 +46,9 @@ export default function TicketsPage() {
   const [error, setError] = useState<string | null>(null);
   const limit = 20;
   const [offset, setOffset] = useState(0);
+  const [refreshTick, setRefreshTick] = useState(0);
+  const [pendingActions, setPendingActions] = useState<Record<string, boolean>>({});
+  const { toast } = useToast();
   const [filters, setFilters] = useState<Filters>({
     symbol: 'ALL',
     strategy: 'ALL',
@@ -101,7 +106,33 @@ export default function TicketsPage() {
     return () => {
       cancelled = true;
     };
-  }, [limit, offset, filters.from, filters.to, filters.symbol, filters.strategy, filters.status, filters.showShorts]);
+  }, [limit, offset, filters.from, filters.to, filters.symbol, filters.strategy, filters.status, filters.showShorts, refreshTick]);
+
+  const handleOperatorAction = useCallback(
+    async (row: TicketRow) => {
+      const ticketId = row.id ? String(row.id) : null;
+      if (!ticketId) {
+        toast('Operator action failed; missing ticket id.');
+        return;
+      }
+      setPendingActions((prev) => ({ ...prev, [ticketId]: true }));
+      try {
+        await recordOperatorAction(ticketId, 'ACTIONED');
+        toast('Operator action recorded.');
+        setRefreshTick((prev) => prev + 1);
+      } catch (err) {
+        console.error('operator action failed', err);
+        toast('Operator action failed; please retry.');
+      } finally {
+        setPendingActions((prev) => {
+          const next = { ...prev };
+          delete next[ticketId];
+          return next;
+        });
+      }
+    },
+    [toast],
+  );
 
   const pnlState = usePnLState(rows);
 
@@ -210,6 +241,13 @@ export default function TicketsPage() {
       render: (row) => <PnLDataCell row={row as ActionableRow} field="stop" />, 
     },
     {
+      key: 'riskDecision',
+      header: 'Risk',
+      align: 'center',
+      className: 'col-risk text-center',
+      render: (row) => <RiskCell row={row} />,
+    },
+    {
       key: 'status',
       header: 'Status',
       align: 'center',
@@ -222,6 +260,25 @@ export default function TicketsPage() {
           ) : null}
         </div>
       ),
+    },
+    {
+      key: 'operator',
+      header: 'Operator',
+      align: 'center',
+      className: 'col-operator text-center',
+      render: (row) => {
+        const ticketId = row.id ? String(row.id) : null;
+        const pending = ticketId ? Boolean(pendingActions[ticketId]) : false;
+        return (
+          <Button
+            size="sm"
+            disabled={!ticketId || pending}
+            onClick={() => ticketId && handleOperatorAction(row)}
+          >
+            {pending ? 'Saving…' : 'Actioned'}
+          </Button>
+        );
+      },
     },
   ];
 

@@ -1,66 +1,103 @@
 import '@testing-library/jest-dom';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
+import ToastProvider from '../context/ToastContext.js';
 
-const sampleTickets = [
-  {
-    symbol: 'ESZ4',
-    side: 'BUY',
-    entry: 4800,
-    stop: 4798,
-    target: 4804,
-    qty: 1,
-    accountId: 'A1',
-    timestampUtc: new Date().toISOString(),
-    meta: { strategy: 'VWAP_FT', rr: 2, guardrails: [] },
-    accepted: true,
-  },
-  {
-    symbol: 'NQZ4',
-    side: 'SELL',
-    entry: 15000,
-    stop: 15010,
-    target: 14980,
-    qty: 1,
-    accountId: 'A1',
-    timestampUtc: new Date().toISOString(),
-    meta: { strategy: 'OSB', rr: 1.5, guardrails: [] },
-    accepted: false,
-    reasons: ['test'],
-  },
-];
-
-const fetchMock = vi.fn().mockResolvedValue({
-  ok: true,
-  json: async () => ({ tickets: sampleTickets, nextCursor: null }),
+const { fetchTicketsMock, fetchSymbolsMock, recordOperatorActionMock } = vi.hoisted(() => {
+  const sampleTickets = [
+    {
+      id: 't-long',
+      symbol: 'ESZ4',
+      strategy: 'ORR',
+      direction: 'LONG',
+      status: 'OPEN',
+      opened_at_utc: new Date().toISOString(),
+      entry_price: 4800,
+      stop_price: 4798,
+      target_price: 4804,
+    },
+    {
+      id: 't-short',
+      symbol: 'NQZ4',
+      strategy: 'ORR',
+      direction: 'SHORT',
+      status: 'OPEN',
+      opened_at_utc: new Date().toISOString(),
+      entry_price: 15000,
+      stop_price: 15010,
+      target_price: 14980,
+    },
+  ];
+  const fetchTicketsMock = vi.fn().mockResolvedValue({ rows: sampleTickets, total: sampleTickets.length });
+  const fetchSymbolsMock = vi.fn().mockResolvedValue(['ES=F', 'NQ=F']);
+  const recordOperatorActionMock = vi.fn().mockResolvedValue(undefined);
+  return { fetchTicketsMock, fetchSymbolsMock, recordOperatorActionMock };
 });
-vi.stubGlobal('fetch', fetchMock);
+
+vi.mock('../lib/api', () => ({
+  fetchTickets: fetchTicketsMock,
+  fetchSymbols: fetchSymbolsMock,
+  recordOperatorAction: recordOperatorActionMock,
+}));
 
 import TicketsPage from '../pages/Tickets.js';
 
+function renderTickets() {
+  render(
+    <ToastProvider>
+      <TicketsPage />
+    </ToastProvider>,
+  );
+}
+
 describe('TicketsPage', () => {
-  it('toggles accepted/rejected filters', async () => {
-    render(<TicketsPage />);
-    await screen.findByText('ESZ4');
-
-    const acceptedToggle = screen.getByLabelText('Accepted');
-    fireEvent.click(acceptedToggle);
-    await waitFor(() => expect(screen.queryByText('ESZ4')).not.toBeInTheDocument());
-
-    const rejectedToggle = screen.getByLabelText('Rejected');
-    fireEvent.click(rejectedToggle);
-    await waitFor(() => expect(screen.queryByText('NQZ4')).not.toBeInTheDocument());
+  beforeEach(() => {
+    fetchTicketsMock.mockClear();
+    fetchSymbolsMock.mockClear();
+    recordOperatorActionMock.mockReset();
+    recordOperatorActionMock.mockResolvedValue(undefined);
   });
 
-  it('copies entry to clipboard', async () => {
-    const writeText = vi.fn();
-    Object.assign(navigator, { clipboard: { writeText } });
-    render(<TicketsPage />);
-    await screen.findByText('ESZ4');
+  it('hides SHORT rows until toggle enabled', async () => {
+    renderTickets();
+    expect(await screen.findByText('ESZ4')).toBeInTheDocument();
+    expect(screen.queryByText('NQZ4')).not.toBeInTheDocument();
 
-    fireEvent.click(screen.getAllByText('Copy')[1]);
-    const entryBtn = screen.getAllByRole('button', { name: 'Entry' })[0];
-    fireEvent.click(entryBtn);
-    expect(writeText).toHaveBeenCalledWith('4800');
+    const toggle = screen.getByLabelText('Show SHORTs (view-only)');
+    fireEvent.click(toggle);
+    await waitFor(() => expect(screen.getByText('NQZ4')).toBeInTheDocument());
+  });
+
+  it('re-fetches tickets when toggling SHORT visibility', async () => {
+    renderTickets();
+    await waitFor(() => expect(fetchTicketsMock).toHaveBeenCalledTimes(1));
+
+    const toggle = screen.getByLabelText('Show SHORTs (view-only)');
+    fireEvent.click(toggle);
+
+    await waitFor(() => expect(fetchTicketsMock).toHaveBeenCalledTimes(2));
+  });
+
+  it('records operator action and refreshes tickets', async () => {
+    renderTickets();
+    const button = await screen.findByRole('button', { name: 'Actioned' });
+
+    fireEvent.click(button);
+
+    await waitFor(() => expect(recordOperatorActionMock).toHaveBeenCalledWith('t-long', 'ACTIONED'));
+    await waitFor(() => expect(fetchTicketsMock).toHaveBeenCalledTimes(2));
+    expect(await screen.findByText('Operator action recorded.')).toBeInTheDocument();
+  });
+
+  it('shows toast when operator action fails', async () => {
+    recordOperatorActionMock.mockRejectedValueOnce(new Error('boom'));
+    renderTickets();
+    const button = await screen.findByRole('button', { name: 'Actioned' });
+
+    fireEvent.click(button);
+
+    await waitFor(() => expect(recordOperatorActionMock).toHaveBeenCalled());
+    expect(await screen.findByText('Operator action failed; please retry.')).toBeInTheDocument();
+    expect(fetchTicketsMock).toHaveBeenCalledTimes(1);
   });
 });

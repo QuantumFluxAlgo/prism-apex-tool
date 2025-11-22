@@ -3,7 +3,12 @@ import Badge from '../ui/Badge';
 import { Tooltip } from '../ui/Tooltip';
 import { useSymbolSpecs } from '../hooks/useSymbolSpecs';
 
-export function SymbolCoverage() {
+type SymbolCoverageProps = {
+  rows?: unknown[];
+  className?: string;
+};
+
+export function SymbolCoverage({ rows: _rows, className }: SymbolCoverageProps = {}) {
   const { data, error, verified, total } = useSymbolSpecs();
 
   if (error) {
@@ -22,11 +27,13 @@ export function SymbolCoverage() {
       ? `Unverified: ${unverifiedSymbols.join(', ')}`
       : 'All tracked symbols verified';
 
-  return (
+  const badge = (
     <Tooltip text={tooltipLabel}>
-      <Badge tone={tone}>
+      <Badge tone={tone} className={className ?? ''}>
         Tick Specs: {verified}/{total} ({pct}%)
       </Badge>
     </Tooltip>
   );
+
+  return badge;
 }

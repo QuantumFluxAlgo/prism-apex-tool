@@ -7,7 +7,7 @@ JOBS_PROFILE   := --profile jobs
 TOOLS_DIR      := tools/codex
 ENABLE_RT      := $(TOOLS_DIR)/enable-realtime.sh
 
-.PHONY: up down ps logs health seed up-dev down-dev prod-up prod-down prod-logs prod-seed smoke wait-db-local wait-db-prod
+.PHONY: up down ps logs health seed up-dev down-dev prod-up prod-down prod-logs prod-seed smoke wait-db-local wait-db-prod proxy-up proxy-down proxy-logs
 
 up:
 	@echo "Bringing up local stack (db, api, dashboard, ingress, cron jobs)..."
@@ -86,3 +86,21 @@ quick-up:
 	sleep 2
 	docker compose up -d api
 	docker compose ps
+
+proxy-up:
+	@if [ -n "$${CLOUDFLARE_TUNNEL_TOKEN:-}" ]; then \
+		echo "Starting reverse proxy + Cloudflare named tunnel (token detected)..."; \
+		docker compose -f docker-compose.yml -f docker-compose.cloudflare.yml up -d reverse-proxy cloudflare-named; \
+	else \
+		echo "Starting reverse proxy + Cloudflare quick tunnel (ephemeral trycloudflare URL)..."; \
+		docker compose -f docker-compose.yml -f docker-compose.cloudflare.yml up -d reverse-proxy cloudflare-quick; \
+		echo "TIP: tail logs for the tunnel URL → docker compose -f docker-compose.yml -f docker-compose.cloudflare.yml logs -f cloudflare-quick | grep -m1 trycloudflare"; \
+	fi
+
+proxy-down:
+	@echo "Stopping reverse proxy + Cloudflare tunnels..."
+	@docker compose -f docker-compose.yml -f docker-compose.cloudflare.yml stop reverse-proxy cloudflare-quick cloudflare-named >/dev/null 2>&1 || true
+	@docker compose -f docker-compose.yml -f docker-compose.cloudflare.yml rm -f reverse-proxy cloudflare-quick cloudflare-named >/dev/null 2>&1 || true
+
+proxy-logs:
+	docker compose -f docker-compose.yml -f docker-compose.cloudflare.yml logs -f reverse-proxy cloudflare-quick cloudflare-named

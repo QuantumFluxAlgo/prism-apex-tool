@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { type ReactNode } from 'react';
 
 type DateRangeConfig = {
   from?: string;
@@ -25,7 +25,8 @@ type FiltersBarProps = {
   dateRange?: DateRangeConfig;
   selects?: SelectConfig[];
   toggles?: ToggleConfig[];
-  children?: React.ReactNode;
+  children?: ReactNode;
+  extra?: ReactNode;
 };
 
 function normalizeOption(option: SelectOption): { label: string; value: string } {
@@ -35,8 +36,14 @@ function normalizeOption(option: SelectOption): { label: string; value: string }
   return { label: option.label, value: option.value };
 }
 
-export default function FiltersBar({ dateRange, selects = [], toggles = [], children }: FiltersBarProps = {}) {
-  const hasDynamicContent = Boolean(dateRange || selects.length || toggles.length || children);
+export default function FiltersBar({
+  dateRange,
+  selects = [],
+  toggles = [],
+  children,
+  extra,
+}: FiltersBarProps = {}) {
+  const hasDynamicContent = Boolean(dateRange || selects.length || toggles.length || children || extra);
 
   if (!hasDynamicContent) {
     return (
@@ -107,6 +114,7 @@ export default function FiltersBar({ dateRange, selects = [], toggles = [], chil
       ))}
 
       {children}
+      {extra}
     </div>
   );
 }

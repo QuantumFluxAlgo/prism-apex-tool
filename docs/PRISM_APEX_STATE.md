@@ -1,13 +1,30 @@
-# Prism Apex Delivery STATE
+# Prism-Apex – STATE
 
-This file is the **single source of truth** for where we are in the delivery plan.
-It is meant to be small and copy-pastable into ChatGPT at the start of a new session.
+- **Current Phase:** Phase 5 – Observability & Rollout Foundations
+- **Last completed step:** 5.2 – RiskEngineV2 → observability wiring (batch decisions now emit summarised events)
+- **Currently active step:** 5.3 – Ticket & operator observability
+- **Latest green RUN gate (API):**
+  - docker compose build api
+  - pnpm lint
+  - pnpm typecheck
+  - pnpm vitest src/observability/events.test.ts \
+                src/risk/risk-engine-v2.test.ts \
+                src/strategy/osb/osb.test.ts \
+                src/strategy/vwap-ft/vwap-ft.test.ts \
+                src/strategy/orr/orr-v3.test.ts \
+                src/strategy/orchestrator/orchestrator.test.ts
 
-## STATE
+## Phase 5 – Current focus
 
-- Current phase: 1 – Data & Metrics Foundations
-- Last completed step: 1.7 – Document the SessionMetrics data model (Phase 1 plan follow-up) (completed 2025-11-14; SessionMetrics data-model doc: docs/data/session-metrics-data-model.md)
-- Current step: 1.8 – Wire SessionMetrics into ORR dashboard and tickets telemetry
-- Next Codex task: Implement integration of SessionMetrics into the dashboard and tickets views, and standardise SessionMetrics Node 20 tests via ./tools/node20-session-metrics.sh.
-- Last Codex OUTCOME REPORT date: 2025-11-14 — 1.6b tests passed in a Node 20 container (pnpm vitest apps/api/src/jobs/session-metrics/populate-session-metrics.test.ts).
+- Wire `recordTicketCreatedEvent(...)` into the orchestrator’s ticket creation path (read-only).
+- Prepare `recordOperatorActionEvent(...)` for future operator workflows.
+- Explore a JSONL/file sink for observability events (still local/dev-only).
+- No change to trading behaviour or infra yet.
 
+---
+
+## Phase 4 – Completion Note (2025-11-16)
+
+- **Phase 4.3 – Risk UX polish** (RiskCell v2.2) complete.
+- API/dashboard RUN gates green under the shared risk-aware UX.
+- Hand-off to Phase 5 for observability + rollout prep.

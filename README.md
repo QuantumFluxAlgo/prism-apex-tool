@@ -127,6 +127,14 @@ API_URL=http://localhost:3000 bash scripts/dev-web-8000.sh
 # Open http://localhost:5173
 ```
 
+### Reverse Proxy + Cloudflare Tunnel
+```bash
+make proxy-up     # auto-detects CLOUDFLARE_TUNNEL_TOKEN; falls back to quick tunnel
+```
+- After running without a token, check `make proxy-logs` (or `docker compose ... logs -f cloudflare-quick`) for the generated `trycloudflare.com` URL.
+- For a persistent hostname export `CLOUDFLARE_TUNNEL_TOKEN=<token>` before `make proxy-up` (it will start `cloudflare-named`). Use `make proxy-down` to stop/remove both services.
+- Override `REVERSE_PROXY_PORT` to change the local listener (defaults to `8090`). `TUNNEL_UPSTREAM` defaults to `http://reverse-proxy:80` if you host the proxy elsewhere on the compose network.
+
 ### Server / Production-ish Bring-Up (from a tag)
 ```bash
 # From a clone on the server (defaults to v1.0.0)
@@ -421,7 +429,7 @@ The codebase must never introduce broker order placement (tickets-only). CI enfo
 
 ### API
 - `/api/symbols/v2` exposes the config-backed symbol specs for UIs and tooling.
-- Update `VITE_API_BASE` (dashboard env) if the API origin differs from the default `http://127.0.0.1:3000`.
+- Dashboard builds leave `VITE_API_BASE` empty so requests hit the same origin via `/api/*`. Override with `--build-arg VITE_API_BASE=http://api:3000` (or similar) if you need to point at a different host; the Vite dev script already sets this for you.
 
 ### Worklist PnL Beta
 - Dashboard Worklist now renders a **PnL (per contract)** column using the shared contracts spec.
@@ -3675,3 +3683,11 @@ $TOOLS/check-realtime.sh
 - `tickets-realtime` discovers all `apps/tickets/dist/backfill-*.js` runners and executes each every minute so every strategy emits tickets continuously.
 - Works on macOS and Linux hosts; reads `DATABASE_URL` from the live API container (or your compose env).
 - The helper bundles these compose overlays automatically: `compose.ingress-db.override.yml`, `compose.gapfill-realtime.override.yml`, `compose.tickets-realtime.override.yml`, `compose.codex-governor.override.yml`, and `compose.codex-forcecurl.override.yml`. If you prefer calling `docker compose` manually (e.g., via CI/server automation), include the same overlays when starting `gapfill-realtime`/`tickets-realtime`.
+
+## Prism Apex Operator Docs
+
+For details on how to operate the Prism Apex delivery process using ChatGPT and Codex Terminal, see:
+
+- [docs/PRISM_APEX_OPERATOR_SOP.md](docs/PRISM_APEX_OPERATOR_SOP.md) — Mechanical operator SOP for ChatGPT + Codex workflow.
+- [docs/PRISM_APEX_DELIVERY_PLAN.md](docs/PRISM_APEX_DELIVERY_PLAN.md) — High-level phases and roadmap for the multi-strategy Prism Apex engine.
+- [docs/PRISM_APEX_STATE.md](docs/PRISM_APEX_STATE.md) — Current delivery STATE (phase, step, next Codex task, last OUTCOME REPORT date). Paste this into a new ChatGPT session to resume work without guessing.

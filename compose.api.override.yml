@@ -1,0 +1,6 @@
+services:
+  api:
+    environment:
+      ORR_EXPOSE_CONTINUATION: "true"
+      ORR_EXPOSE_ATR_METRICS: "true"
+      RISK_PER_TRADE_USD_DEFAULT: "50"

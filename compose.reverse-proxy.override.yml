@@ -1,0 +1,4 @@
+services:
+  reverse-proxy:
+    volumes:
+      - ./reverse-proxy.default.patched.conf:/etc/nginx/conf.d/default.conf:ro

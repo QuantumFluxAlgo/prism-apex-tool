@@ -1,5 +1,20 @@
 import { API_BASE, fetchJson } from './apiBase';
 
+export type SessionFlag = 'NEWS' | 'FOMC' | 'ROLL' | 'HOLIDAY' | 'OTHER';
+
+export type SessionFlagsSummary = {
+  flags: SessionFlag[];
+  hasNewsFlag: boolean;
+};
+
+export type TicketRiskDecision = {
+  allowed: boolean;
+  reason: string;
+  codes: string[];
+  maxContractsAllowed: number | null;
+  warnings: string[];
+};
+
 export type ComplianceSnapshot = {
   eodState: string;
   stopRequired: boolean;
@@ -23,6 +38,20 @@ export type Ticket = {
   };
   reasons?: string[];
 };
+
+export type OperatorSizing = {
+  qty?: number | null;
+  contracts?: number | null;
+  stakeDollars?: number | null;
+};
+
+export type OperatorActionKind =
+  | 'ACTIONED'
+  | 'ACK'
+  | 'DISMISSED'
+  | 'SKIPPED'
+  | 'MONITORING'
+  | 'MONITORED';
 
 export type TicketRow = {
   id?: string | number;
@@ -50,6 +79,12 @@ export type TicketRow = {
   completed_at_utc?: string | null;
   completed_by?: string | null;
   completed_note?: string | null;
+  sessionMetrics?: TicketSessionMetricsSummary | null;
+  sessionFlags?: SessionFlagsSummary | null;
+  riskDecision?: TicketRiskDecision | null;
+  operatorSizing?: OperatorSizing | null;
+  pnlAmount?: number | null;
+  pnlRatio?: number | null;
 };
 
 export type TicketsResponse = {
@@ -157,6 +192,40 @@ export async function completeTicket(id: string, body: { user?: string; note?: s
   return json.row;
 }
 
+export async function recordOperatorAction(ticketId: string, action: OperatorActionKind, note?: string) {
+  const url = `${API_BASE}/api/tickets/${encodeURIComponent(ticketId)}/operator-action`;
+  const res = await fetch(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+    body: JSON.stringify({ action, note: note ?? undefined }),
+  });
+
+  if (res.status === 204) {
+    return;
+  }
+
+  let message = `Operator action failed (${res.status})`;
+  try {
+    const text = await res.text();
+    if (text) {
+      try {
+        const parsed = JSON.parse(text);
+        if (parsed && typeof parsed.error === 'string') {
+          message = parsed.error;
+        } else {
+          message = text;
+        }
+      } catch {
+        message = text;
+      }
+    }
+  } catch {
+    // ignore parse errors
+  }
+
+  throw new Error(message);
+}
+
 // ---- symbols v2 (config-backed) ----
 export type SymbolSpecV2 = {
   symbol: string;
@@ -171,4 +240,12 @@ export type SymbolSpecV2 = {
 export async function getSymbolSpecsV2(): Promise<SymbolSpecV2[]> {
   const data = (await fetchJson('/api/symbols/v2')) as { symbols?: unknown[] };
   return Array.isArray((data as any).symbols) ? ((data as any).symbols as SymbolSpecV2[]) : [];
+}
+
+// Compact SessionMetrics summary attached to each ticket row (Phase 1 Step 1.8b).
+export interface TicketSessionMetricsSummary {
+  status: 'OK' | 'ERROR';
+  orWidth: number | null;
+  orToAtrRatio: number | null;
+  vwapSlopeClassification: 'UP' | 'DOWN' | 'FLAT' | null;
 }

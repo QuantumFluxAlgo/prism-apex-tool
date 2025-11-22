@@ -1,21 +1,13 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import YahooStatus from '../components/YahooStatus';
-
-const items = [
-  { path: '/worklist', label: 'Worklist' },
-  { path: '/tickets', label: 'Tickets' },
-  { path: '/positions', label: 'Positions' },
-  { path: '/reports', label: 'Reports' },
-  { path: '/market-data', label: 'Market Data' },
-  { path: '/status', label: 'Status' },
-];
+import { DASHBOARD_NAV_ITEMS } from './dashboardNavConfig';
 
 export default function Tabs() {
   const { pathname } = useLocation();
   return (
     <div className="dashboard-tabs">
-      {items.map((it) => {
+      {DASHBOARD_NAV_ITEMS.map((it) => {
         const active = it.path === '/' ? pathname === '/' : pathname.startsWith(it.path);
         return (
           <Link

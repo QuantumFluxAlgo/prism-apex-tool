@@ -1,0 +1,89 @@
+# Prism Apex Delivery Plan
+
+This document describes the high-level phases and major steps for delivering the multi-strategy Prism Apex trading engine:
+
+- Architecture & data foundations
+- Strategy engine (ORR, VWAP FT, OSB)
+- Multi-strategy risk & orchestration
+- UI/UX (Worklist, Status, Market Data, Tickets, Reports)
+- Testing, Golden Days, observability, and rollout.
+
+The current progress is tracked in a separate file:
+
+- `docs/PRISM_APEX_STATE.md` — the single source of truth for:
+  - Current phase
+  - Current step
+  - Next Codex task
+  - Last OUTCOME REPORT date
+
+## Phase 1 – Data & Metrics Foundations
+
+- **1.1 – SessionMetrics schema & migrations**  
+  **Status:** DONE. Baseline schema + migrations for SessionMetrics wired into the database model.
+
+- **1.2 – Bar ingestion → SessionMetrics population**  
+  **Status:** DONE. 1-minute bar ingestion feeds the SessionMetrics job; core metrics (OR width, ATR, OR:ATR ratio, VWAP context/regime) are computed for (symbol, sessionDate).
+
+- **1.3 – Config-driven news/session flags**  
+  **Status:** DONE.  
+  - Introduced a config model and in-memory `SessionFlagsService` (SessionFlag enum, `SESSION_FLAGS_CONFIG`, simple symbolPattern + sessionDate matching).  
+  - Added unit tests for the service to verify aggregation and `hasNewsFlag` behaviour.  
+  - Tickets API now enriches each ticket DTO with a `sessionFlags` summary `{ flags: SessionFlag[]; hasNewsFlag: boolean }` sourced purely from config (no extra DB calls).  
+  - Dashboard DTO typings updated and the Tickets view renders a small “News” chip in the Session column whenever `sessionFlags.hasNewsFlag` is true.
+
+- **1.4 – Golden Day fixtures & replay harness**  
+  **Status:** DONE.  
+  - Golden Day fixtures stored per (symbol, sessionDate) with 1-minute bars + optional expected metrics.
+
+- **1.5 – Data model documentation**  
+  **Status:** DONE.  
+  - Authored `docs/PRISM_APEX_DATA_MODEL_PHASE1.md` to capture SessionMetrics flows, Golden Day fixtures, and session flags.
+
+- **1.8 – SessionMetrics integration bundle (API, Tickets, UI, tooling)**  
+  **Status:** DONE (core integration path + Worklist Session parity).  
+  - 1.8b – Tickets API augmentation with SessionMetrics summaries: **DONE**.  
+  - 1.8c – Tickets/Worklist UI rendering of SessionMetrics: **DONE** (core chip layout).  
+  - 1.8d – Node 20 tooling/tests standardization: **DONE** (SessionMetrics job, Golden Day harness, SessionFlags service).
+
+## Phase 2 – Strategy Engine Foundations
+
+**Goal:** Introduce pure strategy engines (ORR v3, VWAP First Touch, OSB) and a multi-strategy orchestrator, fully tested and read-only (no order placement).
+
+- **2.1 – Strategy Orchestrator contract & design** — ✅ DONE
+- **2.2 – Orchestrator skeleton & initial tests** — ✅ DONE
+- **2.3 – ORR v3 design & skeleton** — ✅ DONE
+- **2.3b – ORR v3 behaviour & tests** — ✅ DONE
+- **2.4 – VWAP First Touch strategy** — ✅ DONE
+- **2.5 – OSB strategy module** — ✅ DONE
+- **2.6 – Multi-strategy integration & conflict resolution** — ✅ DONE
+
+Phase 2 status: ✅ Complete – strategy engines and orchestrator are pure, deterministic, and fully covered by tests.
+
+## Phase 3 – Risk & Guardrails Foundations
+
+**Goal:** Build a pure, deterministic risk layer on top of the strategy/orchestrator stack; outputs remain read-only (risk states, sizing hints, ticket annotations).
+
+- **3.1 – Risk engine v2 (design + skeleton + basic tests)** — ✅ DONE  
+  - Design: `docs/PRISM_APEX_RISK_ENGINE_V2_DESIGN.md` defines pure types and guardrails.  
+  - Engine: `apps/api/src/risk/risk-engine-v2.ts` exposes `createRiskEngineV2()` with conservative blocks (`TRADING_DISABLED`, `NEWS_HARD_BLOCK`).  
+  - Tests: `apps/api/src/risk/risk-engine-v2.test.ts` covers happy path, trading-disabled, news blocks, and batch summary aggregation.  
+  - Tooling: `docker compose build api`, `pnpm lint`, `pnpm typecheck`, and vitest suites for risk + strategies + orchestrator (5 files / 27 tests) all green.
+
+- **3.2 – Per-strategy risk hooks & caps – 🔄 CURRENT STEP**  
+  - Implement apex-style per-strategy guardrails using existing configs and session snapshots:  
+    - `maxContractsPerTicket` and `maxContractsPerSession` enforced on incoming drafts.  
+    - Use `sessionStateSnapshot.contractsOpenByStrategy` + draft contracts to detect session caps.  
+    - Decision codes: `STRATEGY_TICKET_SIZE_CAP`, `STRATEGY_SESSION_CONTRACT_CAP`.  
+  - Extend `risk-engine-v2.test.ts` to cover ticket-size clamping, session cap blocks, and mixed batches.  
+  - Run full RUN gate (lint, typecheck, risk + strategy tests) once implemented.
+
+- **3.3 – Account-level risk (daily loss / trailing DD)** — planned  
+- **3.4 – Risk summaries into Tickets/Worklist** — planned  
+- **3.5 – Risk observability & fixtures** — planned
+
+_Phase 3 remains read-only: no balances/positions/fills or SOP-guarded systems are touched._
+
+## Phase 4 – Operator Workflow – Worklist v2 & Ticket Drafts
+
+TBD — future roadmap iteration.
+

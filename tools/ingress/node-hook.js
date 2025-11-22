@@ -1,0 +1,8 @@
+const fs=require('fs');const http=require('http');const https=require('https');
+const METRICS=process.env.ING_METRICS_PATH||'/data/ops/ingress-metrics.jsonl';
+const JITTER=parseInt(process.env.ING_JITTER_MS||'1000',10);const MAX=parseInt(process.env.ING_MAX_RETRIES||'6',10);const COOLDOWN=(parseInt(process.env.ING_COOLDOWN_SEC||'600',10))*1000;
+function log(event,code,backoff,url){try{fs.mkdirSync(require('path').dirname(METRICS),{recursive:true});fs.appendFileSync(METRICS,JSON.stringify({ts:new Date().toISOString(),event,code,backoff_ms:backoff,url})+"\n");}catch{}}
+function jitter(){return Math.floor(Math.random()*JITTER);}
+function wrapFetch(orig){return async function(input,init){const url=typeof input==='string'?input:(input?.url||'unknown');let attempt=0;while(true){try{const res=await orig(input,init);if(res.status>=200&&res.status<300){log('ok',res.status,0,url);return res;}if(res.status===429){const ra=res.headers.get('retry-after');const backoff=(parseInt(ra,10)*1000)||COOLDOWN;const delay=backoff+jitter();log('429',429,delay,url);if(attempt++>=MAX)throw new Error('max-retries');await new Promise(r=>setTimeout(r,delay));continue;}if(res.status>=500||res.status===408){const delay=Math.min(15000,(2**attempt)*500+jitter());log('retry',res.status,delay,url);if(attempt++>=MAX)throw new Error('max-retries');await new Promise(r=>setTimeout(r,delay));continue;}log('fail',res.status,0,url);return res;}catch(e){const delay=Math.min(15000,(2**attempt)*500+jitter());log('error',null,delay,url);if(attempt++>=MAX)throw e;await new Promise(r=>setTimeout(r,delay));}};}}
+if(typeof globalThis.fetch==='function'){const orig=globalThis.fetch.bind(globalThis);globalThis.fetch=wrapFetch(orig);}
+console.log('[ingress-node-hook] active');

@@ -22,6 +22,7 @@ import { exportRoutes } from './routes/export.js';
 import ticketsRoute from './routes/tickets.js';
 import ticketsDebugRoute from './routes/tickets.debug.js';
 import ticketCompleteRoute from './routes/ticket.complete.js';
+import operatorActionsRoute from './routes/operator-actions.js';
 import { tradingviewWebhookRoutes } from './routes/webhooks.tradingview.js';
 import readyRoute from './routes/ready.js';
 import { getConfig } from './config/env.js';
@@ -33,6 +34,9 @@ import symbolsV2Route from './routes/symbols.v2.js';
 import statusRoute from './routes/status.js';
 import opsStatusRoute from './routes/opsStatus.js';
 import reportsDashboardRoute from './routes/reports.dashboard.js';
+import strategyConfigRoute from './routes/strategy-config.js';
+import strategyEngineRoutes from './routes/strategy-engine.js';
+import enginePreviewRoutes from './routes/enginePreview.js';
 
 const cfg = getConfig();
 
@@ -50,6 +54,7 @@ import { jobMissingBrackets } from './jobs/missingBrackets.js';
 import { jobDailyLoss } from './jobs/dailyLoss.js';
 import { jobConsistency } from './jobs/consistency.js';
 import { runTicketsDiskSyncJob } from './jobs/ticketsDiskSync.js';
+import strategyConfigRoutes from './routes/strategy-config.js';
 
 const DISABLE = process.env.DISABLE_JOBS === '1' || process.env.NODE_ENV === 'test';
 
@@ -74,8 +79,10 @@ export function buildServer() {
     bodyLimit: cfg.bodyLimitBytes,
     trustProxy,
   });
+
   // Normalize strategy aliases (e.g., ORR -> APX-DDB-01)
   app.register(strategyAlias);
+
   app.log.info(
     {
       config: {
@@ -94,9 +101,10 @@ export function buildServer() {
     },
     'config summary',
   );
+
   app.register(cors, { origin: true });
-  
-// Public paths (no auth/rate-limit)
+
+  // Public paths (no auth/rate-limit)
   const publicPaths = [
     '/health',
     '/ready',
@@ -115,9 +123,13 @@ export function buildServer() {
   app.register(statusRoute);
   app.register(opsStatusRoute);
   app.register(reportsDashboardRoute);
+  app.register(strategyConfigRoute);
+  app.register(strategyEngineRoutes);
+  app.register(enginePreviewRoutes, { prefix: '/api/engine' });
   
   app.register(ticketsRoute);
   app.register(ticketsDebugRoute);
+  app.register(operatorActionsRoute);
   app.register(ticketCompleteRoute);
   app.register(metricsRoute);
   app.register(analyticsRoutes);
@@ -140,6 +152,10 @@ export function buildServer() {
   app.register(tradingviewWebhookRoutes, { prefix: '/webhooks' });
   app.register(jobsBoot);
   app.register(symbolsRoute);
+
+  // Strategy config API (global RR, etc.)
+  app.register(strategyConfigRoutes, { prefix: '/api/config' });
+
   // ---- Jobs ----
   registerStrategiesJob();
   registerTicketizerJob();
@@ -154,10 +170,12 @@ export function buildServer() {
     jobManager.startAll().catch((err) => app.log.error({ err }, 'job start failed'));
     startJobs();
   }
+
   app.addHook('onClose', async () => {
     stopJobs();
     await jobManager.stopAll();
   });
+
   app.register(openapiRoutes);
   app.register(symbolsV2Route);
 

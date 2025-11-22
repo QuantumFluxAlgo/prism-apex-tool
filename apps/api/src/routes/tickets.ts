@@ -1,9 +1,23 @@
+/* eslint-disable @typescript-eslint/ban-ts-comment */
 import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
 import { Client } from 'pg';
 import { listTickets } from '../store/tickets.js';
 import { isMockDbEnabled, isTestMode } from '../utils/testMode.js';
 import { TICKET_STRATEGIES, type TicketStrategy } from '../schemas/ticket.js';
 import { readTickets } from '../utils/mockStore.js';
+import {
+  attachSessionMetricsToRows,
+  DEFAULT_MAX_SESSION_METRICS_KEYS,
+  fetchSessionMetricsBatch,
+  sessionMetricsKeyToString,
+  type SessionMetricsKey,
+  type SessionMetricsSummary,
+} from '../jobs/session-metrics/batch.js';
+import {
+  createSessionFlagsService,
+  type SessionFlagsSummary,
+} from '../jobs/session-metrics/session-flags-service.js';
+import type { TicketRiskDecisionDto } from './dto/riskDecisionDto.js';
 
 type Query = {
   limit?: string;
@@ -29,6 +43,8 @@ const STRATEGY_ALIASES = new Set([
   'apxddb01',
 ]);
 
+const sessionFlagsService = createSessionFlagsService();
+
 function normalizeStrategy(s?: string | null) {
   if (!s) return undefined;
   const key = s.trim().toLowerCase();
@@ -36,6 +52,20 @@ function normalizeStrategy(s?: string | null) {
 }
 
 type TicketsRequest = FastifyRequest<{ Querystring: Query }>;
+
+export type TicketRowDto = {
+  sessionMetrics: SessionMetricsSummary | null;
+  sessionFlags: SessionFlagsSummary | null;
+  riskDecision?: TicketRiskDecisionDto | null;
+} & Record<string, unknown>;
+
+const DEFAULT_RISK_DECISION: TicketRiskDecisionDto = {
+  allowed: true,
+  reason: 'Not evaluated (Phase 3.5 placeholder)',
+  codes: ['OK'],
+  maxContractsAllowed: null,
+  warnings: [],
+};
 
 export default async function ticketsRoute(app: FastifyInstance) {
   const handler = async (req: TicketsRequest, reply: FastifyReply) => {
@@ -140,7 +170,8 @@ export default async function ticketsRoute(app: FastifyInstance) {
         client.query(countSql, params),
       ]);
       const total = countResult.rows[0]?.n ?? 0;
-      return reply.send({ total, rows: rowsResult.rows, tickets: rowsResult.rows });
+      const ticketsWithMetrics = await populateSessionMetricsForTickets(rowsResult.rows);
+      return reply.send({ total, rows: ticketsWithMetrics, tickets: ticketsWithMetrics });
     } finally {
       await client.end();
     }
@@ -148,4 +179,64 @@ export default async function ticketsRoute(app: FastifyInstance) {
 
   app.get('/tickets', handler);
   app.get('/api/tickets', handler);
+}
+
+
+const MAX_SESSION_METRICS_KEYS = DEFAULT_MAX_SESSION_METRICS_KEYS;
+
+function getSessionKeyFromRow(row: any): SessionMetricsKey | null {
+  const symbol = row.symbol;
+  if (!symbol) return null;
+
+  const rawDate =
+    row.session_date_utc ??
+    (typeof row.opened_at_utc === 'string' ? row.opened_at_utc.slice(0, 10) : null);
+
+  if (!rawDate) return null;
+  return { symbol, sessionDate: rawDate.slice(0, 10) };
+}
+
+const createEmptySessionFlags = (): SessionFlagsSummary => ({
+  flags: [],
+  hasNewsFlag: false,
+});
+
+function getSessionFlagsForRow(row: any): SessionFlagsSummary {
+  const key = getSessionKeyFromRow(row);
+  if (!key) return createEmptySessionFlags();
+  return sessionFlagsService.getFlagsForSession(key.symbol, key.sessionDate);
+}
+
+async function populateSessionMetricsForTickets(rows: any[]): Promise<TicketRowDto[]> {
+  const baseTickets = rows.map((row) => ({
+    ...row,
+    sessionMetrics: null,
+    sessionFlags: getSessionFlagsForRow(row),
+    riskDecision: (row.riskDecision as TicketRiskDecisionDto | null) ?? DEFAULT_RISK_DECISION,
+  })) as TicketRowDto[];
+
+  const keyList: SessionMetricsKey[] = [];
+  const seen = new Set<string>();
+
+  for (const ticket of baseTickets) {
+    const key = getSessionKeyFromRow(ticket);
+    if (!key) continue;
+    const keyStr = sessionMetricsKeyToString(key);
+    if (seen.has(keyStr)) continue;
+    seen.add(keyStr);
+    keyList.push(key);
+    if (keyList.length > MAX_SESSION_METRICS_KEYS) {
+      return baseTickets;
+    }
+  }
+
+  if (!keyList.length) {
+    return baseTickets;
+  }
+
+  const summaryMap = await fetchSessionMetricsBatch(keyList, {
+    maxKeys: MAX_SESSION_METRICS_KEYS,
+  });
+
+  return attachSessionMetricsToRows(baseTickets, summaryMap, (ticket) => getSessionKeyFromRow(ticket));
 }

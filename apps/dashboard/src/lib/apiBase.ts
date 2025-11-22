@@ -1,8 +1,18 @@
+const rawEnvBase = import.meta.env?.VITE_API_BASE;
+const hasEnvBase = typeof rawEnvBase === 'string';
+const normalizedEnvBase = hasEnvBase
+  ? rawEnvBase.trim() === '/'
+    ? ''
+    : rawEnvBase.trim().replace(/\/+$/, '')
+  : undefined;
+
+const windowOrigin =
+  typeof window !== 'undefined' ? window.location.origin.replace(/\/+$/, '') : undefined;
+
 export const API_BASE =
-  (typeof import.meta !== 'undefined' && (import.meta as any)?.env?.VITE_API_BASE) ||
-  (typeof window !== 'undefined'
-    ? `${window.location.protocol}//${window.location.hostname}:3000`
-    : 'http://localhost:3000');
+  (hasEnvBase ? normalizedEnvBase ?? '' : undefined) ||
+  windowOrigin ||
+  'http://localhost:3000';
 
 type FetchJsonOpts = RequestInit & { expected?: number[] };
 

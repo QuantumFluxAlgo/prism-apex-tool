@@ -1,0 +1,14 @@
+version: "3.9"
+services:
+  gapfill-realtime:
+    volumes:
+      - ./tools/ingress:/opt/ingress:ro
+    environment:
+      - "NODE_OPTIONS=--require /opt/ingress/node-hook.js"
+      - "ING_METRICS_PATH=/data/ops/ingress-metrics.jsonl"
+  tickets-realtime:
+    volumes:
+      - ./tools/ingress:/opt/ingress:ro
+    environment:
+      - "NODE_OPTIONS=--require /opt/ingress/node-hook.js"
+      - "ING_METRICS_PATH=/data/ops/ingress-metrics.jsonl"

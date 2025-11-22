@@ -2,7 +2,8 @@
 FROM node:20-slim AS build
 
 WORKDIR /app
-ENV CI=1 PNPM_CONFIG_PROD=false
+ARG VITE_API_BASE
+ENV CI=1 PNPM_CONFIG_PROD=false VITE_API_BASE=${VITE_API_BASE}
 RUN corepack enable
 
 # Copy manifests for cache (include workspace file so pnpm sees the monorepo)

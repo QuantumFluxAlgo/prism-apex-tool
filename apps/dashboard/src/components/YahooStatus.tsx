@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import React, { useEffect, useState } from 'react';
 
 type Row = { symbol: string; minutes_behind: number; last_bar_utc?: string };
@@ -20,7 +21,7 @@ export default function YahooStatus() {
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const json = await res.json();
         setHealth(json);
-      } catch (err) {
+      } catch (_err) {
         setHealth({ status: 'down', rows: [] });
       }
     }

@@ -455,6 +455,71 @@ a {
   color: #b91c1c;
 }
 
+.dashboard-table-wrapper.worklist-table .col-operator,
+.dashboard-table-wrapper.tickets-table .col-operator {
+  min-width: 240px;
+}
+
+.operator-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.operator-panel__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 0.35rem;
+}
+
+.operator-panel__item {
+  border-radius: 8px;
+  padding: 0.4rem 0.5rem;
+  background: #0f172a;
+  color: #e2e8f0;
+  text-align: center;
+  font-size: 0.75rem;
+}
+
+.operator-panel__label {
+  display: block;
+  font-size: 0.7rem;
+  opacity: 0.75;
+}
+
+.operator-panel__value {
+  display: block;
+  font-weight: 600;
+}
+
+.operator-panel__actions {
+  display: flex;
+  justify-content: flex-start;
+}
+
+.operator-panel__reason {
+  font-size: 0.75rem;
+}
+
+.operator-panel__badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+  font-size: 0.75rem;
+  color: #0f172a;
+}
+
+.operator-panel__badge {
+  background: #e2e8f0;
+  border-radius: 999px;
+  padding: 0.1rem 0.5rem;
+}
+
+.operator-panel__badge.is-active {
+  background: #fee2e2;
+  color: #b91c1c;
+}
+
 .dashboard-legend {
   border-radius: var(--apex-radius);
   border: 1px solid var(--apex-legend-border);
@@ -723,4 +788,10 @@ a {
 
 .symbol-chip {
   border: 1px solid rgba(147, 197, 253, 0.35);
+}
+
+/* muted badge for non-contract rows */
+.operator-panel__badge.is-muted{
+  background:#e5e7eb;
+  color:#334155;
 }

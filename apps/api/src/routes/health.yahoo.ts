@@ -1,6 +1,6 @@
 import type { FastifyInstance, FastifyReply } from 'fastify';
 import { Client } from 'pg';
-import { classifyYahooStatus } from '../lib/yahooHealth';
+import { classifyYahooStatus } from '../lib/yahooHealth.js';
 
 export async function yahooHealthRoutes(app: FastifyInstance) {
   const databaseUrl = process.env.DATABASE_URL;

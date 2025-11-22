@@ -1,6 +1,6 @@
 import type { FastifyInstance } from 'fastify';
 import { Client } from 'pg';
-import { classifyYahooStatus, yahooStatusToService } from '../lib/yahooHealth';
+import { classifyYahooStatus, yahooStatusToService } from '../lib/yahooHealth.js';
 
 type Health = 'green' | 'amber' | 'red' | 'grey';
 
@@ -112,7 +112,7 @@ function buildSession(now: Date): SessionInfo {
   const nowMs = now.getTime();
   let sessionOpen = open;
   let sessionClose = close;
-  let isOpen = nowMs >= sessionOpen && nowMs < sessionClose;
+  const isOpen = nowMs >= sessionOpen && nowMs < sessionClose;
 
   if (!isOpen && nowMs >= sessionClose) {
     sessionOpen += DAY_MS;
@@ -204,7 +204,7 @@ export default async function statusRoute(app: FastifyInstance) {
             yahooRows.push({
               symbol: row.symbol,
               last_bar_utc: last.toISOString(),
-              minutes_behind: age / 60_000,
+              minutes_behind: age !== null ? age / 60_000 : Number.POSITIVE_INFINITY,
             });
           }
           entry.health = age === null ? (relaxed ? 'grey' : 'red') : healthFromAge(age, relaxed);
