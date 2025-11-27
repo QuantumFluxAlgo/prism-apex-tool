@@ -439,30 +439,7 @@ export default function Worklist() {
   ];
 
   return (
-    <div className="dashboard-stack">
-      <div className="mb-3">
-        <SymbolCoverage />
-      </div>
-      <div
-        data-testid="pnl-beta-banner"
-        style={{
-          marginBottom: 8,
-          opacity: 0.85,
-        }}
-      >
-        <span
-          style={{
-            padding: '4px 8px',
-            borderRadius: 6,
-            background: '#1e293b',
-            color: '#93c5fd',
-            fontSize: 12,
-          }}
-        >
-          PnL Beta Active — tick-based per-contract
-        </span>
-      </div>
-      <Card>
+    <div className="dashboard-stack"><Card>
         <CardBody className="dashboard-card__body stack">
           <FiltersBar
             dateRange={{
