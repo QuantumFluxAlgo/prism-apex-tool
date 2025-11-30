@@ -13,7 +13,6 @@ import { notifyRoutes } from './routes/notify.js';
 import { jobsRoutes } from './routes/jobs.js';
 import { compatRoutes } from './routes/compat.js';
 import healthRoute from './routes/health.js';
-// import versionRoute from './routes/version.js';
 import { analyticsRoutes } from './routes/analytics.js';
 import { auditRoutes } from './routes/audit.js';
 import { accountsRoutes } from './routes/accounts.js';
@@ -37,25 +36,25 @@ import reportsDashboardRoute from './routes/reports.dashboard.js';
 import strategyConfigRoute from './routes/strategy-config.js';
 import strategyEngineRoutes from './routes/strategy-engine.js';
 import enginePreviewRoutes from './routes/enginePreview.js';
-
-const cfg = getConfig();
-
 import { telemetryRoutes } from './routes/telemetry.js';
 import { openapiRoutes } from './routes/openapi.js';
 import { jobManager } from './lib/jobManager.js';
-
 import { registerStrategiesJob } from './jobs/strategies.js';
 import { registerTicketizerJob } from './jobs/ticketizer.js';
 import { registerTelemetryJob } from './jobs/telemetry.js';
 import { registerEodFlatJob } from './jobs/eodFlat.js';
-
 import { registerJob, startJobs, stopJobs } from './jobs/scheduler.js';
 import { jobMissingBrackets } from './jobs/missingBrackets.js';
 import { jobDailyLoss } from './jobs/dailyLoss.js';
 import { jobConsistency } from './jobs/consistency.js';
 import { runTicketsDiskSyncJob } from './jobs/ticketsDiskSync.js';
 import strategyConfigRoutes from './routes/strategy-config.js';
+import systemJobsRoutes from './routes/system.jobs.js';
+import operatorConfigRoutes from './routes/operatorConfig.js';
+import operatorRiskRoutes from './routes/operatorRisk.js';
+import { registerOperatorSizingRoutes } from './routes/operatorSizing.js';
 
+const cfg = getConfig();
 const DISABLE = process.env.DISABLE_JOBS === '1' || process.env.NODE_ENV === 'test';
 
 export function buildServer() {
@@ -63,7 +62,6 @@ export function buildServer() {
   const app = Fastify({
     logger: {
       level: process.env.LOG_LEVEL ?? 'info',
-      // redact common secret locations; avoid logging raw auth headers or passwords
       redact: [
         'req.headers.authorization',
         'headers.authorization',
@@ -80,7 +78,6 @@ export function buildServer() {
     trustProxy,
   });
 
-  // Normalize strategy aliases (e.g., ORR -> APX-DDB-01)
   app.register(strategyAlias);
 
   app.log.info(
@@ -104,7 +101,6 @@ export function buildServer() {
 
   app.register(cors, { origin: true });
 
-  // Public paths (no auth/rate-limit)
   const publicPaths = [
     '/health',
     '/ready',
@@ -126,7 +122,6 @@ export function buildServer() {
   app.register(strategyConfigRoute);
   app.register(strategyEngineRoutes);
   app.register(enginePreviewRoutes, { prefix: '/api/engine' });
-  
   app.register(ticketsRoute);
   app.register(ticketsDebugRoute);
   app.register(operatorActionsRoute);
@@ -135,9 +130,12 @@ export function buildServer() {
   app.register(analyticsRoutes);
   app.register(auditRoutes);
   app.register(accountsRoutes);
+  app.register(operatorConfigRoutes);
+  app.register(operatorRiskRoutes);
+  registerOperatorSizingRoutes(app);
   app.register(yahooHealthRoutes);
   app.register(exportRoutes);
-
+  app.register(systemJobsRoutes);
   app.register(marketRoutes);
   app.register(signalRoutes);
   app.register(rulesRoutes);
@@ -152,11 +150,8 @@ export function buildServer() {
   app.register(tradingviewWebhookRoutes, { prefix: '/webhooks' });
   app.register(jobsBoot);
   app.register(symbolsRoute);
-
-  // Strategy config API (global RR, etc.)
   app.register(strategyConfigRoutes, { prefix: '/api/config' });
 
-  // ---- Jobs ----
   registerStrategiesJob();
   registerTicketizerJob();
   registerTelemetryJob();

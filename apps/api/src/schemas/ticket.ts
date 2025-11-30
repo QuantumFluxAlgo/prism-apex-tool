@@ -17,6 +17,7 @@ export const TicketSchema = z.object({
     guardrails: z.array(z.string()),
     sizingHint: z.string().optional(),
     consistencyNotes: z.string().optional(),
+    canonicalCandidate: z.unknown().optional(),
   }),
   accepted: z.boolean(),
   reasons: z.array(z.string()).optional(),

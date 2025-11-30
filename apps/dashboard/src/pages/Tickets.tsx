@@ -16,6 +16,7 @@ import { useToast } from '../context/ToastContext';
 import { TicketQualityFilterBar } from '../components/tickets/TicketQualityFilterBar';
 import type { TicketQualityFilterState } from '../types/ticketQualityFilters';
 import { buildTicketQualityQuery } from '../utils/ticketQualityQuery';
+import { saveAs } from '../utils/export';
 
 type Filters = {
   from?: string;
@@ -41,6 +42,131 @@ const DEFAULT_SYMBOL_OPTIONS = [
   '^GDAXI',
 ];
 
+const currencyFormatter = new Intl.NumberFormat('en-US', {
+  style: 'currency',
+  currency: 'USD',
+  minimumFractionDigits: 0,
+  maximumFractionDigits: 0,
+});
+
+function mergeCanonicalFields(row: TicketRow): TicketRow {
+  if (!row.canonicalApproved) return row;
+  const canonical = row.canonicalApproved;
+  return {
+    ...row,
+    id: canonical.ticketId,
+    symbol: canonical.symbol,
+    strategy: canonical.strategyId,
+    direction: canonical.side,
+    entryPrice: canonical.entryPrice,
+    stopPrice: canonical.stopPrice,
+    targetPrice: canonical.targetPrice,
+    entry_price: canonical.entryPrice,
+    stop_price: canonical.stopPrice,
+    target_price: canonical.targetPrice,
+    qty: canonical.quantity,
+    quantity: canonical.quantity,
+    contracts: canonical.quantity,
+    rrMultiple: canonical.rrMultiple,
+    rr: canonical.rrMultiple,
+    riskDollars: canonical.totalRisk,
+    rewardDollars: canonical.expectedReward,
+    pnl: canonical.pnl ?? row.pnl ?? null,
+    pnlAmount: canonical.pnl ?? row.pnlAmount ?? null,
+    pnlRatio: canonical.pnlRMultiple ?? row.pnlRatio ?? null,
+    session_date_utc: canonical.sessionDateUtc,
+    opened_at_utc: canonical.createdAtUtc,
+    completed_at_utc: canonical.finalizedAtUtc ?? row.completed_at_utc ?? null,
+    completed_by: row.completed_by ?? null,
+    tags: canonical.tags ?? row.tags,
+    contextRegime: canonical.contextRegime ?? row.contextRegime,
+    contextAtrBucket: canonical.contextAtrBucket ?? row.contextAtrBucket,
+    contextOrType: canonical.contextOrType ?? row.contextOrType,
+    status: (canonical.status as TicketRow['status']) ?? row.status,
+  } satisfies TicketRow;
+}
+
+function mergeCanonicalFields(row: TicketRow): TicketRow {
+  const canonical = row.canonicalApproved;
+  if (!canonical) {
+    return row;
+  }
+
+  const entry = canonical.entryPrice;
+  const stop = canonical.stopPrice;
+  const target = canonical.targetPrice;
+
+  return {
+    ...row,
+    id: canonical.ticketId,
+    symbol: canonical.symbol,
+    strategy: canonical.strategyId,
+    side: canonical.side,
+    direction: canonical.side,
+    session_date_utc: canonical.sessionDateUtc,
+    opened_at_utc: canonical.createdAtUtc,
+    completed_at_utc: canonical.finalizedAtUtc ?? row.completed_at_utc ?? null,
+    entryPrice: entry,
+    stopPrice: stop,
+    targetPrice: target,
+    entry_price: entry,
+    stop_price: stop,
+    target_price: target,
+    qty: canonical.quantity,
+    quantity: canonical.quantity,
+    contracts: canonical.quantity,
+    rr: canonical.rrMultiple,
+    rrMultiple: canonical.rrMultiple,
+    riskDollars: canonical.totalRisk,
+    rewardDollars: canonical.expectedReward,
+    pnl: canonical.pnl ?? row.pnl ?? null,
+    pnlAmount: canonical.pnl ?? row.pnlAmount ?? null,
+    pnlRatio: canonical.pnlRMultiple ?? row.pnlRatio ?? null,
+    tags: canonical.tags ?? row.tags,
+    contextRegime: canonical.contextRegime ?? row.contextRegime,
+    contextAtrBucket: canonical.contextAtrBucket ?? row.contextAtrBucket,
+    contextOrType: canonical.contextOrType ?? row.contextOrType,
+    status: (canonical.status as TicketRow['status']) ?? row.status,
+  } satisfies TicketRow;
+}
+
+function buildExportRecord(row: TicketRow) {
+  const canonical = row.canonicalApproved;
+  const entry = canonical?.entryPrice ?? row.entry_price ?? row.entryPrice ?? null;
+  const stop = canonical?.stopPrice ?? row.stop_price ?? row.stopPrice ?? null;
+  const target = canonical?.targetPrice ?? row.target_price ?? row.targetPrice ?? null;
+  const qty = canonical?.quantity ?? row.qty ?? row.quantity ?? 0;
+  const perRisk = canonical?.perContractRisk ?? (entry !== null && stop !== null ? Math.abs(entry - stop) : null);
+  const totalRisk = canonical?.totalRisk ?? (perRisk !== null ? perRisk * Math.max(qty, 1) : null);
+  const expectedReward = canonical?.expectedReward ?? (entry !== null && target !== null ? Math.abs(target - entry) : null);
+
+  return {
+    ticketId: canonical?.ticketId ?? row.id ?? '',
+    symbol: canonical?.symbol ?? row.symbol,
+    strategy: canonical?.strategyId ?? row.strategy,
+    side: canonical?.side ?? row.side,
+    entryPrice: entry,
+    stopPrice: stop,
+    targetPrice: target,
+    quantity: qty,
+    perContractRiskUSD: perRisk,
+    totalRiskUSD: totalRisk,
+    expectedRewardUSD: expectedReward,
+    rrMultiple: canonical?.rrMultiple ?? row.rrMultiple ?? row.rr ?? null,
+    status: canonical?.status ?? row.status,
+    openedAtUtc: row.opened_at_utc ?? row.createdAtUtc ?? null,
+    completedAtUtc: canonical?.finalizedAtUtc ?? row.completed_at_utc ?? null,
+    tags: (canonical?.tags ?? row.tags ?? []).join(' '),
+    reasons: (row.reasons ?? []).join(' | '),
+  };
+}
+
+function toCsvValue(value: unknown): string {
+  if (value === null || value === undefined) return '';
+  const str = String(value).replace(/"/g, '""');
+  return `"${str}"`;
+}
+
 export default function TicketsPage() {
   const [rows, setRows] = useState<TicketRow[]>([]);
   const [total, setTotal] = useState<number>(0);
@@ -51,6 +177,8 @@ export default function TicketsPage() {
   const [offset, setOffset] = useState(0);
   const [refreshTick, setRefreshTick] = useState(0);
   const [pendingActions, setPendingActions] = useState<Record<string, boolean>>({});
+  const [selectedDetail, setSelectedDetail] = useState<TicketRow | null>(null);
+  const [exporting, setExporting] = useState(false);
   const { toast } = useToast();
   const [filters, setFilters] = useState<Filters>({
     symbol: 'ALL',
@@ -101,8 +229,20 @@ export default function TicketsPage() {
         if (cancelled) return;
         const rawRows = response.rows ?? [];
         const filteredRows = filters.showShorts ? rawRows : rawRows.filter((row) => (row.direction ?? 'LONG') === 'LONG');
-        setRows(filteredRows);
+        const normalizedRows = filteredRows.map(mergeCanonicalFields);
+        setRows(normalizedRows);
         setTotal(typeof response.total === 'number' ? response.total : rawRows.length);
+        if (normalizedRows.length) {
+          setSelectedDetail((prev) => {
+            if (prev) {
+              const match = normalizedRows.find((row) => row.id === prev.id);
+              return match ?? normalizedRows[0];
+            }
+            return normalizedRows[0];
+          });
+        } else {
+          setSelectedDetail(null);
+        }
       })
       .catch((err) => {
         if (cancelled) return;
@@ -127,6 +267,7 @@ export default function TicketsPage() {
     filters.showShorts,
     refreshTick,
     appliedQualityQuery,
+    selectedDetail,
   ]);
 
   const handleOperatorAction = useCallback(
@@ -301,7 +442,36 @@ export default function TicketsPage() {
         );
       },
     },
+    {
+      key: 'inspect',
+      header: 'Inspect',
+      align: 'center',
+      className: 'col-actions text-center',
+      render: (row) => (
+        <Button size="sm" variant={selectedDetail?.id === row.id ? 'default' : 'ghost'} onClick={() => setSelectedDetail(row)}>
+          Details
+        </Button>
+      ),
+    },
   ];
+
+  const handleExport = useCallback(() => {
+    if (!rows.length || exporting) return;
+    setExporting(true);
+    try {
+      const records = rows.map(buildExportRecord);
+      if (!records.length) return;
+      const headers = Object.keys(records[0]);
+      const lines = [headers.join(',')];
+      for (const record of records) {
+        lines.push(headers.map((key) => toCsvValue((record as Record<string, unknown>)[key])).join(','));
+      }
+      const timestamp = new Date().toISOString().replace(/[:]/g, '-');
+      saveAs(`tickets-${timestamp}.csv`, lines.join('\n'));
+    } finally {
+      setExporting(false);
+    }
+  }, [rows, exporting]);
 
   const nextDisabled = offset + limit >= total;
 
@@ -401,20 +571,83 @@ export default function TicketsPage() {
             />
           </WorklistPnLContext.Provider>
           <div className="mt-3 flex items-center justify-between">
-            <div className="text-xs text-gray-400">
-              Entry/Stop/Target and R are ORR-derived. SHORTs are visible but not actionable.
-            </div>
-            <div className="flex gap-2">
-              <Button size="sm" disabled={offset === 0} onClick={() => setOffset(Math.max(0, offset - limit))}>
-                Prev
-              </Button>
-              <Button size="sm" disabled={nextDisabled} onClick={() => setOffset(offset + limit)}>
-                Next
+        <div className="text-xs text-gray-400">
+          Entry/Stop/Target and R are ORR-derived. SHORTs are visible but not actionable.
+        </div>
+        <div className="flex gap-2">
+          <Button size="sm" variant="secondary" disabled={!rows.length || exporting} onClick={handleExport}>
+            {exporting ? 'Preparing…' : 'Export CSV'}
+          </Button>
+          <Button size="sm" disabled={offset === 0} onClick={() => setOffset(Math.max(0, offset - limit))}>
+            Prev
+          </Button>
+          <Button size="sm" disabled={nextDisabled} onClick={() => setOffset(offset + limit)}>
+            Next
               </Button>
             </div>
           </div>
         </CardBody>
       </Card>
+
+      {selectedDetail && (
+        <Card>
+          <CardBody className="space-y-3">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div>
+                <p className="text-xs uppercase tracking-[0.2em] text-gray-500">Ticket detail</p>
+                <h3 className="text-xl font-semibold">
+                  {selectedDetail.symbol} · {selectedDetail.strategy}
+                </h3>
+                <p className="text-sm text-gray-400">{fmtUtc(selectedDetail.opened_at_utc ?? selectedDetail.createdAtUtc)}</p>
+              </div>
+              <Badge tone={selectedDetail.status === 'COMPLETE' ? 'blue' : selectedDetail.actionable ? 'green' : 'amber'}>
+                {selectedDetail.status ?? '—'}
+              </Badge>
+            </div>
+            <div className="grid gap-3 md:grid-cols-3">
+              <DetailField label="Entry" value={fmtPrice(selectedDetail.entry_price ?? selectedDetail.entryPrice)} />
+              <DetailField label="Stop" value={fmtPrice(selectedDetail.stop_price ?? selectedDetail.stopPrice)} />
+              <DetailField label="Target" value={fmtPrice(selectedDetail.target_price ?? selectedDetail.targetPrice)} />
+            </div>
+            <div className="grid gap-3 md:grid-cols-3">
+              <DetailField label="Qty" value={selectedDetail.qty ?? selectedDetail.quantity ?? '—'} />
+              <DetailField
+                label="Per-contract risk"
+                value={currencyFormatter.format(selectedDetail.riskDollars ?? 0)}
+              />
+              <DetailField label="R:R" value={fmtR(selectedDetail.rrMultiple ?? selectedDetail.rr ?? null)} />
+            </div>
+            <div>
+              <p className="text-xs uppercase tracking-wide text-gray-500">Context</p>
+              <div className="mt-2 flex flex-wrap gap-2">
+                {(selectedDetail.tags ?? []).map((tag) => (
+                  <Badge key={`${selectedDetail.id}-tag-${tag}`} tone="gray">
+                    {tag}
+                  </Badge>
+                ))}
+                {!selectedDetail.tags?.length && <span className="text-sm text-gray-500">No tags</span>}
+              </div>
+            </div>
+            {selectedDetail.reasons && selectedDetail.reasons.length > 0 && (
+              <div>
+                <p className="text-xs uppercase tracking-wide text-gray-500">Reasons</p>
+                <ul className="mt-1 list-disc pl-5 text-sm text-gray-200">
+                  {selectedDetail.reasons.map((reason) => (
+                    <li key={`${selectedDetail.id}-reason-${reason}`}>{reason}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
+          </CardBody>
+        </Card>
+      )}
     </div>
   );
 }
+
+const DetailField: React.FC<{ label: string; value: React.ReactNode }> = ({ label, value }) => (
+  <div>
+    <p className="text-xs uppercase tracking-wide text-gray-500">{label}</p>
+    <p className="text-sm font-mono text-gray-100">{value ?? '—'}</p>
+  </div>
+);

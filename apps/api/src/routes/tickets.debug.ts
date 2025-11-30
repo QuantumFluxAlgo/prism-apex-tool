@@ -10,6 +10,8 @@ import { appendTickets, readTickets, type MockTicket } from '../utils/mockStore.
 import { parseTicketQualityFilters, applyQualityFilters } from './ticketQualityFilters.js';
 import { emitTicketQualityTelemetry } from '../services/tickets/ticketsTelemetry.js';
 import type { TicketRiskDecisionDto } from './dto/riskDecisionDto.js';
+import type { CanonicalCandidateTicket } from '@prism-apex/shared';
+import { buildCanonicalApprovedTicketView } from './dto/canonicalTicketView.js';
 
 type DebugSuggestion = Suggestion & {
   strategy?: string;
@@ -122,6 +124,8 @@ export default async function ticketsDebugRoute(app: FastifyInstance) {
             rrMultiple: t.meta?.rrMultiple ?? null,
             sessionMetrics: null,
             riskDecision: DEFAULT_RISK_DECISION,
+            canonicalCandidate: (t.meta?.canonicalCandidate as CanonicalCandidateTicket | undefined) ?? null,
+            canonicalApproved: buildCanonicalApprovedTicketView(t) ?? null,
           };
         }),
       );
@@ -159,6 +163,7 @@ export default async function ticketsDebugRoute(app: FastifyInstance) {
         rewardDollars: null,
         rrMultiple: null,
         riskDecision: DEFAULT_RISK_DECISION,
+        canonicalApproved: buildCanonicalApprovedTicketView(ticket) ?? null,
       })),
     });
   });

@@ -7,6 +7,9 @@ import { TICKET_STRATEGIES } from '../schemas/ticket.js';
 import type { Ticket, TicketStrategy } from '../schemas/ticket.js';
 import { saveTicket, getRecentTicketSizes } from '../store/tickets.js';
 import { getAccount as getTelemetryAccount } from '../store/telemetry.js';
+import type { CanonicalCandidateTicket } from '@prism-apex/shared';
+import { buildCanonicalCandidateTicket } from '../services/strategy-engine/index.js';
+import { shouldBlockNewTicketsForDay } from '../services/operatorRisk.js';
 
 function computeRR(params: { entry: number; stop: number; target: number }): number {
   const risk = Math.abs(params.entry - params.stop);
@@ -49,6 +52,7 @@ export const ticketizer = {
 };
 
 let unsub: (() => void) | null = null;
+const canonicalCandidateCache = new Map<string, CanonicalCandidateTicket>();
 
 function isPreClose(ts: string, flat: string): boolean {
   const day = ts.slice(0, 10);
@@ -146,11 +150,37 @@ export function guardSuggestion(
 }
 
 function onSuggestion(s: Suggestion): void {
+  void handleSuggestion(s);
+}
+
+async function handleSuggestion(s: Suggestion): Promise<void> {
   jobManager.beat('TICKETIZER');
+  ticketizer.lastSuggestionTs = s.timestampUtc;
+
+  const riskDate = s.timestampUtc.slice(0, 10);
+  try {
+    const lockedOut = await shouldBlockNewTicketsForDay(riskDate);
+    if (lockedOut) {
+      console.info(
+        `[ticketizer] Skipping suggestion symbol=${s.symbol} strategy=${s.meta.strategy} riskDate=${riskDate} — daily risk lockout active`,
+      );
+      return;
+    }
+  } catch (err) {
+    console.warn(`[ticketizer] Failed to evaluate daily risk lockout for ${riskDate}`, err);
+  }
+
+  const canonicalCandidate = buildCanonicalCandidateTicket(s);
+  canonicalCandidateCache.set(canonicalCandidate.id, canonicalCandidate);
+  if (canonicalCandidateCache.size > 100) {
+    const oldestKey = canonicalCandidateCache.keys().next().value;
+    if (oldestKey) {
+      canonicalCandidateCache.delete(oldestKey);
+    }
+  }
   const registry = loadRegistry();
   const acct = registry.accounts[0];
   const cfg = getConfig();
-  ticketizer.lastSuggestionTs = s.timestampUtc;
   const teleAcct = getTelemetryAccount(acct.id);
   const t = guardSuggestion(s, {
     accountId: acct.id,
@@ -166,7 +196,40 @@ function onSuggestion(s: Suggestion): void {
   } else {
     ticketizer.rejected[t.meta.strategy]++;
   }
-  void saveTicket(t);
+  const canonicalKey = canonicalCandidate?.id ?? null;
+  const canonical = canonicalKey ? canonicalCandidateCache.get(canonicalKey) : undefined;
+  const enrichedTicket: Ticket = canonical
+    ? {
+        ...t,
+        meta: {
+          ...t.meta,
+          canonicalCandidate: {
+            id: canonical.id,
+            symbol: canonical.symbol,
+            sessionDateUtc: canonical.sessionDateUtc,
+            side: canonical.side,
+            entryPrice: canonical.entryPrice,
+            stopPrice: canonical.stopPrice,
+            targetPrice: canonical.targetPrice,
+            stopTicks: canonical.stopTicks,
+            targetTicks: canonical.targetTicks,
+            quantity: canonical.quantity,
+            rrMultiple: canonical.rrMultiple,
+            perContractRisk: canonical.perContractRisk,
+            totalRisk: canonical.totalRisk,
+            expectedReward: canonical.expectedReward,
+            strategyId: canonical.strategyId,
+            contextRegime: canonical.contextRegime,
+            contextAtrBucket: canonical.contextAtrBucket,
+            contextOrType: canonical.contextOrType,
+            tags: canonical.tags,
+            createdAtUtc: canonical.createdAtUtc,
+            source: canonical.source,
+          },
+        },
+      }
+    : t;
+  void saveTicket(enrichedTicket);
   publish('ticket', t);
 }
 

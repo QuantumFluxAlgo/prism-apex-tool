@@ -1,6 +1,8 @@
 /* eslint-disable @typescript-eslint/ban-ts-comment */
 import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
 import { Client } from 'pg';
+import type { CanonicalCandidateTicket } from '@prism-apex/shared';
+import { buildCanonicalApprovedTicketView } from './dto/canonicalTicketView.js';
 import { listTickets } from '../store/tickets.js';
 import { isMockDbEnabled, isTestMode } from '../utils/testMode.js';
 import { TICKET_STRATEGIES, type TicketStrategy } from '../schemas/ticket.js';
@@ -71,6 +73,8 @@ export type TicketRowDto = {
   riskDollars?: number | null;
   rewardDollars?: number | null;
   rrMultiple?: number | null;
+  canonicalCandidate?: CanonicalCandidateTicket | null;
+  canonicalApproved?: ReturnType<typeof buildCanonicalApprovedTicketView>;
 } & Record<string, unknown>;
 
 const DEFAULT_RISK_DECISION: TicketRiskDecisionDto = {
@@ -102,12 +106,18 @@ function attachRiskFields(row: any): any {
     row.rr_multiple ??
     toNumber(meta.rrMultiple ?? meta.rr_multiple ?? meta.rr ?? row.rr);
 
+  const canonicalCandidate = meta.canonicalCandidate as CanonicalCandidateTicket | undefined;
+
+  const canonicalApproved = buildCanonicalApprovedTicketView(row);
+
   return {
     ...row,
     contracts: contracts ?? null,
     riskDollars: riskDollars ?? null,
     rewardDollars: rewardDollars ?? null,
     rrMultiple: rrMultiple ?? null,
+    canonicalCandidate: canonicalCandidate ?? null,
+    canonicalApproved: canonicalApproved ?? null,
   };
 }
 

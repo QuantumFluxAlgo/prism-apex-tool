@@ -8,10 +8,12 @@ export interface DashboardNavItem {
 
 export const DASHBOARD_NAV_ITEMS: DashboardNavItem[] = [
   { path: '/worklist', label: 'Worklist' },
+  { path: '/worklist-v2', label: 'Worklist V2 (Mock)' },
   { path: '/tickets', label: 'Tickets' },
-  { path: '/positions', label: 'Positions' },
-  { path: '/reports', label: 'Reports' },
   { path: '/market-data', label: 'Market Data' },
+  { path: '/reports', label: 'Reports' },
+  { path: '/strategy-lab', label: 'Strategy Lab' },
+  { path: '/positions', label: 'Positions' },
   { path: '/strategy-config', label: 'Strategy Config' },
   { path: '/status', label: 'Status' },
 ];

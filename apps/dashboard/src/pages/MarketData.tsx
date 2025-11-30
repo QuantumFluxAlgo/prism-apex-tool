@@ -10,6 +10,7 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { createChart, LineStyle } from 'lightweight-charts';
 import { Card, CardBody, CardHeader } from '../ui/Card';
 import Button from '../ui/Button';
+import { fetchSessionMetrics, type SessionMetricsDto } from '../lib/api';
 
 type BarsSummary = Record<
   string,
@@ -75,6 +76,10 @@ export default function MarketDataPage() {
   const [showVwap, setShowVwap] = useState(true);
   const [showAtr, setShowAtr] = useState(false);
   const [showRange, setShowRange] = useState(false);
+  const [sessionMetrics, setSessionMetrics] = useState<SessionMetricsDto | null>(null);
+const [sessionMetricsError, setSessionMetricsError] = useState<string | null>(null);
+  const [sessionMetrics, setSessionMetrics] = useState<SessionMetricsDto | null>(null);
+  const [sessionMetricsError, setSessionMetricsError] = useState<string | null>(null);
 
 const chartContainerRef = useRef<HTMLDivElement | null>(null);
 const chartApiRef = useRef<any>(null);
@@ -151,6 +156,27 @@ const clampVisibleRangeToData = useCallback(() => {
     const interval = window.setInterval(() => fetchBars(selectedSymbol, granularity), 60_000);
     return () => window.clearInterval(interval);
   }, [selectedSymbol, granularity, fetchBars]);
+
+  useEffect(() => {
+    let cancelled = false;
+    const sessionDate = new Date().toISOString().slice(0, 10);
+    fetchSessionMetrics(selectedSymbol, sessionDate)
+      .then((metrics) => {
+        if (!cancelled) {
+          setSessionMetrics(metrics);
+          setSessionMetricsError(null);
+        }
+      })
+      .catch((err) => {
+        if (!cancelled) {
+          setSessionMetrics(null);
+          setSessionMetricsError(err instanceof Error ? err.message : String(err));
+        }
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [selectedSymbol]);
 
   useEffect(() => {
     selectedSymbolRef.current = selectedSymbol;
@@ -709,6 +735,39 @@ const clampVisibleRangeToData = useCallback(() => {
           {chartError && <p className="mt-3 text-sm text-red-400">Error loading candles: {chartError}</p>}
         </CardBody>
       </Card>
+
+      <Card>
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="text-lg font-semibold">Session Metrics ({selectedSymbol})</h3>
+              <p className="text-sm text-slate-400">OR / ATR / VWAP context</p>
+            </div>
+            <Button size="sm" variant="secondary" onClick={() => setSessionMetrics(null)}>
+              Clear
+            </Button>
+          </div>
+        </CardHeader>
+        <CardBody>
+          {sessionMetrics ? (
+            <div className="grid gap-3 md:grid-cols-3">
+              <DetailMetric label="OR High" value={formatNumber(sessionMetrics.orHigh)} />
+              <DetailMetric label="OR Low" value={formatNumber(sessionMetrics.orLow)} />
+              <DetailMetric label="OR Width" value={formatNumber(sessionMetrics.orWidthPoints)} />
+              <DetailMetric label="OR / ATR" value={sessionMetrics.orWidthToAtrRatio?.toFixed(2) ?? '—'} />
+              <DetailMetric label="ATR" value={formatNumber(sessionMetrics.sessionAtrPoints)} />
+              <DetailMetric label="Vol Regime" value={sessionMetrics.volRegime ?? '—'} />
+              <DetailMetric label="VWAP Slope" value={sessionMetrics.vwapSlope ?? '—'} />
+              <DetailMetric label="Trend" value={sessionMetrics.htfTrendBias ?? '—'} />
+              <DetailMetric label="News" value={sessionMetrics.hasMajorNewsToday ? 'Yes' : 'No'} />
+            </div>
+          ) : (
+            <div className="text-sm text-slate-400">
+              {sessionMetricsError ? sessionMetricsError : 'No session metrics loaded.'}
+            </div>
+          )}
+        </CardBody>
+      </Card>
     </div>
   );
 }
@@ -916,3 +975,23 @@ function stripBranding(container: HTMLDivElement | null) {
     }
   });
 }
+  useEffect(() => {
+    let cancelled = false;
+    const sessionDate = new Date().toISOString().slice(0, 10);
+    fetchSessionMetrics(selectedSymbol, sessionDate)
+      .then((metrics) => {
+        if (!cancelled) {
+          setSessionMetrics(metrics);
+          setSessionMetricsError(null);
+        }
+      })
+      .catch((err) => {
+        if (!cancelled) {
+          setSessionMetrics(null);
+          setSessionMetricsError(err instanceof Error ? err.message : String(err));
+        }
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [selectedSymbol]);

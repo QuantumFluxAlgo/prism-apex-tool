@@ -14,6 +14,7 @@ import {
   priceDiffToTicks,
   ticksToDollars,
 } from '../../risk/contractMath.js';
+import type { CanonicalCandidateTicket } from '@prism-apex/shared';
 
 export const ENGINE_VERSION = '0.5.0-orr-osb-vwapft';
 
@@ -168,5 +169,95 @@ export async function runEnginePreview(
       safetyEnvelope: 'strict-enforced',
       safetyEnvelopeDropped: envelopeRejected.length,
     },
+  };
+}
+
+export interface StrategySuggestionLike {
+  contract: string;
+  symbol: string;
+  side: 'BUY' | 'SELL';
+  entry: number;
+  stop?: number;
+  target: number;
+  qty?: number;
+  timestampUtc: string;
+  meta: {
+    strategy: string;
+    rr?: number;
+    stopTicks?: number;
+    targetTicks?: number;
+    strategyVersion?: string;
+    contextRegime?: string | null;
+    contextAtrBucket?: string | null;
+    contextOrType?: string | null;
+    tags?: string[];
+    guardrails?: string[];
+  };
+}
+
+export function buildCanonicalCandidateTicket(
+  suggestion: StrategySuggestionLike,
+): CanonicalCandidateTicket {
+  const { contract, symbol, side, entry, stop, target, qty, timestampUtc, meta } = suggestion;
+  const entryPrice = Number.isFinite(entry) ? entry : target;
+  const stopPrice = Number.isFinite(stop) ? (stop as number) : entryPrice;
+  const targetPrice = Number.isFinite(target) ? target : entryPrice;
+  const quantity = typeof qty === 'number' && Number.isFinite(qty) && qty > 0 ? qty : 0;
+
+  const rawStopTicks =
+    typeof meta?.stopTicks === 'number' && Number.isFinite(meta.stopTicks)
+      ? Math.abs(meta.stopTicks)
+      : Math.max(Math.abs(entryPrice - stopPrice), 1);
+  const rawTargetTicks =
+    typeof meta?.targetTicks === 'number' && Number.isFinite(meta.targetTicks)
+      ? Math.abs(meta.targetTicks)
+      : Math.max(Math.abs(targetPrice - entryPrice), 1);
+
+  const perContractRisk = Math.max(Math.abs(entryPrice - stopPrice), 0);
+  const totalRisk = perContractRisk * Math.max(quantity, 1);
+  const expectedReward = Math.abs(targetPrice - entryPrice) * Math.max(quantity, 1);
+  const rrMultiple =
+    typeof meta?.rr === 'number' && Number.isFinite(meta.rr)
+      ? meta.rr
+      : perContractRisk > 0
+      ? (expectedReward / Math.max(perContractRisk, 1)) || 1
+      : 1;
+
+  const sessionDateUtc = new Date(timestampUtc).toISOString().slice(0, 10) + 'T00:00:00Z';
+  const id = `candidate:${contract}:${timestampUtc}`;
+
+  return {
+    id,
+    symbol: contract || symbol,
+    sessionDateUtc,
+    side: side === 'SELL' ? 'SHORT' : 'LONG',
+    entryPrice,
+    stopPrice,
+    targetPrice,
+    exitPrice: null,
+    entryTicksFromRef: null,
+    stopTicks: rawStopTicks,
+    targetTicks: rawTargetTicks,
+    quantity,
+    perContractRisk,
+    totalRisk,
+    expectedReward,
+    rrMultiple,
+    pnl: null,
+    pnlRMultiple: null,
+    strategyId: meta.strategy,
+    strategyVersion: meta.strategyVersion ?? null,
+    contextRegime: meta.contextRegime ?? null,
+    contextAtrBucket: meta.contextAtrBucket ?? null,
+    contextOrType: meta.contextOrType ?? null,
+    tags: meta.tags ?? meta.guardrails ?? [],
+    status: 'PENDING',
+    createdAtUtc: timestampUtc,
+    updatedAtUtc: timestampUtc,
+    completedAtUtc: null,
+    completedBy: null,
+    accountId: null,
+    notes: null,
+    source: 'ENGINE',
   };
 }

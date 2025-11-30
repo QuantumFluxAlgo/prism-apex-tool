@@ -1,55 +1,59 @@
 
-type RawBar = any;
-type SessionMetricsComputationResult = any;
-
-/**
- * SessionMetrics runtime wiring (Phase 1 Step 1.8a, Option A).
- *
- * Pipeline:
- *   (symbol, sessionDate) -> bars -> computeSessionMetricsForSymbol -> SessionMetricsDto
- *
- * Bar source:
- *   - Reads 1m intraday bars from the bars_1m table in Postgres via DATABASE_URL.
- */
-
 import { Client } from 'pg';
-import { computeSessionMetricsForSymbol } from './populate-session-metrics.js';
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const computeSessionMetricsForSymbolAny: any = computeSessionMetricsForSymbol;
-
+import {
+  computeSessionMetricsForSymbol,
+  type RawBar,
+} from './populate-session-metrics.js';
+import type {
+  LiquidityRegime,
+  PriceVsVwap,
+  SessionMetricsComputationResult,
+  SessionMetricsPopulationContext,
+  SessionQualityFlag,
+  SessionType,
+  TrendBias,
+  VwapSlope,
+  VolRegime,
+  NewsWindow,
+} from './types.js';
 
 export interface SessionMetricsDto {
-  sessionDate: string;
   symbol: string;
-  timeframe: string;
-
+  sessionDate: string;
+  sessionType: SessionType;
+  sessionStartTs: string | null;
+  sessionEndTs: string | null;
+  sessionAtrPoints: number | null;
+  sessionAtrBucket: string | null;
+  intradayRangePoints: number | null;
+  overnightRangePoints: number | null;
+  volRegime: VolRegime | null;
+  orStartTs: string | null;
+  orEndTs: string | null;
+  orLengthMinutes: number | null;
+  orHigh: number | null;
+  orLow: number | null;
+  orWidthPoints: number | null;
+  orWidthToAtrRatio: number | null;
+  vwapOpenValue: number | null;
+  vwapCloseValue: number | null;
+  vwapSlope: VwapSlope | null;
+  priceVsVwapAtOrEnd: PriceVsVwap | null;
+  htfTrendBias: TrendBias | null;
+  avgVolumeFirst30m: number | null;
+  volumeSpikeFlag: boolean | null;
+  liquidityRegime: LiquidityRegime | null;
+  hasMajorNewsToday: boolean | null;
+  newsWindow: NewsWindow;
+  newsLabel: string | null;
+  sessionQualityFlag: SessionQualityFlag | null;
+  sessionSkipReason: string | null;
+  barsAnalyzed: number;
   status: 'OK' | 'ERROR';
   errorCode: string | null;
   errorMessage: string | null;
-
-  barCount: number;
-  hasOpenRange: boolean;
-
-  sessionHigh: number | null;
-  sessionLow: number | null;
-  sessionRange: number | null;
-  atr: number | null;
-
-  orStartTime: string | null;
-  orEndTime: string | null;
-  orHigh: number | null;
-  orLow: number | null;
-  orWidth: number | null;
-  orToAtrRatio: number | null;
-
-  vwapOpen: number | null;
-  vwapClose: number | null;
-  vwapSlope: number | null;
-  vwapSlopeClassification: 'UP' | 'DOWN' | 'FLAT' | null;
-
-  createdAt: string;
-  updatedAt: string;
-  version: string | null;
+  computedAt: string;
+  version: string;
 }
 
 async function loadBarsForSymbolSession(input: {
@@ -133,47 +137,70 @@ export async function computeSessionMetricsForSymbolSession(input: {
 
   const bars = await loadBarsForSymbolSession({ symbol, sessionDate });
 
-  const result = computeSessionMetricsForSymbolAny({
+  const context: SessionMetricsPopulationContext = {
+    targetSessionDate: sessionDate,
+    symbols: [symbol],
+  };
+
+  const result = computeSessionMetricsForSymbol(
     symbol,
     sessionDate,
+    'RTH',
     bars,
-  });
+    context,
+  );
 
   const nowIso = new Date().toISOString();
 
-  const dto: SessionMetricsDto = {
-    sessionDate,
-    symbol,
-    timeframe: result.timeframe,
+  return mapResultToDto(result, bars.length, nowIso);
+}
 
-    status: result.status,
-    errorCode: result.errorCode ?? null,
-    errorMessage: result.errorMessage ?? null,
+function mapResultToDto(
+  result: SessionMetricsComputationResult,
+  barsAnalyzed: number,
+  computedAt: string,
+): SessionMetricsDto {
+  const isError = result.sessionQualityFlag === 'ERROR' || barsAnalyzed === 0;
+  const status: SessionMetricsDto['status'] = isError ? 'ERROR' : 'OK';
+  const errorCode = isError ? result.sessionSkipReason ?? 'NO_BARS' : null;
+  const errorMessage = isError ? result.sessionSkipReason ?? 'Session metrics unavailable' : null;
 
-    barCount: result.barCount,
-    hasOpenRange: result.hasOpenRange,
-
-    sessionHigh: result.sessionHigh ?? null,
-    sessionLow: result.sessionLow ?? null,
-    sessionRange: result.sessionRange ?? null,
-    atr: result.atr ?? null,
-
-    orStartTime: result.orStartTime ?? null,
-    orEndTime: result.orEndTime ?? null,
+  return {
+    symbol: result.symbol,
+    sessionDate: result.sessionDate,
+    sessionType: result.sessionType,
+    sessionStartTs: result.sessionStartTs ?? null,
+    sessionEndTs: result.sessionEndTs ?? null,
+    sessionAtrPoints: result.sessionAtrPoints ?? null,
+    sessionAtrBucket: result.sessionAtrBucket ?? null,
+    intradayRangePoints: result.intradayRangePoints ?? null,
+    overnightRangePoints: result.overnightRangePoints ?? null,
+    volRegime: result.volRegime ?? null,
+    orStartTs: result.orStartTs ?? null,
+    orEndTs: result.orEndTs ?? null,
+    orLengthMinutes: result.orLengthMinutes ?? null,
     orHigh: result.orHigh ?? null,
     orLow: result.orLow ?? null,
-    orWidth: result.orWidth ?? null,
-    orToAtrRatio: result.orToAtrRatio ?? null,
-
-    vwapOpen: result.vwapOpen ?? null,
-    vwapClose: result.vwapClose ?? null,
+    orWidthPoints: result.orWidthPoints ?? null,
+    orWidthToAtrRatio: result.orWidthToAtrRatio ?? null,
+    vwapOpenValue: result.vwapOpenValue ?? null,
+    vwapCloseValue: result.vwapCloseValue ?? null,
     vwapSlope: result.vwapSlope ?? null,
-    vwapSlopeClassification: result.vwapSlopeClassification ?? null,
-
-    createdAt: nowIso,
-    updatedAt: nowIso,
-    version: result.version ?? 'v1',
+    priceVsVwapAtOrEnd: result.priceVsVwapAtOrEnd ?? null,
+    htfTrendBias: result.htfTrendBias ?? null,
+    avgVolumeFirst30m: result.avgVolumeFirst30m ?? null,
+    volumeSpikeFlag: result.volumeSpikeFlag ?? null,
+    liquidityRegime: result.liquidityRegime ?? null,
+    hasMajorNewsToday: result.hasMajorNewsToday ?? null,
+    newsWindow: result.newsWindow,
+    newsLabel: result.newsLabel ?? null,
+    sessionQualityFlag: result.sessionQualityFlag ?? null,
+    sessionSkipReason: result.sessionSkipReason ?? null,
+    barsAnalyzed,
+    status,
+    errorCode,
+    errorMessage,
+    computedAt,
+    version: 'v1',
   };
-
-  return dto;
 }
