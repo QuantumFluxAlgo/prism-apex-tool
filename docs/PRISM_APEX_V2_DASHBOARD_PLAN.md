@@ -120,7 +120,7 @@ Replace the shallow `Tickets.tsx` stub with a full V2 Tickets view aligned with 
   - Outcome: consistent story between “what I saw before executing” and “what audit records”.
 
 - [ ] **V2.2.5 – Legacy Tickets UI Decommission**  
-  - Remove the current stub `Tickets.tsx` implementation that manually calls `fetch()`.
+  - Remove the current stub `Tickets.tsx` implementation that manually calls `fetch()`.  
   - Ensure only the new Tickets V2 is wired in `App.tsx`.  
   - Outcome: single tickets surface, bound to canonical+audit contracts.
 
@@ -279,5 +279,36 @@ Provide a single Docker-based way to run the full V2 system (API + dashboard + b
     - Postgres (if used).
     - API.
     - Dashboard.
-    - Any ingest/job containers.
-*** End Patch to=functions.shell Output truncated due to length. md ends? need ensure script finished. continue?*** Probably. Need rest? Did script finish? yes exit code 0. output truncated but fine. Need summary etc per instructions? final message with sections etc referencing script results. Provide plan? Already done? We must create final response referencing output. Provide outcome: doc created etc. compose sections 1..5. include mention working tree status? not asked but mention. go final. Need note working tree now dirty. mention doc path etc backup etc. include plan summary etc. let's craft final message per sections. Include AW? Use instructions? Format? Provide bullet? use plain text. let's produce. Suitable info: path docs/PRISM_APEX_V2_DASHBOARD_PLAN.md created. backup maybe? since file new, message 
+    - Any ingest/job containers.  
+  - Correctly wire `API_BASE` and CORS.  
+  - Outcome: `docker compose up` is the default way to run the full stack.
+
+- [ ] **V2.7.2 – Env Profiles (SIM / DEV / DEMO)**  
+  - Wire env vars for:
+    - SIM vs DEMO vs DEV.
+    - Feature toggles for mocks vs real APIs.  
+  - Outcome: environment switching is configuration, not code editing.
+
+- [ ] **V2.7.3 – Health Checks & Readiness**  
+  - Add health/readiness endpoints and Docker healthchecks:
+    - API / dashboard containers report ready before being considered “up”.  
+  - Outcome: deployments know when the system is actually usable.
+
+- [ ] **V2.7.4 – Basic Deploy Runbook**  
+  - Short doc:
+    - “How to run the full V2 stack in Docker on a new machine.”  
+  - Outcome: any dev/ops can spin up V2 without tribal knowledge.
+
+---
+
+## 10. Suggested Execution Order
+
+1. **EPIC V2.1** – Worklist V2 Hardening  
+2. **EPIC V2.2** – Tickets V2  
+3. **EPIC V2.7** – Dockerised Deployment & Envs  
+4. **EPIC V2.3** – Markets & Analytics  
+5. **EPIC V2.4** – Strategy Lab V2  
+6. **EPIC V2.5** – System / Status / Alerts  
+7. **EPIC V2.6** – A2 UI Polish & Consistency  
+
+This file is the **source of truth** for V2 dashboard progress. Update the checkboxes as you deliver each story.
