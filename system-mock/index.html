@@ -1,0 +1,555 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full">
+<head>
+  <meta charset="UTF-8" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@300;400;500;600&display=swap" rel="stylesheet" />
+  <title>System – Prism Apex</title>
+
+  <style>
+    body { font-family: "Space Grotesk", sans-serif; }
+    .mono { font-family: "IBM Plex Mono", monospace; }
+
+    .theme-dark {
+      --bg: #0F1116;
+      --bg-panel: #1A1D23;
+      --bg-header: #13161C;
+      --text: #E7ECF3;
+      --text-secondary: #A1A8B5;
+      --text-muted: #626975;
+      --border: rgba(255,255,255,0.08);
+      --accent: #42E2F4;
+      --ok: #22C55E;
+      --warn: #FBBF24;
+      --err: #F97373;
+      --log-warn-bg: rgba(251,191,36,0.08);
+      --log-err-bg: rgba(248,113,113,0.08);
+    }
+    .theme-light {
+      --bg: #F6F8FA;
+      --bg-panel: #FFFFFF;
+      --bg-header: #E9ECEF;
+      --text: #0F1116;
+      --text-secondary: #444;
+      --text-muted: #777;
+      --border: rgba(0,0,0,0.1);
+      --accent: #0AA4BE;
+      --ok: #16A34A;
+      --warn: #EAB308;
+      --err: #DC2626;
+      --log-warn-bg: rgba(234,179,8,0.12);
+      --log-err-bg: rgba(220,38,38,0.12);
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      transition: background 0.25s ease, color 0.25s ease;
+    }
+
+    .health-card {
+      background: var(--bg-panel);
+      border-color: var(--border);
+    }
+
+    .health-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 9999px;
+      display: inline-block;
+    }
+
+    .health-ok   { background: var(--ok); }
+    .health-warn { background: var(--warn); }
+    .health-err  { background: var(--err); }
+
+    .status-pill {
+      border-radius: 9999px;
+      padding: 2px 8px;
+      font-size: 10px;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .status-ok {
+      background: rgba(34,197,94,0.08);
+      color: var(--ok);
+    }
+    .status-warn {
+      background: rgba(251,191,36,0.10);
+      color: var(--warn);
+    }
+    .status-err {
+      background: rgba(248,113,113,0.12);
+      color: var(--err);
+    }
+
+    @keyframes cardPulse {
+      0% { opacity: 0.85; }
+      50% { opacity: 1; }
+      100% { opacity: 0.85; }
+    }
+  </style>
+</head>
+
+<body class="theme-dark h-full">
+
+<script>
+// Theme toggle
+function toggleTheme() {
+  const b = document.body;
+  b.classList.toggle("theme-dark");
+  b.classList.toggle("theme-light");
+}
+
+// ---------- Fake Data ----------
+
+function fakeHealth() {
+  return [
+    {
+      id: "api",
+      title: "API / Ingress",
+      status: "OK",
+      metrics: [
+        "Latency: 43ms",
+        "Ingress: Stable"
+      ]
+    },
+    {
+      id: "db",
+      title: "DB / Storage",
+      status: "OK",
+      metrics: [
+        "Lag: 0.1s",
+        "Connections: 12"
+      ]
+    },
+    {
+      id: "engine",
+      title: "Strategy Engine",
+      status: "WARN",
+      metrics: [
+        "Workers: 5/6",
+        "Slow: 1 worker"
+      ]
+    },
+    {
+      id: "risk",
+      title: "Risk Engine",
+      status: "OK",
+      metrics: [
+        "Hard-stop: OFF",
+        "Alerts: 0"
+      ]
+    },
+    {
+      id: "other",
+      title: "Other Subsystems",
+      status: "OK",
+      metrics: [
+        "Telemetry: OK",
+        "Fill Monitor: OK"
+      ]
+    }
+  ];
+}
+
+function fakeStatusRows() {
+  return [
+    {
+      symbol: "ES",
+      strategy: "ORR",
+      status: "OK",
+      lastUpdate: "09:52:30",
+      lag: "0.2s",
+      errors: 0,
+      notes: "Live + stable"
+    },
+    {
+      symbol: "NQ",
+      strategy: "VWFT",
+      status: "OK",
+      lastUpdate: "09:52:20",
+      lag: "0.3s",
+      errors: 0,
+      notes: "Good conditions"
+    },
+    {
+      symbol: "CL",
+      strategy: "OSB",
+      status: "WARN",
+      lastUpdate: "09:51:10",
+      lag: "2.1s",
+      errors: 2,
+      notes: "Ingress delay detected"
+    },
+    {
+      symbol: "RTY",
+      strategy: "ORR",
+      status: "OK",
+      lastUpdate: "09:50:58",
+      lag: "0.5s",
+      errors: 0,
+      notes: "Worker restart completed"
+    },
+    {
+      symbol: "ES",
+      strategy: "VWFT",
+      status: "ERR",
+      lastUpdate: "09:49:32",
+      lag: "—",
+      errors: 3,
+      notes: "Risk engine blocking trades"
+    }
+  ];
+}
+
+function baseLogs() {
+  return [
+    {
+      time: "09:52:30",
+      level: "INFO",
+      component: "strategy-orr",
+      symbol: "ES",
+      strategy: "ORR",
+      message: "Heartbeat OK – latency 43ms"
+    },
+    {
+      time: "09:51:10",
+      level: "WARN",
+      component: "ingress-yahoo",
+      symbol: "CL",
+      strategy: "OSB",
+      message: "Ingress delay detected (2.1s)"
+    },
+    {
+      time: "09:50:44",
+      level: "INFO",
+      component: "strategy-orr",
+      symbol: "ES",
+      strategy: "ORR",
+      message: "Ticket generated (score=92 risk=GREEN)"
+    },
+    {
+      time: "09:49:32",
+      level: "ERROR",
+      component: "risk-engine",
+      symbol: "NQ",
+      strategy: "VWFT",
+      message: "Risk check failed: DD limit reached"
+    },
+    {
+      time: "09:48:05",
+      level: "DEBUG",
+      component: "db",
+      symbol: "-",
+      strategy: "-",
+      message: "Checkpoint flush completed (4.3ms)"
+    }
+  ];
+}
+
+// ---------- Rendering ----------
+
+function statusClass(state) {
+  if (state === "OK") return "ok";
+  if (state === "WARN") return "warn";
+  return "err";
+}
+
+function renderHealthCards() {
+  const cards = fakeHealth();
+  const container = document.getElementById("health-cards");
+  container.innerHTML = "";
+
+  cards.forEach(c => {
+    const sClass = statusClass(c.status);
+    const card = document.createElement("div");
+    card.className = "health-card rounded-md border p-3 flex flex-col gap-1";
+    card.style.borderColor = "var(--border)";
+    if (c.status === "WARN" || c.status === "ERR") {
+      card.style.animation = "cardPulse 3s ease-in-out infinite";
+    }
+
+    card.innerHTML = `
+      <div class="flex items-center justify-between">
+        <div class="flex items-center gap-2">
+          <span class="health-dot health-${sClass}"></span>
+          <span class="text-[12px] font-semibold">${c.title}</span>
+        </div>
+        <span class="mono text-[11px]" style="color:var(--${sClass});">${c.status}</span>
+      </div>
+      <div class="text-[11px] mt-1" style="color:var(--text-secondary);">
+        ${c.metrics.map(m => `<div>• ${m}</div>`).join("")}
+      </div>
+    `;
+    container.appendChild(card);
+  });
+}
+
+function renderStatusTable() {
+  const rows = fakeStatusRows();
+  const body = document.getElementById("status-rows");
+  body.innerHTML = "";
+
+  rows.forEach(r => {
+    const sClass = statusClass(r.status);
+    const row = document.createElement("div");
+    row.className =
+      "grid grid-cols-[70px,80px,90px,110px,80px,70px,1fr] px-3 py-1.5 border-b text-[11px]";
+    row.style.borderColor = "var(--border)";
+
+    let rowBg = "transparent";
+    if (r.status === "WARN") rowBg = "var(--log-warn-bg)";
+    if (r.status === "ERR") rowBg = "var(--log-err-bg)";
+    row.style.background = rowBg;
+
+    const pillClass =
+      r.status === "OK" ? "status-pill status-ok" :
+      r.status === "WARN" ? "status-pill status-warn" :
+      "status-pill status-err";
+
+    row.innerHTML = `
+      <div class="mono">${r.symbol}</div>
+      <div class="mono">${r.strategy}</div>
+      <div>
+        <span class="${pillClass}">
+          <span class="health-dot health-${sClass}"></span>
+          <span class="mono">${r.status}</span>
+        </span>
+      </div>
+      <div class="mono">${r.lastUpdate}</div>
+      <div class="mono">${r.lag}</div>
+      <div class="mono text-right">${r.errors}</div>
+      <div style="color:var(--text-secondary);">${r.notes}</div>
+    `;
+    body.appendChild(row);
+  });
+}
+
+let allLogs = baseLogs();
+let autoScroll = true;
+
+function renderLogs() {
+  const body = document.getElementById("log-rows");
+  body.innerHTML = "";
+
+  allLogs.forEach(log => {
+    const row = document.createElement("div");
+    row.className = "grid grid-cols-[80px,60px,130px,60px,70px,1fr] px-3 py-1.5 border-b text-[11px] mono";
+    row.style.borderColor = "var(--border)";
+
+    if (log.level === "WARN") {
+      row.style.background = "var(--log-warn-bg)";
+    } else if (log.level === "ERROR") {
+      row.style.background = "var(--log-err-bg)";
+    }
+
+    let lvlColor = "var(--text-secondary)";
+    if (log.level === "ERROR") lvlColor = "var(--err)";
+    else if (log.level === "WARN") lvlColor = "var(--warn)";
+    else if (log.level === "INFO") lvlColor = "var(--ok)";
+
+    row.innerHTML = `
+      <div>${log.time}</div>
+      <div style="color:${lvlColor};">${log.level}</div>
+      <div>${log.component}</div>
+      <div>${log.symbol}</div>
+      <div>${log.strategy}</div>
+      <div>${log.message}</div>
+    `;
+    body.appendChild(row);
+  });
+
+  if (autoScroll) {
+    body.scrollTop = body.scrollHeight;
+  }
+}
+
+function pushFakeLog() {
+  const levels = ["INFO","WARN","ERROR"];
+  const components = ["ingress-yahoo","strategy-orr","risk-engine","db","api-gateway"];
+  const symbols = ["ES","NQ","CL","RTY","-"];
+  const strategies = ["ORR","OSB","VWFT","-"];
+
+  const now = new Date();
+  const hh = String(now.getHours()).padStart(2,"0");
+  const mm = String(now.getMinutes()).padStart(2,"0");
+  const ss = String(now.getSeconds()).padStart(2,"0");
+
+  const lvl = levels[Math.floor(Math.random()*levels.length)];
+  const comp = components[Math.floor(Math.random()*components.length)];
+  const sym = symbols[Math.floor(Math.random()*symbols.length)];
+  const strat = strategies[Math.floor(Math.random()*strategies.length)];
+
+  let msg;
+  if (lvl === "INFO") {
+    msg = "Heartbeat OK · lag=" + (Math.random()*0.6).toFixed(2) + "s";
+  } else if (lvl === "WARN") {
+    msg = "Ingress delay detected · " + (1+Math.random()*3).toFixed(1) + "s";
+  } else {
+    msg = "Risk check failed · DD limit " + (1+Math.random()*4).toFixed(1) + "%";
+  }
+
+  allLogs.push({
+    time: hh + ":" + mm + ":" + ss,
+    level: lvl,
+    component: comp,
+    symbol: sym,
+    strategy: strat,
+    message: msg
+  });
+
+  if (allLogs.length > 80) {
+    allLogs = allLogs.slice(allLogs.length - 80);
+  }
+  renderLogs();
+}
+
+function initLogControls() {
+  const toggleBtn = document.getElementById("toggle-scroll");
+  toggleBtn.addEventListener("click", () => {
+    autoScroll = !autoScroll;
+    toggleBtn.innerText = autoScroll ? "Pause scroll" : "Resume scroll";
+  });
+
+  // Timer for new fake logs
+  setInterval(pushFakeLog, 4000);
+}
+
+// ---------- Init ----------
+
+document.addEventListener("DOMContentLoaded", () => {
+  renderHealthCards();
+  renderStatusTable();
+  renderLogs();
+  initLogControls();
+});
+</script>
+
+<div class="min-h-screen flex flex-col">
+
+  <!-- HEADER -->
+  <header class="px-6 py-3 border-b"
+          style="background:var(--bg-header);border-color:var(--border);">
+    <div class="flex items-center justify-between gap-4">
+      <div>
+        <h1 class="text-xl font-semibold">System</h1>
+        <p class="text-sm" style="color:var(--text-secondary);">
+          Real-time view of health, feeds, workers and risk blocks.
+        </p>
+      </div>
+      <div class="flex items-center gap-3 text-[11px]">
+        <div class="flex items-center gap-1" style="color:var(--text-secondary);">
+          <span>Time window</span>
+          <button class="px-2 py-0.5 rounded-full border mono"
+                  style="border-color:var(--border);background:var(--bg-panel);">
+            Last 10m
+          </button>
+          <button class="px-2 py-0.5 rounded-full border mono"
+                  style="border-color:var(--border);color:var(--text-muted);">
+            1h
+          </button>
+          <button class="px-2 py-0.5 rounded-full border mono"
+                  style="border-color:var(--border);color:var(--text-muted);">
+            24h
+          </button>
+        </div>
+        <button onclick="toggleTheme()"
+                class="px-3 py-1 rounded-full border text-[11px]"
+                style="border-color:var(--border);color:var(--text-secondary);">
+          Theme
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- TOP HEALTH CARDS -->
+  <section class="px-6 pt-4 pb-3">
+    <div class="flex items-center justify-between mb-2 text-[11px]"
+         style="color:var(--text-secondary);">
+      <span>SYSTEM HEALTH OVERVIEW</span>
+      <span class="flex items-center gap-2">
+        <span><span class="health-dot health-ok"></span> OK</span>
+        <span><span class="health-dot health-warn"></span> WARN</span>
+        <span><span class="health-dot health-err"></span> ERR</span>
+      </span>
+    </div>
+    <div id="health-cards"
+         class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 gap-3">
+      <!-- JS injects cards -->
+    </div>
+  </section>
+
+  <!-- STATUS TABLE -->
+  <section class="px-6 pb-3">
+    <div class="rounded-lg border overflow-hidden"
+         style="border-color:var(--border);background:var(--bg-panel);">
+      <div class="px-3 py-2 border-b flex items-center justify-between text-[11px]"
+           style="border-color:var(--border);color:var(--text-secondary);background:var(--bg-header);">
+        <span>SYMBOL / STRATEGY STATUS</span>
+        <div class="flex items-center gap-2">
+          <span>Sort by</span>
+          <button class="px-2 py-0.5 rounded-full border mono"
+                  style="border-color:var(--border);">Status</button>
+          <button class="px-2 py-0.5 rounded-full border mono"
+                  style="border-color:var(--border);">Data Lag</button>
+        </div>
+      </div>
+      <div class="grid grid-cols-[70px,80px,90px,110px,80px,70px,1fr]
+                  px-3 py-1.5 border-b text-[10px] font-medium"
+           style="border-color:var(--border);color:var(--text-secondary);background:var(--bg-header);">
+        <div>Symbol</div>
+        <div>Strategy</div>
+        <div>Status</div>
+        <div>Last Update</div>
+        <div>Data Lag</div>
+        <div class="text-right">Errors (10m)</div>
+        <div>Notes</div>
+      </div>
+      <div id="status-rows" class="max-h-64 overflow-auto">
+        <!-- JS table rows -->
+      </div>
+    </div>
+  </section>
+
+  <!-- LOG VIEWER -->
+  <section class="px-6 pb-4">
+    <div class="rounded-lg border flex flex-col"
+         style="border-color:var(--border);background:var(--bg-panel);">
+      <!-- Filter bar -->
+      <div class="px-3 py-2 border-b flex flex-wrap gap-2 items-center text-[11px]"
+           style="border-color:var(--border);background:var(--bg-header);">
+        <button class="px-2 py-0.5 rounded-full border"
+                style="border-color:var(--border);">Level ▾</button>
+        <button class="px-2 py-0.5 rounded-full border"
+                style="border-color:var(--border);">Component ▾</button>
+        <button class="px-2 py-0.5 rounded-full border"
+                style="border-color:var(--border);">Symbol ▾</button>
+        <button class="px-2 py-0.5 rounded-full border"
+                style="border-color:var(--border);">Strategy ▾</button>
+        <div class="flex items-center px-2 py-0.5 rounded-full border flex-1 min-w-[180px] max-w-xs"
+             style="border-color:var(--border);">
+          <span class="mr-1" style="color:var(--text-muted);">🔍</span>
+          <input placeholder="Search logs…"
+                 class="bg-transparent outline-none text-[11px] flex-1"
+                 style="color:var(--text);" />
+        </div>
+        <button id="toggle-scroll"
+                class="px-2 py-0.5 rounded-full border text-[11px] mono"
+                style="border-color:var(--border);color:var(--text-secondary);">
+          Pause scroll
+        </button>
+      </div>
+
+      <!-- Log rows -->
+      <div id="log-rows" class="max-h-64 overflow-auto">
+        <!-- JS log rows -->
+      </div>
+    </div>
+  </section>
+
+</div>
+
+</body>
+</html>

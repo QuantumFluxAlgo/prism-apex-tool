@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full">
+<head>
+  <meta charset="UTF-8">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <title>Tickets Mock</title>
+
+  <style>
+    body { font-family: "Space Grotesk", sans-serif; }
+    .mono { font-family: "IBM Plex Mono", monospace; }
+
+    .theme-dark {
+      --bg: #0F1116;
+      --bg-panel: #1A1D23;
+      --bg-header: #13161C;
+      --text: #E7ECF3;
+      --text-secondary: #A1A8B5;
+      --text-muted: #626975;
+      --border: rgba(255,255,255,0.08);
+      --accent: #42E2F4;
+    }
+    .theme-light {
+      --bg: #F6F8FA;
+      --bg-panel: #FFFFFF;
+      --bg-header: #E9ECEF;
+      --text: #0F1116;
+      --text-secondary: #444;
+      --text-muted: #777;
+      --border: rgba(0,0,0,0.1);
+      --accent: #0AA4BE;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      transition: background 0.25s ease, color 0.25s ease;
+    }
+
+    @keyframes pulse {
+      0% { background-color: rgba(66,226,244,0); }
+      50% { background-color: rgba(66,226,244,0.16); }
+      100% { background-color: rgba(66,226,244,0); }
+    }
+
+    @keyframes expiring {
+      from { opacity: 1; }
+      to { opacity: 0.45; }
+    }
+  </style>
+</head>
+
+<body class="theme-dark h-full">
+
+<script>
+function toggleTheme() {
+  const b = document.body;
+  b.classList.toggle("theme-dark");
+  b.classList.toggle("theme-light");
+}
+
+// Build sparkline SVG based on risk/status
+function buildSpark(risk) {
+  const color =
+    risk === "R" ? "#F97373" :
+    risk === "A" ? "#FBBF24" :
+    "#10B981";
+  const pts = [];
+  for (let i = 0; i < 18; i++) {
+    pts.push(i * 5 + "," + (20 - Math.random() * 16));
+  }
+  return `<svg width="100" height="20">
+    <polyline points="${pts.join(" ")}"
+      stroke="${color}"
+      fill="none"
+      stroke-width="2"
+      stroke-linecap="round" />
+  </svg>`;
+}
+
+function genTickets(n = 30) {
+  const out = [];
+  const stratA = ["ORR", "OSB", "VWFT"];
+  const trendA = ["↑", "→", "↓"];
+  const riskA = ["G", "A", "R"];
+  const statusA = ["Actioned", "Rejected", "Expired", "Downranked"];
+  const reasonCatA = [
+    "Risk Blocked",
+    "Arbitrated Out",
+    "Config Mismatch",
+    "Max Contracts",
+    "Session Rule"
+  ];
+  const reasonSummaryA = [
+    "Max contracts exceeded",
+    "Arbitrated out by ORR",
+    "Config mismatch vs lab",
+    "ATR cap breached",
+    "News lockout active"
+  ];
+  const ctxTags = [
+    "RegUp VW+ ATRHigh",
+    "Chop VW- ORIn",
+    "TrendDn ORBreak",
+    "Range VWFlat"
+  ];
+
+  for (let i = 0; i < n; i++) {
+    const strat = stratA[Math.floor(Math.random() * stratA.length)];
+    const strength = trendA[Math.floor(Math.random() * trendA.length)];
+    const risk = riskA[Math.floor(Math.random() * riskA.length)];
+    const status = statusA[Math.floor(Math.random() * statusA.length)];
+    const reasonCat = reasonCatA[Math.floor(Math.random() * reasonCatA.length)];
+    const reasonSummary = reasonSummaryA[Math.floor(Math.random() * reasonSummaryA.length)];
+    const baseHour = 9;
+    const baseMin = 30 + Math.floor(Math.random() * 40);
+    const hh = String(baseHour + Math.floor(baseMin / 60)).padStart(2, "0");
+    const mm = String(baseMin % 60).padStart(2, "0");
+    const time = `${hh}:${mm}`;
+    const entry = (3800 + Math.random() * 800).toFixed(1);
+    const stopTicks = "-" + (4 + Math.floor(Math.random() * 12)) + "t";
+    const targetTicks = "+" + (8 + Math.floor(Math.random() * 24)) + "t";
+    const score = Math.floor(60 + Math.random() * 40);
+    const rr = (1.1 + Math.random() * 2.5).toFixed(2);
+    const minsAgo = Math.floor(Math.random() * 60);
+    const context = ctxTags[Math.floor(Math.random() * ctxTags.length)];
+    const spark = buildSpark(risk);
+
+    out.push({
+      time,
+      strat,
+      score,
+      strength,
+      risk,
+      status,
+      reasonCat,
+      reasonSummary,
+      entry,
+      stopTicks,
+      targetTicks,
+      rr,
+      context,
+      minsAgo,
+      spark
+    });
+  }
+  return out;
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+  const rows = genTickets(30);
+  const c = document.getElementById("ticket-rows");
+
+  rows.forEach((r, i) => {
+    const row = document.createElement("div");
+    row.className =
+      "relative grid grid-cols-[80px,70px,64px,40px,64px,90px,140px,200px,90px,90px,90px,200px,100px,40px] " +
+      "px-4 py-2 border-b text-[12px] hover:bg-white/5 transition";
+    row.style.borderColor = "var(--border)";
+
+    if (r.status === "Expired") {
+      row.style.animation = "expiring 3s infinite alternate";
+    } else if (i % 7 === 0) {
+      row.style.animation = "pulse 0.9s ease";
+    }
+
+    const riskBg =
+      r.risk === "G"
+        ? "rgba(16,185,129,0.15)"
+        : r.risk === "A"
+        ? "rgba(251,191,36,0.15)"
+        : "rgba(248,113,113,0.15)";
+    const riskColor =
+      r.risk === "G" ? "#6EE7B7" : r.risk === "A" ? "#FBBF24" : "#F97373";
+
+    let statusBg, statusColor, statusBorder;
+    switch (r.status) {
+      case "Actioned":
+        statusBg = "rgba(16,185,129,0.10)";
+        statusColor = "#6EE7B7";
+        statusBorder = "rgba(16,185,129,0.40)";
+        break;
+      case "Rejected":
+        statusBg = "rgba(248,113,113,0.10)";
+        statusColor = "#F97373";
+        statusBorder = "rgba(248,113,113,0.40)";
+        break;
+      case "Expired":
+        statusBg = "rgba(251,191,36,0.10)";
+        statusColor = "#FBBF24";
+        statusBorder = "rgba(251,191,36,0.40)";
+        break;
+      case "Downranked":
+      default:
+        statusBg = "rgba(148,163,184,0.10)";
+        statusColor = "#CBD5F5";
+        statusBorder = "rgba(148,163,184,0.40)";
+        break;
+    }
+
+    const strengthColor =
+      r.strength === "↑"
+        ? "#6EE7B7"
+        : r.strength === "↓"
+        ? "#F97373"
+        : "var(--text-secondary)";
+
+    row.innerHTML = `
+      <div class="mono text-xs" style="color:var(--text-secondary);">${r.time}</div>
+      <div class="text-center text-[11px]">${r.strat}</div>
+      <div class="mono text-right text-xs">${r.score}</div>
+      <div class="text-center" style="color:${strengthColor};">${r.strength}</div>
+      <div class="text-center">
+        <span class="px-2 py-0.5 rounded-full text-[10px]"
+          style="background:${riskBg};color:${riskColor};">
+          ${r.risk}
+        </span>
+      </div>
+      <div class="text-center">
+        <span class="px-2 py-0.5 rounded-full text-[10px]"
+          style="background:${statusBg};color:${statusColor};border:1px solid ${statusBorder};">
+          ${r.status}
+        </span>
+      </div>
+      <div class="text-[11px]" style="color:var(--text-secondary);">
+        ${r.reasonCat}
+      </div>
+      <div class="text-[11px] truncate" style="color:var(--text-secondary);">
+        ${r.reasonSummary}
+      </div>
+      <div class="mono text-right text-xs">${r.entry}</div>
+      <div class="mono text-right text-xs" style="color:#F97373;">${r.stopTicks}</div>
+      <div class="mono text-right text-xs" style="color:#10B981;">${r.targetTicks}</div>
+      <div class="text-[11px]" style="color:var(--text-secondary);">
+        ${r.context}
+      </div>
+      <div class="text-center">
+        ${r.spark}
+      </div>
+      <div class="text-center cursor-pointer" title="Notes">
+        📝
+      </div>
+    `;
+
+    c.appendChild(row);
+  });
+});
+</script>
+
+<div class="min-h-screen flex flex-col">
+
+  <!-- HEADER -->
+  <header class="px-6 py-4 border-b" style="background:var(--bg-header);border-color:var(--border);">
+    <div class="flex items-center justify-between">
+      <div>
+        <h1 class="text-xl font-semibold">Tickets</h1>
+        <p class="text-sm" style="color:var(--text-secondary);">
+          Full historical audit of signals, actions, rejections, expiries and downranks.
+        </p>
+      </div>
+      <button onclick="toggleTheme()" class="px-3 py-1 rounded border text-sm"
+              style="border-color:var(--border);color:var(--text-secondary);">
+        Toggle Theme
+      </button>
+    </div>
+  </header>
+
+  <!-- FILTER BAR -->
+  <section class="px-6 py-3 border-b sticky top-0 z-20"
+           style="background:var(--bg-header);border-color:var(--border);">
+    <div class="flex items-center gap-2 flex-wrap text-[11px]">
+      <button class="px-3 py-1 rounded-full border" style="border-color:var(--border);">
+        Date Range ▾
+      </button>
+      <button class="px-3 py-1 rounded-full border" style="border-color:var(--border);">
+        Symbol ▾
+      </button>
+      <button class="px-3 py-1 rounded-full border" style="border-color:var(--border);">
+        Strategy ▾
+      </button>
+      <button class="px-3 py-1 rounded-full border" style="border-color:var(--border);">
+        Status ▾
+      </button>
+      <button class="px-3 py-1 rounded-full border" style="border-color:var(--border);">
+        Reason Category ▾
+      </button>
+      <button class="px-3 py-1 rounded-full border" style="border-color:var(--border);">
+        Score ≥ ▾
+      </button>
+      <button class="px-3 py-1 rounded-full border" style="border-color:var(--border);">
+        Risk: All ▾
+      </button>
+
+      <div class="flex items-center ml-auto px-3 py-1 rounded-full border"
+           style="border-color:var(--border);">
+        <span class="mr-2" style="color:var(--text-muted);">🔍</span>
+        <input placeholder="Search notes, reasons…" class="bg-transparent outline-none text-[11px]"
+               style="color:var(--text);" />
+      </div>
+    </div>
+  </section>
+
+  <!-- MAIN -->
+  <div class="flex flex-1 px-6 py-4 gap-4">
+
+    <!-- TICKETS TABLE -->
+    <div class="flex-1 rounded-lg border overflow-auto"
+         style="border-color:var(--border);background:var(--bg-panel);">
+
+      <div class="px-4 py-2 border-b text-xs font-medium"
+           style="border-color:var(--border);color:var(--text-secondary);">
+        TICKETS TABLE — FULL FEED (Signals, Actions, Rejections, Expiries, Downranks)
+      </div>
+
+      <!-- Header row -->
+      <div class="grid grid-cols-[80px,70px,64px,40px,64px,90px,140px,200px,90px,90px,90px,200px,100px,40px]
+                  px-4 py-2 border-b text-[11px] font-medium"
+           style="border-color:var(--border);background:var(--bg-header);color:var(--text-secondary);">
+        <div>Time</div>
+        <div>Strategy</div>
+        <div class="text-right">Score</div>
+        <div class="text-center">Str</div>
+        <div class="text-center">Risk</div>
+        <div class="text-center">Status</div>
+        <div>Reason Category</div>
+        <div>Reason Summary</div>
+        <div class="text-right">Entry</div>
+        <div class="text-right">Stop</div>
+        <div class="text-right">Target</div>
+        <div>Context</div>
+        <div class="text-center">Sparkline</div>
+        <div class="text-center">N</div>
+      </div>
+
+      <div id="ticket-rows"></div>
+    </div>
+
+    <!-- DETAILS PANEL (mocked, static text) -->
+    <aside class="w-[380px] rounded-lg border p-4 flex flex-col"
+           style="border-color:var(--border);background:var(--bg-panel);color:var(--text-secondary);">
+      <p class="text-xs font-medium mb-2">DETAILS DRAWER — ON ROW CLICK</p>
+
+      <div class="text-[11px] mb-2">
+        Strategy ORR · Symbol ES · 09:45:22
+      </div>
+      <div class="text-[11px] mb-2">
+        Status: <span style="color:#6EE7B7;">Actioned</span> ·
+        Reason Category: <span style="color:#FBBF24;">Max Contracts</span>
+      </div>
+      <div class="text-[11px] mb-2">
+        Reason: Max contracts exceeded (4 &gt; 3)
+      </div>
+
+      <hr class="my-2" style="border-color:var(--border);" />
+
+      <div class="text-[11px] mb-2 mono">
+        Entry: 4522.50 · Stop: -8t · Target: +16t · R:R 2.1 · Contracts: 2
+      </div>
+
+      <hr class="my-2" style="border-color:var(--border);" />
+
+      <div class="text-[11px] mb-2 mono">
+        Score Breakdown: Trend +20 · VWAP +15 · Vol -3 · Structure +10 · Composite 93
+      </div>
+
+      <hr class="my-2" style="border-color:var(--border);" />
+
+      <div class="text-[11px] mb-2">
+        Context: Regime TrendUp · ATR High · VWAP Above · OR Outside Range
+      </div>
+
+      <hr class="my-2" style="border-color:var(--border);" />
+
+      <div class="text-[11px] mb-2">
+        Config Snapshot:
+        <button class="text-[11px] underline" style="color:var(--accent);">
+          Open in Strategy Lab
+        </button>
+      </div>
+
+      <div class="text-[11px] mb-1">
+        Operator Notes
+      </div>
+      <textarea class="w-full flex-1 min-h-[80px] rounded border text-[11px] p-2"
+                placeholder="Add notes or review commentary…"
+                style="border-color:var(--border);background:var(--bg);color:var(--text);"></textarea>
+    </aside>
+  </div>
+</div>
+
+</body>
+</html>

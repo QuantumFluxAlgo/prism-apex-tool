@@ -10,9 +10,7 @@ const windowOrigin =
   typeof window !== 'undefined' ? window.location.origin.replace(/\/+$/, '') : undefined;
 
 export const API_BASE =
-  (hasEnvBase ? normalizedEnvBase ?? '' : undefined) ||
-  windowOrigin ||
-  'http://localhost:3000';
+  (hasEnvBase ? normalizedEnvBase : undefined) || windowOrigin || 'http://localhost:3000';
 
 type FetchJsonOpts = RequestInit & { expected?: number[] };
 

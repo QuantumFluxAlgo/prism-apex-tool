@@ -496,11 +496,10 @@ function getTicketTimestamp(ticket: CanonicalTicket): number {
   return Number.isNaN(parsed) ? 0 : parsed;
 }
 
-function formatStrategyName(strategyId: string) {
-  return strategyId
-    .replace(/[-_]/g, ' ')
-    .replace(/\b(\w)/g, (match) => match.toUpperCase())
-    .trim();
+function formatStrategyName(strategyId?: string | null) {
+  const base = (strategyId ?? '').trim();
+  if (!base) return 'Unknown';
+  return base.replace(/[-_]/g, ' ').replace(/\b(\w)/g, (match) => match.toUpperCase()).trim();
 }
 
 function formatNumber(value: number | null | undefined, digits = 2) {

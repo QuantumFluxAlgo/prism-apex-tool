@@ -504,6 +504,20 @@ export async function updateOperatorConfig(
 }
 
 // ---- symbols v2 (config-backed) ----
+export interface SymbolSummary {
+  symbol: string;
+  description?: string;
+}
+
+export async function fetchSymbols(): Promise<SymbolSummary[]> {
+  const res = await fetch('/api/symbols');
+  if (!res.ok) {
+    throw new Error(`Failed to fetch symbols (${res.status})`);
+  }
+  const body = (await res.json()) as SymbolSummary[] | null | undefined;
+  return Array.isArray(body) ? body : [];
+}
+
 export type SymbolSpecV2 = {
   symbol: string;
   description?: string;

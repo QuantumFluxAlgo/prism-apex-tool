@@ -2,6 +2,7 @@ import { exportTickets, type Ticket } from '../store/tickets.js';
 import { getOperatorConfig } from '../store/operatorConfig.js';
 import type { DailyRiskSnapshotDto } from '../routes/dto/operatorRisk.js';
 import { computeRiskSizing, type RiskSizingResult } from './riskSizing.js';
+import { recordRiskSnapshot } from '../store/riskAuditLog.js';
 
 export type DailyRiskSnapshotParams = {
   dateUtc?: string;
@@ -42,7 +43,7 @@ export async function getDailyRiskSnapshot(params: DailyRiskSnapshotParams = {})
   const isLockedOut =
     remainingRiskCapacity !== null && maxDailyLossAmount !== null ? remainingRiskCapacity <= 0 : null;
 
-  return {
+  const snapshot = {
     dateUtc,
     dailyStartingBalance: operatorConfig.dailyStartingBalance,
     maxDailyDrawdownPct: operatorConfig.maxDailyDrawdownPct,
@@ -53,6 +54,9 @@ export async function getDailyRiskSnapshot(params: DailyRiskSnapshotParams = {})
     remainingRiskCapacity,
     isLockedOut,
   };
+
+  recordRiskSnapshot(snapshot);
+  return snapshot;
 }
 
 export type NextTradeSizingParams = {

@@ -11,6 +11,8 @@ import {
 } from '../lib/api';
 import type { DailyRiskSnapshotDto } from '../lib/operatorRisk';
 import { fetchDailyRiskSnapshot } from '../lib/operatorRisk';
+import { SystemTelemetryPanel } from '../components/SystemTelemetryPanel';
+import { RiskAuditPanel } from '../components/RiskAuditPanel';
 
 type ServiceKey = 'db' | 'api' | 'yahoo' | 'tickets_cron' | 'gapfill_cron';
 type HealthState = 'green' | 'amber' | 'red' | 'grey' | string | undefined;
@@ -63,7 +65,8 @@ function formatIso(iso?: string | null) {
   if (!iso) return '—';
   const date = new Date(iso);
   if (Number.isNaN(date.getTime())) return iso;
-  return date.toISOString().replace('T', ' ').replace('Z', ' UTC');
+  const normalized = date.toISOString();
+  return normalized.replace('T', ' ').replace('Z', ' UTC');
 }
 
 function formatAge(ageMs: number | null | undefined) {
@@ -439,6 +442,9 @@ export default function StatusPage() {
           )}
         </CardBody>
       </Card>
+
+      <SystemTelemetryPanel />
+      <RiskAuditPanel />
 
       <Card>
         <CardHeader>

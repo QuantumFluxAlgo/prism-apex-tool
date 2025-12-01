@@ -29,7 +29,9 @@ export const Accounts = {
 
   get(id: string): AccountRecord | undefined {
     const all = Accounts.list();
-    return all.find(a => String(a.accountId) === id || a.name === id);
+    return all.find(
+      (account: AccountRecord) => String(account.accountId) === id || account.name === id,
+    );
   },
 
   upsert(input: Partial<AccountRecord> & { id: string }): AccountRecord {
@@ -38,7 +40,9 @@ export const Accounts = {
     let current: AccountsFile;
     try { current = loadAccounts(fp) as AccountsFile; }
     catch { current = { accounts: [] } as AccountsFile; }
-    const idx = current.accounts.findIndex(a => String(a.accountId) === input.id || a.name === input.id);
+    const idx = current.accounts.findIndex(
+      (account: AccountRecord) => String(account.accountId) === input.id || account.name === input.id,
+    );
     const base: AccountRecord = idx >= 0
       ? current.accounts[idx]
       : {

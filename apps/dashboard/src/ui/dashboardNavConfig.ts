@@ -16,4 +16,5 @@ export const DASHBOARD_NAV_ITEMS: DashboardNavItem[] = [
   { path: '/positions', label: 'Positions' },
   { path: '/strategy-config', label: 'Strategy Config' },
   { path: '/status', label: 'Status' },
+  { path: '/alerts', label: 'Alerts' },
 ];
