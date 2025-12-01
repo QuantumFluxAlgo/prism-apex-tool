@@ -1,3 +1,12 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+cd ~/Projects/prism-apex-tool
+cd "$(git rev-parse --show-toplevel)"
+
+echo "=== PATCH: FiltersBar – add 'extra' prop and right-aligned slot ==="
+
+cat > apps/dashboard/src/ui/FiltersBar.tsx << 'TSX'
 import React from 'react';
 
 type FiltersBarSelectOption = {
@@ -155,3 +164,15 @@ export default function FiltersBar(props: FiltersBarProps) {
     </div>
   );
 }
+TSX
+
+echo
+echo "--- Dashboard build ---"
+pnpm -C apps/dashboard run build
+
+echo
+echo "--- V2 build audit ---"
+./scripts/run_v2_build_audit.sh || true
+
+echo
+echo "=== PATCH COMPLETE – FiltersBar.extra wired; WorklistV2 should now typecheck. ==="

@@ -265,7 +265,7 @@ export default function ReportsPage() {
         dateRange={{
           from: filters.from,
           to: filters.to,
-          onChange: (from, to) =>
+          onChange: (from: string, to: string) =>
             setFilters((prev) => ({
               ...prev,
               from: from ?? prev.from,
