@@ -4,21 +4,21 @@ type Tone = 'default' | 'green' | 'amber' | 'red' | 'neutral' | 'blue' | 'yellow
 
 const toneClasses: Record<Tone, string> = {
   default:
-    'border-[rgba(255,255,255,0.14)] bg-[rgba(9,15,28,0.9)] text-[var(--text-secondary)]',
+    'border-[var(--badge-neutral-bg)] bg-[var(--badge-neutral-bg)] text-[var(--badge-neutral-fg)]',
   green:
-    'border-[#4BE8A3] text-[#4BE8A3] bg-[rgba(75,232,163,0.12)]',
+    'border-[var(--badge-green-bg)] bg-[var(--badge-green-bg)] text-[var(--badge-green-fg)]',
   amber:
-    'border-[#FFC466] text-[#FFC466] bg-[rgba(255,196,102,0.12)]',
+    'border-[var(--badge-amber-bg)] bg-[var(--badge-amber-bg)] text-[var(--badge-amber-fg)]',
   red:
-    'border-[#FF6A6A] text-[#FF6A6A] bg-[rgba(255,106,106,0.12)]',
+    'border-[var(--badge-red-bg)] bg-[var(--badge-red-bg)] text-[var(--badge-red-fg)]',
   neutral:
-    'border-[rgba(170,177,205,0.9)] text-[rgba(170,177,205,0.95)] bg-[rgba(9,15,28,0.9)]',
+    'border-[var(--badge-neutral-bg)] bg-[var(--badge-neutral-bg)] text-[var(--badge-neutral-fg)]',
   blue:
-    'border-[rgba(125,146,222,0.9)] text-[rgba(191,203,255,0.95)] bg-[rgba(11,15,28,0.9)]',
+    'border-[rgba(125,146,222,0.7)] bg-[rgba(30,64,175,0.6)] text-[#e0f2fe]',
   yellow:
-    'border-[#FFC466] text-[#FFC466] bg-[rgba(255,196,102,0.12)]',
+    'border-[var(--badge-amber-bg)] bg-[var(--badge-amber-bg)] text-[var(--badge-amber-fg)]',
   gray:
-    'border-[rgba(125,146,222,0.55)] text-[rgba(181,191,230,0.95)] bg-[rgba(9,15,28,0.9)]',
+    'border-[var(--badge-neutral-bg)] bg-[var(--badge-neutral-bg)] text-[var(--badge-neutral-fg)]',
 };
 
 export default function Badge({
@@ -40,7 +40,7 @@ export default function Badge({
       className={[
         'dashboard-badge',
         'inline-flex items-center justify-center gap-1',
-        'rounded-full px-2.5 py-0.5',
+        'px-2.5 py-0.5',
         'font-geist-mono text-[10px] leading-tight',
         'uppercase tracking-[0.16em]',
         toneClass,

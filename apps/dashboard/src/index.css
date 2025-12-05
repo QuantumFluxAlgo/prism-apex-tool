@@ -2,6 +2,9 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Import A2 layout/panel system for V2 dashboard pages */
+@import "./styles/a2.css";
+
 /* === PRISM APEX – A2 DESIGN TOKENS (Dashboard scope) === */
 :root {
   --bg-shell: #050814;
@@ -25,6 +28,9 @@
   --border-subtle: rgba(255, 255, 255, 0.07);
   --border-accent: rgba(66, 226, 244, 0.8);
   --border-steel: rgba(125, 146, 222, 0.9);
+
+  /* matches A2 full mock “soft” shell shadow */
+  --shadow-soft: 0 24px 70px rgba(0, 0, 0, 0.9);
 }
 
 /* Fonts – assume Satoshi / Geist Mono are loaded globally via the app;

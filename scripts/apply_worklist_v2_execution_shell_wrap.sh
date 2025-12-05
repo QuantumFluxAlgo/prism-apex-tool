@@ -1,3 +1,27 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+echo "=== PRISM APEX – APPLY WORKLIST V2 EXECUTION SHELL WRAP ==="
+
+ROOT="$(git rev-parse --show-toplevel 2>/dev/null || pwd)"
+cd "$ROOT"
+
+TARGET="apps/dashboard/src/pages/WorklistV2.tsx"
+BACKUP="apps/dashboard/src/pages/WorklistV2.tsx.bak.$(date +%Y%m%d%H%M%S)"
+
+echo "--- Repo root: $ROOT"
+echo "--- Target: $TARGET"
+
+if [ -f "$TARGET" ]; then
+  echo "--- Backing up existing WorklistV2.tsx to $BACKUP"
+  cp "$TARGET" "$BACKUP"
+else
+  echo "!!! WARNING: $TARGET not found, script will still create it"
+fi
+
+echo "--- Writing updated WorklistV2.tsx (A2 ExecutionShell wrapped) ---"
+
+cat > "$TARGET" <<'WORKLIST_V2_TSX'
 /* eslint-disable @typescript-eslint/ban-ts-comment */
 // @ts-nocheck
 /* eslint-disable */
@@ -5,6 +29,7 @@
 // V2 HARDENING (auto-waive): TS waiver for this dashboard file. See PRISM_APEX_V2_BUILD_AUDIT.md.
 import React from 'react';
 import type { CanonicalTicket } from '@prism-apex/shared';
+import { Card, CardBody, CardHeader } from '../ui/Card';
 import FiltersBar from '../ui/FiltersBar';
 import DataTable, { type DataTableColumn } from '../ui/DataTable';
 import Badge from '../ui/Badge';
@@ -13,6 +38,7 @@ import { fmtUtc } from '../utils/time';
 import { getWorklistV2CanonicalTickets } from '../lib/worklistMock';
 import { fetchSessionMetrics, fetchWorklistCanonicalTickets } from '../lib/api';
 import type { SessionMetricsDto } from '../lib/api';
+import ExecutionShell from '../layouts/ExecutionShell';
 
 const MAX_AGE_MINUTES = 30;
 
@@ -232,9 +258,9 @@ function Sparkline({ id }: { id: string }) {
 
 function DetailsSection({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <section className="details-section">
-      <h3 className="details-label">{title}</h3>
-      <div className="mt-2 text-sm text-slate-200">{children}</div>
+    <section className="space-y-2 rounded-xl border border-slate-800 bg-slate-900/40 p-3">
+      <h3 className="text-xs font-semibold uppercase tracking-wide text-slate-400">{title}</h3>
+      <div className="text-sm text-slate-200">{children}</div>
     </section>
   );
 }
@@ -248,7 +274,7 @@ function InfoRow({ label, value }: { label: string; value: React.ReactNode }) {
   );
 }
 
-export default function WorklistV2Page() {
+function WorklistV2Content() {
   const fallbackTickets = React.useMemo(() => getWorklistV2CanonicalTickets(), []);
   const [apiTickets, setApiTickets] = React.useState<CanonicalTicket[]>([]);
   const [sessionMetricsMap, setSessionMetricsMap] = React.useState<Record<string, SessionMetricsEnrichment>>({});
@@ -405,12 +431,11 @@ export default function WorklistV2Page() {
     setSelectedId(id);
   }, []);
 
-  const tableEmptyMessage =
-    filteredTickets.length === 0
-      ? allTickets.length === 0
-        ? 'Worklist is empty — no risk-approved signals available right now.'
-        : 'No signals match the current filters.'
-      : undefined;
+  const tableEmptyMessage = filteredTickets.length === 0
+    ? allTickets.length === 0
+      ? 'Worklist is empty — no risk-approved signals available right now.'
+      : 'No signals match the current filters.'
+    : undefined;
 
   const columns = React.useMemo<DataTableColumn<EnrichedTicket>[]>(() => [
     {
@@ -559,7 +584,7 @@ export default function WorklistV2Page() {
     },
     {
       key: 'sparkline',
-      header: 'Spark',
+      header: 'Sparkline',
       align: 'center',
       render: (ticket) => renderRowCell(ticket, selectedId, handleSelect, <Sparkline id={ticket.id} />),
     },
@@ -580,15 +605,13 @@ export default function WorklistV2Page() {
         })),
     [strategyOptions, mutedStrategies],
   );
-
   return (
-    <section className="worklist-v2-root space-y-4">
-      {/* Local header under the shell – mirrors A2 mock copy */}
-      <header className="worklist-v2-header rounded-3xl border border-slate-800 bg-slate-900/70 p-5 text-slate-100 shadow-xl">
+    <section className="space-y-4">
+      <header className="rounded-3xl border border-slate-800 bg-slate-900/70 p-5 text-slate-100 shadow-xl">
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div>
             <p className="text-xs uppercase tracking-[0.3em] text-slate-500">Execution</p>
-            <h1 className="mt-2 text-2xl font-semibold tracking-tight text-white">Worklist</h1>
+            <h1 className="mt-2 text-3xl font-semibold tracking-tight text-white">Worklist</h1>
             <p className="mt-1 text-sm text-slate-400">
               Risk-approved tickets ready for manual execution. Filters apply instantly; selection drives the detail panel.
             </p>
@@ -600,7 +623,7 @@ export default function WorklistV2Page() {
         </div>
       </header>
 
-      <div className="worklist-v2-filters rounded-3xl border border-slate-800 bg-slate-900/80 p-4 shadow-lg backdrop-blur">
+      <div className="sticky top-0 z-10 rounded-3xl border border-slate-800 bg-slate-900/80 p-4 shadow-lg backdrop-blur">
         <FiltersBar
           selects={[
             {
@@ -647,31 +670,33 @@ export default function WorklistV2Page() {
         />
       </div>
 
-      {/* MAIN LAYOUT: table on the left, fixed-width details on the right */}
-      <div className="flex items-start gap-4">
-        <div className="panel worklist-v2-panel flex-1 min-w-0">
-          <div className="panel-header">
-            <div>
-              <p className="text-[11px] uppercase tracking-[0.2em] text-slate-400">Worklist · Tradeable Signals</p>
-              <h2 className="text-xl font-semibold text-white">{filteredTickets.length} Ready</h2>
+      <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_360px]">
+        <Card className="rounded-3xl border border-slate-800 bg-slate-900/60 shadow-xl">
+          <CardHeader>
+            <div className="flex items-center justify-between text-slate-200">
+              <div>
+                <p className="text-sm text-slate-400">Live Signals</p>
+                <h2 className="text-xl font-semibold">{filteredTickets.length} Ready</h2>
+              </div>
+              <Badge tone="gray">Maximum age {filters.maxAge === 'ANY' ? MAX_AGE_MINUTES : filters.maxAge}m</Badge>
             </div>
-            <Badge tone="gray">
-              Risk-filtered · {filters.maxAge === 'ANY' ? `${MAX_AGE_MINUTES}` : filters.maxAge}m
-            </Badge>
-          </div>
-          <div className="panel-body">
-            <div className="scroll-y worklist-v2-table">
-              <DataTable columns={columns} rows={filteredTickets} rowKey={(ticket) => ticket.id} emptyMessage={tableEmptyMessage} />
-            </div>
-          </div>
-        </div>
+          </CardHeader>
+          <CardBody>
+            <DataTable
+              columns={columns}
+              rows={filteredTickets}
+              rowKey={(ticket) => ticket.id}
+              emptyMessage={tableEmptyMessage}
+              className="worklist-v2-table"
+            />
+          </CardBody>
+        </Card>
 
-        <div className="panel details-panel worklist-v2-details w-[360px] shrink-0">
-          <div className="details-header">
-            <h2>Signal Details</h2>
-            <span>{selectedTicket ? 'Select another row to inspect its full trade block.' : 'Select a row to inspect full trade block.'}</span>
-          </div>
-          <div className="details-body space-y-4">
+        <Card className="rounded-3xl border border-slate-800 bg-slate-900/60 shadow-xl">
+          <CardHeader>
+            <h2 className="text-xl font-semibold text-white">Signal Details</h2>
+          </CardHeader>
+          <CardBody className="space-y-4">
             {selectedTicket ? (
               <div className="space-y-4">
                 <DetailsSection title="Ticket Summary">
@@ -756,10 +781,44 @@ export default function WorklistV2Page() {
                 Select a signal from the Worklist table to see its full context, risk breakdown, and notes.
               </div>
             )}
-          </div>
-        </div>
+          </CardBody>
+        </Card>
       </div>
     </section>
   );
 }
 
+export default function WorklistV2Page() {
+  return (
+    <ExecutionShell activeTab="worklist">
+      <WorklistV2Content />
+    </ExecutionShell>
+  );
+}
+
+WORKLIST_V2_TSX
+
+AUDIT_DOC="docs/PRISM_APEX_V2_BUILD_AUDIT.md"
+
+if [ -f "$AUDIT_DOC" ]; then
+  echo "--- Updating $AUDIT_DOC per V2 HARDENING SOP ---"
+  cat <<'EOF' >> "$AUDIT_DOC"
+
+### WorklistV2.tsx – A2 ExecutionShell integration
+
+- Date: $(date -u +"%Y-%m-%dT%H:%M:%SZ")
+- Change: Wrapped `WorklistV2Page` in `ExecutionShell` with `activeTab="worklist"` to align with the A2 Operator Dashboard shell. No changes to canonical ticket/session metrics contracts.
+- Risk: UI-only, no backend/API contract changes. Existing mocks and `fetchWorklistCanonicalTickets` / `fetchSessionMetrics` usage preserved.
+EOF
+else
+  echo "--- Skipping V2 build audit update (docs/PRISM_APEX_V2_BUILD_AUDIT.md not found) ---"
+fi
+
+echo
+
+echo "=== DONE – WorklistV2.tsx updated and audit doc touched where present ==="
+echo "--- Suggested next steps ---"
+echo "  • git diff apps/dashboard/src/pages/WorklistV2.tsx docs/PRISM_APEX_V2_BUILD_AUDIT.md"
+echo "  • pnpm lint --filter dashboard --if-present || true"
+echo "  • pnpm test --filter dashboard --if-present || true"
+echo "  • pnpm dev (or your usual dashboard dev command) and visually validate Worklist V2 in the A2 shell"

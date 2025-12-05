@@ -1,16 +1,14 @@
-import '@testing-library/jest-dom';
+/**
+ * PRISM APEX — Dashboard Vitest setup
+ *
+ * Vitest + React Testing Library + jest-dom matchers.
+ * This file is loaded by Vitest as the test setup entrypoint.
+ */
 
-if (typeof window !== 'undefined' && !window.matchMedia) {
-  // Minimal matchMedia polyfill for components that read system theme.
-  window.matchMedia = (query: string) =>
-    ({
-      matches: false,
-      media: query,
-      onchange: null,
-      addEventListener: () => undefined,
-      removeEventListener: () => undefined,
-      addListener: () => undefined,
-      removeListener: () => undefined,
-      dispatchEvent: () => false,
-    }) as MediaQueryList;
-}
+import '@testing-library/jest-dom/vitest';
+import { cleanup } from '@testing-library/react';
+import { afterEach } from 'vitest';
+
+afterEach(() => {
+  cleanup();
+});

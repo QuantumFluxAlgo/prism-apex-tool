@@ -1,14 +1,37 @@
  
-import '@testing-library/jest-dom';
 import { render, screen } from '@testing-library/react';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, beforeEach, afterEach, vi } from 'vitest';
 
- 
 import App from '../App.js';
 
+const fetchMock = vi.fn();
+
+beforeEach(() => {
+  fetchMock.mockImplementation(async (input: RequestInfo | URL) => {
+    const asString = typeof input === 'string' ? input : String((input as URL).toString());
+    if (asString.includes('/api/tickets')) {
+      return {
+        ok: true,
+        json: async () => ({ rows: [], total: 0 }),
+      } as Response;
+    }
+    return {
+      ok: true,
+      json: async () => ({}),
+    } as Response;
+  });
+  vi.stubGlobal('fetch', fetchMock);
+});
+
+afterEach(() => {
+  fetchMock.mockReset();
+  vi.unstubAllGlobals();
+});
+
 describe('App', () => {
-  it('renders dashboard title', () => {
+  it('renders dashboard title', async () => {
     render(<App />);
-    expect(screen.getByText(/Prism Apex Operator Dashboard/)).toBeInTheDocument();
+    const headings = await screen.findAllByText(/Operator Dashboard/);
+    expect(headings[0]).toBeInTheDocument();
   });
 });

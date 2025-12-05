@@ -3,6 +3,7 @@
 /* eslint-disable */
 /* V2 HARDENING (auto-waive): ESLint disabled for this file; see PRISM_APEX_V2_BUILD_AUDIT.md. */
 // V2 HARDENING (auto-waive): TS waiver for this dashboard file. See PRISM_APEX_V2_BUILD_AUDIT.md.
+
 import React from 'react';
 import type { CanonicalTicket } from '@prism-apex/shared';
 import FiltersBar from '../ui/FiltersBar';
@@ -52,13 +53,13 @@ function buildSessionMetricsKey(symbol: string, sessionDate?: string | null) {
 
 function isSessionMetricsDto(value: SessionMetricsEnrichment | undefined): value is SessionMetricsDto {
   if (!value) return false;
-  if (value.status === 'MISSING') return false;
-  return typeof value.sessionDate === 'string';
+  if ((value as any).status === 'MISSING') return false;
+  return typeof (value as any).sessionDate === 'string';
 }
 
 function getSessionMetrics(ticket: EnrichedTicket): SessionMetricsDto | null {
   if (!ticket.sessionMetrics) return null;
-  return isSessionMetricsDto(ticket.sessionMetrics) ? ticket.sessionMetrics : null;
+  return isSessionMetricsDto(ticket.sessionMetrics) ? (ticket.sessionMetrics as SessionMetricsDto) : null;
 }
 
 function formatPoints(value: number | null | undefined): string {
@@ -73,12 +74,14 @@ function formatNullablePrice(value: number | null | undefined): string {
 
 function formatSessionMetricsSummary(metrics: SessionMetricsDto | null): string | null {
   if (!metrics) return null;
+
   const parts: string[] = [];
   if (typeof metrics.orWidthPoints === 'number') parts.push(`OR ${formatPoints(metrics.orWidthPoints)}`);
   if (typeof metrics.sessionAtrPoints === 'number') parts.push(`ATR ${formatPoints(metrics.sessionAtrPoints)}`);
   if (metrics.vwapSlope) parts.push(`VWAP ${metrics.vwapSlope}`);
   if (metrics.htfTrendBias) parts.push(`Trend ${metrics.htfTrendBias}`);
   if (metrics.hasMajorNewsToday) parts.push('News risk');
+
   if (!parts.length) return null;
   return parts.join(' · ');
 }
@@ -86,14 +89,18 @@ function formatSessionMetricsSummary(metrics: SessionMetricsDto | null): string 
 function deriveScore(ticket: EnrichedTicket): number {
   const hash = Array.from(ticket.id).reduce((acc, char) => acc + char.charCodeAt(0), 0);
   let score = 60 + (hash % 36);
+
   const metrics = getSessionMetrics(ticket);
   if (metrics) {
     const ratio =
       typeof metrics.orWidthToAtrRatio === 'number'
         ? metrics.orWidthToAtrRatio
-        : typeof metrics.orWidthPoints === 'number' && typeof metrics.sessionAtrPoints === 'number' && metrics.sessionAtrPoints !== 0
+        : typeof metrics.orWidthPoints === 'number' &&
+          typeof metrics.sessionAtrPoints === 'number' &&
+          metrics.sessionAtrPoints !== 0
         ? metrics.orWidthPoints / metrics.sessionAtrPoints
         : null;
+
     if (typeof ratio === 'number' && Number.isFinite(ratio)) {
       if (ratio >= 1.2) score += 8;
       else if (ratio >= 1.0) score += 5;
@@ -101,18 +108,22 @@ function deriveScore(ticket: EnrichedTicket): number {
       else if (ratio <= 0.5) score -= 8;
       else if (ratio <= 0.7) score -= 4;
     }
+
     const direction = ticket.side === 'BUY' ? 'UP' : 'DOWN';
     const opposing = direction === 'UP' ? 'DOWN' : 'UP';
     const slope = metrics.vwapSlope?.toUpperCase();
     const bias = metrics.htfTrendBias?.toUpperCase();
+
     if (slope?.includes(direction) || bias?.includes(direction)) score += 6;
     if (slope?.includes(opposing) || bias?.includes(opposing)) score -= 6;
+
     if (metrics.hasMajorNewsToday) score -= 5;
     if (metrics.sessionQualityFlag === 'SKIP' || metrics.sessionSkipReason) score -= 5;
-    if (metrics.status === 'ERROR') score -= 3;
-  } else if (ticket.sessionMetrics?.status === 'MISSING') {
+    if ((metrics as any).status === 'ERROR') score -= 3;
+  } else if ((ticket.sessionMetrics as any)?.status === 'MISSING') {
     score -= 4;
   }
+
   return Math.max(45, Math.min(98, Math.round(score)));
 }
 
@@ -123,17 +134,21 @@ function deriveStrength(ticket: EnrichedTicket): StrengthTrend {
     const opposing = direction === 'UP' ? 'DOWN' : 'UP';
     const slope = metrics.vwapSlope?.toUpperCase();
     const bias = metrics.htfTrendBias?.toUpperCase();
+
     let alignment = 0;
     if (slope?.includes(direction)) alignment += 1;
     if (bias?.includes(direction)) alignment += 1;
+
     let headwinds = 0;
     if (slope?.includes(opposing)) headwinds += 1;
     if (bias?.includes(opposing)) headwinds += 1;
     if (metrics.hasMajorNewsToday) headwinds += 1;
+
     if (alignment >= 2 && headwinds === 0) return 'strong';
     if (headwinds >= 2 || metrics.sessionQualityFlag === 'SKIP') return 'weak';
     return 'neutral';
   }
+
   if (ticket.rrMultiple >= 2) return 'strong';
   if (ticket.rrMultiple >= 1.2) return 'neutral';
   return 'weak';
@@ -164,7 +179,10 @@ function formatTicks(value: number): string {
 function formatStrategyName(strategyId?: string | null): string {
   const base = (strategyId ?? '').trim();
   if (!base) return 'Unknown';
-  return base.replace(/[-_]/g, ' ').replace(/\b(\w)/g, (match) => match.toUpperCase()).trim();
+  return base
+    .replace(/[-_]/g, ' ')
+    .replace(/\b(\w)/g, (match) => match.toUpperCase())
+    .trim();
 }
 
 function getContextTags(ticket: EnrichedTicket): string[] {
@@ -176,6 +194,9 @@ function getContextTags(ticket: EnrichedTicket): string[] {
   return Array.from(values);
 }
 
+/**
+ * Row cell – now “flat A2 table” style, not chunky Tailwind buttons.
+ */
 function renderRowCell(
   ticket: EnrichedTicket,
   selectedId: string | null,
@@ -183,13 +204,20 @@ function renderRowCell(
   content: React.ReactNode,
 ) {
   const active = selectedId === ticket.id;
+
   return (
     <button
       type="button"
       onClick={() => onSelect(ticket.id)}
-      className={`w-full rounded-lg border border-transparent bg-slate-900/20 px-2 py-2 text-left text-sm text-slate-200 transition hover:border-cyan-400/40 hover:bg-slate-900/50 hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400/60 ${
-        active ? 'border-cyan-400/70 bg-slate-900/70 shadow-[0_0_14px_rgba(66,226,244,0.35)]' : ''
-      }`}
+      className={[
+        'w-full text-left text-[11px] leading-tight transition-colors',
+        'bg-transparent text-[var(--text-secondary)]',
+        'hover:bg-[rgba(19,23,43,0.9)] hover:text-[var(--text-primary)]',
+        'focus:outline-none focus-visible:ring-1 focus-visible:ring-[rgba(66,226,244,0.7)]',
+        active
+          ? 'bg-[rgba(66,226,244,0.16)] text-[var(--text-primary)] border border-[rgba(66,226,244,0.8)] shadow-[0_0_18px_rgba(66,226,244,0.55)] rounded-md'
+          : 'border border-transparent rounded-md',
+      ].join(' ')}
     >
       {content}
     </button>
@@ -222,7 +250,7 @@ function Sparkline({ id }: { id: string }) {
       {values.map((value, idx) => (
         <span
           key={`${id}-${idx}`}
-          className="inline-block w-1 rounded-full bg-slate-500/70"
+          className="inline-block w-1 rounded-full bg-[rgba(118,138,210,0.9)]"
           style={{ height: `${value * 4}px` }}
         />
       ))}
@@ -234,16 +262,16 @@ function DetailsSection({ title, children }: { title: string; children: React.Re
   return (
     <section className="details-section">
       <h3 className="details-label">{title}</h3>
-      <div className="mt-2 text-sm text-slate-200">{children}</div>
+      <div className="mt-2 text-[11px] text-[var(--text-primary)]">{children}</div>
     </section>
   );
 }
 
 function InfoRow({ label, value }: { label: string; value: React.ReactNode }) {
   return (
-    <div className="flex items-center justify-between text-sm">
-      <span className="text-slate-400">{label}</span>
-      <span className="font-mono text-slate-100">{value ?? '—'}</span>
+    <div className="flex items-center justify-between text-[11px]">
+      <span className="text-[var(--text-muted)]">{label}</span>
+      <span className="font-geist-mono text-[var(--text-primary)]">{value ?? '—'}</span>
     </div>
   );
 }
@@ -253,19 +281,26 @@ export default function WorklistV2Page() {
   const [apiTickets, setApiTickets] = React.useState<CanonicalTicket[]>([]);
   const [sessionMetricsMap, setSessionMetricsMap] = React.useState<Record<string, SessionMetricsEnrichment>>({});
   const usingApiTickets = apiTickets.length > 0;
+
   const allTickets = React.useMemo<EnrichedTicket[]>(() => {
     const source = usingApiTickets ? apiTickets : fallbackTickets;
     return source.map((ticket) => {
       const mapKey = buildSessionMetricsKey(ticket.symbol, ticket.sessionDateUtc);
       const hasSessionDate = Boolean(ticket.sessionDateUtc);
       const sessionMetrics =
-        usingApiTickets && hasSessionDate ? sessionMetricsMap[mapKey] : usingApiTickets && !hasSessionDate ? SESSION_METRICS_PLACEHOLDER : undefined;
+        usingApiTickets && hasSessionDate
+          ? sessionMetricsMap[mapKey]
+          : usingApiTickets && !hasSessionDate
+          ? SESSION_METRICS_PLACEHOLDER
+          : undefined;
+
       return {
         ...ticket,
         sessionMetrics,
       };
     });
   }, [apiTickets, fallbackTickets, sessionMetricsMap, usingApiTickets]);
+
   const [filters, setFilters] = React.useState<FiltersState>({
     symbol: 'ALL',
     strategy: 'ALL',
@@ -274,11 +309,13 @@ export default function WorklistV2Page() {
     maxAge: '30',
     search: '',
   });
+
   const [mutedStrategies, setMutedStrategies] = React.useState<Record<string, boolean>>({});
   const [selectedId, setSelectedId] = React.useState<string | null>(null);
 
   React.useEffect(() => {
     let cancelled = false;
+
     fetchWorklistCanonicalTickets()
       .then((tickets) => {
         if (!cancelled && tickets.length) {
@@ -288,6 +325,7 @@ export default function WorklistV2Page() {
       .catch(() => {
         // fall back to mock data silently
       });
+
     return () => {
       cancelled = true;
     };
@@ -295,6 +333,7 @@ export default function WorklistV2Page() {
 
   React.useEffect(() => {
     if (!apiTickets.length) return;
+
     const unique = new Map<string, { symbol: string; sessionDate: string }>();
     apiTickets.forEach((ticket) => {
       if (!ticket.sessionDateUtc) return;
@@ -303,10 +342,12 @@ export default function WorklistV2Page() {
         unique.set(key, { symbol: ticket.symbol, sessionDate: ticket.sessionDateUtc });
       }
     });
+
     const pending = Array.from(unique.entries()).filter(([key]) => !(key in sessionMetricsMap));
     if (!pending.length) return;
 
     let cancelled = false;
+
     Promise.all(
       pending.map(async ([key, query]) => {
         const metrics = await fetchSessionMetrics(query.symbol, query.sessionDate);
@@ -339,7 +380,11 @@ export default function WorklistV2Page() {
     };
   }, [apiTickets, sessionMetricsMap]);
 
-  const symbolOptions = React.useMemo(() => ['ALL', ...Array.from(new Set(allTickets.map((ticket) => ticket.symbol)))], [allTickets]);
+  const symbolOptions = React.useMemo(
+    () => ['ALL', ...Array.from(new Set(allTickets.map((ticket) => ticket.symbol)))],
+    [allTickets],
+  );
+
   const strategyOptions = React.useMemo(
     () => ['ALL', ...Array.from(new Set(allTickets.map((ticket) => ticket.strategyId)))],
     [allTickets],
@@ -355,16 +400,20 @@ export default function WorklistV2Page() {
       const ticketScore = deriveScore(ticket);
       const ticketRisk = deriveRiskBucket(ticket);
       const ageMinutes = computeAgeMinutes(ticket);
+
       if (filters.symbol !== 'ALL' && ticket.symbol !== filters.symbol) return false;
       if (filters.strategy !== 'ALL' && ticket.strategyId !== filters.strategy) return false;
       if (minScore !== null && ticketScore < minScore) return false;
       if (targetRisk && ticketRisk !== targetRisk) return false;
+
       if (maxAge !== null) {
         if (ageMinutes > maxAge) return false;
       } else if (ageMinutes > MAX_AGE_MINUTES) {
         return false;
       }
+
       if (mutedStrategies[ticket.strategyId]) return false;
+
       if (search) {
         const haystack = [
           ticket.symbol,
@@ -377,8 +426,10 @@ export default function WorklistV2Page() {
         ]
           .join(' ')
           .toLowerCase();
+
         if (!haystack.includes(search)) return false;
       }
+
       return true;
     });
   }, [allTickets, filters, mutedStrategies]);
@@ -388,6 +439,7 @@ export default function WorklistV2Page() {
       setSelectedId(null);
       return;
     }
+
     setSelectedId((prev) => {
       if (prev && filteredTickets.some((ticket) => ticket.id === prev)) {
         return prev;
@@ -412,158 +464,178 @@ export default function WorklistV2Page() {
         : 'No signals match the current filters.'
       : undefined;
 
-  const columns = React.useMemo<DataTableColumn<EnrichedTicket>[]>(() => [
-    {
-      key: 'score',
-      header: 'Score',
-      className: 'text-left',
-      render: (ticket) =>
-        renderRowCell(
-          ticket,
-          selectedId,
-          handleSelect,
-          <div className="font-mono text-lg text-white">{deriveScore(ticket)}</div>,
-        ),
-    },
-    {
-      key: 'strength',
-      header: 'Strength',
-      className: 'text-left',
-      render: (ticket) => renderRowCell(ticket, selectedId, handleSelect, <StrengthIndicator trend={deriveStrength(ticket)} />),
-    },
-    {
-      key: 'strategy',
-      header: 'Strategy',
-      render: (ticket) =>
-        renderRowCell(
-          ticket,
-          selectedId,
-          handleSelect,
-          <div className="flex flex-col gap-1">
-            <span className="text-sm font-semibold text-white">{formatStrategyName(ticket.strategyId)}</span>
-            <span className="text-xs text-slate-400">{ticket.side}</span>
-          </div>,
-        ),
-    },
-    {
-      key: 'risk',
-      header: 'Risk',
-      align: 'center',
-      render: (ticket) => renderRowCell(ticket, selectedId, handleSelect, <RiskPill bucket={deriveRiskBucket(ticket)} />),
-    },
-    {
-      key: 'contracts',
-      header: 'Contracts',
-      align: 'center',
-      render: (ticket) =>
-        renderRowCell(
-          ticket,
-          selectedId,
-          handleSelect,
-          <span className="font-mono text-base text-white">{numberFormatter.format(ticket.quantity)}</span>,
-        ),
-    },
-    {
-      key: 'entry',
-      header: 'Entry',
-      render: (ticket) =>
-        renderRowCell(
-          ticket,
-          selectedId,
-          handleSelect,
-          <div className="flex flex-col text-sm">
-            <span className="font-mono text-white">{fmtPrice(ticket.entryPrice)}</span>
-            <span className="text-xs text-slate-400">UTC {fmtUtc(ticket.createdAtUtc)}</span>
-          </div>,
-        ),
-    },
-    {
-      key: 'stop',
-      header: 'Stop',
-      render: (ticket) =>
-        renderRowCell(
-          ticket,
-          selectedId,
-          handleSelect,
-          <div className="flex flex-col text-sm">
-            <span className="font-mono text-white">{fmtPrice(ticket.stopPrice)}</span>
-            <span className="text-xs text-rose-300">{formatTicks(-Math.abs(ticket.stopTicks))}</span>
-          </div>,
-        ),
-    },
-    {
-      key: 'target',
-      header: 'Target',
-      render: (ticket) =>
-        renderRowCell(
-          ticket,
-          selectedId,
-          handleSelect,
-          <div className="flex flex-col text-sm">
-            <span className="font-mono text-white">{fmtPrice(ticket.targetPrice)}</span>
-            <span className="text-xs text-emerald-300">{formatTicks(Math.abs(ticket.targetTicks))}</span>
-          </div>,
-        ),
-    },
-    {
-      key: 'rr',
-      header: 'R:R',
-      align: 'center',
-      render: (ticket) => renderRowCell(ticket, selectedId, handleSelect, <span className="font-mono text-white">{fmtR(ticket.rrMultiple)}</span>),
-    },
-    {
-      key: 'context',
-      header: 'Market Context',
-      render: (ticket) =>
-        renderRowCell(
-          ticket,
-          selectedId,
-          handleSelect,
-          <div className="flex flex-col gap-1">
-            <div className="flex flex-wrap gap-1">
-              {getContextTags(ticket).map((tag) => (
-                <Badge key={`${ticket.id}-${tag}`} tone="gray">
-                  {tag}
-                </Badge>
-              ))}
-              {getContextTags(ticket).length === 0 ? <span className="text-xs text-slate-500">No tags</span> : null}
-            </div>
-            {(() => {
-              const metrics = getSessionMetrics(ticket);
-              const summary = formatSessionMetricsSummary(metrics);
-              if (summary) {
-                return <p className="text-[11px] text-slate-400">{summary}</p>;
-              }
-              if (ticket.sessionMetrics?.status === 'MISSING') {
-                return <p className="text-[11px] text-slate-500">Session metrics unavailable.</p>;
-              }
-              if (usingApiTickets && ticket.sessionMetrics === undefined && ticket.sessionDateUtc) {
-                return <p className="text-[11px] text-slate-500">Session metrics loading…</p>;
-              }
-              return null;
-            })()}
-          </div>,
-        ),
-    },
-    {
-      key: 'timeRemaining',
-      header: 'Time Remaining',
-      align: 'center',
-      render: (ticket) =>
-        renderRowCell(
-          ticket,
-          selectedId,
-          handleSelect,
-          <span className="font-mono text-base text-white">{`${computeTimeRemaining(ticket)}m`}</span>,
-        ),
-    },
-    {
-      key: 'sparkline',
-      header: 'Spark',
-      align: 'center',
-      render: (ticket) => renderRowCell(ticket, selectedId, handleSelect, <Sparkline id={ticket.id} />),
-    },
-  ], [handleSelect, selectedId, usingApiTickets]);
+  const columns = React.useMemo<DataTableColumn<EnrichedTicket>[]>(
+    () => [
+      {
+        key: 'score',
+        header: 'Score',
+        className: 'text-left',
+        render: (ticket) =>
+          renderRowCell(
+            ticket,
+            selectedId,
+            handleSelect,
+            <div className="font-geist-mono text-[15px] text-[var(--text-primary)]">
+              {deriveScore(ticket)}
+            </div>,
+          ),
+      },
+      {
+        key: 'strength',
+        header: 'Strength',
+        className: 'text-left',
+        render: (ticket) =>
+          renderRowCell(ticket, selectedId, handleSelect, <StrengthIndicator trend={deriveStrength(ticket)} />),
+      },
+      {
+        key: 'strategy',
+        header: 'Strategy',
+        render: (ticket) =>
+          renderRowCell(
+            ticket,
+            selectedId,
+            handleSelect,
+            <div className="flex flex-col gap-1">
+              <span className="text-[11px] font-medium text-[var(--text-primary)]">
+                {formatStrategyName(ticket.strategyId)}
+              </span>
+              <span className="text-[10px] text-[var(--text-muted)]">{ticket.side}</span>
+            </div>,
+          ),
+      },
+      {
+        key: 'risk',
+        header: 'Risk',
+        align: 'center',
+        render: (ticket) => renderRowCell(ticket, selectedId, handleSelect, <RiskPill bucket={deriveRiskBucket(ticket)} />),
+      },
+      {
+        key: 'contracts',
+        header: 'Contracts',
+        align: 'center',
+        render: (ticket) =>
+          renderRowCell(
+            ticket,
+            selectedId,
+            handleSelect,
+            <span className="font-geist-mono text-[13px] text-[var(--text-primary)]">
+              {numberFormatter.format(ticket.quantity)}
+            </span>,
+          ),
+      },
+      {
+        key: 'entry',
+        header: 'Entry',
+        render: (ticket) =>
+          renderRowCell(
+            ticket,
+            selectedId,
+            handleSelect,
+            <div className="flex flex-col">
+              <span className="font-geist-mono text-[var(--text-primary)]">{fmtPrice(ticket.entryPrice)}</span>
+              <span className="text-[10px] text-[var(--text-muted)]">UTC {fmtUtc(ticket.createdAtUtc)}</span>
+            </div>,
+          ),
+      },
+      {
+        key: 'stop',
+        header: 'Stop',
+        render: (ticket) =>
+          renderRowCell(
+            ticket,
+            selectedId,
+            handleSelect,
+            <div className="flex flex-col">
+              <span className="font-geist-mono text-[var(--text-primary)]">{fmtPrice(ticket.stopPrice)}</span>
+              <span className="text-[10px] text-[#fb7185]">{formatTicks(-Math.abs(ticket.stopTicks))}</span>
+            </div>,
+          ),
+      },
+      {
+        key: 'target',
+        header: 'Target',
+        render: (ticket) =>
+          renderRowCell(
+            ticket,
+            selectedId,
+            handleSelect,
+            <div className="flex flex-col">
+              <span className="font-geist-mono text-[var(--text-primary)]">{fmtPrice(ticket.targetPrice)}</span>
+              <span className="text-[10px] text-[#4ade80]">{formatTicks(Math.abs(ticket.targetTicks))}</span>
+            </div>,
+          ),
+      },
+      {
+        key: 'rr',
+        header: 'R:R',
+        align: 'center',
+        render: (ticket) =>
+          renderRowCell(
+            ticket,
+            selectedId,
+            handleSelect,
+            <span className="font-geist-mono text-[var(--text-primary)]">{fmtR(ticket.rrMultiple)}</span>,
+          ),
+      },
+      {
+        key: 'context',
+        header: 'Market Context',
+        render: (ticket) =>
+          renderRowCell(
+            ticket,
+            selectedId,
+            handleSelect,
+            <div className="flex flex-col gap-1">
+              <div className="flex flex-wrap gap-1">
+                {getContextTags(ticket).map((tag) => (
+                  <Badge key={`${ticket.id}-${tag}`} tone="gray">
+                    {tag}
+                  </Badge>
+                ))}
+                {getContextTags(ticket).length === 0 ? (
+                  <span className="text-[10px] text-[var(--text-muted)]">No tags</span>
+                ) : null}
+              </div>
+              {(() => {
+                const metrics = getSessionMetrics(ticket);
+                const summary = formatSessionMetricsSummary(metrics);
+                if (summary) {
+                  return <p className="text-[10px] text-[var(--text-muted)]">{summary}</p>;
+                }
+                if ((ticket.sessionMetrics as any)?.status === 'MISSING') {
+                  return <p className="text-[10px] text-[var(--text-muted)]">Session metrics unavailable.</p>;
+                }
+                if (usingApiTickets && ticket.sessionMetrics === undefined && ticket.sessionDateUtc) {
+                  return <p className="text-[10px] text-[var(--text-muted)]">Session metrics loading…</p>;
+                }
+                return null;
+              })()}
+            </div>,
+          ),
+      },
+      {
+        key: 'timeRemaining',
+        header: 'Time Remaining',
+        align: 'center',
+        render: (ticket) =>
+          renderRowCell(
+            ticket,
+            selectedId,
+            handleSelect,
+            <span className="font-geist-mono text-[13px] text-[var(--text-primary)]">
+              {`${computeTimeRemaining(ticket)}m`}
+            </span>,
+          ),
+      },
+      {
+        key: 'sparkline',
+        header: 'Spark',
+        align: 'center',
+        render: (ticket) => renderRowCell(ticket, selectedId, handleSelect, <Sparkline id={ticket.id} />),
+      },
+    ],
+    [handleSelect, selectedId, usingApiTickets],
+  );
 
   const strategyMuteToggles = React.useMemo(
     () =>
@@ -582,78 +654,85 @@ export default function WorklistV2Page() {
   );
 
   return (
-    <section className="worklist-v2-root space-y-4">
-      {/* Local header under the shell – mirrors A2 mock copy */}
-      <header className="worklist-v2-header rounded-3xl border border-slate-800 bg-slate-900/70 p-5 text-slate-100 shadow-xl">
+    <section className="worklist-v2-root font-satoshi">
+      <header className="worklist-v2-header px-6 py-5">
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div>
-            <p className="text-xs uppercase tracking-[0.3em] text-slate-500">Execution</p>
-            <h1 className="mt-2 text-2xl font-semibold tracking-tight text-white">Worklist</h1>
-            <p className="mt-1 text-sm text-slate-400">
+            <p className="text-[10px] uppercase tracking-[0.3em] text-[var(--text-muted)]">Execution</p>
+            <h1 className="mt-2 text-xl font-semibold tracking-[0.04em] text-[var(--text-primary)]">Worklist</h1>
+            <p className="mt-1 text-[12px] text-[var(--text-secondary)]">
               Risk-approved tickets ready for manual execution. Filters apply instantly; selection drives the detail panel.
             </p>
           </div>
-          <div className="flex flex-col items-end gap-2 text-xs">
+          <div className="flex flex-col items-end gap-2 text-[11px]">
             <Badge tone="blue">Session · UTC</Badge>
             <Badge tone="gray">Environment · A2 Mock</Badge>
           </div>
         </div>
       </header>
 
-      <div className="worklist-v2-filters rounded-3xl border border-slate-800 bg-slate-900/80 p-4 shadow-lg backdrop-blur">
-        <FiltersBar
-          selects={[
-            {
-              label: 'Symbol',
-              value: filters.symbol,
-              options: symbolOptions,
-              onChange: (value) => setFilters((prev) => ({ ...prev, symbol: value })),
-            },
-            {
-              label: 'Strategy',
-              value: filters.strategy,
-              options: strategyOptions,
-              onChange: (value) => setFilters((prev) => ({ ...prev, strategy: value })),
-            },
-            {
-              label: 'Min Score',
-              value: filters.minScore,
-              options: SCORE_OPTIONS,
-              onChange: (value) => setFilters((prev) => ({ ...prev, minScore: value })),
-            },
-            {
-              label: 'Risk Bucket',
-              value: filters.riskBucket,
-              options: ['ANY', ...RISK_BUCKET_OPTIONS],
-              onChange: (value) => setFilters((prev) => ({ ...prev, riskBucket: value })),
-            },
-            {
-              label: 'Max Age (m)',
-              value: filters.maxAge,
-              options: MAX_AGE_OPTIONS,
-              onChange: (value) => setFilters((prev) => ({ ...prev, maxAge: value })),
-            },
-          ]}
-          toggles={strategyMuteToggles}
-          extra={
-            <input
-              type="search"
-              value={filters.search}
-              onChange={(event) => setFilters((prev) => ({ ...prev, search: event.target.value }))}
-              placeholder="Search symbol / strategy / notes"
-              className="rounded-md border border-slate-800 bg-slate-950/80 px-3 py-1 text-sm text-white placeholder:text-slate-500"
+      <div className="worklist-v2-filters px-4 pt-3 pb-4">
+        <div className="panel">
+          <div className="panel-body">
+            <FiltersBar
+              selects={[
+                {
+                  label: 'Symbol',
+                  value: filters.symbol,
+                  options: symbolOptions,
+                  onChange: (value) => setFilters((prev) => ({ ...prev, symbol: value })),
+                },
+                {
+                  label: 'Strategy',
+                  value: filters.strategy,
+                  options: strategyOptions,
+                  onChange: (value) => setFilters((prev) => ({ ...prev, strategy: value })),
+                },
+                {
+                  label: 'Min Score',
+                  value: filters.minScore,
+                  options: SCORE_OPTIONS,
+                  onChange: (value) => setFilters((prev) => ({ ...prev, minScore: value })),
+                },
+                {
+                  label: 'Risk Bucket',
+                  value: filters.riskBucket,
+                  options: ['ANY', ...RISK_BUCKET_OPTIONS],
+                  onChange: (value) => setFilters((prev) => ({ ...prev, riskBucket: value })),
+                },
+                {
+                  label: 'Max Age (m)',
+                  value: filters.maxAge,
+                  options: MAX_AGE_OPTIONS,
+                  onChange: (value) => setFilters((prev) => ({ ...prev, maxAge: value })),
+                },
+              ]}
+              toggles={strategyMuteToggles}
+              extra={
+                <input
+                  type="search"
+                  value={filters.search}
+                  onChange={(event) =>
+                    setFilters((prev) => ({
+                      ...prev,
+                      search: event.target.value,
+                    }))
+                  }
+                  placeholder="Search symbol / strategy / notes"
+                  className="rounded-md border border-[var(--border-subtle)] bg-[var(--bg-deep)] px-3 py-1 text-[12px] text-[var(--text-primary)] placeholder:text-[var(--text-muted)]"
+                />
+              }
             />
-          }
-        />
+          </div>
+        </div>
       </div>
 
-      {/* MAIN LAYOUT: table on the left, fixed-width details on the right */}
-      <div className="flex items-start gap-4">
-        <div className="panel worklist-v2-panel flex-1 min-w-0">
+      <div className="layout-two">
+        <div className="panel worklist-v2-panel">
           <div className="panel-header">
             <div>
-              <p className="text-[11px] uppercase tracking-[0.2em] text-slate-400">Worklist · Tradeable Signals</p>
-              <h2 className="text-xl font-semibold text-white">{filteredTickets.length} Ready</h2>
+              <p className="text-[10px] uppercase tracking-[0.2em] text-[var(--text-muted)]">Worklist · Tradeable Signals</p>
+              <h2 className="mt-1 text-[15px] font-semibold text-[var(--text-primary)]">{filteredTickets.length} Ready</h2>
             </div>
             <Badge tone="gray">
               Risk-filtered · {filters.maxAge === 'ANY' ? `${MAX_AGE_MINUTES}` : filters.maxAge}m
@@ -661,15 +740,24 @@ export default function WorklistV2Page() {
           </div>
           <div className="panel-body">
             <div className="scroll-y worklist-v2-table">
-              <DataTable columns={columns} rows={filteredTickets} rowKey={(ticket) => ticket.id} emptyMessage={tableEmptyMessage} />
+              <DataTable
+                columns={columns}
+                rows={filteredTickets}
+                rowKey={(ticket) => ticket.id}
+                emptyMessage={tableEmptyMessage}
+              />
             </div>
           </div>
         </div>
 
-        <div className="panel details-panel worklist-v2-details w-[360px] shrink-0">
+        <div className="panel details-panel worklist-v2-details">
           <div className="details-header">
             <h2>Signal Details</h2>
-            <span>{selectedTicket ? 'Select another row to inspect its full trade block.' : 'Select a row to inspect full trade block.'}</span>
+            <span>
+              {selectedTicket
+                ? 'Select another row to inspect its full trade block.'
+                : 'Select a row to inspect full trade block.'}
+            </span>
           </div>
           <div className="details-body space-y-4">
             {selectedTicket ? (
@@ -703,13 +791,15 @@ export default function WorklistV2Page() {
                         {tag}
                       </Badge>
                     ))}
-                    {getContextTags(selectedTicket).length === 0 ? <span className="text-xs text-slate-500">No context tags.</span> : null}
+                    {getContextTags(selectedTicket).length === 0 ? (
+                      <span className="text-[10px] text-[var(--text-muted)]">No context tags.</span>
+                    ) : null}
                   </div>
                   {(() => {
                     const metrics = getSessionMetrics(selectedTicket);
                     if (metrics) {
                       return (
-                        <div className="mt-3 space-y-2 border-t border-slate-800 pt-3">
+                        <div className="mt-3 space-y-2 border-t border-[rgba(255,255,255,0.06)] pt-3">
                           <InfoRow label="OR High" value={formatNullablePrice(metrics.orHigh)} />
                           <InfoRow label="OR Low" value={formatNullablePrice(metrics.orLow)} />
                           <InfoRow label="OR Width" value={formatPoints(metrics.orWidthPoints)} />
@@ -717,15 +807,18 @@ export default function WorklistV2Page() {
                           <InfoRow label="VWAP Slope" value={metrics.vwapSlope ?? '—'} />
                           <InfoRow label="Trend Bias" value={metrics.htfTrendBias ?? '—'} />
                           <InfoRow label="Regime" value={metrics.volRegime ?? '—'} />
-                          <InfoRow label="News" value={metrics.hasMajorNewsToday ? metrics.newsLabel ?? 'Major event' : 'None'} />
+                          <InfoRow
+                            label="News"
+                            value={metrics.hasMajorNewsToday ? metrics.newsLabel ?? 'Major event' : 'None'}
+                          />
                         </div>
                       );
                     }
-                    if (selectedTicket.sessionMetrics?.status === 'MISSING') {
-                      return <p className="mt-3 text-xs text-slate-500">Session metrics unavailable.</p>;
+                    if ((selectedTicket.sessionMetrics as any)?.status === 'MISSING') {
+                      return <p className="mt-3 text-[10px] text-[var(--text-muted)]">Session metrics unavailable.</p>;
                     }
                     if (usingApiTickets && selectedTicket.sessionDateUtc) {
-                      return <p className="mt-3 text-xs text-slate-500">Session metrics loading…</p>;
+                      return <p className="mt-3 text-[10px] text-[var(--text-muted)]">Session metrics loading…</p>;
                     }
                     return null;
                   })()}
@@ -735,16 +828,19 @@ export default function WorklistV2Page() {
                   <div className="space-y-2">
                     <InfoRow label="Age" value={`${computeAgeMinutes(selectedTicket)}m`} />
                     <InfoRow label="Time remaining" value={`${computeTimeRemaining(selectedTicket)}m`} />
-                    <InfoRow label="Completed" value={selectedTicket.completedAtUtc ? fmtUtc(selectedTicket.completedAtUtc) : '—'} />
+                    <InfoRow
+                      label="Completed"
+                      value={selectedTicket.completedAtUtc ? fmtUtc(selectedTicket.completedAtUtc) : '—'}
+                    />
                   </div>
                 </DetailsSection>
 
                 <DetailsSection title="Notes & Source">
-                  <div className="space-y-2 text-sm">
+                  <div className="space-y-2">
                     <InfoRow label="Source" value={selectedTicket.source ?? 'ENGINE'} />
                     <div>
-                      <p className="text-slate-400">Notes</p>
-                      <p className="font-mono text-slate-100">
+                      <p className="text-[10px] text-[var(--text-muted)]">Notes</p>
+                      <p className="font-geist-mono text-[var(--text-primary)]">
                         {selectedTicket.notes ?? 'No operator notes attached.'}
                       </p>
                     </div>
@@ -752,7 +848,7 @@ export default function WorklistV2Page() {
                 </DetailsSection>
               </div>
             ) : (
-              <div className="rounded-xl border border-dashed border-slate-800 bg-slate-900/40 p-6 text-center text-sm text-slate-400">
+              <div className="rounded-xl border border-dashed border-[rgba(255,255,255,0.08)] bg-[rgba(9,12,30,0.7)] p-6 text-center text-[11px] text-[var(--text-muted)]">
                 Select a signal from the Worklist table to see its full context, risk breakdown, and notes.
               </div>
             )}
@@ -762,4 +858,3 @@ export default function WorklistV2Page() {
     </section>
   );
 }
-
