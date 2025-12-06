@@ -30,6 +30,7 @@ Update these checkboxes as work is delivered.
 Phase 3 (Dec 2025 snapshot)
 - Tickets V2 page implemented as canonical A2 surface using fetchTickets + useTicketsHistory.
 - Dashboard helper fetchJson hardened to tolerate mock responses (tests now exercise real /api/tickets flow).
+- Worklist V2 now consumes canonical tickets via fetchWorklistCanonicalTickets(...) wrapper over /api/tickets; Tickets and Analytics share the same CanonicalTicket mapping from TicketRow.
 
 3. EPIC V2.1 — Worklist V2 Production Hardening
 Goal
