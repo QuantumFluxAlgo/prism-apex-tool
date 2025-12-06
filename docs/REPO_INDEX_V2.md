@@ -91,7 +91,7 @@ Canonical V2 dashboard pages (apps/dashboard/src/pages) – CANONICAL:
 WorklistV2.tsx – Worklist V2 execution page (live signals, scoring, detail panel). Uses fetchWorklistCanonicalTickets(...) over /api/tickets to load CanonicalTicket rows.
 Tickets.tsx – Tickets / audit surface (A2). Uses useTicketsHistory + fetchTickets(...) to pull canonical ticket history via /api/tickets, including audit fields (completedBy, notes, risk decision, session metrics).
 MarketData.tsx – Markets/market context cockpit.
-Analytics.tsx – Performance & drift analytics dashboard.
+Analytics.tsx – Performance & drift analytics dashboard (canonical). Uses fetchAnalyticsCanonicalTickets(...) + fetchSessionMetricsBatch(...) to drive KPIs, PnL-over-time, regime breakdown, and the canonical trades table.
 StrategyLab.tsx – Strategy Lab (config, backtest, lab vs live).
 Status.tsx – System status/health dashboard.
 Alerts.tsx – Alerts surface (risk/system/engine alerts).
