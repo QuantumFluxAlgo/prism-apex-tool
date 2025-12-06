@@ -7,7 +7,7 @@ const fetchMock = vi.fn();
 function stubFetchWith(data: unknown, init: Partial<Response> = {}) {
   fetchMock.mockResolvedValue({
     ok: init.ok ?? true,
-    text: async () => JSON.stringify(data),
+    json: async () => data,
     ...init,
   } as Response);
 }
@@ -31,7 +31,7 @@ describe('TicketsPage', () => {
   });
 
   it('renders loading state and fetches the tickets endpoint', async () => {
-    stubFetchWith([]);
+    stubFetchWith({ rows: [], total: 0 });
     renderTickets();
 
     expect(screen.getByText(/Loading tickets/i)).toBeInTheDocument();
@@ -39,30 +39,35 @@ describe('TicketsPage', () => {
   });
 
   it('shows table rows when tickets are returned', async () => {
-    const tickets = [
-      {
-        id: 't-123',
-        symbol: 'MESZ4',
-        side: 'LONG',
-        status: 'OPEN',
-        strategy: 'VWAP',
-        openedAtUtc: '2025-12-04T12:00:00Z',
-      },
-    ];
-    stubFetchWith(tickets);
+    const response = {
+      total: 1,
+      rows: [
+        {
+          id: 't-123',
+          symbol: 'MESZ4',
+          side: 'LONG',
+          status: 'ACTIONED',
+          strategy: 'VWAP',
+          opened_at_utc: '2025-12-04T12:00:00Z',
+        },
+      ],
+    };
+    stubFetchWith(response);
 
     renderTickets();
 
     expect(await screen.findByText('MESZ4')).toBeInTheDocument();
     expect(screen.getByText('LONG')).toBeInTheDocument();
     expect(screen.getByText('VWAP')).toBeInTheDocument();
-    expect(screen.getByText('2025-12-04T12:00:00Z')).toBeInTheDocument();
+    expect(screen.getByText(/12:00/)).toBeInTheDocument();
   });
 
   it('shows empty state when no tickets are returned', async () => {
-    stubFetchWith([]);
+    stubFetchWith({ rows: [], total: 0 });
+
     renderTickets();
     await waitFor(() => expect(fetchMock).toHaveBeenCalled());
+
     expect(
       await screen.findByText(/No tickets returned for the current filters/i),
     ).toBeInTheDocument();
@@ -70,9 +75,10 @@ describe('TicketsPage', () => {
 
   it('shows an error message when fetch fails', async () => {
     stubFetchError('boom');
+
     renderTickets();
-    expect(
-      await screen.findByText(/Error loading tickets: Error: boom/i),
-    ).toBeInTheDocument();
+
+    const el = await screen.findByText(/Error loading tickets:/i);
+    expect(el.textContent ?? '').toMatch(/boom/);
   });
 });

@@ -233,7 +233,6 @@ Any future change to EPICs or page contracts must be reflected here and in this 
 6.1 Fastify Routes (apps/api/src/routes)
 All of these are CANONICAL routes unless explicitly prefixed as test-only.
 
-_codex_write_test.ts
 accounts.ts
 alerts.ts
 analytics.ts
