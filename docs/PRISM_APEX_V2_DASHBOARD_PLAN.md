@@ -26,6 +26,11 @@ Update these checkboxes as work is delivered.
  EPIC V2.5 – System / Status / Alerts Console
  EPIC V2.6 – A2 UI Polish & Consistency
  EPIC V2.7 – Dockerised Deployment & Environments
+
+Phase 3 (Dec 2025 snapshot)
+- Tickets V2 page implemented as canonical A2 surface using fetchTickets + useTicketsHistory.
+- Dashboard helper fetchJson hardened to tolerate mock responses (tests now exercise real /api/tickets flow).
+
 3. EPIC V2.1 — Worklist V2 Production Hardening
 Goal
 Turn the current Worklist V2 into the production Worklist for canonical, risk-approved tickets (API or mock) with stable filters, columns, and details, aligned to the canonical ticket + session metrics model.

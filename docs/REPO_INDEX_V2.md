@@ -81,13 +81,14 @@ ui/ – Reusable A2 UI primitives (Cards, Badges, DataTable, FiltersBar, Tabs, t
 components/ – Higher-level dashboard components (risk charts, status panels, etc.).
 lib/ – API client wrappers and DTOs.
 hooks/ – React hooks for data fetching, polling, and state.
+  - useTicketsHistory.ts – Canonical tickets history hook over /api/tickets (date range, symbol, strategy, status, search).
 utils/ – Formatting and convenience utilities.
 theme/ – Tokens and CSS for A2 look & feel.
 2.2.1 Canonical V2 Dashboard Pages
 Canonical V2 dashboard pages (apps/dashboard/src/pages) – CANONICAL:
 
 WorklistV2.tsx – Worklist V2 execution page (live signals, scoring, detail panel).
-Tickets.tsx – Tickets / audit surface.
+Tickets.tsx – Tickets / audit surface (A2). Uses useTicketsHistory + fetchTickets(...) to pull canonical ticket history via /api/tickets, including audit fields (completedBy, notes, risk decision, session metrics).
 MarketData.tsx – Markets/market context cockpit.
 Analytics.tsx – Performance & drift analytics dashboard.
 StrategyLab.tsx – Strategy Lab (config, backtest, lab vs live).
