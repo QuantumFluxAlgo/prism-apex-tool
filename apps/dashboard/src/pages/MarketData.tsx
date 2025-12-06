@@ -1,16 +1,22 @@
+/* eslint-disable @typescript-eslint/ban-ts-comment */
 // @ts-nocheck
 /* eslint-disable */
+/* V2 HARDENING (auto-waive): ESLint disabled for this file; see PRISM_APEX_V2_BUILD_AUDIT.md. */
+// V2 HARDENING (auto-waive): TS waiver for this dashboard file. See PRISM_APEX_V2_BUILD_AUDIT.md.
+
 /**
  * PRISM APEX V2 — Market Data
  *
  * Intent:
- * - Use live endpoints without assuming their shape.
- * - Render an A2-style Markets surface that matches the HTML mock structurally.
- * - Keep behaviour conservative and resilient; no brittle DTO coupling.
+ * - Use live endpoints without assuming their exact shape.
+ * - Render an A2-style Markets surface that shows session metrics context
+ *   for the selected symbol (regime, OR/ATR, news, quality).
+ * - Be defensive: tolerate missing fields, API errors, and empty symbol lists.
  */
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { Card, CardBody, CardHeader } from '../ui/Card';
+import Badge from '../ui/Badge';
 
 type SymbolSummary = {
   symbol: string;
@@ -27,21 +33,93 @@ type FetchState<T> = {
 const SYMBOLS_ENDPOINT = '/api/symbols';
 const SESSION_METRICS_ENDPOINT = '/api/session-metrics';
 
-function formatMetric(value: unknown, opts?: { dp?: number; suffix?: string }) {
-  if (value === null || value === undefined) return '—';
+const pointsFormatter = new Intl.NumberFormat('en-US', {
+  maximumFractionDigits: 2,
+});
 
-  const suffix = opts?.suffix ?? '';
-  const dp = opts?.dp ?? 2;
+const ratioFormatter = new Intl.NumberFormat('en-US', {
+  maximumFractionDigits: 2,
+});
 
-  if (typeof value === 'number') {
-    return `${value.toFixed(dp)}${suffix}`;
+function formatPoints(value: unknown): string {
+  if (typeof value !== 'number' || Number.isNaN(value)) return '—';
+  return `${pointsFormatter.format(value)}pt`;
+}
+
+function formatRatio(value: unknown): string {
+  if (typeof value !== 'number' || !Number.isFinite(value)) return '—';
+  return ratioFormatter.format(value);
+}
+
+function formatDateLabel(iso: string | undefined | null): string {
+  if (!iso) return '—';
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return iso.slice(0, 10);
+  const yyyy = d.getUTCFullYear();
+  const mm = String(d.getUTCMonth() + 1).padStart(2, '0');
+  const dd = String(d.getUTCDate()).padStart(2, '0');
+  return `${yyyy}-${mm}-${dd}`;
+}
+
+function getSessionDateForSymbol(summary: SymbolSummary | null): string | null {
+  // Prefer lastIngestUtc date; fall back to "today" if missing.
+  if (!summary?.lastIngestUtc) {
+    const today = new Date();
+    return today.toISOString().slice(0, 10);
   }
+  return summary.lastIngestUtc.slice(0, 10);
+}
 
-  if (typeof value === 'boolean') {
-    return value ? `Yes${suffix}` : `No${suffix}`;
+function formatSessionSummary(metrics: any): string {
+  if (!metrics) return 'No session metrics available.';
+  const parts: string[] = [];
+
+  if (typeof metrics.orWidthPoints === 'number') {
+    parts.push(`OR ${formatPoints(metrics.orWidthPoints)}`);
   }
+  if (typeof metrics.sessionAtrPoints === 'number') {
+    parts.push(`ATR ${formatPoints(metrics.sessionAtrPoints)}`);
+  }
+  if (metrics.orWidthToAtrRatio !== undefined && metrics.orWidthToAtrRatio !== null) {
+    parts.push(`OR/ATR ${formatRatio(metrics.orWidthToAtrRatio)}`);
+  }
+  if (metrics.vwapSlope) parts.push(`VWAP ${String(metrics.vwapSlope)}`);
+  if (metrics.htfTrendBias) parts.push(`Trend ${String(metrics.htfTrendBias)}`);
+  if (metrics.hasMajorNewsToday) parts.push('News risk');
 
-  return String(value);
+  if (!parts.length) return 'Session metrics loaded.';
+  return parts.join(' · ');
+}
+
+function qualityTone(metrics: any): 'green' | 'amber' | 'red' | 'gray' {
+  if (!metrics) return 'gray';
+  const flag = metrics.sessionQualityFlag;
+  if (flag === 'GOOD' || flag === 'OK') return 'green';
+  if (flag === 'SKIP') return 'red';
+  if (flag === 'WARN') return 'amber';
+  return 'amber';
+}
+
+function qualityLabel(metrics: any): string {
+  if (!metrics) return 'No session classification';
+  if (metrics.sessionQualityFlag) return String(metrics.sessionQualityFlag);
+  return 'Unclassified';
+}
+
+function newsLabel(metrics: any): string {
+  if (!metrics) return 'No news flags';
+  return metrics.hasMajorNewsToday ? 'Major news in session' : 'No major news';
+}
+
+function MetricTile({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="rounded-xl border border-slate-800/80 bg-slate-950/80 px-3 py-2">
+      <div className="text-[10px] uppercase tracking-[0.18em] text-slate-500">
+        {label}
+      </div>
+      <div className="mt-1 font-geist-mono text-sm text-slate-100">{value}</div>
+    </div>
+  );
 }
 
 export default function MarketDataPage() {
@@ -53,20 +131,22 @@ export default function MarketDataPage() {
 
   const [selectedSymbol, setSelectedSymbol] = useState<string | null>(null);
 
-  const [metricsState, setMetricsState] = useState<FetchState<unknown>>({
+  const [metricsState, setMetricsState] = useState<FetchState<any>>({
     loading: false,
     error: null,
     data: null,
   });
 
-  // Load available symbols once
+  // Load available symbols once.
   useEffect(() => {
     let cancelled = false;
 
     async function loadSymbols() {
       setSymbolsState((s) => ({ ...s, loading: true, error: null }));
+
       try {
         const res = await fetch(SYMBOLS_ENDPOINT);
+
         if (!res.ok) {
           const text = await res.text().catch(() => '');
           if (!cancelled) {
@@ -110,11 +190,26 @@ export default function MarketDataPage() {
       cancelled = true;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []); // run once
+  }, []);
 
-  // Load session metrics when symbol changes
+  const symbols: SymbolSummary[] = useMemo(
+    () => symbolsState.data || [],
+    [symbolsState.data],
+  );
+
+  const selectedSummary: SymbolSummary | null = useMemo(
+    () => symbols.find((s) => s.symbol === selectedSymbol) || null,
+    [symbols, selectedSymbol],
+  );
+
+  const sessionDate: string | null = useMemo(
+    () => getSessionDateForSymbol(selectedSummary),
+    [selectedSummary],
+  );
+
+  // Load session metrics when symbol or sessionDate changes.
   useEffect(() => {
-    if (!selectedSymbol) {
+    if (!selectedSymbol || !sessionDate) {
       setMetricsState({ loading: false, error: null, data: null });
       return;
     }
@@ -125,10 +220,13 @@ export default function MarketDataPage() {
       setMetricsState({ loading: true, error: null, data: null });
 
       try {
-        const url = `${SESSION_METRICS_ENDPOINT}?symbol=${encodeURIComponent(
-          selectedSymbol,
-        )}`;
-        const res = await fetch(url);
+        const params = new URLSearchParams({
+          symbol: selectedSymbol,
+          sessionDate,
+        });
+
+        const res = await fetch(`${SESSION_METRICS_ENDPOINT}?${params.toString()}`);
+
         if (!res.ok) {
           const text = await res.text().catch(() => '');
           if (!cancelled) {
@@ -166,10 +264,7 @@ export default function MarketDataPage() {
     return () => {
       cancelled = true;
     };
-  }, [selectedSymbol]);
-
-  const symbols = symbolsState.data || [];
-  const metrics: any = metricsState.data ?? null;
+  }, [selectedSymbol, sessionDate]);
 
   const symbolOptions =
     symbols.length === 0
@@ -183,6 +278,8 @@ export default function MarketDataPage() {
       : symbols;
 
   const headerSymbolLabel = selectedSymbol || 'No symbol selected';
+  const sessionDateLabel = sessionDate ? formatDateLabel(sessionDate) : '—';
+  const metrics = metricsState.data;
 
   return (
     <div className="flex flex-col gap-4">
@@ -192,10 +289,16 @@ export default function MarketDataPage() {
           Markets
         </h1>
         <p className="text-xs text-slate-400">
-          Session context for the current symbol: coverage, regime, and volatility
-          checks wired to live session-metrics endpoints.
+          Session context for the current symbol: coverage, regime, volatility,
+          and news flags via live session metrics.
         </p>
       </header>
+
+      {symbolsState.error && (
+        <div className="rounded-xl border border-red-500/40 bg-red-950/40 px-3 py-2 text-[11px] text-red-100">
+          {symbolsState.error}
+        </div>
+      )}
 
       {/* TOP CONTROLS BAR (A2-style pills) */}
       <section className="flex flex-wrap items-center gap-2 border-b border-slate-800/80 pb-3 text-[11px]">
@@ -206,25 +309,32 @@ export default function MarketDataPage() {
             onChange={(e) => setSelectedSymbol(e.target.value || null)}
           >
             {symbolOptions.map((s) => (
-              <option key={s.symbol} value={s.symbol === 'Loading symbols…' || s.symbol === 'No symbols available' ? '' : s.symbol}>
+                <option
+                  key={s.symbol}
+                  value={
+                    s.symbol === 'Loading symbols…' || s.symbol === 'No symbols available'
+                      ? ''
+                      : s.symbol
+                  }
+                >
                 {s.symbol}
               </option>
             ))}
           </select>
 
-          <button className="px-3 h-7 rounded-full border border-slate-700 bg-slate-950/60 text-[11px] text-slate-300">
+          <button className="h-7 px-3 rounded-full border border-slate-700 bg-slate-950/60 text-[11px] text-slate-300">
             1m ▾
           </button>
-          <button className="px-3 h-7 rounded-full border border-slate-700 bg-slate-950/60 text-[11px] text-slate-300">
+          <button className="h-7 px-3 rounded-full border border-slate-700 bg-slate-950/60 text-[11px] text-slate-300">
             Session: RTH ▾
           </button>
-          <button className="px-3 h-7 rounded-full border border-slate-700 bg-slate-950/60 text-[11px] text-slate-300 flex items-center gap-1">
+          <button className="flex h-7 items-center gap-1 rounded-full border border-slate-700 bg-slate-950/60 px-3 text-[11px] text-slate-300">
             Overlays
             <span className="text-[10px] text-slate-500">
               VWAP • OR • ATR • Signals
             </span>
           </button>
-          <button className="px-3 h-7 rounded-full border border-slate-700 bg-slate-950/60 text-[11px] text-slate-300">
+          <button className="h-7 px-3 rounded-full border border-slate-700 bg-slate-950/60 text-[11px] text-slate-300">
             Compare ▾
           </button>
         </div>
@@ -232,233 +342,133 @@ export default function MarketDataPage() {
         <div className="ml-auto flex items-center gap-4 text-[11px] text-slate-500">
           <div className="flex items-center gap-2">
             <span>Scrub</span>
-            <div className="w-40 h-[3px] rounded-full bg-slate-600/60 relative">
-              <div className="absolute left-1/2 -translate-x-1/2 top-[-3px] w-3 h-3 rounded-full bg-cyan-400/90" />
+            <div className="relative h-[3px] w-40 rounded-full bg-slate-600/60">
+              <div className="absolute top-[-3px] left-1/2 h-3 w-3 -translate-x-1/2 rounded-full bg-cyan-400/90" />
             </div>
           </div>
-          <span className="font-mono text-slate-400">
+          <span className="font-geist-mono text-slate-400">
             {headerSymbolLabel}
+            {sessionDate ? ` · Session ${sessionDateLabel}` : ''}
           </span>
         </div>
       </section>
 
-      {/* MAIN AREA: CHART + CONTEXT CARDS */}
-      <div className="flex flex-col lg:flex-row gap-4">
+      {/* MAIN AREA: CHART PANEL + CONTEXT CARDS */}
+      <div className="flex flex-col gap-4 lg:flex-row">
         {/* CHART / SESSION PANEL */}
-        <Card className="flex-1 flex flex-col gap-3">
+        <Card className="flex flex-1 flex-col gap-3">
           <CardHeader className="flex items-center justify-between rounded-t-2xl border-b border-slate-800/80 bg-slate-950/80 px-4 py-3">
             <div className="text-[11px] text-slate-400">
               Price · VWAP · OR · ATR · Signals
             </div>
-            <div className="font-mono text-[11px] text-slate-300">
-              {headerSymbolLabel} · Session metrics
+            <div className="font-geist-mono text-[11px] text-slate-300">
+              {headerSymbolLabel} · Session {sessionDateLabel}
             </div>
           </CardHeader>
-          <CardBody className="flex flex-col gap-3 rounded-b-2xl bg-slate-950/60 px-4 py-4">
-            <div className="rounded-xl border border-slate-800/80 bg-slate-950/90 flex items-center justify-center h-72">
-              {metricsState.loading && (
-                <p className="text-xs text-slate-300">
-                  Loading session metrics…
+          <CardBody className="flex flex-col gap-4 rounded-b-2xl bg-slate-950/60 px-4 py-4">
+            <div className="flex h-64 items-center justify-center rounded-xl border border-slate-800/80 bg-slate-950/90">
+              {metricsState.loading ? (
+                <p className="text-xs text-slate-200">Loading session metrics…</p>
+              ) : metricsState.error ? (
+                <p className="max-w-md text-center text-xs text-red-300">
+                  {metricsState.error}
+                </p>
+              ) : metrics ? (
+                <div className="flex max-w-xl flex-col items-center gap-2 text-center">
+                  <p className="text-[11px] font-geist-mono uppercase tracking-[0.18em] text-slate-500">
+                    Session overlays (VWAP · OR · ATR)
+                  </p>
+                  <p className="text-sm text-slate-100">
+                    {formatSessionSummary(metrics)}
+                  </p>
+                  <p className="text-[11px] text-slate-400">
+                    Visual overlays will sit on top of this panel; metrics summary
+                    is live today.
+                  </p>
+                </div>
+              ) : (
+                <p className="text-xs text-slate-400">
+                  Select a symbol to load session metrics.
                 </p>
               )}
-              {!metricsState.loading && metricsState.error && (
-                <p className="text-xs text-red-300">{metricsState.error}</p>
-              )}
-              {!metricsState.loading &&
-                !metricsState.error &&
-                !metricsState.data && (
-                  <p className="text-xs text-slate-400 text-center px-4">
-                    No metrics returned for the current selection. Once DTOs are
-                    final, this card will render the live price/VWAP/ATR overlay for
-                    {` ${headerSymbolLabel}.`}
-                  </p>
-                )}
-              {!metricsState.loading &&
-                !metricsState.error &&
-                metricsState.data && (
-                  <p className="text-xs text-slate-300 text-center px-4">
-                    Session metrics loaded for{' '}
-                    <span className="font-mono text-slate-100">
-                      {headerSymbolLabel}
-                    </span>
-                    . The chart placeholder is intentionally flat for now; it will be
-                    wired to this payload in the final Markets V2 visual pass.
-                  </p>
-                )}
             </div>
 
-            <div className="flex items-center justify-between text-[11px] text-slate-500">
-              <div>
-                Session: Today · RTH · time scrubber is visual-only in this
-                scaffold.
-              </div>
-              <div className="flex items-center gap-2">
-                <span>Zoom</span>
-                <div className="flex gap-1">
-                  <button className="px-2 py-0.5 rounded border border-slate-700 bg-slate-950/80">
-                    -
-                  </button>
-                  <button className="px-2 py-0.5 rounded border border-slate-700 bg-slate-950/80">
-                    +
-                  </button>
-                </div>
-              </div>
+            <div className="grid grid-cols-2 gap-3 text-xs md:grid-cols-4">
+              <MetricTile
+                label="OR width"
+                value={metrics ? formatPoints(metrics.orWidthPoints) : '—'}
+              />
+              <MetricTile
+                label="Session ATR"
+                value={metrics ? formatPoints(metrics.sessionAtrPoints) : '—'}
+              />
+              <MetricTile
+                label="OR / ATR"
+                value={metrics ? formatRatio(metrics.orWidthToAtrRatio) : '—'}
+              />
+              <MetricTile
+                label="VWAP slope"
+                value={metrics?.vwapSlope ? String(metrics.vwapSlope) : '—'}
+              />
             </div>
           </CardBody>
         </Card>
 
-        {/* CONTEXT CARDS (RIGHT-HAND COLUMN) */}
-        <div className="w-full lg:w-[320px] flex-shrink-0 space-y-3">
-          {/* Session Metrics */}
+        {/* CONTEXT / QUALITY COLUMN */}
+        <div className="flex w-full flex-col gap-3 lg:w-80">
           <Card>
-            <CardBody className="rounded-2xl border border-slate-800/80 bg-slate-950/80 px-4 py-3">
-              <div className="text-[11px] font-medium text-slate-300">
-                Session Metrics
+            <CardHeader className="rounded-t-2xl border-b border-slate-800/80 bg-slate-950/80 px-4 py-3">
+              <div className="flex items-center justify-between gap-2">
+                <span className="text-[11px] font-medium text-slate-200">
+                  Session classification
+                </span>
+                <Badge tone={qualityTone(metrics)} className="text-[9px]">
+                  {qualityLabel(metrics)}
+                </Badge>
               </div>
-              <dl className="mt-2 space-y-1 text-[11px] text-slate-400">
-                <div className="flex justify-between">
-                  <dt>OR Width</dt>
-                  <dd className="font-mono text-slate-100">
-                    {formatMetric(
-                      metrics?.orWidthPoints ??
-                        metrics?.orWidth ??
-                        null,
-                    )}
-                  </dd>
-                </div>
-                <div className="flex justify-between">
-                  <dt>OR / ATR Ratio</dt>
-                  <dd className="font-mono text-slate-100">
-                    {formatMetric(
-                      metrics?.orWidthToAtrRatio ?? null,
-                    )}
-                  </dd>
-                </div>
-                <div className="flex justify-between">
-                  <dt>VWAP Slope</dt>
-                  <dd className="font-mono text-slate-100">
-                    {formatMetric(metrics?.vwapSlope ?? null)}
-                  </dd>
-                </div>
-                <div className="flex justify-between">
-                  <dt>Price vs VWAP</dt>
-                  <dd className="font-mono text-slate-100">
-                    {formatMetric(
-                      metrics?.priceVsVwapAtOrEnd ?? null,
-                    )}
-                  </dd>
-                </div>
-              </dl>
+            </CardHeader>
+            <CardBody className="space-y-2 rounded-b-2xl bg-slate-950/60 px-4 py-3 text-xs text-slate-200">
+              <p>{newsLabel(metrics)}</p>
+              {metrics?.sessionSkipReason && (
+                <p className="text-[11px] text-amber-300">
+                  Skip reason: {String(metrics.sessionSkipReason)}
+                </p>
+              )}
+              {metrics?.status === 'ERROR' && (
+                <p className="text-[11px] text-red-300">
+                  Metrics service reported an error for this session.
+                </p>
+              )}
+              {!metrics && !metricsState.loading && (
+                <p className="text-[11px] text-slate-400">
+                  When session metrics are available, quality flags and news risk
+                  will appear here.
+                </p>
+              )}
             </CardBody>
           </Card>
 
-          {/* Volatility & Regime */}
           <Card>
-            <CardBody className="rounded-2xl border border-slate-800/80 bg-slate-950/80 px-4 py-3">
-              <div className="text-[11px] font-medium text-slate-300">
-                Volatility &amp; Regime
-              </div>
-              <dl className="mt-2 space-y-1 text-[11px] text-slate-400">
-                <div className="flex justify-between">
-                  <dt>Session ATR (pts)</dt>
-                  <dd className="font-mono text-slate-100">
-                    {formatMetric(
-                      metrics?.sessionAtrPoints ?? null,
-                    )}
-                  </dd>
-                </div>
-                <div className="flex justify-between">
-                  <dt>Vol Regime</dt>
-                  <dd className="font-mono text-slate-100">
-                    {formatMetric(metrics?.volRegime ?? null)}
-                  </dd>
-                </div>
-                <div className="flex justify-between">
-                  <dt>Liquidity Regime</dt>
-                  <dd className="font-mono text-slate-100">
-                    {formatMetric(metrics?.liquidityRegime ?? null)}
-                  </dd>
-                </div>
-                <div className="flex justify-between">
-                  <dt>Bars Analyzed</dt>
-                  <dd className="font-mono text-slate-100">
-                    {formatMetric(metrics?.barsAnalyzed ?? null, {
-                      dp: 0,
-                    })}
-                  </dd>
-                </div>
-              </dl>
-            </CardBody>
-          </Card>
-
-          {/* Active Strategies / Flags */}
-          <Card>
-            <CardBody className="rounded-2xl border border-slate-800/80 bg-slate-950/80 px-4 py-3">
-              <div className="text-[11px] font-medium text-slate-300">
-                Active Flags &amp; Strategies
-              </div>
-              <div className="mt-2 space-y-1 text-[11px] text-slate-400">
-                <div className="flex justify-between">
-                  <span>Major news today</span>
-                  <span className="font-mono text-slate-100">
-                    {formatMetric(
-                      metrics?.hasMajorNewsToday ?? null,
-                    )}
-                  </span>
-                </div>
-                <div className="flex justify-between">
-                  <span>News window</span>
-                  <span className="font-mono text-slate-100">
-                    {formatMetric(metrics?.newsWindow ?? null)}
-                  </span>
-                </div>
-                <div className="flex justify-between">
-                  <span>News label</span>
-                  <span className="font-mono text-slate-100">
-                    {formatMetric(metrics?.newsLabel ?? null)}
-                  </span>
-                </div>
-                <div className="flex justify-between">
-                  <span>Session quality</span>
-                  <span className="font-mono text-slate-100">
-                    {formatMetric(
-                      metrics?.sessionQualityFlag ?? null,
-                    )}
-                  </span>
-                </div>
-              </div>
+            <CardHeader className="rounded-t-2xl border-b border-slate-800/80 bg-slate-950/80 px-4 py-3">
+              <span className="text-[11px] font-medium text-slate-200">
+                Raw session payload (debug)
+              </span>
+            </CardHeader>
+            <CardBody className="rounded-b-2xl bg-slate-950/60 px-4 py-3">
+              {metrics ? (
+                <pre className="max-h-64 overflow-auto whitespace-pre-wrap break-all text-[10px] text-slate-400">
+                  {JSON.stringify(metrics, null, 2)}
+                </pre>
+              ) : (
+                <p className="text-[11px] text-slate-500">
+                  No payload loaded. Select a symbol and ensure session metrics are
+                  available for the chosen session date.
+                </p>
+              )}
             </CardBody>
           </Card>
         </div>
       </div>
-
-      {/* SIGNAL STRIP – CURRENTLY JUST A PLACEHOLDER ROW */}
-      <Card>
-        <CardHeader className="rounded-t-2xl border-b border-slate-800/80 bg-slate-950/80 px-4 py-2 text-[11px] font-medium text-slate-400">
-          LAST SIGNALS — CURRENT SYMBOL
-        </CardHeader>
-        <CardBody className="rounded-b-2xl bg-slate-950/60 px-4 py-3">
-          <div className="text-xs text-slate-500">
-            No live signal feed is wired into Markets yet. This strip will be driven
-            by canonical tickets (signals, actions, expiries, downranks) once the
-            tickets/markets integration EPIC lands.
-          </div>
-        </CardBody>
-      </Card>
-
-      {/* RAW METRICS PAYLOAD (UNCHANGED, FOR DEBUGGING) */}
-      <Card>
-        <CardHeader>
-          <h2 className="text-xs font-semibold uppercase tracking-wide text-slate-400">
-            Raw metrics payload
-          </h2>
-        </CardHeader>
-        <CardBody>
-          <pre className="mt-1 max-h-64 overflow-auto rounded-lg bg-slate-900/80 p-3 text-[11px] text-slate-100">
-{JSON.stringify(metricsState.data, null, 2) || 'null'}
-          </pre>
-        </CardBody>
-      </Card>
     </div>
   );
 }
