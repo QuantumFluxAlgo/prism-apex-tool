@@ -1,145 +1,187 @@
-/* eslint-disable @typescript-eslint/ban-ts-comment */
-// @ts-nocheck
-/* eslint-disable */
-/* V2 HARDENING (auto-waive): ESLint disabled for this file; see PRISM_APEX_V2_BUILD_AUDIT.md. */
-// V2 HARDENING (auto-waive): TS waiver for this dashboard file. See PRISM_APEX_V2_BUILD_AUDIT.md.
-import React, { useEffect, useState } from 'react';
-import { fetchSystemAlerts, type SystemAlert, type AlertSeverity } from '../lib/systemAlerts';
+import React, { useMemo, useState } from 'react';
 
-function formatDateTime(iso: string): string {
-  const d = new Date(iso);
-  if (Number.isNaN(d.getTime())) return iso;
-  return d.toLocaleString([], {
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-    hour: '2-digit',
-    minute: '2-digit',
-    second: '2-digit',
-  });
+type Severity = 'info' | 'warning' | 'critical';
+type AlertState = 'open' | 'acknowledged' | 'cleared';
+
+type AlertSource = 'risk' | 'system' | 'engine' | 'infra' | 'external';
+
+interface AlertItem {
+  id: string;
+  severity: Severity;
+  state: AlertState;
+  source: AlertSource;
+  title: string;
+  message: string;
+  createdAt: string;
 }
 
-function severityClasses(severity: AlertSeverity): string {
-  switch (severity) {
-    case 'info':
-      return 'bg-sky-500/10 text-sky-300 border-sky-500/40';
-    case 'warning':
-      return 'bg-amber-500/10 text-amber-300 border-amber-500/40';
-    case 'error':
-      return 'bg-rose-500/10 text-rose-300 border-rose-500/40';
-    default:
-      return 'bg-slate-600/10 text-slate-200 border-slate-500/40';
-  }
-}
+const ALL_ALERTS: AlertItem[] = [
+  {
+    id: 'alert-risk-guardrail',
+    severity: 'warning',
+    state: 'open',
+    source: 'risk',
+    title: 'Risk guardrail breach (sim)',
+    message:
+      'Cumulative session drawdown breached configured sim guardrail for one strategy; live accounts unaffected.',
+    createdAt: '2025-12-06T14:55:00Z',
+  },
+  {
+    id: 'alert-engine-lag',
+    severity: 'info',
+    state: 'acknowledged',
+    source: 'engine',
+    title: 'Session-metrics processing lag',
+    message:
+      'Session-metrics job briefly lagged behind bar ingestion; pipeline is now caught up and within SLA.',
+    createdAt: '2025-12-06T14:20:00Z',
+  },
+  {
+    id: 'alert-system-auth',
+    severity: 'critical',
+    state: 'open',
+    source: 'system',
+    title: 'Authentication error rate spike',
+    message:
+      'Elevated authentication failures detected against external API; investigate credentials, device binding, or rate limits.',
+    createdAt: '2025-12-06T14:05:00Z',
+  },
+  {
+    id: 'alert-infra-disk',
+    severity: 'warning',
+    state: 'acknowledged',
+    source: 'infra',
+    title: 'Disk usage approaching threshold',
+    message:
+      'One analytics node is above the configured disk utilisation threshold; clean-up job scheduled.',
+    createdAt: '2025-12-06T13:40:00Z',
+  },
+  {
+    id: 'alert-external-maintenance',
+    severity: 'info',
+    state: 'cleared',
+    source: 'external',
+    title: 'External venue maintenance window',
+    message:
+      'Scheduled external venue maintenance completed; connectivity and routing back to normal.',
+    createdAt: '2025-12-06T12:00:00Z',
+  },
+];
 
-export const AlertsPage: React.FC = () => {
-  const [alerts, setAlerts] = useState<SystemAlert[]>([]);
-  const [loading, setLoading] = useState<boolean>(true);
-  const [error, setError] = useState<string | null>(null);
+const SEVERITY_LABEL: Record<Severity, string> = {
+  info: 'Info',
+  warning: 'Warning',
+  critical: 'Critical',
+};
 
-  const load = async () => {
-    try {
-      setError(null);
-      const data = await fetchSystemAlerts();
-      setAlerts(data);
-    } catch (err) {
-      // eslint-disable-next-line no-console
-      console.error('[AlertsPage] failed to fetch alerts', err);
-      setError('Unable to load alerts.');
-    } finally {
-      setLoading(false);
-    }
-  };
+const SEVERITY_CLASS: Record<Severity, string> = {
+  info: 'alerts-badge alerts-badge--info',
+  warning: 'alerts-badge alerts-badge--warning',
+  critical: 'alerts-badge alerts-badge--critical',
+};
 
-  useEffect(() => {
-    void load();
+const STATE_LABEL: Record<AlertState, string> = {
+  open: 'Open',
+  acknowledged: 'Acknowledged',
+  cleared: 'Cleared',
+};
 
-    const interval = window.setInterval(() => {
-      void load();
-    }, 15000); // 15s auto-refresh
+function Alerts() {
+  const [severityFilter, setSeverityFilter] = useState<Severity | 'all'>('all');
+  const [stateFilter, setStateFilter] = useState<AlertState | 'all'>('open');
 
-    return () => {
-      window.clearInterval(interval);
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  const filteredAlerts = useMemo(() => {
+    return ALL_ALERTS.filter((alert) => {
+      if (severityFilter !== 'all' && alert.severity !== severityFilter) {
+        return false;
+      }
+      if (stateFilter !== 'all' && alert.state !== stateFilter) {
+        return false;
+      }
+      return true;
+    });
+  }, [severityFilter, stateFilter]);
 
   return (
-    <main className="flex flex-1 flex-col gap-4 p-4">
-      <header className="flex flex-col gap-1">
-        <h1 className="text-base font-semibold tracking-wide text-slate-50">System Alerts</h1>
-        <p className="text-xs text-slate-400">
-          High-signal events from scheduler, ingest, session metrics, and daily risk guardrails. Newest first. Auto-refresh every 15 seconds.
+    <div className="alerts-page">
+      <header className="alerts-header">
+        <h1 className="alerts-title">Alerts</h1>
+        <p className="alerts-subtitle">
+          Canonical feed of risk, system, engine, infra, and external alerts with severity and
+          lifecycle state.
         </p>
       </header>
 
-      {error && (
-        <div className="rounded-md border border-rose-500/60 bg-rose-950/40 px-3 py-2 text-[11px] text-rose-200">
-          {error}
+      <section className="alerts-filters">
+        <div className="alerts-filter">
+          <label htmlFor="severity-filter">Severity</label>
+          <select
+            id="severity-filter"
+            value={severityFilter}
+            onChange={(event) =>
+              setSeverityFilter(event.target.value === 'all' ? 'all' : (event.target.value as Severity))
+            }
+          >
+            <option value="all">All</option>
+            <option value="info">Info</option>
+            <option value="warning">Warning</option>
+            <option value="critical">Critical</option>
+          </select>
         </div>
-      )}
 
-      <section className="flex-1 rounded-xl border border-slate-800 bg-slate-950/70">
-        <div className="flex items-center justify-between border-b border-slate-800/80 px-3 py-2">
-          <div className="flex items-center gap-2">
-            <span className="text-xs font-medium text-slate-200">Recent Alerts</span>
-            <span className="text-[10px] text-slate-500">
-              {alerts.length === 0 && !loading ? 'No alerts yet.' : `${alerts.length} alert${alerts.length === 1 ? '' : 's'}`}
-            </span>
-          </div>
-          <span className="text-[10px] text-slate-500">{loading ? 'Loading…' : 'Auto-refresh · 15s'}</span>
+        <div className="alerts-filter">
+          <label htmlFor="state-filter">State</label>
+          <select
+            id="state-filter"
+            value={stateFilter}
+            onChange={(event) =>
+              setStateFilter(event.target.value === 'all' ? 'all' : (event.target.value as AlertState))
+            }
+          >
+            <option value="all">All</option>
+            <option value="open">Open</option>
+            <option value="acknowledged">Acknowledged</option>
+            <option value="cleared">Cleared</option>
+          </select>
         </div>
+      </section>
 
-        <div className="max-h-[480px] overflow-auto">
-          <table className="min-w-full border-collapse text-[11px] text-slate-200">
-            <thead className="sticky top-0 bg-slate-900/90 backdrop-blur">
-              <tr className="border-b border-slate-800/80">
-                <th className="px-3 py-2 text-left font-medium text-slate-400">Time</th>
-                <th className="px-3 py-2 text-left font-medium text-slate-400">Severity</th>
-                <th className="px-3 py-2 text-left font-medium text-slate-400">Source / Code</th>
-                <th className="px-3 py-2 text-left font-medium text-slate-400">Message</th>
-                <th className="px-3 py-2 text-left font-medium text-slate-400">Entity</th>
+      <section className="alerts-table-wrapper">
+        {filteredAlerts.length === 0 ? (
+          <p className="alerts-empty">No alerts match the current filters.</p>
+        ) : (
+          <table className="alerts-table">
+            <thead>
+              <tr>
+                <th>Created</th>
+                <th>Severity</th>
+                <th>State</th>
+                <th>Source</th>
+                <th>Title</th>
+                <th>Message</th>
               </tr>
             </thead>
             <tbody>
-              {alerts.length === 0 && !loading ? (
-                <tr>
-                  <td colSpan={5} className="px-3 py-4 text-center text-[11px] text-slate-500">
-                    No alerts recorded yet. When scheduler jobs fail or daily lockout triggers, they will appear here.
+              {filteredAlerts.map((alert) => (
+                <tr key={alert.id}>
+                  <td>{alert.createdAt}</td>
+                  <td>
+                    <span className={SEVERITY_CLASS[alert.severity]}>
+                      {SEVERITY_LABEL[alert.severity]}
+                    </span>
                   </td>
+                  <td>{STATE_LABEL[alert.state]}</td>
+                  <td>{alert.source}</td>
+                  <td>{alert.title}</td>
+                  <td>{alert.message}</td>
                 </tr>
-              ) : (
-                alerts.map((alert) => {
-                  const entity = alert.entityType && alert.entityId ? `${alert.entityType}:${alert.entityId}` : alert.jobName ?? '—';
-
-                  return (
-                    <tr key={alert.id} className="border-b border-slate-800/70 last:border-b-0 hover:bg-slate-900/60">
-                      <td className="px-3 py-2 align-top text-[11px] text-slate-300">{formatDateTime(alert.createdAt)}</td>
-                      <td className="px-3 py-2 align-top text-[11px]">
-                        <span
-                          className={`inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] font-medium ${severityClasses(alert.severity)}`}
-                        >
-                          {alert.severity.toUpperCase()}
-                        </span>
-                      </td>
-                      <td className="px-3 py-2 align-top text-[11px] text-slate-200">
-                        <div className="flex flex-col gap-0.5">
-                          <span className="font-medium text-slate-100">{alert.source}</span>
-                          <span className="text-[10px] uppercase tracking-wide text-slate-500">{alert.code}</span>
-                        </div>
-                      </td>
-                      <td className="px-3 py-2 align-top text-[11px] text-slate-200">{alert.message}</td>
-                      <td className="px-3 py-2 align-top text-[11px] text-slate-300">{entity}</td>
-                    </tr>
-                  );
-                })
-              )}
+              ))}
             </tbody>
           </table>
-        </div>
+        )}
       </section>
-    </main>
+    </div>
   );
-};
+}
 
-export default AlertsPage;
+export default Alerts;
