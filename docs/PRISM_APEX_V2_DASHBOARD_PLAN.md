@@ -33,7 +33,8 @@ Phase 3 (Dec 2025 snapshot)
 - Worklist V2 now consumes canonical tickets via fetchWorklistCanonicalTickets(...) wrapper over /api/tickets; Tickets and Analytics share the same CanonicalTicket mapping from TicketRow.
 - Analytics page implemented as canonical A2 surface using fetchAnalyticsCanonicalTickets(...) + fetchSessionMetricsBatch(...); KPIs, PnL-over-time, and regime breakdown share the same CanonicalTicket contract.
 - Markets page implemented as canonical session surface using /api/symbols + /api/session-metrics; overlays panel and quality/news cards read from live session metrics payload.
-- Strategy Lab V2 UI scaffolded as canonical A2 surface using fetchAnalyticsCanonicalTickets(...); lab vs live KPIs and trades preview are driven by the same analytics ticket contract (no order routing).
+- Status page implemented as canonical system health surface over engine jobs, external dependencies, and environment flags.
+- Alerts page implemented as canonical alerts surface for risk/system/engine/infra events, with severity and lifecycle state.
 
 3. EPIC V2.1 — Worklist V2 Production Hardening
 Goal

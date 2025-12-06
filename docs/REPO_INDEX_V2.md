@@ -93,8 +93,8 @@ Tickets.tsx – Tickets / audit surface (A2). Uses useTicketsHistory + fetchTick
 MarketData.tsx – Markets/market context cockpit (canonical). Uses /api/symbols and /api/session-metrics to drive the session overlays panel and quality/news context.
 Analytics.tsx – Performance & drift analytics dashboard (canonical). Uses fetchAnalyticsCanonicalTickets(...) + fetchSessionMetricsBatch(...) to drive KPIs, PnL-over-time, regime breakdown, and the canonical trades table.
 StrategyLab.tsx – Strategy Lab (config, backtest, lab vs live). Uses fetchAnalyticsCanonicalTickets(...) to drive lab vs live KPIs and the trades preview over the canonical analytics ticket feed (front-end only; no order routing).
-Status.tsx – System status/health dashboard.
-Alerts.tsx – Alerts surface (risk/system/engine alerts).
+Status.tsx – System status/health dashboard (canonical). Surfaces engine job status, external dependencies, and environment flags from a unified status feed.
+Alerts.tsx – Alerts surface (canonical). Shows risk/system/engine/infra alerts with severity and lifecycle filters.
 These must be treated as the only canonical operator surfaces for V2.
 
 2.2.2 Other Pages & Variants
