@@ -1,3 +1,13 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+echo "=== PRISM APEX – FIX ALERTS TEST QUERIES (V2) ==="
+
+REPO_ROOT="${PRISM_APEX_ROOT:-$(git rev-parse --show-toplevel)}"
+cd "$REPO_ROOT"
+
+echo "--- Overwriting Alerts.test.tsx with disambiguated queries ---"
+cat <<'TSX' > apps/dashboard/src/__tests__/Alerts.test.tsx
 import React from 'react';
 import { describe, it, expect } from 'vitest';
 import { render, screen, fireEvent, within } from '@testing-library/react';
@@ -53,3 +63,8 @@ describe('AlertsPage', () => {
     ).toBeInTheDocument();
   });
 });
+TSX
+
+echo
+echo "--- Running dashboard tests ---"
+pnpm --filter prism-apex-dashboard run test
