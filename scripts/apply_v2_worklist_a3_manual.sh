@@ -1,3 +1,13 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+echo "=== PRISM APEX – APPLYING WORKLIST V2 A3 OVERHAUL (MANUAL TERMINAL) ==="
+
+REPO_ROOT="$(git rev-parse --show-toplevel 2>/dev/null || pwd)"
+cd "$REPO_ROOT"
+
+echo "--- Writing apps/dashboard/src/pages/WorklistV2.tsx ---"
+cat <<'TSX' > apps/dashboard/src/pages/WorklistV2.tsx
 /* eslint-disable @typescript-eslint/ban-ts-comment */
 // @ts-nocheck
 /* eslint-disable */
@@ -9,7 +19,6 @@ import type { CanonicalTicket } from '@prism-apex/shared';
 import FiltersBar from '../ui/FiltersBar';
 import DataTable, { type DataTableColumn } from '../ui/DataTable';
 import Badge from '../ui/Badge';
-import '../styles/worklist-a3.css';
 import { fmtPrice, fmtR } from '../utils/number';
 import { fmtUtc } from '../utils/time';
 import { getWorklistV2CanonicalTickets } from '../lib/worklistMock';
@@ -1134,3 +1143,61 @@ export default function WorklistV2Page() {
     </section>
   );
 }
+TSX
+
+echo "--- Writing apps/dashboard/src/styles/worklist-a3.css ---"
+cat <<'CSS' > apps/dashboard/src/styles/worklist-a3.css
+/* Worklist V2 — A3-specific refinements.
+ *
+ * Keep this file small and safe. Most of the heavy lifting is done via
+ * Tailwind utility classes in WorklistV2.tsx; this is mainly for scrollbars
+ * and subtle layout polish that isn't worth inlining.
+ */
+
+.worklist-v2-root {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+/* Smooth scroll experience for the table panel */
+.worklist-v2-table {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(56, 189, 248, 0.75) rgba(15, 23, 42, 0.95);
+}
+
+.worklist-v2-table::-webkit-scrollbar {
+  width: 6px;
+}
+
+.worklist-v2-table::-webkit-scrollbar-track {
+  background: rgba(15, 23, 42, 0.95);
+}
+
+.worklist-v2-table::-webkit-scrollbar-thumb {
+  background: linear-gradient(
+    to bottom,
+    rgba(56, 189, 248, 0.9),
+    rgba(56, 189, 248, 0.4)
+  );
+  border-radius: 999px;
+}
+
+/* Minor tweak so the details panel feels anchored */
+.worklist-v2-details {
+  will-change: transform, box-shadow;
+  transition:
+    transform 160ms ease-out,
+    box-shadow 160ms ease-out;
+}
+
+.worklist-v2-details:hover {
+  transform: translateY(-1px);
+  box-shadow:
+    0 26px 60px rgba(15, 23, 42, 0.98),
+    0 0 22px rgba(56, 189, 248, 0.25);
+}
+CSS
+
+echo "--- Running dashboard tests ---"
+pnpm --filter prism-apex-dashboard test

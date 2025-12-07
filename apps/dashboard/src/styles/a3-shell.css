@@ -1,71 +1,50 @@
-/* Prism Apex – A3 Shell Visual System
- *
- * Goal:
- *   - Full-screen dark, glassy shell.
- *   - Left nav rail with density and hierarchy.
- *   - Top bar with environment + clock.
- *   - Inner content card hosting existing canonical pages unmodified.
- */
+/* Prism Apex – A3 Shell & Glass Theme */
 
-/* Reset-ish */
+/* Fill viewport */
 html,
 body,
 #root {
   height: 100%;
 }
 
-body {
-  margin: 0;
-  font-family: system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Text",
-    "Segoe UI", sans-serif;
-  background: radial-gradient(circle at top left, #1d4ed8 0, #020617 45%, #000 100%);
-  color: #e5e7eb;
-}
-
-/* Root frame */
+/* Root background */
 .a3-root {
-  min-height: 100vh;
-  padding: 24px;
-  box-sizing: border-box;
-  display: flex;
-  align-items: stretch;
-  justify-content: center;
+  min-height: 100%;
   background:
-    radial-gradient(900px at -10% -10%, rgba(59, 130, 246, 0.35), transparent),
-    radial-gradient(900px at 110% 110%, rgba(236, 72, 153, 0.25), transparent),
-    radial-gradient(circle at top left, #020617 0, #020617 55%, #000 100%);
+    radial-gradient(1400px at top left, rgba(56, 189, 248, 0.22), transparent),
+    radial-gradient(1400px at bottom right, rgba(129, 140, 248, 0.22), transparent),
+    linear-gradient(180deg, #020617, #020617 40%, #020617);
+  color: #e5edff;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "SF Pro Text",
+    "Inter", sans-serif;
 }
 
-/* Shell container */
+/* Main shell grid */
 .a3-shell {
-  position: relative;
+  max-width: 1440px;
+  margin: 0 auto;
+  padding: 20px 24px;
   display: grid;
   grid-template-columns: 260px minmax(0, 1fr);
-  gap: 0;
-  max-width: 1520px;
-  width: 100%;
-  min-height: calc(100vh - 48px);
-  background: radial-gradient(circle at top left, #020617 0, #020617 45%, #020617ee 80%);
-  border-radius: 24px;
-  border: 1px solid rgba(148, 163, 184, 0.35);
-  box-shadow:
-    0 28px 80px rgba(15, 23, 42, 0.9),
-    0 0 0 1px rgba(15, 23, 42, 0.9);
-  overflow: hidden;
-  backdrop-filter: blur(26px);
+  gap: 20px;
+  box-sizing: border-box;
 }
 
-/* Left navigation rail */
+/* Left nav rail */
 .a3-nav {
   display: flex;
   flex-direction: column;
-  padding: 20px 18px 16px;
-  border-right: 1px solid rgba(30, 64, 175, 0.7);
+  gap: 18px;
+  padding: 16px;
+  border-radius: 24px;
+  border: 1px solid rgba(37, 99, 235, 0.7);
   background:
-    radial-gradient(700px at top, rgba(37, 99, 235, 0.28), transparent),
-    radial-gradient(500px at bottom, rgba(30, 64, 175, 0.35), transparent),
+    radial-gradient(800px at top left, rgba(59, 130, 246, 0.38), transparent),
+    radial-gradient(600px at bottom right, rgba(30, 64, 175, 0.55), transparent),
     linear-gradient(180deg, rgba(15, 23, 42, 0.98), rgba(15, 23, 42, 0.98));
-  gap: 24px;
+  box-shadow:
+    0 0 0 1px rgba(15, 23, 42, 0.9),
+    0 20px 50px rgba(15, 23, 42, 0.98);
 }
 
 /* Logo block */
@@ -73,115 +52,82 @@ body {
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 10px 10px;
+  padding: 10px 12px;
   border-radius: 999px;
-  background: radial-gradient(circle at top left, #1d4ed8, #0f172a);
-  box-shadow: 0 14px 30px rgba(15, 23, 42, 0.9);
+  background:
+    radial-gradient(600px at top left, rgba(56, 189, 248, 0.5), transparent),
+    rgba(15, 23, 42, 0.98);
+  box-shadow: 0 16px 40px rgba(15, 23, 42, 0.95);
 }
 
 .a3-logo-mark {
   width: 28px;
   height: 28px;
   border-radius: 999px;
-  background: radial-gradient(circle at 30% 0, #e5e7eb, #0f172a);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 15px;
-  color: #0f172a;
+  background:
+    conic-gradient(
+      from 210deg,
+      rgba(56, 189, 248, 1),
+      rgba(129, 140, 248, 1),
+      rgba(56, 189, 248, 1)
+    );
+  color: #020617;
+  font-weight: 700;
+  font-size: 16px;
 }
 
 .a3-logo-copy {
   display: flex;
   flex-direction: column;
+  gap: 2px;
 }
 
 .a3-logo-title {
   font-size: 13px;
   font-weight: 600;
-  letter-spacing: 0.06em;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: #e5e7eb;
 }
 
 .a3-logo-subtitle {
   font-size: 11px;
-  color: #a5b4fc;
+  opacity: 0.8;
 }
 
 /* Nav list */
 .a3-nav-list {
   display: flex;
   flex-direction: column;
-  gap: 4px;
-  padding: 6px 4px 8px;
-  border-radius: 16px;
-  background: radial-gradient(circle at top left, rgba(37, 99, 235, 0.18), transparent);
-  box-shadow: inset 0 0 0 1px rgba(30, 64, 175, 0.45);
+  gap: 8px;
 }
 
 .a3-nav-item {
   position: relative;
   display: flex;
   flex-direction: column;
-  gap: 2px;
-  padding: 9px 10px 8px 10px;
-  border-radius: 12px;
+  gap: 4px;
+  padding: 10px 12px;
+  border-radius: 16px;
+  border: 1px solid rgba(30, 64, 175, 0.7);
+  background: linear-gradient(135deg, rgba(15, 23, 42, 0.98), rgba(15, 23, 42, 0.98));
   text-decoration: none;
-  color: #e5e7eb;
-  background: linear-gradient(
-    90deg,
-    rgba(15, 23, 42, 0.6),
-    rgba(15, 23, 42, 0.4)
-  );
-  border: 1px solid transparent;
-  cursor: pointer;
+  color: inherit;
+  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.9);
   transition:
-    border-color 140ms ease,
-    background 140ms ease,
-    transform 140ms ease,
-    box-shadow 140ms ease;
-}
-
-.a3-nav-item:hover {
-  border-color: rgba(129, 140, 248, 0.8);
-  background: linear-gradient(
-    90deg,
-    rgba(30, 64, 175, 0.7),
-    rgba(15, 23, 42, 0.7)
-  );
-  box-shadow: 0 12px 28px rgba(15, 23, 42, 0.9);
-  transform: translateY(-1px);
-}
-
-.a3-nav-item--active {
-  border-color: rgba(129, 140, 248, 1);
-  background: linear-gradient(
-    90deg,
-    rgba(37, 99, 235, 0.9),
-    rgba(15, 23, 42, 0.9)
-  );
-  box-shadow:
-    0 12px 30px rgba(37, 99, 235, 0.5),
-    0 0 0 1px rgba(15, 23, 42, 0.9);
+    border-color 160ms ease-out,
+    box-shadow 160ms ease-out,
+    transform 160ms ease-out,
+    background 200ms ease-out;
 }
 
 .a3-nav-item-main {
   display: flex;
   align-items: center;
+  justify-content: space-between;
   gap: 8px;
-}
-
-.a3-nav-item-indicator {
-  width: 6px;
-  height: 20px;
-  border-radius: 999px;
-  background: radial-gradient(circle at top, rgba(129, 140, 248, 0.1), transparent);
-  flex-shrink: 0;
-}
-
-.a3-nav-item--active .a3-nav-item-indicator {
-  background: linear-gradient(180deg, #bfdbfe, #4f46e5);
 }
 
 .a3-nav-item-label {
@@ -189,79 +135,109 @@ body {
   font-weight: 500;
 }
 
+.a3-nav-item-indicator {
+  width: 16px;
+  height: 16px;
+  border-radius: 999px;
+  border: 1px solid rgba(148, 163, 184, 0.7);
+}
+
 .a3-nav-item-description {
   font-size: 11px;
-  color: #c7d2fe;
   opacity: 0.85;
+  color: #c7d2fe;
+}
+
+.a3-nav-item:hover {
+  border-color: rgba(129, 140, 248, 0.9);
+  background: linear-gradient(
+    120deg,
+    rgba(30, 64, 175, 0.9),
+    rgba(15, 23, 42, 0.98)
+  );
+  box-shadow: 0 14px 34px rgba(15, 23, 42, 0.95);
+  transform: translateY(-1px);
+}
+
+.a3-nav-item--active {
+  border-color: rgba(56, 189, 248, 0.95);
+  background:
+    linear-gradient(
+      135deg,
+      rgba(56, 189, 248, 0.28),
+      rgba(56, 189, 248, 0.08),
+      rgba(15, 23, 42, 0.98)
+    );
+  box-shadow:
+    0 0 0 1px rgba(56, 189, 248, 0.9),
+    0 18px 45px rgba(15, 23, 42, 0.98);
+}
+
+.a3-nav-item--active .a3-nav-item-indicator {
+  border-color: rgba(56, 189, 248, 0.95);
+  box-shadow:
+    0 0 12px rgba(56, 189, 248, 0.9),
+    inset 0 0 0 1px rgba(15, 23, 42, 1);
+  background: radial-gradient(circle at 50% 30%, rgba(56, 189, 248, 1), #020617);
 }
 
 /* Nav footer */
 .a3-nav-footer {
   margin-top: auto;
-  padding: 10px 10px 8px;
-  border-radius: 14px;
-  background: radial-gradient(circle at top left, rgba(30, 64, 175, 0.8), #020617);
-  box-shadow:
-    0 12px 24px rgba(15, 23, 42, 0.9),
-    inset 0 0 0 1px rgba(30, 64, 175, 0.8);
+  padding-top: 8px;
+  border-top: 1px solid rgba(30, 64, 175, 0.7);
   display: flex;
   flex-direction: column;
+  gap: 8px;
+}
+
+.a3-env-pill {
+  display: inline-flex;
+  align-items: center;
   gap: 6px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  border: 1px solid rgba(34, 211, 238, 0.9);
+  background:
+    radial-gradient(500px at top left, rgba(34, 211, 238, 0.4), transparent),
+    rgba(15, 23, 42, 0.98);
+  font-size: 11px;
 }
 
 .a3-env-label {
   font-size: 11px;
   text-transform: uppercase;
-  letter-spacing: 0.08em;
-  color: #c7d2fe;
-  opacity: 0.9;
+  letter-spacing: 0.12em;
+  opacity: 0.85;
 }
 
-.a3-env-pills {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-}
-
-.a3-pill {
-  font-size: 11px;
-  padding: 4px 8px;
-  border-radius: 999px;
-  border: 1px solid rgba(191, 219, 254, 0.5);
-  background: rgba(15, 23, 42, 0.9);
-  color: #e5e7eb;
-}
-
-.a3-pill--sim {
-  background: radial-gradient(circle at top left, #22c55e, #047857);
-  border-color: rgba(22, 163, 74, 1);
+.a3-env-value {
+  font-weight: 600;
 }
 
 .a3-build-meta {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
-  font-size: 10px;
-  color: #c7d2fe;
-  opacity: 0.9;
+  flex-direction: column;
+  gap: 2px;
+  font-size: 11px;
+  opacity: 0.85;
 }
 
 .a3-build-label {
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  opacity: 0.7;
+}
+
+.a3-build-value {
   font-weight: 500;
 }
 
-.a3-build-tag {
-  padding: 2px 6px;
-  border-radius: 999px;
-  border: 1px solid rgba(129, 140, 248, 0.9);
-  background: rgba(15, 23, 42, 0.9);
-}
-
-/* Main area */
+/* Main side */
 .a3-main {
   display: flex;
   flex-direction: column;
-  padding: 18px 18px 18px 0;
+  gap: 14px;
 }
 
 /* Top bar */
@@ -269,173 +245,300 @@ body {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 14px 18px 14px 18px;
-  border-radius: 18px;
+  gap: 12px;
+  padding: 14px 16px;
+  border-radius: 22px;
+  border: 1px solid rgba(37, 99, 235, 0.8);
   background:
-    radial-gradient(circle at top left, rgba(59, 130, 246, 0.3), transparent),
-    linear-gradient(90deg, rgba(15, 23, 42, 0.98), rgba(15, 23, 42, 0.98));
-  border: 1px solid rgba(148, 163, 184, 0.5);
-  box-shadow: 0 18px 38px rgba(15, 23, 42, 0.9);
-  margin-bottom: 14px;
+    radial-gradient(900px at top, rgba(59, 130, 246, 0.32), transparent),
+    linear-gradient(135deg, rgba(15, 23, 42, 0.98), rgba(15, 23, 42, 0.98));
+  box-shadow:
+    0 0 0 1px rgba(15, 23, 42, 0.9),
+    0 18px 45px rgba(15, 23, 42, 0.98);
 }
 
 .a3-topbar-left {
   display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.a3-topbar-stack {
-  display: flex;
   flex-direction: column;
-  gap: 3px;
+  gap: 4px;
 }
 
 .a3-topbar-title {
-  font-size: 15px;
+  font-size: 18px;
   font-weight: 600;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  color: #e5e7eb;
 }
 
 .a3-topbar-subtitle {
   font-size: 12px;
-  color: #9ca3af;
-}
-
-/* Clock */
-.a3-topbar-right {
-  display: flex;
-  align-items: center;
-}
-
-.a3-clock {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  padding: 6px 10px;
-  border-radius: 999px;
-  border: 1px solid rgba(148, 163, 184, 0.7);
-  background: radial-gradient(circle at top left, rgba(30, 64, 175, 0.7), #020617);
-  font-size: 11px;
-  color: #e5e7eb;
-}
-
-.a3-clock-date {
-  opacity: 0.9;
-}
-
-.a3-clock-time {
-  font-variant-numeric: tabular-nums;
-  font-weight: 500;
-}
-
-.a3-clock-separator {
-  width: 1px;
-  height: 16px;
-  background: rgba(148, 163, 184, 0.9);
   opacity: 0.8;
 }
 
-/* Content area */
-.a3-content {
-  flex: 1;
-  padding: 6px 0 0 0;
+.a3-topbar-right {
   display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.a3-topbar-status {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.a3-topbar-status-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.a3-status-pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 10px;
+  border-radius: 999px;
+  border: 1px solid rgba(148, 163, 184, 0.6);
+  font-size: 11px;
+}
+
+.a3-status-pill--primary {
+  border-color: rgba(56, 189, 248, 0.85);
+  background:
+    radial-gradient(500px at top left, rgba(56, 189, 248, 0.4), transparent),
+    rgba(15, 23, 42, 0.98);
+}
+
+.a3-status-pill--muted {
+  opacity: 0.85;
+}
+
+.a3-clock {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+  padding: 6px 10px;
+  border-radius: 14px;
+  border: 1px solid rgba(148, 163, 184, 0.5);
+  background:
+    radial-gradient(500px at top, rgba(15, 23, 42, 0.3), transparent),
+    rgba(15, 23, 42, 0.98);
+}
+
+.a3-clock-date {
+  font-size: 11px;
+  opacity: 0.8;
+}
+
+.a3-clock-time {
+  font-size: 14px;
+  font-weight: 600;
+}
+
+/* Content wrapper */
+.a3-content {
+  margin-top: 6px;
 }
 
 .a3-content-inner {
-  position: relative;
-  flex: 1;
-  border-radius: 20px;
+  border-radius: 24px;
+  padding: 14px;
   background:
-    radial-gradient(circle at top left, rgba(30, 64, 175, 0.2), transparent),
-    radial-gradient(circle at bottom right, rgba(30, 64, 175, 0.4), transparent),
-    linear-gradient(135deg, #020617, #020617);
-  border: 1px solid rgba(75, 85, 99, 0.9);
-  box-shadow:
-    0 18px 40px rgba(15, 23, 42, 0.95),
-    inset 0 0 0 1px rgba(15, 23, 42, 0.9);
-  padding: 18px 18px 18px 18px;
-  overflow: hidden;
+    radial-gradient(1200px at top left, rgba(56, 189, 248, 0.16), transparent),
+    radial-gradient(1200px at bottom right, rgba(129, 140, 248, 0.16), transparent),
+    linear-gradient(145deg, rgba(15, 23, 42, 0.99), rgba(15, 23, 42, 0.99));
+  box-shadow: 0 20px 65px rgba(15, 23, 42, 0.98);
 }
 
-/* Let existing pages use their own layouts inside the card.
-   Keep padding modest so your existing Worklist/Tickets/Analytics
-   tables and panels sit comfortably. */
-.a3-content-inner > *:first-child {
-  margin-top: 0;
-}
-
-/* RESPONSIVE */
-
-@media (max-width: 1200px) {
+/* Responsiveness */
+@media (max-width: 1100px) {
   .a3-shell {
     grid-template-columns: 220px minmax(0, 1fr);
+    padding: 16px;
+  }
+
+  .a3-main {
+    gap: 10px;
   }
 }
 
-@media (max-width: 960px) {
-  .a3-root {
-    padding: 12px;
-  }
-
+@media (max-width: 900px) {
   .a3-shell {
-    grid-template-columns: 80px minmax(0, 1fr);
-  }
-
-  .a3-logo-copy,
-  .a3-nav-item-description,
-  .a3-build-meta {
-    display: none;
-  }
-
-  .a3-nav {
-    padding-inline: 12px;
-  }
-
-  .a3-nav-item {
-    padding-inline: 8px;
-  }
-
-  .a3-topbar {
-    padding-inline: 12px;
-  }
-
-  .a3-content-inner {
-    border-radius: 16px;
-    padding: 14px;
-  }
-}
-
-@media (max-width: 720px) {
-  .a3-shell {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 12px;
   }
 
   .a3-nav {
     flex-direction: row;
     align-items: center;
-    overflow-x: auto;
-    border-right: none;
-    border-bottom: 1px solid rgba(30, 64, 175, 0.7);
+    justify-content: space-between;
   }
 
   .a3-nav-list {
     flex-direction: row;
-    overflow-x: auto;
-  }
-
-  .a3-nav-item {
-    min-width: 120px;
+    flex-wrap: wrap;
+    gap: 6px;
   }
 
   .a3-main {
-    padding: 12px;
+    padding-inline: 4px;
   }
 
-  .a3-topbar {
-    margin-bottom: 10px;
+  .a3-content-inner {
+    border-radius: 18px;
   }
+}
+
+@media (max-width: 640px) {
+  .a3-topbar {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .a3-topbar-right {
+    width: 100%;
+    justify-content: space-between;
+  }
+}
+
+/* === Glassy cards & upgraded tables (A3 overlay on A2 tokens) === */
+
+.dashboard-card {
+  position: relative;
+  border-radius: 24px;
+  padding: 1px;
+  background:
+    radial-gradient(140% 220% at 0% 0%, rgba(56, 189, 248, 0.28), transparent),
+    radial-gradient(140% 260% at 110% 120%, rgba(129, 140, 248, 0.24), transparent),
+    linear-gradient(135deg, rgba(15, 23, 42, 0.98), rgba(15, 23, 42, 0.98));
+  box-shadow:
+    0 0 0 1px rgba(15, 23, 42, 0.95),
+    0 20px 55px rgba(15, 23, 42, 0.95);
+  overflow: hidden;
+}
+
+.dashboard-card > * {
+  position: relative;
+  z-index: 1;
+}
+
+.dashboard-card__header {
+  background:
+    radial-gradient(140% 200% at 0% 0%, rgba(30, 64, 175, 0.96), rgba(15, 23, 42, 0.98));
+  border-bottom: 1px solid rgba(148, 163, 184, 0.45);
+}
+
+.dashboard-card__body {
+  background:
+    radial-gradient(160% 260% at 100% 120%, rgba(15, 23, 42, 0.96), rgba(15, 23, 42, 0.99));
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .dashboard-card {
+    transition:
+      box-shadow 180ms ease-out,
+      transform 180ms ease-out,
+      background 240ms ease-out;
+  }
+
+  .dashboard-card:hover {
+    box-shadow:
+      0 0 0 1px rgba(56, 189, 248, 0.7),
+      0 26px 70px rgba(15, 23, 42, 0.98);
+    transform: translateY(-1px);
+  }
+}
+
+/* Data tables */
+
+.dashboard-table-wrapper {
+  position: relative;
+  margin: 4px 0;
+  border-radius: 22px;
+  padding: 1px;
+  background:
+    radial-gradient(180% 260% at -10% 0%, rgba(56, 189, 248, 0.3), transparent),
+    radial-gradient(200% 300% at 110% 120%, rgba(37, 99, 235, 0.35), transparent),
+    linear-gradient(135deg, rgba(15, 23, 42, 0.98), rgba(15, 23, 42, 1));
+  box-shadow:
+    0 0 0 1px rgba(15, 23, 42, 0.95),
+    0 18px 55px rgba(15, 23, 42, 0.98);
+  overflow: hidden;
+}
+
+.dashboard-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: radial-gradient(160% 260% at 50% 0%, rgba(15, 23, 42, 0.96), rgba(15, 23, 42, 0.99));
+  font-size: 12px;
+}
+
+.dashboard-table thead {
+  background:
+    linear-gradient(
+      90deg,
+      rgba(30, 64, 175, 0.96),
+      rgba(56, 189, 248, 0.18)
+    );
+}
+
+.dashboard-table th {
+  padding: 0.5rem 0.75rem;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: #e5edff;
+  border-bottom: 1px solid rgba(148, 163, 184, 0.5);
+  white-space: nowrap;
+  text-align: left;
+}
+
+.dashboard-table td {
+  padding: 0.45rem 0.75rem;
+  border-bottom: 1px solid rgba(15, 23, 42, 0.9);
+  color: #e2e8f0;
+}
+
+/* Striping + hover */
+.dashboard-table tbody tr:nth-child(odd) {
+  background-color: rgba(15, 23, 42, 0.98);
+}
+
+.dashboard-table tbody tr:nth-child(even) {
+  background-color: rgba(15, 23, 42, 0.96);
+}
+
+.dashboard-table tbody tr:hover {
+  background:
+    radial-gradient(160% 260% at 0% 0%, rgba(56, 189, 248, 0.16), transparent),
+    rgba(15, 23, 42, 0.98);
+}
+
+/* Empty state row */
+.dashboard-table tbody tr:only-child td {
+  text-align: center;
+  padding: 1.25rem 0.75rem;
+  color: rgba(148, 163, 184, 0.95);
+  font-size: 13px;
+}
+
+@media (max-width: 768px) {
+  .dashboard-table-wrapper {
+    border-radius: 18px;
+  }
+
+  .dashboard-table th,
+  .dashboard-table td {
+    padding-inline: 0.55rem;
+  }
+}
+
+/* V2 A3 SHELL WIDTH OVERRIDE (Worklist + peers)
+ * Widen the main content card so Worklist table columns fit comfortably.
+ */
+.a3-main {
+  max-width: 1360px;
+}
+
+.a3-content-inner {
+  max-width: 100%;
 }
