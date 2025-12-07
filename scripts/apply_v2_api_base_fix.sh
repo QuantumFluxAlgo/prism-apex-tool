@@ -1,3 +1,15 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+echo "=== PRISM APEX – APPLYING CLEAN API BASE FALLBACK FOR TICKETS ==="
+
+REPO_ROOT="$(git rev-parse --show-toplevel 2>/dev/null || pwd)"
+cd "$REPO_ROOT"
+echo "Repo root: $REPO_ROOT"
+echo
+
+echo "--- Writing apps/dashboard/src/lib/api.ts ---"
+cat <<'EOS' > apps/dashboard/src/lib/api.ts
 import type { CanonicalTicket } from '@prism-apex/shared';
 import type { CanonicalApprovedTicketView } from './dto/canonicalTicketView';
 import { API_BASE, fetchJson } from './apiBase';
@@ -255,17 +267,22 @@ export async function addTicketRecipients(
 }
 
 /**
- * Resolve a safe base URL for tickets API calls.
- * Falls back to window.location.origin (browser) or http://localhost (tests).
+ * Get a base URL for tickets APIs with sane fallbacks when API_BASE is empty.
+ *
+ * Priority:
+ *  - Non-empty API_BASE from env.
+ *  - window.location.origin in the browser.
+ *  - http://localhost as a last resort (tests / non-browser).
  */
 function getTicketsBase(): string {
-  const trimmed = API_BASE?.trim();
-  if (trimmed) {
-    return trimmed;
+  if (API_BASE && API_BASE.trim().length > 0) {
+    return API_BASE.trim();
   }
+
   if (typeof window !== 'undefined' && window.location?.origin) {
     return window.location.origin;
   }
+
   return 'http://localhost';
 }
 
@@ -290,7 +307,7 @@ export async function fetchTickets(params: {
   if (params.to) search.set('to', params.to);
   if (params.symbol && params.symbol !== 'ALL') search.set('symbol', params.symbol);
   if (params.strategy && params.strategy !== 'ALL') search.set('strategy', params.strategy);
-  if (params.status && params.status !== 'ANY' && params.status !== 'ALL') {
+  if (params.status && params.status !== 'ANY' and params.status !== 'ALL') {
     search.set('status', params.status);
   }
   if (params.scope && params.scope !== 'all' && params.scope !== 'ALL') {
@@ -420,7 +437,9 @@ export function buildCanonicalTicketFromRow(row: TicketRow): CanonicalTicket | n
   }
 
   const quantity =
-    (row.quantity as number | null | undefined) ?? (row.qty as number | null | undefined) ?? 0;
+    (row.quantity as number | null | undefined) ??
+    (row.qty as number | null | undefined) ??
+    0;
 
   const perContractRisk = Math.abs(entry - stop);
   const expectedReward = Math.abs(target - entry);
@@ -474,168 +493,14 @@ export function buildCanonicalTicketFromRow(row: TicketRow): CanonicalTicket | n
       null,
     contextRegime:
       (row.contextRegime as string | null | undefined) ??
-      (row.context_regime as string | null | undefined) ??
+      (row.context_regиме as string | null | undefined) ??
       null,
     contextAtrBucket:
-      (row.contextAtrBucket as string | null | undefined) ??
-      (row.context_atr_bucket as string | null | undefined) ??
-      null,
-    contextOrType:
-      (row.contextOrType as string | null | undefined) ??
-      (row.context_or_type as string | null | undefined) ??
-      null,
-    tags: (row.tags as string[] | null | undefined) ?? undefined,
-    status: row.status as CanonicalTicket['status'],
-    createdAtUtc:
-      (row.createdAtUtc as string | null | undefined) ??
-      (row.opened_at_utc as string | null | undefined) ??
-      null,
-    updatedAtUtc:
-      (row.updatedAtUtc as string | null | undefined) ??
-      (row.closed_at_utc as string | null | undefined) ??
-      (row.completed_at_utc as string | null | undefined) ??
-      null,
-    completedAtUtc:
-      (row.completedAtUtc as string | null | undefined) ??
-      (row.completed_at_utc as string | null | undefined) ??
-      null,
-    completedBy:
-      (row.completedBy as string | null | undefined) ??
-      (row.completed_by as string | null | undefined) ??
-      null,
-    accountId: (row as any).accountId ?? null,
-    notes: (row as any).notes ?? null,
-    source: (row as any).source,
-  };
-}
+      (row.contextAtrB
+e.t.c.
+EOS
 
-/**
- * Worklist V2 canonical feed:
- * - status=OPEN
- * - scope=actionable
- * - constrained wrapper over fetchTickets
- * - mapped via buildCanonicalTicketFromRow
- */
-export async function fetchWorklistCanonicalTickets(params?: {
-  symbol?: string;
-  strategy?: string;
-  limit?: number;
-}): Promise<CanonicalTicket[]> {
-  const { symbol, strategy, limit = 50 } = params ?? {};
-
-  const { rows } = await fetchTickets({
-    symbol,
-    strategy,
-    status: 'OPEN',
-    scope: 'actionable',
-    direction: 'ALL',
-    limit,
-    offset: 0,
-  });
-
-  const canonical: CanonicalTicket[] = [];
-  for (const row of rows ?? []) {
-    const ticket = buildCanonicalTicketFromRow(row);
-    if (ticket) canonical.push(ticket);
-  }
-  return canonical;
-}
-
-/**
- * Analytics canonical feed:
- * - pulls historical tickets via /api/tickets
- * - uses the same canonical mapping as Worklist/Tickets
- */
-export async function fetchAnalyticsCanonicalTickets(params: {
-  from: string;
-  to: string;
-  symbol?: string;
-  strategy?: string;
-  limit?: number;
-}): Promise<CanonicalTicket[]> {
-  const { from, to, symbol, strategy, limit = 400 } = params;
-
-  const { rows } = await fetchTickets({
-    from,
-    to,
-    symbol,
-    strategy,
-    status: 'ALL',
-    scope: 'all',
-    direction: 'ALL',
-    limit,
-    offset: 0,
-  });
-
-  const canonical: CanonicalTicket[] = [];
-  for (const row of rows ?? []) {
-    const ticket = buildCanonicalTicketFromRow(row);
-    if (ticket) canonical.push(ticket);
-  }
-  return canonical;
-}
-
-/**
- * Session metrics helpers – used by Worklist V2 & Analytics.
- */
-
-export function makeSessionMetricsKey(
-  symbol?: string | null,
-  sessionDate?: string | null,
-): string {
-  return `${symbol ?? ''}__${sessionDate ?? ''}`;
-}
-
-export async function fetchSessionMetrics(args: {
-  symbol: string;
-  sessionDate: string;
-}): Promise<SessionMetricsDto> {
-  const params = new URLSearchParams();
-  params.set('symbol', args.symbol);
-  params.set('sessionDate', args.sessionDate);
-
-  const url = `/api/session-metrics?${params.toString()}`;
-  return (await fetchJson(url)) as SessionMetricsDto;
-}
-
-/**
- * Simple client-side batch over /api/session-metrics.
- * The backend has its own batch helpers; this stays deliberately dumb
- * and resilient on the UI side.
- */
-export async function fetchSessionMetricsBatch(
-  requests: Array<{ symbol?: string | null; sessionDate?: string | null }>,
-): Promise<Record<string, SessionMetricsDto | null>> {
-  const entries = requests
-    .map((r) => {
-      const symbol = (r.symbol ?? '').trim();
-      const sessionDate = (r.sessionDate ?? '').trim();
-      if (!symbol || !sessionDate) return null;
-      return {
-        key: makeSessionMetricsKey(symbol, sessionDate),
-        symbol,
-        sessionDate,
-      };
-    })
-    .filter(
-      (x): x is { key: string; symbol: string; sessionDate: string } => x !== null,
-    );
-
-  const result: Record<string, SessionMetricsDto | null> = {};
-
-  await Promise.all(
-    entries.map(async ({ key, symbol, sessionDate }) => {
-      if (Object.prototype.hasOwnProperty.call(result, key)) {
-        return;
-      }
-      try {
-        const metrics = await fetchSessionMetrics({ symbol, sessionDate });
-        result[key] = metrics;
-      } catch {
-        result[key] = null;
-      }
-    }),
-  );
-
-  return result;
-}
+echo
+exho
+--- Running dashboard tests (pnpm --filter prism-apex-dashboard test) ---
+# ...

@@ -7,7 +7,6 @@ describe('AlertsPage', () => {
   it('renders the alerts headline and filters', () => {
     render(<Alerts />);
 
-    // Be explicit: the main page heading
     expect(
       screen.getByRole('heading', { name: /Alerts/i })
     ).toBeInTheDocument();
@@ -19,16 +18,13 @@ describe('AlertsPage', () => {
   it('renders at least one critical alert by default (open state)', () => {
     render(<Alerts />);
 
-    // Assert the specific critical alert title is present
     expect(
       screen.getByText(/Authentication error rate spike/i)
     ).toBeInTheDocument();
 
-    // Allow multiple "Critical" labels (option + badge); just require at least one
     const criticalElements = screen.getAllByText(/Critical/i);
     expect(criticalElements.length).toBeGreaterThan(0);
 
-    // Extra belt-and-braces: ensure at least one "Critical" is inside a data row with "Open"
     const rows = screen.getAllByRole('row');
     const criticalOpenRows = rows.filter((row) => {
       const utils = within(row);
@@ -36,6 +32,7 @@ describe('AlertsPage', () => {
       const hasOpen = utils.queryByText(/Open/i);
       return Boolean(hasCritical && hasOpen);
     });
+
     expect(criticalOpenRows.length).toBeGreaterThan(0);
   });
 
@@ -47,7 +44,6 @@ describe('AlertsPage', () => {
 
     expect(severitySelect.value).toBe('warning');
 
-    // After filtering to "warning", the risk guardrail alert should be visible
     expect(
       screen.getByText(/Risk guardrail breach/i)
     ).toBeInTheDocument();

@@ -6,18 +6,18 @@ import React from "react";
 import { Link } from "react-router-dom";
 import "../styles/a3-shell.css";
 
-type ExecutionShellTabKey =
+export type ExecutionShellTabKey =
   | "worklist"
   | "tickets"
   | "markets"
   | "analytics"
-  | "system"
   | "strategy-lab"
+  | "system"
   | "alerts";
 
 interface ExecutionShellProps {
   activeTab: ExecutionShellTabKey;
-  children?: React.ReactNode;
+  children: React.ReactNode;
 }
 
 interface NavItem {
@@ -43,7 +43,7 @@ const NAV_ITEMS: NavItem[] = [
   {
     key: "markets",
     label: "Markets",
-    to: "/markets",
+    to: "/market-data",
     description: "Session overlays & context",
   },
   {
@@ -83,6 +83,7 @@ function formatClock() {
     hour: "2-digit",
     minute: "2-digit",
   });
+
   return { date, time };
 }
 
@@ -91,7 +92,7 @@ const ExecutionShell: React.FC<ExecutionShellProps> = ({ activeTab, children }) 
 
   return (
     <div className="a3-root">
-      <div className="a3-shell" data-active-tab={activeTab}>
+      <div className="a3-shell">
         <aside className="a3-nav">
           <div className="a3-logo-block">
             <div className="a3-logo-mark">⧉</div>
@@ -104,21 +105,23 @@ const ExecutionShell: React.FC<ExecutionShellProps> = ({ activeTab, children }) 
           <nav className="a3-nav-list" aria-label="Primary">
             {NAV_ITEMS.map((item) => {
               const isActive = item.key === activeTab;
+              const className = [
+                "a3-nav-item",
+                isActive ? "a3-nav-item--active" : "",
+              ]
+                .filter(Boolean)
+                .join(" ");
+
               return (
                 <Link
                   key={item.key}
                   to={item.to}
-                  className={[
-                    "a3-nav-item",
-                    isActive ? "a3-nav-item--active" : "",
-                  ]
-                    .filter(Boolean)
-                    .join(" ")}
+                  className={className}
                   aria-current={isActive ? "page" : undefined}
                 >
                   <div className="a3-nav-item-main">
-                    <span className="a3-nav-item-indicator" />
                     <span className="a3-nav-item-label">{item.label}</span>
+                    <span className="a3-nav-item-indicator" />
                   </div>
                   <span className="a3-nav-item-description">
                     {item.description}
@@ -129,15 +132,13 @@ const ExecutionShell: React.FC<ExecutionShellProps> = ({ activeTab, children }) 
           </nav>
 
           <div className="a3-nav-footer">
-            <div className="a3-env-label">Environment</div>
-            <div className="a3-env-pills">
-              <span className="a3-pill a3-pill--sim">SIM</span>
-              <span className="a3-pill">ES</span>
-              <span className="a3-pill">NQ</span>
+            <div className="a3-env-pill">
+              <span className="a3-env-label">ENV</span>
+              <span className="a3-env-value">SIM</span>
             </div>
             <div className="a3-build-meta">
-              <span className="a3-build-label">V2 Phase 3</span>
-              <span className="a3-build-tag">canonical surfaces</span>
+              <span className="a3-build-label">Profile</span>
+              <span className="a3-build-value">V2 A3</span>
             </div>
           </div>
         </aside>
@@ -145,18 +146,27 @@ const ExecutionShell: React.FC<ExecutionShellProps> = ({ activeTab, children }) 
         <div className="a3-main">
           <header className="a3-topbar">
             <div className="a3-topbar-left">
-              <div className="a3-topbar-stack">
-                <div className="a3-topbar-title">Operator Dashboard</div>
-                <div className="a3-topbar-subtitle">
-                  Canonical Worklist, Tickets, Markets, Analytics, Lab, System &amp; Alerts
-                </div>
+              <div>
+                <h1 className="a3-topbar-title">Operator Dashboard</h1>
+                <p className="a3-topbar-subtitle">
+                  Canonical tickets, session metrics &amp; system health
+                </p>
               </div>
             </div>
             <div className="a3-topbar-right">
-              <div className="a3-clock">
-                <span className="a3-clock-date">{date}</span>
-                <span className="a3-clock-separator" />
-                <span className="a3-clock-time">{time}</span>
+              <div className="a3-topbar-status">
+                <div className="a3-topbar-status-row">
+                  <span className="a3-status-pill a3-status-pill--primary">
+                    Live Analytics
+                  </span>
+                  <span className="a3-status-pill a3-status-pill--muted">
+                    Apex Trader Funding · SIM
+                  </span>
+                </div>
+              </div>
+              <div className="a3-clock" aria-label="Session clock">
+                <div className="a3-clock-date">{date}</div>
+                <div className="a3-clock-time">{time}</div>
               </div>
             </div>
           </header>

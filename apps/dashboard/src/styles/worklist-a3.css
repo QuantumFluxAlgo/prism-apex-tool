@@ -366,3 +366,46 @@
 }
 
 /* End of Worklist V2 A3 visuals */
+
+/* === WORKLIST V2 – A3 COCKPIT WIDTH + HEADER CLEANUP OVERRIDES ===
+ * These rules are appended to avoid touching the existing glass theme.
+ * Scope is strictly .worklist-v2-* so other surfaces are unaffected.
+ */
+
+.worklist-v2-root > header p.text-[0\.65rem].uppercase.tracking-[0\.32em].text-slate-400 {
+  display: none;
+}
+
+.worklist-v2-root > .grid {
+  grid-template-columns: minmax(0, 1.8fr) minmax(360px, 1fr);
+  align-items: flex-start;
+  column-gap: 1.25rem;
+}
+
+@media (max-width: 1180px) {
+  .worklist-v2-root > .grid {
+    grid-template-columns: minmax(0, 1fr);
+    row-gap: 1.25rem;
+  }
+}
+
+.worklist-v2-table {
+  overflow-x: auto;
+  overflow-y: auto;
+}
+
+.worklist-v2-table table {
+  min-width: 1040px;
+}
+
+.worklist-v2-details {
+  width: 360px;
+  max-width: 360px;
+}
+
+@media (max-width: 1180px) {
+  .worklist-v2-details {
+    width: 100%;
+    max-width: 100%;
+  }
+}

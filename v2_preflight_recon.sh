@@ -1,71 +1,69 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-echo "=== PRISM APEX – V2 PREFLIGHT RECON (READ-ONLY) ==="
-echo
+echo "=== PRISM APEX – V2 PREFLIGHT RECON ==="
 
-# 1) Confirm we’re in a git repo and show branch + cleanliness
-if git rev-parse --show-toplevel >/dev/null 2>&1; then
-  REPO_ROOT="$(git rev-parse --show-toplevel)"
-  echo "Repo root: $REPO_ROOT"
-else
-  echo "ERROR: Not inside a git repository."
-  exit 1
-fi
-echo
-
-echo "--- Git branch & status ---"
-git rev-parse --abbrev-ref HEAD || true
-echo
-git status -sb || true
-echo
-
-echo "--- Check for Test branch (local & remote) ---"
-echo "Local Test branch:"
-git branch --list Test || true
-echo
-echo "Remote Test branch:"
-git branch -r | grep 'origin/Test' || echo "origin/Test not found" 
-echo
-
-# 2) Docker status
-echo "--- Docker status ---"
+# 1) Docker status
+echo "--- Docker ---"
 if command -v docker >/dev/null 2>&1; then
-  docker info >/dev/null 2>&1 && echo "Docker: RUNNING (docker info ok)" || echo "Docker: INSTALLED but docker info failed (daemon not running?)"
+  if docker info >/dev/null 2>&1; then
+    echo "[OK] Docker daemon is running."
+  else
+    echo "[WARN] Docker installed but 'docker info' failed (daemon not running?)."
+  fi
 else
-  echo "Docker: NOT INSTALLED or not on PATH"
+  echo "[WARN] 'docker' command not found on PATH."
 fi
 echo
 
-# 3) Repo structure – key apps and routes
-cd "$REPO_ROOT"
+# 2) Git repo / branch / cleanliness
+echo "--- Git ---"
+if git rev-parse --git-dir >/dev/null 2>&1; then
+  REPO_ROOT="$(git rev-parse --show-toplevel)"
+  echo "[OK] Git repo detected at: $REPO_ROOT"
+  echo "Current branch: $(git rev-parse --abbrev-ref HEAD)"
+  echo
+  echo "Working tree status (short):"
+  git status --short || true
+  echo
 
-echo "--- apps/ tree (top-level) ---"
-ls -R apps 2>/dev/null || echo "apps/ directory not found"
+  echo "Checking for 'Test' branch (local or remote)..."
+  if git show-ref --verify --quiet refs/heads/Test; then
+    echo "[OK] Local branch 'Test' exists."
+  elif git show-ref --verify --quiet refs/remotes/origin/Test; then
+    echo "[OK] Remote branch 'origin/Test' exists (no local tracking branch)."
+  else
+    echo "[WARN] No local or remote 'Test' branch found."
+  fi
+else
+  echo "[ERROR] Not inside a git repository."
+fi
 echo
 
-echo "--- Dashboard pages ---"
-ls -R apps/dashboard/src/pages 2>/dev/null || echo "apps/dashboard/src/pages not found"
+# 3) Structure: apps and key routes/pages
+echo "--- apps/ (recursive) ---"
+ls -R apps || true
 echo
 
-echo "--- API routes ---"
-ls -R apps/api/src/routes 2>/dev/null || echo "apps/api/src/routes not found"
+echo "--- apps/dashboard/src/pages (recursive) ---"
+ls -R apps/dashboard/src/pages || true
 echo
 
-# 4) Canonical V2 docs metadata
+echo "--- apps/api/src/routes (recursive) ---"
+ls -R apps/api/src/routes || true
+echo
+
+# 4) Canonical doc metadata
 echo "--- Canonical V2 docs (ls -l) ---"
 for f in \
   docs/PRISM_APEX_V2_DASHBOARD_PLAN.md \
   docs/REPO_INDEX_V2.md \
   docs/DOCS_CLASSIFICATION_V2.md
-do
-  if [ -f "$f" ]; then
-    echo "\$ ls -l $f"
-    ls -l "$f"
-  else
-    echo "MISSING: $f"
-  fi
+ do
   echo
-done
+  echo "File: $f"
+  ls -l "$f" 2>/dev/null || echo "[WARN] Missing: $f"
+ done
 
+echo
 echo "=== END PREFLIGHT RECON ==="
