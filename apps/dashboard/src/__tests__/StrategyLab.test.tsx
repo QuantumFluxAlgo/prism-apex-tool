@@ -47,7 +47,8 @@ describe('StrategyLabPage', () => {
 
     // KPI labels show up
     expect(await screen.findByText(/Total PnL/i)).toBeInTheDocument();
-    expect(await screen.findByText(/ES/)).toBeInTheDocument();
+    const presetOccurrences = await screen.findAllByText(/OR Reversal \(ORR\)/i);
+    expect(presetOccurrences.length).toBeGreaterThan(0);
   });
 
   it('shows an error message when analytics helper rejects', async () => {

@@ -68,6 +68,7 @@ VWAP/OR/ATR/regime snapshot.
 Session flags, notes, and risk decision summary.
 No UI-side recalculation of metrics beyond formatting.
 Outcome: selecting a row shows a complete execution context built from canonical + session metrics.
+
  V2.1.5 – Empty/Error/Latency States
 
 Implement explicit A2-styled states for:

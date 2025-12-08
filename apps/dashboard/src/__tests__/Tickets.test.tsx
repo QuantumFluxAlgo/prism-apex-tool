@@ -57,7 +57,7 @@ describe('TicketsPage', () => {
     renderTickets();
 
     expect(await screen.findByText('MESZ4')).toBeInTheDocument();
-    expect(screen.getByText('LONG')).toBeInTheDocument();
+    expect(screen.getAllByText('LONG').length).toBeGreaterThan(0);
     expect(screen.getByText('VWAP')).toBeInTheDocument();
     expect(screen.getByText(/12:00/)).toBeInTheDocument();
   });

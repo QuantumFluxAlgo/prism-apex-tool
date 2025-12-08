@@ -16,27 +16,18 @@ import StatusPage from "./pages/Status";
 import AlertsPage from "./pages/Alerts";
 
 import AppErrorBoundary from "./components/AppErrorBoundary";
-import ExecutionShell from "./layouts/ExecutionShell";
+import ExecutionShell, { type ExecutionShellTabKey } from "./layouts/ExecutionShell";
 
 /*
 ---------------------------------------------------------------------------
-A2 ROUTING MODEL (V2 ONLY)
+A2/A3 ROUTING MODEL (V2 ONLY)
 
-- All primary dashboard views are hosted inside the A2 ExecutionShell
+- All primary dashboard views are hosted inside the V2 ExecutionShell
   with a single source of truth for activeTab.
 - Legacy routes are redirected onto the V2 surfaces so we don't have
   two competing shells or layouts.
 ---------------------------------------------------------------------------
 */
-
-type ExecutionShellTabKey =
-  | "worklist"
-  | "tickets"
-  | "markets"
-  | "analytics"
-  | "system"
-  | "strategy-lab"
-  | "alerts";
 
 function ExecutionRoute({
   tab,
@@ -55,7 +46,7 @@ export default function App() {
         <AppErrorBoundary>
           <BrowserRouter>
             <Routes>
-              {/* Primary A2 tabs */}
+              {/* Primary V2 tabs (A3 shell) */}
               <Route
                 path="/worklist-v2"
                 element={
@@ -130,3 +121,4 @@ export default function App() {
     </ThemeProvider>
   );
 }
+
