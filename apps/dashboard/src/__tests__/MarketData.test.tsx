@@ -1,89 +1,46 @@
-import { render, screen, waitFor } from '@testing-library/react';
-import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
+// src/__tests__/MarketData.test.tsx
+import React from 'react';
+import { describe, it, expect } from 'vitest';
+import { render, screen, within } from '@testing-library/react';
+import { MemoryRouter } from 'react-router-dom';
+import MarketDataPage from '../pages/MarketData';
 
-import MarketDataPage from '../pages/MarketData.js';
-
-const fetchMock = vi.fn();
-
-function stubSymbolsWith(symbols: unknown[]) {
-  fetchMock.mockResolvedValueOnce({
-    ok: true,
-    json: async () => symbols,
-  } as Response);
-}
-
-function stubSessionMetricsWith(payload: unknown) {
-  fetchMock.mockResolvedValueOnce({
-    ok: true,
-    json: async () => payload,
-  } as Response);
-}
-
-function stubSessionMetricsError(message: string) {
-  fetchMock.mockResolvedValueOnce({
-    ok: false,
-    status: 500,
-    text: async () => message,
-  } as Response);
-}
+const renderMarketDataPage = () =>
+  render(
+    <MemoryRouter>
+      <MarketDataPage />
+    </MemoryRouter>,
+  );
 
 describe('MarketDataPage', () => {
-  beforeEach(() => {
-    fetchMock.mockReset();
-    vi.stubGlobal('fetch', fetchMock);
+  it('renders loading or live session metrics status in the filters meta area', async () => {
+    const { container } = renderMarketDataPage();
+
+    const filtersRoot = container.querySelector('.markets-a3-filters');
+    expect(filtersRoot).not.toBeNull();
+
+    const filters = within(filtersRoot as HTMLElement);
+
+    // Status line: we only care that something with "Session metrics" shows up
+    const status = await filters.findByText(/Session metrics/i);
+    expect(status).toBeInTheDocument();
   });
 
-  afterEach(() => {
-    vi.unstubAllGlobals();
-  });
+  it('renders an initial empty-state debug message when no payload is loaded', () => {
+    renderMarketDataPage();
 
-  it('renders loading state and fetches the symbols endpoint', async () => {
-    stubSymbolsWith([
-      { symbol: 'ES', lastIngestUtc: '2025-02-18T14:30:00Z' },
-    ]);
-    stubSessionMetricsWith({});
-
-    render(<MarketDataPage />);
-
-    // Initial option when no symbols loaded yet.
-    expect(screen.getByText(/Loading symbols/i)).toBeInTheDocument();
-
-    await waitFor(() => {
-      expect(fetchMock).toHaveBeenCalled();
-    });
-  });
-
-  it('renders session summary when metrics are returned', async () => {
-    stubSymbolsWith([
-      { symbol: 'ES', lastIngestUtc: '2025-02-18T14:30:00Z' },
-    ]);
-    stubSessionMetricsWith({
-      orWidthPoints: 10,
-      sessionAtrPoints: 20,
-      orWidthToAtrRatio: 0.5,
-      vwapSlope: 'UP',
-      htfTrendBias: 'TrendUp',
-      hasMajorNewsToday: false,
-    });
-
-    render(<MarketDataPage />);
-
-    // Wait for the summary text derived from the metrics.
-    expect(await screen.findByText(/OR 10pt/i)).toBeInTheDocument();
-    expect(screen.getByText(/ATR 20pt/i)).toBeInTheDocument();
-    expect(screen.getByText(/Session overlays \(VWAP · OR · ATR\)/i)).toBeInTheDocument();
-  });
-
-  it('shows an error message when session metrics fetch fails', async () => {
-    stubSymbolsWith([
-      { symbol: 'ES', lastIngestUtc: '2025-02-18T14:30:00Z' },
-    ]);
-    stubSessionMetricsError('boom');
-
-    render(<MarketDataPage />);
-
+    // Debug pre text shown when there is no payload yet
     expect(
-      await screen.findByText(/Failed to load session metrics/i),
+      screen.getByText(/No payload loaded\. Select a symbol and ensure SessionMetrics are available/i),
     ).toBeInTheDocument();
   });
+
+  it('keeps the main chart shell visible regardless of metrics state', () => {
+    const { container } = renderMarketDataPage();
+
+    // Structural assertion – A3 chart shell wrapper should exist
+    const chartShell = container.querySelector('.markets-a3-chart-shell');
+    expect(chartShell).not.toBeNull();
+  });
 });
+

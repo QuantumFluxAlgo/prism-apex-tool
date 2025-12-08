@@ -22,15 +22,25 @@ export type SessionMetricsDto = {
   symbol?: string | null;
   sessionDate?: string | null;
 
+  // Opening Range structure
+  orHigh?: number | null;
+  orLow?: number | null;
   orWidthPoints?: number | null;
+
+  // Volatility / ATR structure
   sessionAtrPoints?: number | null;
   orWidthToAtrRatio?: number | null;
 
+  // Trend / VWAP / regime
   vwapSlope?: string | null;
   htfTrendBias?: string | null;
+  volRegime?: string | null;
 
+  // News / event labelling
   hasMajorNewsToday?: boolean | null;
+  newsLabel?: string | null;
 
+  // Overall quality / skip reasons
   sessionQualityFlag?: string | null;
   sessionSkipReason?: string | null;
 
@@ -639,3 +649,4 @@ export async function fetchSessionMetricsBatch(
 
   return result;
 }
+

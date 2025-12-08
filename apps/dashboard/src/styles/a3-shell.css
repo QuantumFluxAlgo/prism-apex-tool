@@ -536,7 +536,7 @@ body,
  * Widen the main content card so Worklist table columns fit comfortably.
  */
 .a3-main {
-  max-width: 1360px;
+  max-width: 100%;
 }
 
 .a3-content-inner {
@@ -549,7 +549,7 @@ body,
  */
 
 .a3-shell {
-  max-width: 1680px;
+  max-width: 1920px;
 }
 
 .a3-main {

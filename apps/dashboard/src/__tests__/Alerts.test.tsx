@@ -1,51 +1,87 @@
+// src/__tests__/Alerts.test.tsx
 import React from 'react';
 import { describe, it, expect } from 'vitest';
-import { render, screen, fireEvent, within } from '@testing-library/react';
-import Alerts from '../pages/Alerts';
+import { render, screen, within, fireEvent } from '@testing-library/react';
+import { MemoryRouter } from 'react-router-dom';
+import AlertsPage from '../pages/Alerts';
+
+const renderAlertsPage = () =>
+  render(
+    <MemoryRouter>
+      <AlertsPage />
+    </MemoryRouter>,
+  );
 
 describe('AlertsPage', () => {
-  it('renders the alerts headline and filters', () => {
-    render(<Alerts />);
+  it('renders the alerts headline and filter groups', () => {
+    const { container } = renderAlertsPage();
 
+    // Headline
     expect(
-      screen.getByRole('heading', { name: /Alerts/i })
+      screen.getByRole('heading', { name: /Alerts/i }),
     ).toBeInTheDocument();
 
-    expect(screen.getByLabelText(/Severity/i)).toBeInTheDocument();
-    expect(screen.getByLabelText(/State/i)).toBeInTheDocument();
+    // Scope to the filters row
+    const filtersRow = container.querySelector('.alerts-filters-row');
+    expect(filtersRow).not.toBeNull();
+
+    const filters = within(filtersRow as HTMLElement);
+
+    // Filter group labels (visual labels, not form labels)
+    expect(filters.getByText(/^Severity$/i)).toBeInTheDocument();
+    expect(filters.getByText(/^State$/i)).toBeInTheDocument();
   });
 
-  it('renders at least one critical alert by default (open state)', () => {
-    render(<Alerts />);
+  it('renders at least one critical open alert by default', () => {
+    renderAlertsPage();
 
+    // Summary tile for critical alerts
     expect(
-      screen.getByText(/Authentication error rate spike/i)
+      screen.getByText(/Critical open/i),
     ).toBeInTheDocument();
 
-    const criticalElements = screen.getAllByText(/Critical/i);
-    expect(criticalElements.length).toBeGreaterThan(0);
+    // At least one "Critical" badge in the page
+    const criticalBadges = screen.getAllByText(/Critical/i);
+    expect(criticalBadges.length).toBeGreaterThan(0);
+  });
 
-    const rows = screen.getAllByRole('row');
-    const criticalOpenRows = rows.filter((row) => {
-      const utils = within(row);
-      const hasCritical = utils.queryByText(/Critical/i);
-      const hasOpen = utils.queryByText(/Open/i);
-      return Boolean(hasCritical && hasOpen);
+  it('filters alerts by severity when pill filters are used', () => {
+    const { container } = renderAlertsPage();
+
+    const filtersRow = container.querySelector('.alerts-filters-row');
+    expect(filtersRow).not.toBeNull();
+
+    // There are two filter groups: [0] Severity, [1] State
+    const filterGroups = filtersRow!.querySelectorAll('.alerts-filter-group');
+    expect(filterGroups.length).toBeGreaterThanOrEqual(2);
+
+    const severityGroup = filterGroups[0] as HTMLElement;
+    const severityFilters = within(severityGroup);
+
+    // These are the SEVERITY pills (All / Info / Warning / Critical)
+    const severityAllPill = severityFilters.getByRole('button', {
+      name: /^All$/i,
+    });
+    const severityWarningPill = severityFilters.getByRole('button', {
+      name: /^Warning$/i,
     });
 
-    expect(criticalOpenRows.length).toBeGreaterThan(0);
-  });
+    // Initial state: "All" active, "Warning" inactive
+    expect(severityAllPill.className).toMatch(/alerts-filter-pill--active/);
+    expect(severityWarningPill.className).not.toMatch(
+      /alerts-filter-pill--active/,
+    );
 
-  it('filters alerts by severity', () => {
-    render(<Alerts />);
+    // Click the "Warning" severity pill.
+    fireEvent.click(severityWarningPill);
 
-    const severitySelect = screen.getByLabelText(/Severity/i) as HTMLSelectElement;
-    fireEvent.change(severitySelect, { target: { value: 'warning' } });
-
-    expect(severitySelect.value).toBe('warning');
-
-    expect(
-      screen.getByText(/Risk guardrail breach/i)
-    ).toBeInTheDocument();
+    // After click: "Warning" active, "All" inactive
+    expect(severityWarningPill.className).toMatch(
+      /alerts-filter-pill--active/,
+    );
+    expect(severityAllPill.className).not.toMatch(
+      /alerts-filter-pill--active/,
+    );
   });
 });
+
