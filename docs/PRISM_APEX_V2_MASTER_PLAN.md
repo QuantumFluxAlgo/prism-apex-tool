@@ -1,1525 +1,1061 @@
-# PRISM APEX – V2 REPO INDEX  
-**Canonical Architecture & Monorepo Map**  
+# PRISM APEX – V2 MASTER PLAN (A3 DASHBOARD SURFACES)
+
 _Last updated: 2025-12-08_
 
 ---
 
-# 1. Overview
+## 0. Purpose of this document
 
-This document is the **canonical index** for the `prism-apex-tool` monorepo.  
-It is the single source of truth for:
+This document defines the **Prism Apex V2 Operator Dashboard** (A3 surfaces), the **current implementation status**, and the **forward path** to a production-ready A3 UX across all operator surfaces.
 
-- Repository structure  
-- Canonical vs mock modules  
-- Engine, ingest, analytics, and dashboard architecture  
-- File-level mappings for each V2 EPIC  
-- Operational boundaries and runtime contracts  
+It is written for a new engineer + AI assistant so they can:
 
-This file must be updated **in the same PR** as any material code change.
+- See exactly what is **already working (true today)**.
+- Understand the **target A3 UX pattern** for every dashboard.
+- Know which pieces are **deliberately follow-up work**, not accidents.
+- Keep all changes aligned with the **canonical engine / ticket / analytics model**.
 
----
-
-## 1.1 Purpose
-
-Enable any engineer or AI assistant to:
-
-- Understand the **exact structure** of the monorepo  
-- Locate **canonical engine, strategy, ingestion, analytics, and dashboard modules**  
-- Distinguish canonical code from:
-  - **MOCK**
-  - **TEST_FIXTURE**
-  - **LEGACY**
-- Navigate the system to implement or verify V2 features safely  
-- Maintain a consistent understanding of the V2 dashboard system  
+This file, together with `docs/REPO_INDEX_V2.md`, is the **canonical source of truth** for what the V2 dashboard is and where it is going.
 
 ---
 
-## 1.2 Status Flags (Definitions)
+## 1. Product frame (high level)
 
-| Flag | Meaning |
-|------|---------|
-| **CANONICAL** | Production source of truth. Must be used for V2. |
-| **MOCK** | Demo/fallback only; not permitted for production logic. |
-| **TEST_FIXTURE** | Test data or golden states. Never used at runtime. |
-| **LEGACY** | V1/deprecated. Never extended; only removed/cleaned. |
+Prism Apex is an **operator-assisted trading and risk platform**.
 
----
+- It is **not** an auto-trader.
+- The dashboard is a **read-only + ticket surface** over:
 
-## 1.3 High-Level System Summary
+  - Ingest: Yahoo 1m bars and other feeds.
+  - Engine: session metrics, strategy orchestration, guardrails.
+  - Tickets: canonical ticket model (ORR / OSB / VWAP-FT / internal strategies).
+  - Analytics: canonical analytics tickets and PnL views.
 
-Prism Apex comprises four major subsystems:
+### 1.1 Non-negotiables
 
-1. **Engine & Jobs** (strategies, session metrics, risk engine, ticketizer)  
-2. **Fastify API Service** (HTTP/WS interface to engine + state stores)  
-3. **Operator Dashboard (A2/A3 surfaces)**  
-4. **Ingest Pipelines** (Yahoo bars, replay, gapfill)
-
-The monorepo implements:
-
-- Canonical ticket model  
-- Session metrics jobs & store  
-- Strategy orchestration (ORR/OSB/VWAP-FT, etc.)  
-- Risk engine (rules-apex)  
-- Analytics based on canonical analytics ticket feed  
-- Operator dashboards  
-- Consistency, telemetry, and audit subsystems  
+- The dashboard **does not place trades**.
+- Output is **tickets + analytics + telemetry** for a human operator.
+- Safety > cleverness – every surface exists to help an operator make a clear **yes/no** risk decision.
+- All dashboard work must respect the **canonical models** in `@prism-apex/shared` and the API contracts in `apps/api`.
 
 ---
 
-# 2. System Architecture Overview
+## 2. Architecture snapshot (UI side)
 
-The Prism Apex platform forms a **data and decision pipeline**:
+This section describes the **UI topology** and the **canonical building blocks** the V2 dashboard must use.
 
-Market Data (Yahoo 1m bars)
-↓
-Ingest jobs (backfill, gapfill)
-↓
-Session Metrics Engine (OR/ATR/VWAP/regime)
-↓
-Strategies (OSB / ORR / VWAP-FT / custom)
-↓
-Ticketizer (risk sizing, guardrails, R:R checks)
-↓
-Canonical Tickets Store
-↓
-API Service (Fastify)
-↓
-Dashboard (WorklistV2, Tickets, Markets, Analytics, Strategy Lab)
+### 2.1 Key dashboard pages
 
-markdown
-Copy code
+All live dashboard pages are under:
 
-### 2.1 Core Architectural Concepts
+- `apps/dashboard/src/pages`
+- `apps/dashboard/src/layouts/ExecutionShell.tsx`
 
-- **CanonicalTicket** and **CanonicalApprovedTicketView** are the *only* ticket shapes used in V2.
-- A2/A3 dashboard pages use **canonical API routes** via the unified client in `apps/dashboard/src/lib/api.ts`.
-- The **engine + API + dashboard** form one coherent system.
+**Canonical V2 surfaces:**
 
----
+- `WorklistV2.tsx` – V2 operator cockpit (A3 worklist surface).
+- `Tickets.tsx` – canonical ticket history.
+- `MarketData.tsx` – session / markets context cockpit (A3 shell).
+- `Analytics.tsx` – analytics & PnL over canonical analytics tickets.
+- `StrategyLab.tsx` – strategy lab surface, driven by canonical analytics tickets.
+- `Status.tsx` – system status / telemetry.
+- `Alerts.tsx` – alert stream.
+- `Positions.tsx` – positions / exposure snapshot (currently synthetic).
+- `layouts/ExecutionShell.tsx` – global shell (header, env badges, background).
+- `App.tsx` – top-level router and page wiring.
 
-# 3. Monorepo Directory Map (Top-Level)
+**Legacy / non-V2 surfaces** (reference only):
 
-Below is the **top-level map** of major folders.  
-This is exhaustive for all system-critical domains.
-
-prism-apex-tool/
-│
-├── apps/
-│ ├── api/ # Fastify service (CANONICAL)
-│ ├── dashboard/ # Operator UI (CANONICAL)
-│ ├── ingest/ # Batch ingest (CANONICAL)
-│ ├── ingress-yahoo-dev/ # Yahoo dev ingress (CANONICAL)
-│ └── tickets/ # CLI utility (LEGACY/utility)
-│
-├── packages/ # Shared domain libraries (CANONICAL)
-│
-├── types/ # Global TypeScript declarations (CANONICAL)
-│
-├── docs/ # Specs, design system, dashboard plans (CANONICAL)
-│
-├── config/ # Product/session/contract config (CANONICAL)
-│
-├── infra/ # Nginx, systemd, env templates (CANONICAL)
-│
-├── analytics-mock/ # MOCK servers
-├── markets-mock/ # MOCK
-├── tickets-mock/ # MOCK
-├── worklist-mock/ # MOCK
-├── system-mock/ # MOCK
-├── strategy-lab-mock/ # MOCK
-│
-├── scripts/ # Local utilities
-├── tools/ # Developer tools
-├── bin/ # Executables
-│
-└── backups/ / tmp/ / *.bak # LEGACY/backup
-
-markdown
-Copy code
-
----
-
-# 4. Apps (Runtime Services & UIs)
-
-Each app under `apps/` is documented with:
-
-- Purpose  
-- Canonical modules  
-- Key entrypoints  
-- V2 relevance  
-- Domain boundaries  
-
----
-
-# 4.1 `apps/api` – Fastify API Service (**CANONICAL**)
-
-**Path:** `apps/api/`  
-**Purpose:** Primary backend exposing canonical APIs to dashboard and tools.
-
-### Responsibilities
-
-- Ticket endpoints (worklist, analytics, ticket history)
-- Session metrics feed
-- Strategy engine control (read-only)
-- Risk engine updates & audit logging
-- Consistency & telemetry
-- System/status endpoints
-- Operator config
-- Symbols/products/session info
-- Tradovate-facing endpoints (read-only)
-
-### Key Entrypoints
-
-- `src/index.ts` – API bootstrap
-- `src/config/env.ts` – environment loader
-- `src/jobs/*` – engine jobs
-- `src/routes/*` – HTTP routes (see section 8)
-
-### Canonical Domains (`apps/api/src`)
-
-- `routes/` – All Fastify routes (**CANONICAL**)
-- `jobs/` – Strategy, ticketizer, session metrics, telemetry jobs
-- `store/` – In-memory or persistent stores:
-  - `tickets.ts`
-  - `systemAlerts.ts`
-  - `systemTelemetry.ts`
-  - `operatorConfig.ts`
-  - `riskAuditLog.ts`
-- `dto/` – Data transfer objects for engine/strategy/config
-- `util/` – Shared helpers for jobs and routes
-
-### Runtime Contract
-
-Dashboard APIs **must only** call canonical routes.  
-Mocks are not permitted for production flows.
-
-# 4.2 `apps/dashboard` – Operator Dashboard (A2/A3) **CANONICAL**
-
-**Path:** `apps/dashboard/`  
-**Purpose:**  
-This is the **official operator UI** for Prism Apex.  
-All V2 A3 surfaces live here.  
-This is the only frontend that must be used for production workflows.
-
----
-
-## 4.2.1 Responsibilities
-
-- Worklist V2 (execution cockpit)  
-- Tickets (audit & history)  
-- Markets (session context cockpit)  
-- Analytics (R-multiple, PnL, drift analysis)  
-- Strategy Lab (lab vs live configs)  
-- System Status (telemetry)  
-- Alerts (risk/system alerts)  
-- Positions (synthetic positions via canonical tickets)
-
-The dashboard uses:
-
-- **React + Vite**
-- **Shared UI primitives** (A2 design system)
-- **Canonical API wrappers** in `lib/api.ts` and `lib/apiBase.ts`
-- **Canonical hooks** in `hooks/`
-
-No page may implement its own fetch logic; all network traffic must go through `lib/apiBase.ts` → `lib/api.ts`.
-
----
-
-## 4.2.2 Directory Map (Canonical)
-
-apps/dashboard/src/
-│
-├── App.tsx # Top-level SPA router
-├── main.tsx # Vite bootstrap
-│
-├── layouts/
-│ └── ExecutionShell.tsx # A3 global shell (header, env badges, background) — CANONICAL
-│
-├── pages/ # All page-level surfaces
-│ ├── WorklistV2.tsx # CANONICAL operator cockpit
-│ ├── Tickets.tsx # CANONICAL audit surface
-│ ├── MarketData.tsx # CANONICAL markets/session cockpit
-│ ├── Analytics.tsx # CANONICAL analytics
-│ ├── StrategyLab.tsx # CANONICAL lab surface
-│ ├── Status.tsx # CANONICAL system health
-│ ├── Alerts.tsx # CANONICAL alerts stream
-│ ├── Positions.tsx # CANONICAL synthetic positions
-│ └── (legacy V1 pages) # LEGACY — never extended
-│
-├── ui/ # A2 UI primitives (CANONICAL)
-│ ├── Badge.tsx
-│ ├── Button.tsx
-│ ├── Card.tsx
-│ ├── DataTable.tsx
-│ ├── FiltersBar.tsx
-│ ├── Kpi.tsx
-│ ├── Tabs.tsx
-│ ├── Tooltip.tsx
-│ ├── dashboardNavConfig.ts
-│ ├── theme.ts
-│ └── (more UI atoms…)
-│
-├── components/ # Domain-specific composites
-│ ├── WorklistPnLCell.tsx
-│ ├── WorklistPnLColumns.tsx
-│ ├── SystemStatus.tsx
-│ └── (additional small domain components)
-│
-├── hooks/
-│ ├── useWorklistTickets.ts # CANONICAL worklist hook
-│ ├── useTicketsHistory.ts # CANONICAL tickets history hook
-│ └── (future hooks)
-│
-├── lib/
-│ ├── apiBase.ts # API_BASE resolver + tolerant fetchJson — CANONICAL
-│ ├── api.ts # All dashboard API clients — CANONICAL
-│ ├── worklistMock.ts # MOCK fallback for worklist V2
-│ └── (misc libs)
-│
-├── utils/
-│ ├── number.ts # fmtPrice, fmtR, etc.
-│ ├── time.ts # fmtUtc
-│ ├── pnlDisplay.ts # Tested PnL formatting logic
-│ └── (misc utilities)
-│
-├── styles/ # Page-specific A3 styles
-│ ├── analytics-a3.css
-│ ├── markets-a3.css
-│ └── (token-based styles)
-│
-└── tests/ # Vitest suite (CANONICAL)
-
-markdown
-Copy code
-
----
-
-## 4.2.3 Canonical A3 Dashboard Pages
-
-Each V2 page adheres to the A3 surface contract:
-
-- Global header via `ExecutionShell`
-- Page header (title, badges)
-- Filters bar
-- KPI strip (where applicable)
-- Main table or chart surface
-- Detail panel (right or bottom)
-
-### **WorklistV2.tsx** — *Operator Cockpit*  
-**Status:** CANONICAL & COMPLETE (V2.1 delivered)
-
-- Uses `useWorklistTickets`  
-- Live + mock fallback handling  
-- Filters: symbol, strategy, side, risk bucket, score, age  
-- KPI strip  
-- Canonical ticket table  
-- Narrative-rich detail panel  
-
-### **Tickets.tsx** — *Ticket History*  
-**Status:** CANONICAL & COMPLETE (V2.2 delivered)
-
-- Calls `fetchTickets()`  
-- A3 layout without router dependency  
-- Extensive tests ensuring stability  
-- KPI strip + full detail panel  
-
-### **MarketData.tsx** — *Session Context Cockpit*  
-**Status:** CANONICAL (First pass done; deepening required — EPIC V2.2)**
-
-- Symbol selector  
-- Session selector  
-- OR/ATR/VWAP/regime overlays  
-- Detail panel  
-- Uses `fetchSessionMetricsBatch`  
-
-### **Analytics.tsx** — *Canonical Analytics*  
-**Status:** CANONICAL & COMPLETE (A3 Analytics delivered)
-
-- Fetches analytics tickets  
-- Batch session metrics  
-- Summary KPIs  
-- Full details & tickets breakdown  
-
-### **StrategyLab.tsx** — *Lab Surface*  
-**Status:** CANONICAL (Baseline delivered; deepening required)**
-
-- Preset strip  
-- Lab KPIs over analytics feed  
-- Future: config narrative, lab/live comparison  
-
-### **Status.tsx**, **Alerts.tsx**, **Positions.tsx**  
-**Status:** CANONICAL baseline (tests green)  
-**Next:** A3 enrichment and deeper wiring (V2.4)
-
----
-
-## 4.2.4 Dashboard Test Suite (Vitest)
-
-**Path:** `apps/dashboard/src/__tests__/`  
-**Status:**  
-All V2 tests currently **pass** (11/11 files, 28/28 tests).
-
-Tests cover:
-
-- Worklist PnL cell  
-- Worklist columns  
-- Tickets  
-- Analytics  
-- Markets  
-- Alerts  
-- Status  
-- Strategy Lab  
-- Positions  
-- App router  
-- PnL display utilities  
-
-Tests act as the **contract** for A3 behaviour.  
-Breaking tests without updating them is not permitted.
-
----
-
-# 4.3 `apps/ingest` – Yahoo Ingest & Backfill **CANONICAL**
-
-**Purpose:**  
-Provides historical & gap-fill bar ingest for the engine.
-
-### Key Files
-
-- `src/backfill.ts` — historical backfill  
-- `src/gapfill.ts` — gap filling  
-- `src/*` — ingest helpers  
-
-This app is required for realistic analytics & ticketization.
-
----
-
-# 4.4 `apps/ingress-yahoo-dev` – Yahoo Dev Ingress **CANONICAL**
-
-**Purpose:**  
-Local-only service to stream Yahoo bars during development.
-
----
-
-# 4.5 `apps/tickets` – Tickets CLI (LEGACY)
-
-Small CLI utilities for ticket workflows.  
-Not part of V2 UI or canonical engine pipelines.
-
-# 5. Shared Packages (`packages/*`)
-
-The `packages/` directory contains all **shared domain libraries** used across the monorepo.  
-These packages together represent the **core business logic** of Prism Apex V2:
-- Canonical models  
-- Risk engine  
-- Strategy engines  
-- Ticketization  
-- Metrics & analytics  
-- Yahoo data  
-- Rules & guardrails  
-- Internal utilities  
-
-Most packages are **CANONICAL** unless marked as TEST_FIXTURE or LEGACY.
-
-> **Rule:** Frontend and API surfaces must never re-implement domain logic.  
-> They must import from these packages to guarantee correctness and consistency.
-5.1 Overview Table (Canonical / Mock / Test Fixture)
-md
-Copy code
-| Package Name                  | NPM Scope               | Status        | Purpose                                         |
-|------------------------------|--------------------------|---------------|-------------------------------------------------|
-| @prism-apex/accounts         | packages/accounts       | CANONICAL     | Accounts domain + helper logic                  |
-| @prism-apex/analytics        | packages/analytics      | CANONICAL     | Analytics & reporting helpers                   |
-| @prism-apex/audit            | packages/audit          | CANONICAL     | Audit & compliance helpers                      |
-| @prism-apex/clients-tradovate| packages/clients-tradovate | CANONICAL (read-only) | Tradovate integration helpers            |
-| @prism-apex/config           | packages/config         | CANONICAL     | Shared config utils                             |
-| @prism-apex/consistency      | packages/consistency    | CANONICAL     | Consistency checks                              |
-| @prism-apex/data-yahoo       | packages/data-yahoo     | CANONICAL     | Yahoo 1m bar domain                             |
-| @prism-apex/indicators       | packages/indicators     | CANONICAL     | Technical indicators                             |
-| @prism-apex/metrics          | packages/metrics        | CANONICAL     | Session + trade metrics logic                    |
-| @prism-apex/reporting        | packages/reporting      | CANONICAL     | Reporting helpers                                |
-| @prism-apex/risk-state       | packages/risk-state     | CANONICAL     | Risk state machine                               |
-| @prism-apex/rules            | packages/rules          | CANONICAL     | Generic rules engine                              |
-| @prism-apex/rules-apex       | packages/rules-apex     | CANONICAL     | **Apex Risk Engine** & guardrails                |
-| @prism-apex/runtime          | packages/runtime        | CANONICAL     | Runtime/orchestration helpers                    |
-| @prism-apex/sdk              | packages/sdk            | CANONICAL     | Toolkit/SDK abstractions                         |
-| @prism-apex/shared           | packages/shared         | **CANONICAL** | **Shared contracts (CanonicalTicket, etc.)**     |
-| @prism-apex/signals          | packages/signals        | CANONICAL     | Strategy signal definitions                      |
-| @prism-apex/strategies       | packages/strategies     | CANONICAL     | Strategy implementations (VWAP-FT, OSB, etc.)    |
-| @prism-apex/strategy-apx-ddb01 | packages/strategy-apx-ddb01 | CANONICAL | DDB01 variant strategy implementation           |
-| @prism-apex/ticketizer       | packages/ticketizer     | CANONICAL     | Ticket creation engine                           |
-
-| (Tests)                      | packages/*/__tests__    | TEST_FIXTURE  | Unit & integration tests; not used in runtime    |
-5.2 Canonical Package Descriptions
-Below is a detailed, canonical explanation for each domain module.
-
-5.2.1 @prism-apex/shared — Canonical Contracts (CORE)
-Path: packages/shared/
-Status: CANONICAL – SINGLE SOURCE OF TRUTH
-
-This is the most important package for the entire system.
-
-It defines the core contract types used across:
-
-Engine
-
-API
-
-Dashboard
-
-Ticketizer
-
-Analytics
-
-Strategy Lab
-
-Includes:
-CanonicalTicket
-
-CanonicalApprovedTicketView
-
-Strategy event types
-
-Bar/market data types
-
-Time/date/session types
-
-Shared numeric + domain-specific enums
-
-Rule:
-No dashboard, API route, or job may define its own ticket shape.
-Everything must import from @prism-apex/shared.
-
-5.2.2 @prism-apex/rules-apex — Apex Risk Engine (CORE)
-Path: packages/rules-apex
-Status: CANONICAL
-
-Contains all Apex-specific guardrails, including:
-
-Risk sizing logic
-
-Daily loss checks
-
-R:R ratio verification
-
-Stop-loss boundaries
-
-Regime-based rule overrides
-
-Account constraints
-
-Used by:
-
-Engine
-
-Ticketizer
-
-Risk-audit logs
-
-Strategy orchestrator
-
-No logic may be duplicated elsewhere.
-
-5.2.3 @prism-apex/ticketizer — Ticket Creation Engine (CORE)
-Path: packages/ticketizer
-Status: CANONICAL
-
-Responsible for turning strategy signals into:
-
-CanonicalTickets
-
-ApprovedTicketViews
-
-Supporting audit fields
-
-Used by:
-
-Engine jobs (engineRunJob.ts, ticketizer.ts)
-
-API routes for previewing tickets
-
-Strategy backtests
-
-This is the heart of live ticket creation.
-
-5.2.4 @prism-apex/strategies — Strategy Implementations
-Path: packages/strategies/
-Status: CANONICAL
-
-Contains the actual trading strategies:
-
-VWAP First Touch (VWAP-FT)
-
-OSB Breakout
-
-ORR
-
-Additional strategies under development
-
-Each strategy defines:
-
-Inputs
-
-Signal logic
-
-Output contract (shared)
-
-These outputs feed into ticketizer.
-
-5.2.5 @prism-apex/signals — Strategy Signal Definitions
-Contains reusable signal-building utilities.
-
-5.2.6 @prism-apex/analytics — Analytics Domain
-Provides:
-
-PnL aggregation
-
-R-multiple math
-
-Rolling window metrics
-
-Summary computation
-
-Used by Analytics page and Strategy Lab.
-
-5.2.7 @prism-apex/metrics — Session + Trading Metrics
-Contains the logic powering:
-
-Session overlays (OR, ATR)
-
-Vol regime classification
-
-Trend bias
-
-VWAP slope
-
-OR/ATR ratio
-
-Used by:
-
-Engine
-
-API routes
-
-Dashboard (Markets + Analytics)
-
-5.2.8 @prism-apex/data-yahoo — Yahoo Data Utilities
-Responsible for:
-
-Yahoo ingest formats
-
-Bar parsing
-
-Symbol metadata
-
-Gap-detection helpers
-
-Used by ingest jobs and session-metrics jobs.
-
-5.2.9 @prism-apex/audit — Audit Framework
-Risk & engine audit logs.
-
-5.2.10 @prism-apex/risk-state
-Represents risk-state snapshot for an account/session.
-
-5.2.11 @prism-apex/runtime
-Runtime helpers for orchestrators and job managers.
-
-5.2.12 @prism-apex/sdk
-Common utilities, convenience wrappers, and shared code for CLIs.
-
-5.2.13 @prism-apex/config
-Shared config logic (account config, product config, roll schedule, etc.)
-
-5.2.14 @prism-apex/consistency
-Cross-domain consistency-check helpers.
-
-5.2.15 @prism-apex/reporting
-Reporting helpers used across engine + analytics.
-
-5.2.16 @prism-apex/clients-tradovate
-Read-only Tradovate client integration helpers.
-
-Note:
-Prism Apex never places live orders.
-These clients are used for account read-only contexts or offline simulation.
-
-5.3 Test Packages (TEST_FIXTURE)
-Each package may contain:
-
-/tests
-
-/__tests__
-
-These are pure fixtures, mocks, and unit tests.
-
-They must never be imported in production code.
-
-5.4 Rules for Shared Packages
-md
-Copy code
-1. Canonical logic must be in packages, never duplicated in apps.
-2. Dashboard and API must import contracts from @prism-apex/shared.
-3. Ticket logic must always import from @prism-apex/ticketizer.
-4. Strategy logic must always import from @prism-apex/strategies or @prism-apex/signals.
-5. Risk logic must always import from @prism-apex/rules-apex.
-6. If a package changes, update:
-   - REPO_INDEX_V2.md (this file)
-   - PRISM_APEX_V2_DASHBOARD_PLAN.md
-
-# 6. Global Types (`types/*`)
-
-The `types/` directory provides global TypeScript declarations used across the monorepo.
-These definitions ensure consistency between the API, dashboard, ingest jobs, and all
-packages.
-
-> **Status:** CANONICAL
-
-Every file here participates directly in the TypeScript compilation pipeline for all apps/packages.
-
----
-
-## 6.1 Directory Structure
-
-types/
-global/
-apex-types.d.ts
-contracts.d.ts
-env.d.ts
-json.d.ts
-vitest.d.ts
-test/
-globals.d.ts
-
-markdown
-Copy code
-
----
-
-## 6.2 File Descriptions
-
-### **`global/apex-types.d.ts`**
-- Apex-specific shared types used across engine + dashboard.
-- Includes enums, domain-level identifiers, and utility types.
-
-### **`global/contracts.d.ts`**
-- Canonical contract interfaces (aligned with `@prism-apex/shared`).
-- Provides convenience-level global access to shared contracts.
-
-### **`global/env.d.ts`**
-- Declares environment vars for apps (API_BASE, NODE_ENV, ingest settings, etc.).
-
-### **`global/json.d.ts`**
-- JSON typing helpers for deep-typed JSON parsing.
-
-### **`global/vitest.d.ts`**
-- Vitest global test declarations.
-
-### **`test/globals.d.ts`**
-- Test-only globals; required by dashboard + API test suites.
-
-> **Rule:**  
-> Anything runtime-relevant must exist in `@prism-apex/shared`, not only here.  
-> These files exist to support TS ergonomics, not domain logic.
-7. Documentation & Specs (docs/*)
-md
-Copy code
-# 7. Docs & Specs
-
-The `docs/` directory contains **all canonical architecture, design, strategy, and UI documentation**.
-
-> **Status:** CANONICAL — These documents define how Prism Apex V2 must behave.
-
-Any change to domain models, UI, engine, or workflow must be reflected here.
-
----
-
-## 7.1 Key Architecture Docs
-
-- `PRISM_APEX_V2_DASHBOARD_PLAN.md`
-  - Canonical dashboard plan for A3 UI surfaces.
-  - Maintains EPICs, stories, completion criteria.
-  - Defines Worklist V2, Tickets, Markets, Analytics, Strategy Lab, Status, Alerts, Positions.
-
-- `PRISM_APEX_V2_BUILD_AUDIT.md`
-  - Full audit of code decisions, waivers, and rationale.
-
-- `PRISM_APEX_RISK_ENGINE_V2_DESIGN.md`
-  - Canonical risk engine specification.
-
-- `PRISM_APEX_STATE.md` & `.prev`
-  - State machine definitions for engine execution.
-
-- `PRISM_APEX_DATA_MODEL_PHASE1.md`
-  - Data model and contracts overview.
-
-- `PRISM_APEX_DELIVERY_PLAN*.md`
-  - Versioned delivery/roadmap.
-
-- `PRISM_APEX_OPERATOR_SOP.md`
-  - Operator workflow SOP for production incidents.
-
----
-
-## 7.2 UI / Design System Docs (`docs/ui`)
-
-These define the **A2 design system**, which all A3 surfaces adhere to:
-
-- `PRISM_APEX_UI_DESIGN_SYSTEM.md`
-- `specs/worklist.md`
-- `specs/tickets.md`
-- `specs/markets.md`
-- `specs/analytics.md`
-- `specs/strategy-lab.md`
-- `specs/system.md`
-- `specs/ui-components.md`
-- `specs/ui-pages.md`
-
-> **Rule:**  
-> V2 dashboard surfaces must respect these specs unless a deviation is recorded in `PRISM_APEX_V2_BUILD_AUDIT.md`.
-
----
-
-## 7.3 Engine / Strategy Docs
-
-- `PRISM_APEX_VWAP_FT_DESIGN.md`
-- `PRISM_APEX_ORR_V3_DESIGN.md`
-- `PRISM_APEX_OSB_DESIGN.md`
-- Strategy specs mapping directly to `@prism-apex/strategies` implementations.
-8. API Service (apps/api) — Routes & Jobs
-md
-Copy code
-# 8. API Service (apps/api)
-
-The API is the **canonical backend** for:
-
-- Worklist feed
-- Tickets feed
-- Analytics feed
-- Session metrics
-- Alerts
-- System telemetry
-- Engine coordination
-- Strategy orchestration
-- Ticketizer integration
-
-> **Status:** CANONICAL
-
-Every dashboard surface uses these routes.
-
----
-
-## 8.1 Fastify App Entrypoints
-
-- `apps/api/src/index.ts` — Fastify bootstrap
-- `apps/api/src/config/env.ts`
-- `apps/api/src/config/session-flags.ts`
-
----
-
-## 8.2 Canonical Routes (Full List)
-
-These routes form the **official API** consumed by the dashboard and internal tools.
-
-### **Core Data**
-- `/tickets`
-- `/tickets.debug`
-- `/ticket.complete`
-- `/ticketQualityFilters`
-- `/analytics`
-- `/session-metrics`
-- `/symbols` & `/symbols.v2`
-
-### **System & Operations**
-- `/status`
-- `/opsStatus`
-- `/version`
-- `/health`
-- `/health.yahoo`
-
-### **Strategy / Risk / Engine**
-- `/strategies.config`
-- `/strategy-config`
-- `/strategy-engine`
-- `/signals`
-- `/operator-risk`
-- `/operatorSizing`
-- `/dto/*` (data transfer object helpers)
-
-### **Telemetry & Alerts**
-- `/system.alerts`
-- `/system.jobs`
-- `/system.telemetry`
-- `/telemetry`
-
-> **Rule:**  
-> No page in the dashboard may invent its own API endpoints.  
-> Everything must map to one of these canonical ones.
-
----
-
-## 8.3 API Jobs (Engine / Ingest / Metrics / Ticketizer)
-
-**All jobs under `apps/api/src/jobs` are CANONICAL unless marked TEST_FIXTURE.**
-
-### **Session Metrics Jobs**
-- `session-metrics/batch.ts`
-- `session-metrics/runtime.ts`
-- `session-metrics/populate-session-metrics.ts`
-- `session-metrics/service.ts`
-- Golden day fixtures & replay pipeline (TEST_FIXTURE)
-
-### **Strategy / Ticketization Jobs**
-- `strategies.ts`
-- `engineRunJob.ts`
-- `engineReplayRunner.ts`
-- `ticketizer.ts`
-
-### **Ingest / Feed Jobs**
-- `feed.ts`
-- `missingBrackets.ts`
-
-### **Operational Jobs**
-- `dailyLoss.ts`
-- `eodFlat.ts`
-- `consistency.ts`
-- `telemetry.ts`
-
-### **Job Orchestration**
-- `jobManager.ts`
-- `scheduler.ts`
-- `manager.ts`
-
-> **Rule:**  
-> All canonical data consumed by dashboard pages (tickets, metrics, analytics, statuses) ultimately come from these jobs.
-9. Config, Infra & Operational Artifacts
-md
-Copy code
-# 9. Config & Infra
-
-These define the runtime environment for deployment and local development.
-
----
-
-## 9.1 Config (`config/`)
-
-### **CANONICAL runtime configuration**
-
-- `contracts-spec.json` — Definition of supported products/instruments  
-- `products.json` — Product metadata  
-- `roll.json` — Futures roll schedules  
-- `sessions.json` — Trading session calendar
-
-All ingest + engine + metrics logic downstream depends on these.
-
----
-
-## 9.2 Apex Rules
-
-- `apex/rules.json` — Apex account rules for guardrail engine  
-
-Consumed by:
-
-- `@prism-apex/rules-apex`
-- Ticketizer jobs
-- Risk-audit logs
-- Operator-risk API routes
-
----
-
-## 9.3 Infrastructure (`infra/`)
-
-### Deployment & runtime
-
-- `nginx/prism-apex.conf.example` — Nginx proxy config  
-- `systemd/prism-apex.service` — Systemd unit  
-- `systemd/prism-apex.env.example` — Env template  
-- `.env.prod.example` — Production `.env` template  
-
----
-
-## 9.4 Root Documentation & Runbooks
-
-- `README.md`
-- `OPERATIONS.md`
-- `AGENTS.md`
-- `TECH-SPEC.md`
-- `PORTS.md`
-- `TESTING.md`
-- `INTEGRATIONS-TRADOVATE.md`  
-- `CHANGELOG.md`
-- `VERSION`
-
-These are operationally required.
-
-# 10. Mocks, Fixtures & Stub Servers
-
-Mocks exist ONLY for UI prototyping and test determinism.
-They are *not* canonical runtime sources.
-
-> **Status:** MOCK
-
----
-
-## 10.1 Top-Level Mock Servers
-
-These provide HTTP demo endpoints for UI exploration without a backend:
-
-- `analytics-mock/`
-- `markets-mock/`
-- `strategy-lab-mock/`
-- `system-mock/`
-- `tickets-mock/`
-- `worklist-mock/`
-
-Each contains:
-
-- `server.js` – lightweight Express/HTTP server
-- `index.html` – simple dashboard wrapper
-- Sample JSON responses
-
-**Rules:**
-- Must never be used for production logic.
-- Must never be imported into canonical V2 pages.
-- Acceptable for manual UI demos and design validation only.
-
----
-
-## 10.2 Dashboard Mock Generators (`*.sh`)
-
-All scripts under root:
-
-- `generate_worklist_mock.sh`
-- `generate_worklist_market_a2_mock.sh`
-- `generate_analytics_mock.sh`
-- `generate_markets_mock.sh`
-- `generate_tickets_mock.sh`
-- `generate_system_mock.sh`
-- `generate_strategy_lab_mock.sh`
-- `generate_strategy_lab_a2_mock.sh`
-- `generate_prism_apex_full_mock.sh`
-- `generate_prism_apex_spec_mock.sh`
-- `generate_prism_apex_a2_mock.sh`
-- `generate_prism_a2_three_view_mock.sh`
-
-**Rules:**
-- These scripts output example mocks only.
-- Do not treat mock shapes as canonical — canonical shapes live in:
-  - `@prism-apex/shared`
-  - `/apps/api/src/routes/*`
-  - `/apps/api/src/dto/*`
-
----
-
-## 10.3 Test Fixtures
-
-> **Status:** TEST_FIXTURE — Not runtime logic
-
-Examples:
-
-- `apps/api/src/jobs/session-metrics/golden-days/*.json`
-- `packages/shared/src/tickets.fixtures.ts`
-- Dashboard test fixtures under:
-  - `apps/dashboard/src/__tests__/`
-- Package-level tests:
-  - `packages/*/tests`
-  - `packages/*/__tests__`
-
-**Rules:**
-- Fixtures lock expected behaviour.
-- When canonical shapes change, fixtures **must** be updated accordingly.
-11. Legacy & Backups
-md
-Copy code
-# 11. Legacy, Deprecated & Backup Files
-
-These files exist for historical reference only.
-
-> **Status:** LEGACY — Do not extend or modify except during cleanup.
-
----
-
-## 11.1 Dashboard Legacy Pages
-
-These must NOT be used for V2 development:
-
-- `apps/dashboard/src/pages/Worklist.tsx`
-- `Worklist.tsx.bk.*` (timestamped variants)
-- `Worklist.tsx.bak2`
-- `WorklistV2.legacy.tsx`
-- Old prototype pages:
+- `Worklist.tsx` and `Worklist*.bak*` – V1 Worklist variants.
+- Demo/auxiliary surfaces:
   - `DemoPnL.tsx`
   - `Downloads.tsx`
   - `Placeholder.tsx`
-  - `Positions.tsx` (pre-V2 rewrite)
   - `Reports.tsx`
   - `StrategyConfig.tsx`
 
----
-
-## 11.2 Legacy Docs
-
-Files with `.prev` suffix, such as:
-
-- `docs/PRISM_APEX_DELIVERY_PLAN.md.prev`
-- `docs/PRISM_APEX_STATE.md.prev`
-
-These should not be used as authoritative guidance.
+> **Rule:** Only the **V2 pages listed above** are canonical going forward. Legacy pages are for reference and cleanup only.
 
 ---
 
-## 11.3 Legacy Mocks
+### 2.2 Shared UI primitives (stabilised)
 
-Any non-V2 mock server prior to the A2 redesign is considered obsolete.
-12. EPIC ↔ Code Anchor Crosswalk
-(The complete mapping for engineers and AI assistants)
-md
-Copy code
-# 12. EPIC ↔ Code Anchor Mapping
+Shared UI primitives live under:
 
-This turns the entire monorepo into an EPIC-indexed map.
+- `apps/dashboard/src/ui`
+- `apps/dashboard/src/components`
 
-> **Status:** CANONICAL  
-> This crosswalk must be updated any time a route, job, or surface changes.
+As of this plan:
 
----
+#### Atoms / layout
 
-## EPIC 0 — Ingest & Bar Store
+- `ui/Card.tsx`  
+  `Card`, `CardHeader`, `CardBody` for A3 surface framing.
+- `ui/Button.tsx`  
+  Primary/secondary button styles.
+- `ui/Badge.tsx`  
+  Compact label chips (env, modes, statuses, regimes).
+- `ui/Kpi.tsx`  
+  KPI tile (label + value, optional delta).
+- `ui/Tooltip.tsx`  
+  Hover hints.
 
-**Code Anchors:**
+#### Data surfaces
 
-- `apps/ingest/src/backfill.ts`
-- `apps/ingest/src/gapfill.ts`
-- `apps/api/src/jobs/feed.ts`
-- `packages/data-yahoo/*`
+- `ui/DataTable.tsx` – generic typed table abstraction:
 
----
+  - Props: `columns`, `rows`, `rowKey`, `loading`, `emptyMessage`.
+  - **Important:** `rows` must always be an array (empty is fine).
 
-## EPIC 1 — Session Metrics
+- `ui/FiltersBar.tsx` – A2/A3-style compact filter strip used on Worklist, Tickets, Analytics, and other cockpit pages.
 
-**Code Anchors:**
+#### Feature components
 
-- `apps/api/src/jobs/session-metrics/*`
-- `apps/api/src/routes/session-metrics.ts`
-- `apps/api/src/routes/metrics.ts`
-- `packages/metrics/*`
+- `components/WorklistPnLCell.tsx` – visual PnL cell using `Badge` + `Tooltip`.
+- `utils/pnlDisplay.ts` – PnL formatting logic (unit-tested).
 
----
+**Rules:**
 
-## EPIC 2 — Strategies & Ticketizer
+- These primitives are **canonical** for V2 dashboard work.
+- Page-local bespoke CSS blobs are **discouraged** unless there is a strong, documented reason.
+- All V2 pages must use the A2/A3 tokens defined in:
 
-**Code Anchors:**
-
-- `packages/strategies/*`
-- `packages/signals/*`
-- `packages/ticketizer/*`
-- `apps/api/src/jobs/strategies.ts`
-- `apps/api/src/jobs/engineRunJob.ts`
-- `apps/api/src/jobs/engineReplayRunner.ts`
-- `apps/api/src/jobs/ticketizer.ts`
-- `apps/api/src/store/tickets.ts`
+  - `docs/ui/PRISM_APEX_UI_DESIGN_SYSTEM.md`
+  - `apps/dashboard/src/index.css`
 
 ---
 
-## EPIC 3 — Risk Engine & Guardrails
+### 2.3 API helper layer (dashboard side)
 
-**Code Anchors:**
+API helpers live under:
 
-- `packages/rules-apex/*`
-- `packages/rules/*`
-- `packages/risk-state/*`
-- `apps/api/src/routes/dto/operatorRisk.ts`
-- `apps/api/src/routes/dto/riskDecisionDto.ts`
-- `apps/api/src/store/riskAuditLog.ts`
+- `apps/dashboard/src/lib/apiBase.ts`
+- `apps/dashboard/src/lib/api.ts`
+
+#### `apiBase.ts` (canonical HTTP base)
+
+- Resolves `API_BASE` from:
+
+  - `VITE_API_BASE`
+  - `VITE_API_URL`
+  - `VITE_BACKEND_BASE`
+
+- `resolveApiUrl()` – handles relative vs absolute URLs safely.
+- `fetchJson()` – tolerant, normalised `fetch` wrapper:
+
+  - Centralised error handling.
+  - Normalised JSON/text parsing.
+  - **Single entrypoint** for HTTP on the dashboard.
+
+#### `api.ts` (canonical dashboard API helpers)
+
+- `fetchTickets(...)` – canonical ticket history (`/api/tickets`).
+- `buildCanonicalTicketFromRow(...)` – maps `TicketRow -> CanonicalTicket`.
+- `fetchWorklistCanonicalTickets(...)` – constrained worklist feed wrapper (`/api/worklist`).
+- `fetchAnalyticsCanonicalTickets(...)` – canonical analytics ticket feed.
+- `fetchSessionMetrics(...)` / `fetchSessionMetricsBatch(...)` – session metrics helpers for Worklist, Analytics, and (future) Markets.
+- `makeSessionMetricsKey(symbol, sessionDateUtc)` – stable keying for metrics maps.
+
+> **Rule:** These helpers are the **only allowed HTTP surface** for V2 dashboard code. Any new API integration must go through `apiBase.ts` + `api.ts`.
 
 ---
 
-## EPIC 4 — Worklist V2
+## 3. Current implementation status (branch snapshot)
 
-**Code Anchors:**
+This section describes the **current true state** of the V2 dashboard on the active branch.
 
-- `apps/api/src/routes/tickets.ts` (worklist queries)
-- `apps/api/src/routes/ticketQualityFilters.ts`
+### 3.1 Test status
+
+- **Vitest (dashboard suite):**
+  - **11/11 test files, 28/28 tests passing.**
+
+Coverage includes:
+
+- Page-level tests:
+  - `Alerts`
+  - `Analytics`
+  - `App`
+  - `MarketData`
+  - `Positions`
+  - `Status`
+  - `StrategyLab`
+  - `Tickets`
+- Component / utility tests:
+  - `WorklistPnLCell`
+  - `WorklistPnLColumns`
+  - `pnlDisplay`
+
+**Implications:**
+
+- All canonical V2 surfaces **render without import errors**.
+- Core behaviours such as loading/empty/error states and key copy are **guarded by tests**.
+
+---
+
+### 3.2 Shared imports & wiring
+
+Verified as working and used in the current branch:
+
+- UI atoms:
+
+  - `Card`
+  - `Badge`
+  - `Button`
+  - `Kpi`
+  - `DataTable`
+  - `FiltersBar`
+  - `Tooltip`
+
+- Data hooks / helpers:
+
+  - `useWorklistTickets` – worklist hook over `/api/worklist` with mock fallback.
+  - `fetchTickets`, `buildCanonicalTicketFromRow`.
+  - `fetchAnalyticsCanonicalTickets`.
+  - `fetchSessionMetrics`, `fetchSessionMetricsBatch`.
+  - `makeSessionMetricsKey`.
+
+- Page components:
+
+  - `WorklistV2`
+  - `Tickets`
+  - `MarketData`
+  - `Analytics`
+  - `StrategyLab`
+  - `Status`
+  - `Alerts`
+  - `Positions`
+
+There are **no known broken imports** or obvious wiring gaps in the canonical V2 pages.
+
+---
+
+### 3.3 Worklist / WorklistV2
+
+**Location**
+
 - `apps/dashboard/src/pages/WorklistV2.tsx`
 - `apps/dashboard/src/hooks/useWorklistTickets.ts`
-- `apps/dashboard/src/ui/DataTable.tsx`
-- `apps/dashboard/src/ui/FiltersBar.tsx`
-- `apps/dashboard/src/ui/Card.tsx`
-- `apps/dashboard/src/ui/Badge.tsx`
-- `apps/dashboard/src/lib/api.ts`
-- `worklist-mock/` (**MOCK fallback only**)
+- `apps/dashboard/src/lib/worklistMock.ts`
+
+#### Current state (TRUE)
+
+- `WorklistV2.tsx` is the **canonical V2 operator cockpit** for live signals.
+- Uses `useWorklistTickets` as the **single worklist data hook**:
+
+  - Primary source: engine-backed `GET /api/worklist`.
+  - Tolerant of payload shapes:
+    - `{ tickets: [...] }`
+    - `{ worklist: [...] }`
+    - bare `[...]`.
+  - Fallback: `getWorklistV2CanonicalTickets()` mock when:
+    - Engine is offline.
+    - Payload shape is invalid.
+    - No tickets are returned for the current view.
+
+- Layout (A3 cockpit pattern):
+
+  - A3 header under `ExecutionShell`:
+    - Title “Worklist”.
+    - Environment badges (e.g. SIM) and explicit read-only copy.
+  - Filter strip:
+    - Symbol, strategy, side, risk bucket, min score, max age, text search, reset.
+  - KPI strip:
+    - Ticket count.
+    - Average score.
+    - Risk bucket breakdown.
+    - Latest ticket summary.
+  - Main table:
+    - Ticket ID, symbol, strategy, side, score, risk, PnL (ticks), age, created-at.
+    - PnL columns use `WorklistPnLCell` + `pnlDisplay` utilities.
+  - Details panel:
+    - Ticket identity chips.
+    - Core metrics, risk context.
+    - Operator notes.
+    - Explicit “read-only / guardrails live in engine” messaging.
+
+- Testing:
+
+  - `WorklistPnLCell.test.tsx` and `WorklistPnLColumns.test.tsx` both **green**.
+  - PnL formatting is covered by `pnlDisplay.test.ts`.
+
+#### Where we need to be (TARGET)
+
+- API-backed filtering and pagination (push semantics into `/api/worklist`).
+- Strategy-specific narratives (ORR / OSB / VWAP-FT) in the details panel.
+- Full A3 visual QA against A2 mocks:
+  - Spacing, typography, chip styles.
+  - Table header visibility and alignment.
+  - Consistent token usage.
 
 ---
 
-## EPIC 5 — Tickets / Audit Trail
+### 3.4 Tickets
 
-**Code Anchors:**
+**Location**
 
-- `apps/api/src/routes/tickets.ts`
 - `apps/dashboard/src/pages/Tickets.tsx`
-- `apps/dashboard/src/lib/api.ts` (`fetchTickets`, mapping)
-- `apps/dashboard/src/hooks/useTicketsHistory.ts`
+- `apps/dashboard/src/lib/api.ts`
+
+#### Current state (TRUE)
+
+- Tickets is an A3-style **ticket history / audit surface**.
+- Uses `fetchTickets(...)` + `buildCanonicalTicketFromRow(...)` from `lib/api.ts`.
+
+**Data path:**
+
+- `GET /api/tickets` with standard filters:
+
+  - `symbol`
+  - `strategy`
+  - `status`
+  - `direction`
+  - `scope`
+  - `limit`
+
+**Layout:**
+
+- Header:
+
+  - Title “Tickets”.
+  - Badges:
+    - `Read-only ticket history`
+    - `Backed by /api/tickets`
+
+- Filter strip:
+
+  - Symbol
+  - Strategy
+  - Side
+  - Status
+  - Free-text search
+
+- KPI strip:
+
+  - Ticket count (post-filter).
+  - LONG/SHORT split.
+  - Average R multiple.
+  - Latest ticket ID.
+
+- Main table:
+
+  - Ticket ID
+  - Symbol
+  - Strategy
+  - Side
+  - Entry / stop / target
+  - R multiple
+  - Created-at (UTC)
+
+- Detail panel:
+
+  - Chips for: ticket ID, symbol, strategy, side, status.
+  - Grids for: entry/stop/target, R multiple, PnL amount, created-at.
+  - Read-only disclaimer: routing and guardrails live in engine/back office.
+
+**Testing:**
+
+- `Tickets.test.tsx` asserts:
+
+  - Loading state.
+  - Happy-path data render.
+  - Empty state.
+  - Error state.
+  - Core copy and structure remain stable.
+
+#### Where we need to be (TARGET)
+
+- More advanced time windows (session / week / month).
+- Clear scopes (live session, archive, lab).
+- Richer operator-level analytics signals:
+  - Ticket error codes.
+  - Guardrail reasons.
+  - Risk bucket breakdowns.
 
 ---
 
-## EPIC 6 — Markets & Overlays
+### 3.5 Analytics
 
-**Code Anchors:**
+**Location**
 
-- `apps/api/src/routes/session-metrics.ts`
-- `apps/api/src/routes/metrics.ts`
-- `apps/api/src/routes/symbols.ts` / `symbols.v2.ts`
+- `apps/dashboard/src/pages/Analytics.tsx`
+- `apps/dashboard/src/lib/api.ts`
+
+#### Current state (TRUE)
+
+- Analytics is an **A3 analytics cockpit over canonical analytics tickets**.
+
+**Data sources:**
+
+- `fetchAnalyticsCanonicalTickets(...)`:
+
+  - Pulls canonical analytics tickets with:
+    - `from`, `to` (ISO dates).
+    - Optional `symbol`.
+    - Optional `strategy`.
+    - `limit`.
+
+- `fetchSessionMetricsBatch(...)` + `makeSessionMetricsKey(...)`:
+
+  - Overlay session metrics per ticket (OR/ATR/VWAP/trend/regime).
+
+- `getWorklistV2CanonicalTickets()`:
+
+  - Safe fallback when analytics feed is empty/unavailable.
+
+**Behaviour:**
+
+- Time-window presets:
+
+  - `'7D'`, `'30D'`, `'90D'`, `'YTD'` mapped to `{ from, to }` ISO ranges.
+
+- Filters:
+
+  - Symbol: `ALL` + discovered symbols from sample.
+  - Strategy: `ALL` + discovered `strategyId` values.
+  - Side: `ALL / BUY / SELL`.
+  - Status: `ALL / OPEN / COMPLETED / CANCELLED`.
+  - Min R multiple: `ANY / 0 / 1 / 2`.
+  - Free-text search across:
+    - Ticket fields.
+    - Context labels.
+    - Session-metrics derived flags.
+
+- Sample summary (AnalyticsSummary):
+
+  - Total tickets in filtered sample.
+  - Aggregated risk.
+  - Realised PnL.
+  - Average planned R.
+  - Average realised R.
+  - Expectancy R.
+  - Win rate (%).
+  - Best R, worst R.
+  - Average duration (minutes) between created/completed.
+
+- Table (A3 row-card pattern):
+
+  - **Ticket** card:
+    - Ticket ID, symbol, strategy, side, status.
+    - Created/completed timestamps (UTC).
+  - **Risk / PnL** card:
+    - Total risk in currency.
+    - Planned vs realised R multiple.
+    - Realised PnL in currency.
+    - Badge tone driven by win/loss/flat classification.
+  - **Duration** card:
+    - Time-in-trade in minutes.
+  - **Session Context** card:
+    - Summary string built from OR width, ATR, VWAP slope, trend bias, news flag.
+    - Regime chips (volatility, session flag, skip reason, news).
+
+- Detail panel:
+
+  - Ticket summary:
+    - ID, symbol, side, strategy, status, timestamps.
+  - Risk & PnL:
+    - Contracts, per-contract risk, total risk, expected reward.
+    - Planned and realised R.
+    - Realised PnL.
+  - Session metrics:
+    - OR high/low/width.
+    - Session ATR points.
+    - VWAP slope.
+    - Trend bias.
+    - Regime.
+    - Session quality flag / skip reason.
+    - News label or “None”.
+  - Notes & context:
+    - Context regime, ATR bucket, OR type, notes text.
+
+**Testing:**
+
+- `Analytics.test.tsx` ensures:
+
+  - Page shell renders correctly.
+  - Analytics helper is invoked as expected.
+  - Behaviour remains wired and stable.
+
+#### Where we need to be (TARGET)
+
+- Regime and session pivots:
+
+  - Pivots by symbol, strategy, volatility regime, session regime.
+
+- Visualisations:
+
+  - R-distribution.
+  - Expectancy over time.
+  - Session-level metrics trends (charts kept stable for tests).
+
+- Cross-linking:
+
+  - Drilldown pathways into Worklist/Tickets for the same symbol/strategy/session.
+
+---
+
+### 3.6 Markets (Session / Market Context)
+
+**Location**
+
 - `apps/dashboard/src/pages/MarketData.tsx`
 
+#### Current state (TRUE)
+
+- `MarketData.tsx` is an A3 **Session Context** cockpit with a **structurally correct shell**.
+
+**Shell & copy:**
+
+- Title: **“Session Context”**.
+- Subheading text explicitly mentioning:
+  - “Price overlays, OR / ATR footprint, VWAP slope, and regime flags”.
+
+**Filters row (`.markets-a3-filters`):**
+
+- Accessible **Symbol** combobox:
+
+  - Currently a placeholder with a single `No symbols` option.
+
+- Non-accessible **Session** selector:
+
+  - Present for layout, hidden from accessibility tree.
+
+- Overlay toggles:
+
+  - Buttons: “OR band”, “VWAP trace”, “ATR marker”.
+
+**Main panel:**
+
+- Chart/table shell with class `.markets-a3-chart-shell`.
+- Debug message:
+
+  - “No payload loaded. Select a symbol and ensure SessionMetrics are available before relying on this view.”
+
+- Table placeholder:
+
+  - Columns: Time, Side, Entry, Stop, Target, R:R, PnL (R), Status.
+  - Single row instructing:
+    - “Select a symbol and session to view tickets.”
+
+**Detail panel:**
+
+- Header: “Session Details”.
+- Copy describing OR/ATR, VWAP, trend, regime, and news flags.
+- Placeholder card instructing the operator to select a symbol/session.
+
+**Reality:**
+
+- Page is currently **synthetic**:
+
+  - No live call to `fetchSessionMetricsBatch(...)` in this surface.
+  - Designed to satisfy tests and layout requirements, not full metrics yet.
+
+**Testing:**
+
+- `MarketData.test.tsx` validates:
+
+  - Page headline.
+  - Filters row + overlay toggles.
+  - Presence of `.markets-a3-chart-shell` and debug copy.
+
+#### Where we need to be (TARGET)
+
+- Replace synthetic state with real session metrics:
+
+  - Use `fetchSessionMetricsBatch(...)` and `session-metrics` routes.
+  - Add curated symbol set (ES/NQ/CL/YM) based on configs.
+
+- Per-symbol cards:
+
+  - Quality flag, volatility regime, trend bias.
+  - OR high/low/width, ATR points, OR/ATR ratio.
+  - Basic news flags (major event vs none).
+
+- Detail panel:
+
+  - Full OR and ATR metrics.
+  - VWAP slope.
+  - Trend bias.
+  - Volatility regime.
+  - Session flags and skip reasons.
+  - Clear “read-only guardrail context” narrative.
+
+- Cross-linking:
+
+  - Jump from Markets to Worklist/Tickets filtered by symbol/session.
+
 ---
 
-## EPIC 7 — Reports / Analytics
+### 3.7 Strategy Lab, Status, Alerts, Positions
 
-**Code Anchors:**
+#### Strategy Lab
 
-- `apps/api/src/routes/analytics.ts`
-- `apps/api/src/routes/export.ts`
-- `apps/dashboard/src/pages/Analytics.tsx`
-- `apps/dashboard/src/lib/api.ts` (`fetchAnalyticsCanonicalTickets`, `fetchSessionMetricsBatch`)
+**Location**
 
----
-
-## EPIC 8 — Strategy Lab
-
-**Code Anchors:**
-
-- `apps/api/src/routes/strategy-config.ts`
-- `apps/api/src/routes/strategies.config.ts`
 - `apps/dashboard/src/pages/StrategyLab.tsx`
 
+**Current (TRUE):**
+
+- Uses canonical analytics helper to drive **Lab KPIs**.
+- Renders:
+
+  - Strategy preset strip (e.g. ORR / OSB / VWAP-FT).
+  - Mode toggle between lab vs live focus.
+  - Lab KPIs derived from analytics tickets.
+
+- Tests:
+
+  - `StrategyLab.test.tsx` covers:
+    - Loading state.
+    - Helper invocation.
+    - Basic KPI rendering.
+
+**Target:**
+
+- Per-ticket analytics table for the selected lab preset.
+- “Config snapshot” panel describing:
+
+  - Risk per trade.
+  - Guardrails.
+  - Expected behaviour by regime.
+
+- Lab vs live comparison view:
+
+  - Toggle or side-by-side.
+
 ---
 
-## EPIC 9 — System Health / Status
+#### Status
 
-**Code Anchors:**
+**Location**
 
-- `apps/api/src/routes/status.ts`
-- `apps/api/src/routes/system.alerts.ts`
-- `apps/api/src/routes/system.jobs.ts`
-- `apps/api/src/routes/system.telemetry.ts`
 - `apps/dashboard/src/pages/Status.tsx`
-- `apps/dashboard/src/components/SystemStatus.tsx`
+
+**Current (TRUE):**
+
+- A3-style **System Status** cockpit.
+- KPI tiles summarising:
+
+  - Healthy components.
+  - Degraded components.
+  - Down components.
+
+- Main table:
+
+  - Category (engine/external/infra/etc.).
+  - Name.
+  - Status.
+  - Details.
+  - Last updated timestamp.
+
+- Backed by **synthetic but realistic** merged status data sufficient for tests and operator overview.
+
+- Tests:
+
+  - `Status.test.tsx` validates:
+    - Headline “System Status”.
+    - Presence of core tiles for engine and external dependencies.
+    - Healthy components summary.
+
+**Target:**
+
+- Canonical wiring to:
+
+  - `/api/status`
+  - `/api/system.jobs`
+  - `/api/system.telemetry`
+
+- Clear mapping of:
+
+  - Jobs.
+  - Queues.
+  - External APIs.
+  - Infra health.
+
+- Strong operator copy for **what to do** when parts degrade.
 
 ---
 
-## EPIC 10 — V2 Polish & Cleanup
+#### Alerts
 
-**Code Anchors:**
+**Location**
 
-- `docs/PRISM_APEX_V2_DASHBOARD_PLAN.md`
-- `docs/REPO_INDEX_V2.md`
-- Legacy / backup pruning
-- Removal of mock servers after V2 stabilisation
-13. Maintenance Rules
-md
-Copy code
-# 13. Maintenance Rules
+- `apps/dashboard/src/pages/Alerts.tsx`
 
-These rules are strict. Violating them destabilises the system.
+**Current (TRUE):**
 
----
+- A3 **Alerts cockpit** using a **synthetic but realistic in-memory feed**.
 
-## 13.1 Canonical-Only Rule
+**Alert model:**
 
-Any change to:
+- Severity:
 
-- A dashboard page  
-- An API route  
-- A canonical DTO  
-- A job  
+  - `info`
+  - `warning`
+  - `critical`
 
-**must** be reflected in:
+- State:
 
-- This file (`REPO_INDEX_V2.md`)
-- `PRISM_APEX_V2_DASHBOARD_PLAN.md`
-- Relevant UI/engine specs
+  - `open`
+  - `acknowledged`
+  - `cleared`
 
----
+- Source:
 
-## 13.2 Mock Isolation Rule
+  - `risk`
+  - `system`
+  - `engine`
+  - `infra`
+  - `external`
 
-Mocks must never drive real functionality.
+**Layout:**
 
-- If a page requires data but engine/API is not ready:
-  - Use canonical fallback mocks (`lib/*Mock.ts`), not top-level mock servers.
+- Header:
 
----
+  - Title “Alerts”.
+  - Badges:
+    - `Critical alerts present` / `No critical alerts`.
+    - `Synthetic · Read-only`.
 
-## 13.3 Test Preservation Rule
+- KPI tiles:
 
-All existing Vitest files must stay green.
+  - Open alerts.
+  - Critical open alerts.
+  - Alerts “in workflow” (acknowledged).
 
-If behaviour changes:
+- Filters row (`.alerts-filters-row`):
 
-- Update tests accordingly
-- Or add new tests
+  - Two filter groups (`.alerts-filter-group`):
+    - Severity pills.
+    - State pills.
+  - Active pills use:
+    - `alerts-filter-pill alerts-filter-pill--active`.
 
----
+- Table:
 
-## 13.4 DTO Consistency Rule
+  - Columns:
+    - Created.
+    - Severity (badge).
+    - State.
+    - Source.
+    - Title.
+    - Message.
 
-DTO contracts live in:
+**Target:**
 
-- `@prism-apex/shared`
-- `apps/api/src/dto/*`
-
-These are the ONLY sources of truth.
-
----
-
-## 13.5 Page Pattern Rule (A3 Pattern)
-
-Every dashboard page must follow:
-
-1. Global shell (`ExecutionShell`)
-2. Page header
-3. Filters bar
-4. KPI strip (where applicable)
-5. Main data table or panel
-6. Detail panel
-
-All using `ui/` primitives.
+- Replace synthetic seed with canonical alerts from `/api/system.alerts`.
+- Align severity policy with the risk engine & system telemetry.
+- Dedicated copy and filtering for account/session-level incidents.
 
 ---
 
-## 13.6 Documentation Sync Rule
+#### Positions
 
-Any commit that changes architecture or behaviour must update both:
+**Location**
 
-- `PRISM_APEX_V2_DASHBOARD_PLAN.md`
-- `REPO_INDEX_V2.md`
+- `apps/dashboard/src/pages/Positions.tsx`
 
-Both must be in the same PR.
-14. Final Notes for Future Engineers
-md
-Copy code
-# 14. Final Notes for Engineers & AI Assistants
+**Current (TRUE):**
 
-- Do not reinvent data flows.
-- Always inspect the existing file before modifying.
-- Confirm routes & DTOs via Codex Terminal (`grep`, `rg`, `fd`, etc.).
-- Use shared UI components — do not create bespoke variations.
-- Keep A2 tokens consistent across pages.
-- Prefer refactor over wholesale rewrite.
-- Safety > cleverness.
-- When unsure: consult the EPIC ↔ Code Anchor section.
+- A3 **Positions** surface with a **synthetic but realistic placeholder implementation**.
 
-This file is the source of truth.
+**Behaviour:**
 
-# 15. Canonicality Audit (Cross-Check Against Dashboard Plan)
+- Initial placeholder:
 
-This section confirms the rewritten REPO_INDEX_V2.md is internally consistent and aligned with:
+  - A card with literal text **“Loading…”** followed by:
+    - “Fetching synthetic positions from ticket history.”
+  - Tests rely on this exact `Loading…` text.
 
-- `PRISM_APEX_V2_DASHBOARD_PLAN.md`
-- Current canonical code under `apps/api` and `apps/dashboard`
-- Canonical shared types in `@prism-apex/shared`
+- KPI strip:
 
-This audit is maintained by the expert panel.
+  - Active positions.
+  - Symbols active.
+  - Contracts (synthetic).
+  - Unrealised PnL (currently flagged as requiring broker).
 
----
+  All currently show `—` because live broker integration is not wired.
 
-## 15.1 Canonical Surfaces
+- Main table:
 
-**Canonical dashboard pages (7 total):**
+  - Columns:
+    - Symbol.
+    - Side.
+    - Contracts.
+    - Sample ticket.
+    - Last updated.
+    - Notes.
+  - Placeholder row with text:
+    - “No synthetic positions available. Either there are no open tickets in the recent window, or the engine is not emitting canonical ticket status yet.”
 
-| Surface | File | Canonical | Notes |
-|--------|------|-----------|-------|
-| Worklist V2 | `pages/WorklistV2.tsx` | ✅ | Correctly wired to `/api/worklist` with fallback. |
-| Tickets | `pages/Tickets.tsx` | ✅ | Pure A3 cockpit using canonical ticket feed. |
-| Market Data | `pages/MarketData.tsx` | ✅ | Uses session metrics batch + symbol meta. |
-| Analytics | `pages/Analytics.tsx` | ✅ | Uses canonical analytics ticket feed + session overlays. |
-| Strategy Lab | `pages/StrategyLab.tsx` | ✅ | Lab semantics over canonical analytics feed. |
-| Status | `pages/Status.tsx` | ✅ | System telemetry + jobs + alerts via unified view. |
-| Alerts | `pages/Alerts.tsx` | ✅ | Severity/state filtering, canonical future extension expected. |
-| Positions | `pages/Positions.tsx` | ⚠ Placeholder | Currently synthetic. Canonical FE surface, non-canonical data. |
+- Tests:
 
-**Conclusion:**  
-All pages listed in the dashboard plan as canonical are correctly represented in the repo index.
+  - `Positions.test.tsx` validates:
+    - Presence of the `Loading…` placeholder.
+    - “Active positions” KPI text.
 
----
+**Target:**
 
-## 15.2 Canonical Data Sources
+- Short term:
 
-Every canonical dashboard surface must rely on canonical API routes.
+  - Synthetic positions derived from ticket history:
+    - Aggregate non-completed tickets by symbol/side.
+    - Derive synthetic exposure and sample tickets.
 
-Cross-check:
+- Medium term (post Tradovate integration):
 
-### ✔ Worklist → `/api/worklist`
-Matches repo code. Fallback mock allowed.
+  - Broker-backed positions:
+    - Reconciled positions.
+    - Live unrealised PnL.
+    - Risk buckets / guardrails.
 
-### ✔ Tickets → `/api/tickets`
-Matches.
+- Detail panel:
 
-### ✔ Analytics → `/api/tickets` with analytics filters
-Matches.
-
-### ✔ Session Metrics → `/api/session-metrics`
-Matches.
-
-### ✔ Market Data → `/api/session-metrics`, `/api/symbols`
-Matches.
-
-### ✔ Status → `/api/status`, `/api/system.jobs`, `/api/system.alerts`, `/api/system.telemetry`
-Matches dashboard implementation.
-
-### ✔ Alerts → `/api/system.alerts`
-Matches.
-
-### ✔ Positions → (Not implemented canonically yet)
-Repo index flags this correctly as non-canonical.
-
-**Conclusion:**  
-Canonicality is preserved—no contradiction exists between the plan and implementation.
+  - Per-symbol exposure.
+  - Session context and risk guardrails.
+  - Alignment with Apex account rules.
 
 ---
 
-## 15.3 Canonical DTO Verification
+## 4. Epics and stories (Option C approach)
 
-**Canonical DTOs live in:**
+We are explicitly following **Option C**:
 
-- `@prism-apex/shared/src/contracts.ts`
-- `apps/api/src/dto/*`  
-- `apps/api/src/routes/dto/*`
+> Ship **minimal but real** surfaces now, then iterate into richer features.
 
-Cross-check:
-
-| DTO | Status | Notes |
-|------|---------|--------|
-| `CanonicalTicket` | Canonical | Used by Worklist, Tickets, Analytics. |
-| `CanonicalApprovedTicketView` | Canonical | Used for ticketization and audit surfaces. |
-| `SessionMetricsDto` | Canonical | Used by Worklist, Analytics, Market Data. |
-| `RiskDecisionDto` | Canonical | Used in API risk surfaces. |
-| Strategy config DTOs | Canonical | Used in Strategy Lab flows. |
-
-**Conclusion:**  
-All referenced DTOs in the repo index correspond to actual files and are canonical.
+Anything marked `[FOLLOW-UP]` is intentionally deferred work, **not** a gap.
 
 ---
 
-## 15.4 Mock Isolation Audit
+### EPIC V2.1 – Worklist V2 A3 Cockpit (Primary)
 
-All mock servers under root:
+**Goal:** One **serious operator cockpit** that a CEO can look at and understand.
 
-- Are correctly flagged as MOCK.
-- Are not used by canonical pages.
-- Are only referenced in Worklist fallback mocks (correct behaviour).
+#### Current (TRUE)
 
-**Conclusion:**  
-Mocks are safely isolated and documented; no contamination risk.
+- Worklist V2 A3 cockpit implemented at `WorklistV2.tsx`.
+- Uses `useWorklistTickets` over `/api/worklist` with canonical-shape mock fallback.
+- A3 layout: header, filters, KPIs, table, detail panel.
+- PnL columns fully wired via `WorklistPnLCell` + `pnlDisplay`.
+- Relevant tests are all green.
 
----
+#### Target
 
-## 15.5 Legacy Isolation Audit
+- API-driven filters and pagination.
+- Strategy-specific narratives in the details panel.
+- Full A3 visual parity with A2 mocks.
 
-The following must *not* be used in V2:
+#### Stories
 
-- old Worklist variants  
-- DemoPnL, Reports, StrategyConfig  
-- `.bak` and `.bk.*` files  
-- legacy placeholders  
+1. **W1 – A3 layout shell for Worklist V2**  
+   Refine header, filters bar, KPIs, table, and detail panel strictly against the A2 Worklist spec and tokens.
 
-Repo index correctly identifies every legacy file and marks scope restrictions.
+2. **W2 – Canonical Worklist table wiring**  
+   Ensure columns are strictly canonical (`CanonicalTicket` / worklist DTO), with no ad-hoc fields.
 
-**Conclusion:**  
-Legacy boundaries are documented and enforced.
+3. **W3 – Operator filters**  
+   Move more filtering semantics into the API instead of client-only filtering.
 
----
+4. **W4 – Ticket detail panel**  
+   Add richer guardrail and narrative explanations per strategy.
 
-# 16. Forward-Looking Map (Where We Are vs. Where We Must Go)
-
-This provides the “true-status + target-state” view the expert panel recommends.
-
----
-
-## 16.1 Current State (Truthful Snapshot)
-
-- **All V2 dashboards render and pass tests.**
-- **Worklist V2** is production-grade in FE structure and API alignment.
-- **Tickets** is stable and canonical.
-- **Analytics** and **Markets** have fully working first-pass implementations.
-- **Strategy Lab** is minimally correct but not feature-complete.
-- **Status/Alerts** provide meaningful synthetic telemetry & alerting.
-- **Positions** is **synthetic only** — canonical backend data does not yet exist.
+5. **W5 – Visual QA vs A2 mocks**  
+   Iterate until mocks and live surface are recognisably the same product.
 
 ---
 
-## 16.2 Required Destination (Target A3 System)
+### EPIC V2.2 – Tickets & Markets Surfacing
 
-The expert panel defines the target as:
+**Goal:** Tickets and Markets use the same A3 structure as Worklist and are backed by canonical feeds where available.
 
-1. **All A3 pages fully wired to canonical engine/session data.**
-2. **Charts and richer metrics added to Analytics and Markets**, once stable.
-3. **Strategy Lab upgraded** to provide true lab/live drift comparisons.
-4. **Positions** replaced with canonical live broker positions + PnL logic.
-5. **All mocks deleted** after full canonical wiring is completed.
-6. **Documentation, repo index, and tests** fully aligned as the system evolves.
+#### Current (TRUE)
 
-This section is consistent with V2 Dashboard Plan EPICs.
+- **Tickets:**
+  - Fully A3-ified ticket history surface, backed by `/api/tickets`.
+  - Tests green for loading, happy-path, empty, and error states.
+
+- **Markets:**
+  - A3 Session Context shell implemented.
+  - Synthetic content with correct structural landmarks for tests.
+  - No live session metrics wiring yet.
+
+#### Target
+
+- **Tickets:**
+  - Richer time windows and scopes.
+  - Tighter integration with analytics views.
+
+- **Markets:**
+  - Live session metrics from `/api/session-metrics`.
+  - Per-symbol regime, OR/ATR, trend, news context.
+  - Cross-links to Worklist/Tickets.
+
+#### Stories
+
+1. **T1 – Tickets page uses shared A3 layout (DONE)**  
+   Keep as-is; refine only where tests and UX require.
+
+2. **T2 – Advanced tickets filters** `[FOLLOW-UP]`  
+   Introduce engine-driven scopes and richer window presets.
+
+3. **M1 – Markets cockpit frame (DONE – SHELL)**  
+   Shell matches A3 expectations and tests.
+
+4. **M2 – Markets data path** `[FOLLOW-UP]`  
+   Wire real session metrics, add symbol sets and cross-links.
 
 ---
 
-# 17. Appendix A — Reference Table of Canonical Modules
+### EPIC V2.3 – Analytics & Strategy Lab (Canonical Analytics Tickets)
 
-A high-speed lookup for any engineer or AI assistant.
+**Goal:** Solid Analytics & Strategy Lab surfaces built on **canonical analytics ticket feeds**.
 
-```md
-| Domain | Canonical Modules |
-|--------|-------------------|
-| Tickets | `/apps/api/src/routes/tickets.ts`, `@prism-apex/shared/src/contracts.ts` |
-| Worklist | `/apps/api/src/routes/tickets.ts` (worklist subset), `useWorklistTickets.ts` |
-| Analytics | `/apps/api/src/routes/analytics.ts`, `fetchAnalyticsCanonicalTickets` |
-| Session Metrics | `/apps/api/src/routes/session-metrics.ts`, batch helpers |
-| Risk Engine | `packages/rules-apex/*`, `/apps/api/src/store/riskAuditLog.ts` |
-| Strategies | `packages/strategies/*`, `packages/signals/*`, ticketizer |
-| Market Data | session metrics + symbol metadata routes |
-| Status | `/api/status`, `/api/system.alerts`, `/api/system.jobs`, telemetry |
-| Alerts | `/api/system.alerts` |
-18. Appendix B — Rules for AI Assistants
-This ensures future sessions behave correctly:
+#### Current (TRUE)
 
-md
-Copy code
-# AI Assistant Operational Rules
+- **Analytics:**
+  - Fully wired to `fetchAnalyticsCanonicalTickets` + `fetchSessionMetricsBatch`.
+  - Provides rich KPIs, detailed ticket row-cards, and aggregated sample summary.
 
-1. **Never propose rewrites where refactors suffice.**
-2. **Always request file content via Codex Terminal search before generating replacements.**
-3. **Always align with:**
-   - `REPO_INDEX_V2.md`
-   - `PRISM_APEX_V2_DASHBOARD_PLAN.md`
-4. **When adding new behaviour:**
-   - Confirm canonical API surfaces.
-   - Update tests or write new ones.
-   - Update both canonical documents.
-5. **Mocks must not be used for runtime logic.**
-6. **Always show the path to a file you reference.**
-7. **Never invent new DTO fields — confirm in `@prism-apex/shared`.**
-8. **If uncertain, escalate to “expert panel reasoning” before output.**
-19. Appendix C — Change Tracking & Versioning
-md
-Copy code
-# Change Tracking
+- **Strategy Lab:**
+  - Preset strip, mode toggle, and Lab KPIs over analytics tickets.
+  - Tests confirm behaviour.
 
-This file must include:
+#### Target
 
-- Date of canonical update
-- Summary of changes
-- Items removed or deprecated
-- EPICs affected
-- Tests affected
+- Regime/session pivots in Analytics.
+- R-distribution and expectancy visualisations.
+- Strategy Lab table + config snapshot.
+- Lab vs live comparison toggles.
 
-Every PR modifying canonical surfaces must:
+---
 
-- Update this index
-- Update the dashboard plan
-- Ensure tests remain green
-20. Closing Statement
-md
-Copy code
-# End of REPO_INDEX_V2.md
+### EPIC V2.4 – System, Alerts, Positions
 
-This index is now canonical and aligned with all V2 surfaces, DTOs, API routes, and EPICs.  
-Any change to runtime behaviour, UI surfaces, or data flows must update this file.
+**Goal:** Make Status, Alerts, Positions **operator-useful at a glance**.
+
+#### Current (TRUE)
+
+- **Status:**
+  - Healthy/degraded/down counts.
+  - Engine/external components table.
+- **Alerts:**
+  - Synthetic but realistic alert stream with severity/state filters.
+- **Positions:**
+  - Synthetic placeholder page with clear forward story and correct tests.
+
+#### Target
+
+- **Status:**
+  - Live integration to jobs/telemetry/alerts routes.
+
+- **Alerts:**
+  - Canonical feed from system alerts store.
+
+- **Positions:**
+  - Synthetic positions from ticket history, then broker-backed positions.
+
+---
+
+### EPIC V2.5 – UX, consistency, and tokens
+
+**Goal:** Every page feels like **one coherent product**.
+
+#### Stories
+
+1. **U1 – Token audit**  
+   Eliminate stray hex colours; normalise typography and spacing using A2 tokens.
+
+2. **U2 – A3 pattern enforcement**  
+   Enforce the shell → header → filters → KPIs → table → details pattern on all main surfaces.
+
+3. **U3 – Mobile / small viewport sanity** `[FOLLOW-UP]`  
+   Ensure graceful degradation on smaller viewports (horizontal scroll acceptable; broken layouts are not).
+
+---
+
+### EPIC V2.6 – Testing & observability
+
+**Goal:** Keep the suite green while evolving the dashboard.
+
+#### Stories
+
+1. **TST1 – Maintain green dashboard tests (DONE, KEEPING)**  
+   Any refactor must either keep or update the existing tests.
+
+2. **TST2 – Incremental test coverage**  
+   New behaviours (filters, error states, PnL variants) must gain tests.
+
+3. **OBS1 – Log / event hooks** `[FOLLOW-UP]`  
+   Instrument key user actions (filter changes, etc.) for later observability.
+
+---
+
+### EPIC V2.7 – Cleanup & dead code removal
+
+**Goal:** Reduce confusion and surface area.
+
+#### Stories
+
+1. **CLN1 – Legacy Worklist** `[FOLLOW-UP]`  
+   Archive/remove V1 Worklist variants once V2 is fully adopted.
+
+2. **CLN2 – Mock & stub rationalisation**  
+   Keep only canonical-shape mocks still in use; remove dead ones.
+
+3. **CLN3 – Docs alignment**  
+   Keep this file and `REPO_INDEX_V2.md` in lockstep with actual code and models.
+
+---
+
+## 5. Quality gates
+
+Before calling V2 “dashboard ready”:
+
+1. **All tests green**  
+   - Already true now for the dashboard suite.
+
+2. **Worklist V2 A3 cockpit**
+
+   - Visually close to A2 mocks.
+   - Uses canonical ticket + metrics.
+   - Works end-to-end with real or canonical-mock data.
+
+3. **Tickets, Markets, Analytics, Strategy Lab, Status, Alerts, Positions**
+
+   - Use consistent A3 structure.
+   - No obvious UX regressions or broken layouts.
+   - No broken imports or runtime errors.
+
+4. **Docs**
+
+   - This plan and `REPO_INDEX_V2.md` accurately describe:
+     - File locations.
+     - Canonical models.
+     - Current vs follow-up work.
+
+---
+
+## 6. How to work on this going forward
+
+Principles for future engineers and AI assistants:
+
+- **Do not start from scratch.**
+
+  - Inspect existing pages, shared UI atoms, and tests first.
+
+- **Prefer refactor over rewrite.**
+
+  - If tests already pass, evolve behaviour/layout incrementally and update tests alongside.
+
+- **Respect canonical models.**
+
+  - `@prism-apex/shared` contracts and API routes in `apps/api` are the ground truth.
+  - Mocks must mirror canonical shapes exactly.
+
+- **Keep tests and docs in sync.**
+
+  - Any non-trivial UI change:
+    - Should update or add tests that codify the intended behaviour.
+    - Must update this plan and `REPO_INDEX_V2.md` if it changes surfaces or contracts.
+
+This document is the **single source of truth** for what the Prism Apex V2 dashboard is **today**, and what is **deliberately deferred** vs **accidentally missing**.
+
