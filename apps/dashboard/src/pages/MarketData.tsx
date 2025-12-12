@@ -28,7 +28,13 @@ import Tooltip from "../ui/Tooltip";
 import FiltersBar from "../ui/FiltersBar";
 import DataTable from "../ui/DataTable";
 import Button from "../ui/Button";
-import { fetchYahooHealth, fetchMarketSnapshotPayload } from "../lib/api";
+import {
+  fetchYahooHealth,
+  fetchMarketSnapshotPayload,
+  fetchMarketSymbols,
+  fetchMarketSessions,
+  type MarketSessionDefinition,
+} from "../lib/api";
 import {
   deriveIngestState,
   getWorstLagSeconds,
@@ -157,6 +163,8 @@ export default function MarketData() {
   const [error, setError] = useState<string | null>(null);
   const [ingestState, setIngestState] = useState<IngestState>("UNKNOWN");
   const [worstLag, setWorstLag] = useState<number | null>(null);
+  const [sessionWindows, setSessionWindows] = useState<Record<string, MarketSessionDefinition>>({});
+  const [apiSymbols, setApiSymbols] = useState<string[]>([]);
 
   useEffect(() => {
     let cancelled = false;
@@ -166,7 +174,20 @@ export default function MarketData() {
         setLoading(true);
         setError(null);
 
-        const raw = await fetchMarketSnapshotPayload();
+        const [raw, symbolList, sessionMap] = await Promise.all([
+          fetchMarketSnapshotPayload(),
+          fetchMarketSymbols(),
+          fetchMarketSessions(),
+        ]);
+
+        if (!cancelled) {
+          if (symbolList.length > 0) {
+            setApiSymbols(symbolList);
+          }
+          if (sessionMap && Object.keys(sessionMap).length > 0) {
+            setSessionWindows(sessionMap);
+          }
+        }
 
         if (!Array.isArray(raw) || raw.length === 0) {
           throw new Error("Empty markets payload; using mock.");
@@ -218,10 +239,12 @@ export default function MarketData() {
     };
   }, []);
 
-  const symbols = useMemo(
-    () => Array.from(new Set(rows.map((r) => r.symbol))).sort(),
-    [rows]
-  );
+  const symbols = useMemo(() => {
+    if (apiSymbols.length > 0) {
+      return [...apiSymbols];
+    }
+    return Array.from(new Set(rows.map((r) => r.symbol))).sort();
+  }, [rows, apiSymbols]);
 
   const filtered = useMemo(() => {
     let result = rows;
@@ -398,6 +421,25 @@ export default function MarketData() {
           </div>
         </div>
       </header>
+
+      {Object.keys(sessionWindows).length > 0 && (
+        <section className="mb-4 grid gap-3 text-xs text-slate-300 sm:grid-cols-2 lg:grid-cols-3">
+          {Object.entries(sessionWindows).map(([name, window]) => (
+            <div
+              key={name}
+              className="rounded-lg border border-slate-800 bg-slate-950/60 px-4 py-3"
+            >
+              <div className="text-[10px] uppercase tracking-[0.18em] text-slate-500">
+                {name} session
+              </div>
+              <div className="font-mono">
+                {window.start} → {window.end}
+              </div>
+              <div className="text-[10px] text-slate-400">TZ: {window.tz}</div>
+            </div>
+          ))}
+        </section>
+      )}
 
       {/* Legacy debug copy – tests assert on this exact text */}
       <p className="text-[0.7rem] text-slate-500">
