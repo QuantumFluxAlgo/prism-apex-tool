@@ -14,6 +14,7 @@ import { useEffect, useMemo, useState } from "react";
 
 import {
   fetchTickets,
+  fetchWorklistFeed,
   buildCanonicalTicketFromRow,
   type SessionMetricsDto,
   type SessionFlagsSummary,
@@ -56,11 +57,6 @@ export interface WorklistTicket {
 
   // Operator notes
   notes?: string | null;
-}
-
-interface ApiWorklistResponse {
-  total: number;
-  tickets: any[];
 }
 
 interface UseWorklistTicketsResult {
@@ -195,23 +191,6 @@ function deriveTrendLocally(
 }
 
 /**
- * Try the canonical Worklist feed first.
- */
-async function fetchWorklistJson(): Promise<ApiWorklistResponse | null> {
-  if (typeof fetch !== "function") return null;
-
-  try {
-    const res = await fetch("/api/worklist");
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    const json = (await res.json()) as ApiWorklistResponse | null;
-    if (!json || !Array.isArray(json.tickets)) return null;
-    return json;
-  } catch {
-    return null;
-  }
-}
-
-/**
  * Main hook.
  */
 export function useWorklistTickets(): UseWorklistTicketsResult {
@@ -232,9 +211,15 @@ export function useWorklistTickets(): UseWorklistTicketsResult {
         let sourceRows: any[] = [];
 
         // 1) Prefer canonical Worklist feed
-        const worklistJson = await fetchWorklistJson();
-        if (worklistJson && worklistJson.tickets.length > 0) {
-          sourceRows = worklistJson.tickets;
+        const worklistJson = await fetchWorklistFeed();
+        const feedTickets = Array.isArray(worklistJson?.tickets)
+          ? worklistJson.tickets
+          : Array.isArray(worklistJson?.rows)
+          ? worklistJson?.rows
+          : [];
+
+        if (feedTickets.length > 0) {
+          sourceRows = feedTickets;
         } else {
           // 2) Fallback to canonical tickets endpoint
           const { rows = [] } = await fetchTickets({

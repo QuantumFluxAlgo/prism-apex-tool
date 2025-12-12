@@ -1,17 +1,11 @@
 import { useEffect, useState } from 'react';
+import {
+  fetchStrategyConfig,
+  type StrategyConfigKey,
+  type StrategyConfigResponse,
+} from '../lib/api';
 
-export interface StrategyConfigResponse {
-  strategy: 'orr' | 'osb' | 'vwap_ft';
-  config: {
-    version: number;
-    params: Record<string, unknown>;
-  };
-  warnings: string[];
-}
-
-type StrategyKey = StrategyConfigResponse['strategy'];
-
-export function useStrategyConfig(strategy: StrategyKey) {
+export function useStrategyConfig(strategy: StrategyConfigKey) {
   const [data, setData] = useState<StrategyConfigResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -23,9 +17,7 @@ export function useStrategyConfig(strategy: StrategyKey) {
       setLoading(true);
       setError(null);
       try {
-        const res = await fetch(`/api/strategy-config/${strategy}`);
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        const json = (await res.json()) as StrategyConfigResponse;
+        const json = await fetchStrategyConfig(strategy);
         if (!cancelled) setData(json);
       } catch (err) {
         if (!cancelled) setError(err instanceof Error ? err.message : 'Unknown error');

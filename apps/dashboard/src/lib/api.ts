@@ -107,6 +107,17 @@ export type OperatorActionKind =
   | 'MONITORING'
   | 'MONITORED';
 
+export type StrategyConfigKey = 'orr' | 'osb' | 'vwap_ft';
+
+export interface StrategyConfigResponse {
+  strategy: StrategyConfigKey;
+  config: {
+    version: number;
+    params: Record<string, unknown>;
+  };
+  warnings: string[];
+}
+
 /**
  * TicketRow = server payload row from /api/tickets.
  * It *extends* CanonicalTicket but should not be treated as canonical until
@@ -262,6 +273,86 @@ export async function fetchSystemTelemetry(): Promise<SystemTelemetrySnapshot[]>
     '/api/system/telemetry',
   );
   if (payload && Array.isArray(payload.jobs)) return payload.jobs;
+  return [];
+}
+
+export async function fetchStrategyConfig(
+  strategy: StrategyConfigKey,
+): Promise<StrategyConfigResponse> {
+  return fetchJson<StrategyConfigResponse>(
+    `/api/strategy-config/${encodeURIComponent(strategy)}`,
+  );
+}
+
+export interface WorklistApiResponse {
+  total?: number;
+  tickets?: any[];
+  rows?: any[];
+}
+
+export async function fetchWorklistFeed(): Promise<WorklistApiResponse | null> {
+  try {
+    const payload = await fetchJson<WorklistApiResponse>('/api/worklist');
+    if (!payload) return null;
+    if (Array.isArray(payload.tickets)) {
+      return { total: payload.total, tickets: payload.tickets };
+    }
+    if (Array.isArray(payload.rows)) {
+      return { total: payload.total, tickets: payload.rows };
+    }
+    return null;
+  } catch {
+    return null;
+  }
+}
+
+export async function fetchMarketSnapshotPayload(): Promise<any[]> {
+  try {
+    const payload = await fetchJson<any>('/api/markets');
+    if (Array.isArray(payload?.rows)) return payload.rows;
+    if (Array.isArray(payload?.markets)) return payload.markets;
+    if (Array.isArray(payload)) return payload;
+  } catch {
+    // fall through to mock/memory
+  }
+  return [];
+}
+
+export type MarketSessionDefinition = {
+  start: string;
+  end: string;
+  tz: string;
+};
+
+export async function fetchMarketSessions(): Promise<
+  Record<string, MarketSessionDefinition>
+> {
+  const paths = ['/api/market/sessions', '/market/sessions'];
+  for (const path of paths) {
+    try {
+      const data = await fetchJson<Record<string, MarketSessionDefinition>>(path);
+      if (data && typeof data === 'object') {
+        return data;
+      }
+    } catch {
+      // try next path
+    }
+  }
+  return {};
+}
+
+export async function fetchMarketSymbols(): Promise<string[]> {
+  const paths = ['/api/market/symbols', '/market/symbols'];
+  for (const path of paths) {
+    try {
+      const data = await fetchJson<{ symbols?: string[] }>(path);
+      if (data && Array.isArray(data.symbols)) {
+        return data.symbols;
+      }
+    } catch {
+      // try next path
+    }
+  }
   return [];
 }
 

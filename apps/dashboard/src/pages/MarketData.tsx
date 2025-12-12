@@ -28,7 +28,7 @@ import Tooltip from "../ui/Tooltip";
 import FiltersBar from "../ui/FiltersBar";
 import DataTable from "../ui/DataTable";
 import Button from "../ui/Button";
-import { fetchYahooHealth } from "../lib/api";
+import { fetchYahooHealth, fetchMarketSnapshotPayload } from "../lib/api";
 import {
   deriveIngestState,
   getWorstLagSeconds,
@@ -166,23 +166,7 @@ export default function MarketData() {
         setLoading(true);
         setError(null);
 
-        if (typeof fetch !== "function") {
-          throw new Error("fetch not available; using mock markets.");
-        }
-
-        const res = await fetch("/api/markets");
-        if (!res.ok) {
-          throw new Error(`HTTP ${res.status}`);
-        }
-
-        const json: any = await res.json();
-        const raw = Array.isArray(json?.rows)
-          ? json.rows
-          : Array.isArray(json?.markets)
-          ? json.markets
-          : Array.isArray(json)
-          ? json
-          : [];
+        const raw = await fetchMarketSnapshotPayload();
 
         if (!Array.isArray(raw) || raw.length === 0) {
           throw new Error("Empty markets payload; using mock.");

@@ -4,7 +4,10 @@
 /* V2 HARDENING (auto-waive): ESLint disabled for this file; see PRISM_APEX_V2_BUILD_AUDIT.md. */
 // V2 HARDENING (auto-waive): TS waiver for this dashboard file. See PRISM_APEX_V2_BUILD_AUDIT.md.
 import React, { useEffect, useState } from 'react';
-import { fetchSystemTelemetry, type JobTelemetrySnapshot } from '../lib/systemTelemetry';
+import {
+  fetchSystemTelemetry,
+  type SystemTelemetrySnapshot,
+} from '../lib/api';
 
 function formatDuration(ms: number | null): string {
   if (ms == null) return '—';
@@ -24,7 +27,7 @@ function formatDate(iso: string | null): string {
 }
 
 export const SystemTelemetryPanel: React.FC = () => {
-  const [jobs, setJobs] = useState<JobTelemetrySnapshot[]>([]);
+  const [jobs, setJobs] = useState<SystemTelemetrySnapshot[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 

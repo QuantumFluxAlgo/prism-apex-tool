@@ -1,11 +1,8 @@
 // @ts-nocheck
-/* PRISM APEX – Worklist V2 data hook
- *
- * Fetches canonical-shaped worklist tickets from /api/worklist.
- * Returns { data, loading, error } in A3 cockpit-friendly format.
- */
+/* PRISM APEX – Worklist V2 data hook */
 
 import { useEffect, useState } from "react";
+import { fetchWorklistFeed, type WorklistApiResponse } from "../lib/api";
 
 export function useWorklist() {
   const [data, setData] = useState([]);
@@ -19,16 +16,16 @@ export function useWorklist() {
       try {
         setLoading(true);
 
-        const res = await fetch("/api/worklist");
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const json: WorklistApiResponse | null = await fetchWorklistFeed();
+        if (!json) {
+          throw new Error("Worklist feed unavailable");
+        }
 
-        const json = await res.json();
-
-        // Expected shape: { total, tickets: [...] }
-        const rows =
-          json?.tickets ??
-          json?.rows ??
-          Array.isArray(json) ? json : [];
+        const rows = Array.isArray(json?.tickets)
+          ? json?.tickets
+          : Array.isArray(json?.rows)
+          ? json?.rows
+          : [];
 
         if (mounted) {
           setData(rows);
@@ -52,4 +49,3 @@ export function useWorklist() {
 
   return { data, loading, error };
 }
-
