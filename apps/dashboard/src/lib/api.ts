@@ -360,13 +360,18 @@ export async function fetchMarketSymbols(): Promise<string[]> {
  * Shared helpers
  */
 
+// ST-006: Activity/compliance endpoints do not exist; keep stubs quarantined
+// so any accidental usage fails fast until FINAL epic cleanup.
 export async function fetchMarketActivity(): Promise<TicketRow[]> {
-  const data = (await fetchJson('/api/activity')) as TicketsResponse;
-  return Array.isArray(data.rows) ? data.rows : [];
+  throw new Error(
+    'fetchMarketActivity is quarantined (ST-006). No /api/activity route exists.',
+  );
 }
 
 export async function fetchComplianceSnapshot(): Promise<ComplianceSnapshot> {
-  return (await fetchJson('/api/compliance')) as ComplianceSnapshot;
+  throw new Error(
+    'fetchComplianceSnapshot is quarantined (ST-006). No /api/compliance route exists.',
+  );
 }
 
 /**
