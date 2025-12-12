@@ -217,7 +217,7 @@ export type YahooHealthResponse = {
 };
 
 export async function fetchYahooHealth(): Promise<YahooHealthResponse> {
-  return fetchJson<YahooHealthResponse>('/health/yahoo');
+  return fetchJson<YahooHealthResponse>('/api/health/yahoo');
 }
 
 export type SystemJobStatus = {

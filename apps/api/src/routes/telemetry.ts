@@ -1,21 +1,25 @@
-import type { FastifyPluginAsync } from 'fastify';
+import type { FastifyPluginAsync, FastifyReply, FastifyRequest } from 'fastify';
 import { z } from 'zod';
 import { getAccount, getPositions, getFills } from '../store/telemetry.js';
 
 export const telemetryRoutes: FastifyPluginAsync = async (app) => {
-  app.get('/telemetry/positions', async (req, reply) => {
+  const prefixes = ['/telemetry', '/api/telemetry'] as const;
+
+  const positionsHandler = async (req: FastifyRequest, reply: FastifyReply) => {
     const q = z.object({ accountId: z.string().min(1) }).safeParse(req.query);
     if (!q.success) return reply.code(400).send({ error: 'Invalid query' });
     return getPositions(q.data.accountId);
-  });
-  app.get('/telemetry/account', async (req, reply) => {
+  };
+
+  const accountHandler = async (req: FastifyRequest, reply: FastifyReply) => {
     const q = z.object({ accountId: z.string().min(1) }).safeParse(req.query);
     if (!q.success) return reply.code(400).send({ error: 'Invalid query' });
     const acct = getAccount(q.data.accountId);
     if (!acct) return reply.code(404).send({ error: 'Not found' });
     return acct;
-  });
-  app.get('/telemetry/fills', async (req, reply) => {
+  };
+
+  const fillsHandler = async (req: FastifyRequest, reply: FastifyReply) => {
     const q = z
       .object({
         accountId: z.string().min(1),
@@ -24,7 +28,13 @@ export const telemetryRoutes: FastifyPluginAsync = async (app) => {
       .safeParse(req.query);
     if (!q.success) return reply.code(400).send({ error: 'Invalid query' });
     return getFills(q.data.accountId, q.data.date);
-  });
+  };
+
+  for (const prefix of prefixes) {
+    app.get(`${prefix}/positions`, positionsHandler);
+    app.get(`${prefix}/account`, accountHandler);
+    app.get(`${prefix}/fills`, fillsHandler);
+  }
 };
 
 export default telemetryRoutes;
