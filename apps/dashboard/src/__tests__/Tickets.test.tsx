@@ -1,19 +1,31 @@
 import { render, screen, waitFor } from '@testing-library/react';
-import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
 import TicketsPage from '../pages/Tickets.js';
+import { fetchTickets, fetchYahooHealth } from '../lib/api';
 
-const fetchMock = vi.fn();
+vi.mock('../lib/api', () => ({
+  fetchTickets: vi.fn(),
+  fetchYahooHealth: vi.fn(),
+}));
 
-function stubFetchWith(data: unknown, init: Partial<Response> = {}) {
-  fetchMock.mockResolvedValue({
-    ok: init.ok ?? true,
-    json: async () => data,
-    ...init,
-  } as Response);
+const mockHealth = {
+  status: 'live',
+  rows: [
+    {
+      symbol: 'ES',
+      status: 'GREEN',
+      lag_seconds: 42,
+      last_bar_timestamp: '2025-01-01T12:00:00Z',
+    },
+  ],
+};
+
+function stubFetchWith(data: unknown) {
+  vi.mocked(fetchTickets).mockResolvedValue(data as any);
 }
 
 function stubFetchError(message: string) {
-  fetchMock.mockRejectedValue(new Error(message));
+  vi.mocked(fetchTickets).mockRejectedValue(new Error(message));
 }
 
 function renderTickets() {
@@ -22,12 +34,9 @@ function renderTickets() {
 
 describe('TicketsPage', () => {
   beforeEach(() => {
-    fetchMock.mockReset();
-    vi.stubGlobal('fetch', fetchMock);
-  });
-
-  afterEach(() => {
-    vi.unstubAllGlobals();
+    vi.mocked(fetchTickets).mockReset();
+    vi.mocked(fetchYahooHealth).mockReset();
+    vi.mocked(fetchYahooHealth).mockResolvedValue(mockHealth as any);
   });
 
   it('renders loading state and fetches the tickets endpoint', async () => {
@@ -35,7 +44,8 @@ describe('TicketsPage', () => {
     renderTickets();
 
     expect(screen.getByText(/Loading tickets/i)).toBeInTheDocument();
-    await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1));
+    await waitFor(() => expect(fetchTickets).toHaveBeenCalledTimes(1));
+    expect(fetchYahooHealth).toHaveBeenCalledTimes(1);
   });
 
   it('shows table rows when tickets are returned', async () => {
@@ -66,7 +76,7 @@ describe('TicketsPage', () => {
     stubFetchWith({ rows: [], total: 0 });
 
     renderTickets();
-    await waitFor(() => expect(fetchMock).toHaveBeenCalled());
+    await waitFor(() => expect(fetchTickets).toHaveBeenCalled());
 
     expect(
       await screen.findByText(/No tickets returned for the current filters/i),

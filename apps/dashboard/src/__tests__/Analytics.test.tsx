@@ -1,59 +1,91 @@
-// src/__tests__/Analytics.test.tsx
 import React from 'react';
-import { describe, it, expect } from 'vitest';
-import { render, screen, within } from '@testing-library/react';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { render, screen, waitFor } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
-import MarketDataPage from '../pages/MarketData';
+import AnalyticsPage from '../pages/Analytics';
+import type { CanonicalTicket } from '@prism-apex/shared';
 
-const renderMarketDataPage = () =>
+const canonicalTicket = (overrides: Partial<CanonicalTicket> = {}): CanonicalTicket => ({
+  id: overrides.id ?? 'tick-1',
+  symbol: overrides.symbol ?? 'ES',
+  strategyId: overrides.strategyId ?? 'OSB',
+  side: 'LONG',
+  entryPrice: 100,
+  stopPrice: 99,
+  targetPrice: 103,
+  quantity: 1,
+  sessionDateUtc: overrides.sessionDateUtc ?? '2024-01-01T00:00:00Z',
+  createdAtUtc: overrides.createdAtUtc ?? '2024-01-01T13:30:00Z',
+  updatedAtUtc: overrides.updatedAtUtc ?? '2024-01-01T13:45:00Z',
+  completedAtUtc: overrides.completedAtUtc ?? '2024-01-01T14:00:00Z',
+  pnl: overrides.pnl ?? 150,
+  pnlRMultiple: overrides.pnlRMultiple ?? 1.5,
+  rrMultiple: overrides.rrMultiple ?? 2,
+  totalRisk: overrides.totalRisk ?? 75,
+  perContractRisk: overrides.perContractRisk ?? 75,
+  targetTicks: overrides.targetTicks ?? 10,
+  stopTicks: overrides.stopTicks ?? 5,
+  expectedReward: overrides.expectedReward ?? 150,
+});
+
+vi.mock('../lib/api', () => ({
+  fetchTickets: vi.fn(),
+  buildCanonicalTicketFromRow: vi.fn(),
+}));
+
+import { fetchTickets, buildCanonicalTicketFromRow } from '../lib/api';
+
+const renderPage = () =>
   render(
     <MemoryRouter>
-      <MarketDataPage />
+      <AnalyticsPage />
     </MemoryRouter>,
   );
 
-describe('MarketDataPage', () => {
-  it('renders the session context header and shell chrome', () => {
-    renderMarketDataPage();
-
-    // Header title and description
-    expect(
-      screen.getByRole('heading', { name: /Session Context/i }),
-    ).toBeInTheDocument();
-
-    expect(
-      screen.getByText(/Price overlays, OR \/ ATR footprint, VWAP slope, and regime flags/i),
-    ).toBeInTheDocument();
-
-    // Header badges
-    expect(screen.getByText(/Session · UTC/i)).toBeInTheDocument();
-    expect(screen.getByText(/Environment · A3 Shell/i)).toBeInTheDocument();
-  });
-
-  it('renders symbol selector and overlay toggles', () => {
-    const { container } = renderMarketDataPage();
-
-    const filtersRoot = container.querySelector('.markets-a3-filters');
-    expect(filtersRoot).not.toBeNull();
-
-    const filters = within(filtersRoot as HTMLElement);
-
-    // Symbol label – scoped to the filters card so we don’t hit other occurrences
-    expect(filters.getByText(/^Symbol$/i)).toBeInTheDocument();
-
-    // Symbol selector
-    expect(filters.getByRole('combobox')).toBeInTheDocument();
-
-    // Overlay toggles
-    expect(
-      screen.getByRole('button', { name: /OR band/i }),
-    ).toBeInTheDocument();
-    expect(
-      screen.getByRole('button', { name: /VWAP trace/i }),
-    ).toBeInTheDocument();
-    expect(
-      screen.getByRole('button', { name: /ATR marker/i }),
-    ).toBeInTheDocument();
-  });
+beforeEach(() => {
+  vi.resetAllMocks();
 });
 
+afterEach(() => {
+  vi.clearAllMocks();
+});
+
+describe('AnalyticsPage', () => {
+  it('aggregates canonical tickets into sessions', async () => {
+    (fetchTickets as vi.Mock).mockResolvedValue({
+      rows: [
+        { id: '1' },
+        { id: '2' },
+      ],
+    });
+    const canonicalRows = [
+      canonicalTicket({ id: '1', pnl: 200 }),
+      canonicalTicket({ id: '2', pnl: -50 }),
+    ];
+    let idx = 0;
+    (buildCanonicalTicketFromRow as vi.Mock).mockImplementation(() => canonicalRows[idx++]);
+
+    renderPage();
+
+    await waitFor(() => {
+      expect(screen.getByText('2024-01-01')).toBeInTheDocument();
+    });
+
+    expect(screen.getByText(/OSB/i)).toBeInTheDocument();
+    expect(screen.getByText('+150')).toBeInTheDocument();
+    expect(screen.getByText('2')).toBeInTheDocument(); // trades column
+  });
+
+  it('shows empty state when no tickets returned', async () => {
+    (fetchTickets as vi.Mock).mockResolvedValue({ rows: [] });
+    (buildCanonicalTicketFromRow as vi.Mock).mockReturnValue(null);
+
+    renderPage();
+
+    await waitFor(() => {
+      expect(
+        screen.getByText(/Failed to load analytics history/i),
+      ).toBeInTheDocument();
+    });
+  });
+});

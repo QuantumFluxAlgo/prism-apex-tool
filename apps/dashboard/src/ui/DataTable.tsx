@@ -28,6 +28,7 @@ type Column = {
 interface DataTableProps {
   columns?: Column[];
   data?: any[];
+  rows?: any[];
   /**
    * Optional row click handler – used by A3 cockpits
    * to drive the right-hand details panel.
@@ -42,12 +43,19 @@ interface DataTableProps {
 
 export default function DataTable({
   columns = [],
-  data = [],
+  data,
+  rows,
   onRowClick,
   getRowId,
 }: DataTableProps) {
   const safeCols = Array.isArray(columns) ? columns : [];
-  const safeData = Array.isArray(data) ? data : [];
+  const source =
+    Array.isArray(data) && data.length > 0
+      ? data
+      : Array.isArray(rows)
+      ? rows
+      : [];
+  const safeData = Array.isArray(source) ? source : [];
 
   const resolveHeader = (col: Column) => {
     if (col.header != null) return col.header;
@@ -121,4 +129,3 @@ export default function DataTable({
     </table>
   );
 }
-

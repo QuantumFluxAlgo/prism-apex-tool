@@ -20,6 +20,24 @@ EPIC 0 requires us to formalise *how* to run these components, document prerequi
 | `apps/ingest/src/gapfill.ts` | Detects missing 1-minute bars within the last 29 days per symbol, or for an explicit window, and refills from Yahoo with UPSERT semantics.
 | `apps/ingress-yahoo-dev/src/server.ts` | Express server for manual ingress/testing. Validates payloads, dedupes JSONL caches, updates AVWAP state, applies sizing/guardrails, and can emit tickets for demo purposes. Controlled via env (e.g., `APEX_ENABLE_YAHOO_INGRESS=true`).
 
+## Cadence & Freshness Budget
+
+| Stage | Current behaviour | Target budget | Notes / knobs |
+|-------|-------------------|---------------|---------------|
+| Yahoo ingest job (`apps/api` → `pnpm --filter @prism-apex/ingest backfill`) | Disabled until `INGEST_YAHOO_SYMBOLS` is set; when enabled it ran every 60 s and re-read the entire `YAHOO_RANGE` (default 30 d). | Fetch the most recent 15–20 minutes of bars every ≤45 s. | The scheduler now honours `YAHOO_POLL_INTERVAL_MS` (fallback 45 000 ms) and `YAHOO_POLL_LOOKBACK_MINUTES` (fallback 90) before launching the CLI. Override them in `.env` to tune cadence without touching code. |
+| Gapfill cron (`gapfill-cron` service) | Hard-coded to run `apps/ingest/dist/gapfill.js` daily at 02:20 UTC. | ≥1× per day to repair gaps, plus ad-hoc runs. | Continue to use the cron container for daily maintenance; run `scripts/ingest/run-gapfill.sh` for targeted repairs. |
+| Session metrics | Calculated on-demand when Worklist/Tickets request data (`createSessionMetricsService` reads the latest `bars_1m`). | <5 s after new bars arrive. | Because metrics compute synchronously at read time, freshness equals the ingest lag. |
+| Worklist/Tickets dashboards | Read canonical tickets + session metrics directly from the API. | Tickets should see <2 min total lag (ingest + guardrails). | Use `/health/yahoo` to verify ingest lag stays below the `YAHOO_OK_LAG_MIN` threshold (25 min by default). |
+
+**Environment presets (drop these in `.env` or compose overrides):**
+
+| Deployment | `YAHOO_POLL_INTERVAL_MS` | `YAHOO_POLL_LOOKBACK_MINUTES` | Rationale |
+|------------|-------------------------|-------------------------------|-----------|
+| SIM / local dev | `90000` (90 s) | `90` | Gentler cadence for laptops while still replaying 90 min of data when charts stall. |
+| PROD / staging | `45000` (45 s default) | `20` | Poll halfway through each minute and only re-fetch the last ~20 minutes so bars land <15 s after Yahoo posts them. |
+
+Set `INGEST_YAHOO_SYMBOLS="ES=F,MES=F,..."` whenever you want the scheduler to run; otherwise it stays idle and only the daily gapfill writes bars.
+
 ## Prerequisites
 
 - **Docker / Postgres**: Run the repo’s docker compose (`make up` or equivalent) so Postgres is reachable via `postgres://apex:apex@db:5432/prismapex` (default in the scripts). Ensure the database has the `bars_1m` table.
@@ -63,6 +81,11 @@ This runs `pnpm --filter @prism-apex/ingress-yahoo-dev start`, which launches th
 - Both backfill and gapfill write via `INSERT ... ON CONFLICT (symbol, ts_utc) DO UPDATE` so re-running the same window only updates changed bars and never duplicates rows.
 - `fetchWindow` dedupes by ISO timestamp before writing; combined with UPSERT, this satisfies EPIC 0’s “rerun without corruption” requirement.
 - Ingress server appends JSONL but guards risk resets per day and enforces news blackout/guardrails; running it with the same payload multiple times is safe as long as the downstream consumer dedupes tickets (a future step).
+
+## Health & Telemetry
+
+- `curl -fsS http://localhost:3000/health/yahoo` returns the latest bar timestamp per symbol plus lag minutes. CI uses the same signal; keep ingest jobs running until the summary reports `status: "ok"` with lag < `YAHOO_OK_LAG_MIN` (25 min by default).
+- When tuning cadence, watch the API logs for `[yahoo-ingest-manual] completed …` and confirm runs complete within the poll interval (use `YAHOO_POLL_LOOKBACK_MINUTES` to keep the fetch window small enough).
 
 ## How This Supports EPIC 0
 

@@ -140,6 +140,11 @@ function parseCsv(value?: string): string[] {
     .filter(Boolean);
 }
 
+function toPositiveNumber(value: string | undefined, fallback: number): number {
+  const n = Number(value);
+  return Number.isFinite(n) && n > 0 ? n : fallback;
+}
+
 /**
  * Yahoo ingest job configuration:
  * - INGEST_YAHOO_SYMBOLS: comma-separated Yahoo symbols (e.g. "ES=F,MES=F").
@@ -150,9 +155,17 @@ function parseCsv(value?: string): string[] {
  */
 const INGEST_JOB_NAME = 'yahoo-ingest-manual';
 const INGEST_JOB_MODE = (process.env.INGEST_JOB_MODE ?? 'backfill').toLowerCase() === 'gapfill' ? 'gapfill' : 'backfill';
-const DEFAULT_INGEST_INTERVAL_MS = 60_000; // run every minute by default
-const INGEST_JOB_INTERVAL_MS = Number(
-  process.env.INGEST_JOB_INTERVAL_MS ?? `${DEFAULT_INGEST_INTERVAL_MS}`,
+const DEFAULT_YAHOO_POLL_INTERVAL_MS = toPositiveNumber(
+  process.env.YAHOO_POLL_INTERVAL_MS,
+  45_000,
+);
+const INGEST_JOB_INTERVAL_MS = toPositiveNumber(
+  process.env.INGEST_JOB_INTERVAL_MS,
+  DEFAULT_YAHOO_POLL_INTERVAL_MS,
+);
+const DEFAULT_YAHOO_POLL_LOOKBACK_MINUTES = toPositiveNumber(
+  process.env.YAHOO_POLL_LOOKBACK_MINUTES,
+  20,
 );
 
 function resolveSymbols(): string[] {
@@ -183,6 +196,9 @@ async function runYahooIngestJob(): Promise<void> {
     ...process.env,
     YAHOO_SYMBOLS: symbols.join(','),
   };
+  if (!env.YAHOO_RANGE && Number.isFinite(DEFAULT_YAHOO_POLL_LOOKBACK_MINUTES) && DEFAULT_YAHOO_POLL_LOOKBACK_MINUTES > 0) {
+    env.YAHOO_RANGE = `${Math.round(DEFAULT_YAHOO_POLL_LOOKBACK_MINUTES)}m`;
+  }
   const windowFrom = process.env.INGEST_WINDOW_FROM;
   const windowTo = process.env.INGEST_WINDOW_TO;
   if (windowFrom) env.WINDOW_FROM = windowFrom;
@@ -203,6 +219,11 @@ async function runYahooIngestJob(): Promise<void> {
 }
 
 registerJob(INGEST_JOB_NAME, INGEST_JOB_INTERVAL_MS, runYahooIngestJob);
+console.info(
+  `[${INGEST_JOB_NAME}] configured interval=${INGEST_JOB_INTERVAL_MS}ms lookback=${Math.round(
+    DEFAULT_YAHOO_POLL_LOOKBACK_MINUTES,
+  )}m`,
+);
 
 const runIngestOnStart = (process.env.INGEST_RUN_ON_START ?? '').toLowerCase() === 'true';
 if (runIngestOnStart) {

@@ -1,9 +1,14 @@
 // src/__tests__/MarketData.test.tsx
 import React from 'react';
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, within } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import MarketDataPage from '../pages/MarketData';
+import { fetchYahooHealth } from '../lib/api';
+
+vi.mock('../lib/api', () => ({
+  fetchYahooHealth: vi.fn(),
+}));
 
 const renderMarketDataPage = () =>
   render(
@@ -13,6 +18,13 @@ const renderMarketDataPage = () =>
   );
 
 describe('MarketDataPage', () => {
+  beforeEach(() => {
+    vi.mocked(fetchYahooHealth).mockReset();
+    vi.mocked(fetchYahooHealth).mockResolvedValue({
+      rows: [{ symbol: 'ES', status: 'GREEN', lag_seconds: 30 }],
+    } as any);
+  });
+
   it('renders loading or live session metrics status in the filters meta area', async () => {
     const { container } = renderMarketDataPage();
 
@@ -43,4 +55,3 @@ describe('MarketDataPage', () => {
     expect(chartShell).not.toBeNull();
   });
 });
-

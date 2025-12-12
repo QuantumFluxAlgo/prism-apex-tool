@@ -4,15 +4,24 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 import StrategyLabPage from '../pages/StrategyLab.js';
 
 const fetchAnalyticsCanonicalTicketsMock = vi.fn();
+const fetchYahooHealthMock = vi.fn();
 
 vi.mock('../lib/api.js', () => ({
   fetchAnalyticsCanonicalTickets: (...args: any[]) =>
     fetchAnalyticsCanonicalTicketsMock(...args),
+  fetchYahooHealth: () => fetchYahooHealthMock(),
 }));
 
 describe('StrategyLabPage', () => {
   beforeEach(() => {
     fetchAnalyticsCanonicalTicketsMock.mockReset();
+    fetchYahooHealthMock.mockReset();
+    fetchYahooHealthMock.mockResolvedValue({
+      rows: [
+        { symbol: 'ES', status: 'GREEN', lag_seconds: 40 },
+        { symbol: 'NQ', status: 'GREEN', lag_seconds: 60 },
+      ],
+    });
   });
 
   it('renders loading state and calls the analytics helper', async () => {

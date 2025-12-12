@@ -19,7 +19,17 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import Badge from '../ui/Badge';
 import DataTable, { type DataTableColumn } from '../ui/DataTable';
-import { fetchAnalyticsCanonicalTickets } from '../lib/api';
+import {
+  fetchAnalyticsCanonicalTickets,
+  fetchYahooHealth,
+} from '../lib/api';
+import {
+  deriveIngestState,
+  getWorstLagSeconds,
+  formatLag,
+  statusChipTone,
+  type IngestState,
+} from '../lib/ingestState';
 import '../styles/strategy-lab-a3.css';
 
 type FetchState<T> = {
@@ -177,6 +187,8 @@ export default function StrategyLabPage() {
     error: null,
     data: null,
   });
+  const [ingestState, setIngestState] = useState<IngestState>('UNKNOWN');
+  const [worstLag, setWorstLag] = useState<number | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -206,6 +218,28 @@ export default function StrategyLabPage() {
 
     loadAnalytics();
 
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+    async function loadIngest() {
+      try {
+        const response = await fetchYahooHealth();
+        if (cancelled) return;
+        const rows = response?.rows ?? [];
+        setIngestState(deriveIngestState(rows));
+        setWorstLag(getWorstLagSeconds(rows));
+      } catch {
+        if (!cancelled) {
+          setIngestState('UNKNOWN');
+          setWorstLag(null);
+        }
+      }
+    }
+    loadIngest();
     return () => {
       cancelled = true;
     };
@@ -315,6 +349,12 @@ export default function StrategyLabPage() {
   const tradesLabel = String(kpis.totalTrades);
   const hasRows = tableRows.length > 0;
 
+  const ingestUnsafe = ingestState === 'NOT LIVE';
+  const showBanner =
+    ingestState === 'DEGRADED' || ingestState === 'NOT LIVE';
+  const bannerTone =
+    ingestState === 'NOT LIVE' ? 'rose' : 'amber';
+
   return (
     <section className="strategy-lab-v2-root space-y-5">
       {/* A3 header */}
@@ -332,12 +372,45 @@ export default function StrategyLabPage() {
           <div className="flex flex-col items-end gap-1 text-[0.7rem]">
             <Badge tone="blue">Canonical analytics feed</Badge>
             <Badge tone="gray">Read-only · No order routing</Badge>
+            <Badge tone={statusChipTone[ingestState]} size="xs">
+              Ingest {ingestState} · {formatLag(worstLag)}
+            </Badge>
           </div>
         </div>
       </header>
 
+      {showBanner && (
+        <div
+          className={`rounded-xl border px-4 py-3 text-[0.8rem] ${
+            bannerTone === 'rose'
+              ? 'border-rose-500/40 bg-rose-500/10 text-rose-100'
+              : 'border-amber-500/40 bg-amber-500/10 text-amber-50'
+          }`}
+        >
+          {ingestState === 'NOT LIVE' ? (
+            <p>
+              Market ingest is <strong>NOT LIVE</strong>. Latest bars are unavailable
+              ({formatLag(worstLag)} lag). Lab controls are locked until ingest recovers.
+            </p>
+          ) : (
+            <p>
+              Market ingest is <strong>DEGRADED</strong>. Expect stale analytics inputs
+              ({formatLag(worstLag)} lag) while reviewing lab presets.
+            </p>
+          )}
+        </div>
+      )}
+
       {/* Preset strip + mode toggle */}
       <section className="strategy-lab-v2-strip">
+        {ingestUnsafe && (
+          <div className="mb-2 flex items-center gap-2 text-[0.75rem] text-rose-200">
+            <Badge tone="rose" size="xs">
+              UNSAFE
+            </Badge>
+            Market ingest not live — preset + mode controls disabled.
+          </div>
+        )}
         <div className="strategy-lab-preset-group">
           {presets.map((preset) => {
             const active = preset.id === selectedPresetId;
@@ -346,11 +419,13 @@ export default function StrategyLabPage() {
                 key={preset.id}
                 type="button"
                 onClick={() => setSelectedPresetId(preset.id)}
-                className={
+                className={`${
                   active
                     ? 'strategy-lab-preset-btn strategy-lab-preset-btn-active'
                     : 'strategy-lab-preset-btn'
-                }
+                } ${ingestUnsafe ? 'opacity-40 cursor-not-allowed' : ''}`}
+                disabled={ingestUnsafe}
+                aria-disabled={ingestUnsafe}
               >
                 <span className="strategy-lab-preset-label">{preset.label}</span>
                 <span className="strategy-lab-preset-code">{preset.code}</span>
@@ -365,22 +440,26 @@ export default function StrategyLabPage() {
             <button
               type="button"
               onClick={() => setMode('live')}
-              className={
+              className={`${
                 mode === 'live'
                   ? 'strategy-lab-mode-btn strategy-lab-mode-btn-active'
                   : 'strategy-lab-mode-btn'
-              }
+              } ${ingestUnsafe ? 'opacity-40 cursor-not-allowed' : ''}`}
+              disabled={ingestUnsafe}
+              aria-disabled={ingestUnsafe}
             >
               Live config
             </button>
             <button
               type="button"
               onClick={() => setMode('lab')}
-              className={
+              className={`${
                 mode === 'lab'
                   ? 'strategy-lab-mode-btn strategy-lab-mode-btn-active strategy-lab-mode-btn-lab'
                   : 'strategy-lab-mode-btn'
-              }
+              } ${ingestUnsafe ? 'opacity-40 cursor-not-allowed' : ''}`}
+              disabled={ingestUnsafe}
+              aria-disabled={ingestUnsafe}
             >
               Lab config
             </button>
@@ -519,4 +598,3 @@ export default function StrategyLabPage() {
     </section>
   );
 }
-

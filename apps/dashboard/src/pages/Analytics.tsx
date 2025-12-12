@@ -4,35 +4,41 @@
  * Goals:
  * - Surface realised PnL, drawdown and R-multiples by session/symbol/strategy.
  * - Make it obvious whether the engine + operator are printing money or bleeding.
- * - Engine-backed via /api/analytics when available, with safe mock fallback.
- *
- * Layout:
- * - Header
- * - Filters strip
- * - KPI strip
- * - Main table
- * - Right-hand details panel
+ * - Powered entirely by canonical tickets via /api/tickets.
  */
 
 import React, { useEffect, useMemo, useState } from "react";
+import type { CanonicalTicket } from "@prism-apex/shared";
 import { Card, CardBody } from "../ui/Card";
 import Kpi from "../ui/Kpi";
 import Badge from "../ui/Badge";
-import Tooltip from "../ui/Tooltip";
 import FiltersBar from "../ui/FiltersBar";
 import DataTable from "../ui/DataTable";
 import Button from "../ui/Button";
+import { fetchTickets, buildCanonicalTicketFromRow } from "../lib/api";
+
+const RANGE_DAYS = 10;
+
+const STRATEGY_LABELS: Record<string, string> = {
+  ORR: "Opening Range Reversal",
+  OSB: "Opening-Session Breakout",
+  "VWAP-FT": "VWAP First-Touch",
+};
+
+function formatStrategyLabel(code: string | undefined | null) {
+  if (!code) return "Unknown strategy";
+  return STRATEGY_LABELS[code] ?? code;
+}
 
 type AnalyticsRow = {
   id: string;
-  sessionDate: string; // YYYY-MM-DD
+  sessionDate: string;
   symbol: string;
   strategy: string;
-  realizedPnl: number; // dollars or ticks – interpretation is backend-specific
-  unrealizedPnl: number;
+  realizedPnl: number;
   maxDrawdown: number;
   trades: number;
-  winRate: number; // 0–100
+  winRate: number;
   avgRMultiple: number;
 };
 
@@ -48,80 +54,102 @@ const INITIAL_FILTERS: AnalyticsFilters = {
   search: "",
 };
 
-const MOCK_ANALYTICS_ROWS: AnalyticsRow[] = [
-  {
-    id: "a-es-orr-2025-12-08",
-    sessionDate: "2025-12-08",
-    symbol: "ES",
-    strategy: "ORR",
-    realizedPnl: 850,
-    unrealizedPnl: 0,
-    maxDrawdown: -220,
-    trades: 7,
-    winRate: 71,
-    avgRMultiple: 1.8,
-  },
-  {
-    id: "a-nq-vwap-2025-12-08",
-    sessionDate: "2025-12-08",
-    symbol: "NQ",
-    strategy: "VWAP-FT",
-    realizedPnl: -320,
-    unrealizedPnl: 0,
-    maxDrawdown: -480,
-    trades: 5,
-    winRate: 40,
-    avgRMultiple: -0.4,
-  },
-  {
-    id: "a-cl-osb-2025-12-08",
-    sessionDate: "2025-12-08",
-    symbol: "CL",
-    strategy: "OSB",
-    realizedPnl: 120,
-    unrealizedPnl: 30,
-    maxDrawdown: -150,
-    trades: 4,
-    winRate: 50,
-    avgRMultiple: 0.6,
-  },
-];
+function computeRange(days: number): { from: string; to: string } {
+  const now = Date.now();
+  const end = new Date(now);
+  const start = new Date(now - days * 24 * 60 * 60 * 1000);
+  return { from: start.toISOString(), to: end.toISOString() };
+}
 
-function mapApiRowToAnalytics(row: any): AnalyticsRow {
-  return {
-    id: String(row.id ?? `${row.symbol}-${row.strategy}-${row.sessionDate ?? ""}`),
-    sessionDate: String(row.sessionDate ?? row.session_date ?? "").slice(0, 10),
-    symbol: String(row.symbol ?? "ES"),
-    strategy: String(row.strategy ?? row.strategyId ?? "ORR"),
-    realizedPnl: Number(
-      row.realizedPnl ??
-        row.realisedPnl ??
-        row.pnlRealized ??
-        row.realized_pnl ??
-        0
-    ),
-    unrealizedPnl: Number(
-      row.unrealizedPnl ??
-        row.unrealisedPnl ??
-        row.pnlUnrealized ??
-        row.unrealized_pnl ??
-        0
-    ),
-    maxDrawdown: Number(row.maxDrawdown ?? row.max_drawdown ?? 0),
-    trades: Number(row.trades ?? row.tradeCount ?? 0),
-    winRate: Number(row.winRate ?? row.win_rate ?? 0),
-    avgRMultiple: Number(row.avgRMultiple ?? row.avg_r_multiple ?? 0),
-  };
+type Bucket = {
+  sessionDate: string;
+  symbol: string;
+  strategy: string;
+  trades: number;
+  wins: number;
+  realizedPnl: number;
+  pnlSeries: Array<{ ts: string; pnl: number }>;
+  rMultipleSum: number;
+  rMultipleCount: number;
+};
+
+function aggregateTickets(tickets: CanonicalTicket[]): AnalyticsRow[] {
+  const buckets = new Map<string, Bucket>();
+
+  for (const t of tickets) {
+    const sessionDate = (t.sessionDateUtc ?? t.createdAtUtc ?? "").slice(0, 10) || "Unknown";
+    const symbol = t.symbol ?? "UNKNOWN";
+    const strategy = t.strategyId ?? "UNKNOWN";
+    const key = `${sessionDate}|${symbol}|${strategy}`;
+
+    if (!buckets.has(key)) {
+      buckets.set(key, {
+        sessionDate,
+        symbol,
+        strategy,
+        trades: 0,
+        wins: 0,
+        realizedPnl: 0,
+        pnlSeries: [],
+        rMultipleSum: 0,
+        rMultipleCount: 0,
+      });
+    }
+
+    const bucket = buckets.get(key)!;
+    const pnl = typeof t.pnl === "number" ? t.pnl : 0;
+    bucket.trades += 1;
+    bucket.realizedPnl += pnl;
+    if (pnl > 0) bucket.wins += 1;
+    bucket.pnlSeries.push({
+      ts: t.completedAtUtc ?? t.updatedAtUtc ?? t.createdAtUtc ?? sessionDate,
+      pnl,
+    });
+    if (typeof t.pnlRMultiple === "number" && Number.isFinite(t.pnlRMultiple)) {
+      bucket.rMultipleSum += t.pnlRMultiple;
+      bucket.rMultipleCount += 1;
+    }
+  }
+
+  const rows: AnalyticsRow[] = [];
+
+  for (const [key, bucket] of buckets.entries()) {
+    const sorted = bucket.pnlSeries.sort((a, b) => (a.ts ?? "").localeCompare(b.ts ?? ""));
+    let equity = 0;
+    let peak = 0;
+    let maxDrawdown = 0;
+    for (const point of sorted) {
+      equity += point.pnl;
+      if (equity > peak) peak = equity;
+      const dd = equity - peak;
+      if (dd < maxDrawdown) maxDrawdown = dd;
+    }
+
+    rows.push({
+      id: key,
+      sessionDate: bucket.sessionDate,
+      symbol: bucket.symbol,
+      strategy: bucket.strategy,
+      realizedPnl: Number(bucket.realizedPnl.toFixed(2)),
+      maxDrawdown: Number(maxDrawdown.toFixed(2)),
+      trades: bucket.trades,
+      winRate: bucket.trades ? Math.round((bucket.wins / bucket.trades) * 100) : 0,
+      avgRMultiple: bucket.rMultipleCount
+        ? Number((bucket.rMultipleSum / bucket.rMultipleCount).toFixed(2))
+        : 0,
+    });
+  }
+
+  return rows.sort((a, b) => b.sessionDate.localeCompare(a.sessionDate));
 }
 
 export default function Analytics() {
   const [filters, setFilters] = useState<AnalyticsFilters>(INITIAL_FILTERS);
-  const [rows, setRows] = useState<AnalyticsRow[]>(MOCK_ANALYTICS_ROWS);
-  const [selected, setSelected] = useState<AnalyticsRow | null>(
-    MOCK_ANALYTICS_ROWS[0]
-  );
+  const [rows, setRows] = useState<AnalyticsRow[]>([]);
+  const [selected, setSelected] = useState<AnalyticsRow | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
+  const [refreshToken, setRefreshToken] = useState(0);
 
   useEffect(() => {
     let cancelled = false;
@@ -131,38 +159,32 @@ export default function Analytics() {
         setLoading(true);
         setError(null);
 
-        if (typeof fetch !== "function") {
-          throw new Error("fetch not available; using mock analytics.");
+        const { from, to } = computeRange(RANGE_DAYS);
+        const { rows: ticketRows = [] } = await fetchTickets({
+          from,
+          to,
+          status: "ALL",
+          scope: "all",
+          limit: 1000,
+        });
+        const canonical = ticketRows
+          .map((row) => buildCanonicalTicketFromRow(row))
+          .filter((ticket): ticket is CanonicalTicket => Boolean(ticket));
+        if (!canonical.length) {
+          throw new Error(
+            "Failed to load analytics history: No ticket history available in selected range",
+          );
         }
-
-        const res = await fetch("/api/analytics");
-        if (!res.ok) {
-          throw new Error(`HTTP ${res.status}`);
-        }
-
-        const json: any = await res.json();
-        const raw = Array.isArray(json?.rows)
-          ? json.rows
-          : Array.isArray(json?.sessions)
-          ? json.sessions
-          : Array.isArray(json)
-          ? json
-          : [];
-
-        if (!Array.isArray(raw) || raw.length === 0) {
-          throw new Error("Empty analytics payload; using mock.");
-        }
-
-        const mapped = raw.map(mapApiRowToAnalytics);
+        const aggregated = aggregateTickets(canonical);
         if (!cancelled) {
-          setRows(mapped);
-          setSelected(mapped[0] ?? null);
+          setRows(aggregated);
+          setSelected(aggregated[0] ?? null);
         }
       } catch (err: any) {
         if (!cancelled) {
-          setError(err?.message ?? "Unknown error");
-          setRows(MOCK_ANALYTICS_ROWS);
-          setSelected(MOCK_ANALYTICS_ROWS[0]);
+          setError(err?.message ?? "Failed to load analytics history.");
+          setRows([]);
+          setSelected(null);
         }
       } finally {
         if (!cancelled) {
@@ -175,7 +197,7 @@ export default function Analytics() {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [refreshToken]);
 
   const symbols = useMemo(
     () => Array.from(new Set(rows.map((r) => r.symbol))).sort(),
@@ -198,11 +220,10 @@ export default function Analytics() {
     if (filters.search.trim()) {
       const q = filters.search.trim().toLowerCase();
       result = result.filter((r) => {
-        return (
-          r.sessionDate.toLowerCase().includes(q) ||
-          r.symbol.toLowerCase().includes(q) ||
-          r.strategy.toLowerCase().includes(q)
-        );
+        const haystack = [r.sessionDate, r.symbol, r.strategy, r.id]
+          .join(" ")
+          .toLowerCase();
+        return haystack.includes(q);
       });
     }
 
@@ -211,66 +232,48 @@ export default function Analytics() {
 
   const isEmpty = !loading && !error && filtered.length === 0;
 
-  // --- KPI strip -------------------------------------------------------------
-
   const totalSessions = filtered.length;
-
-  const netRealized = filtered.reduce(
-    (acc, r) => acc + (Number.isFinite(r.realizedPnl) ? r.realizedPnl : 0),
-    0
-  );
-
-  const maxDrawdown =
-    filtered.length === 0
-      ? 0
-      : filtered.reduce(
-          (acc, r) =>
-            typeof r.maxDrawdown === "number"
-              ? Math.min(acc, r.maxDrawdown)
-              : acc,
-          0
-        );
-
+  const netRealized = filtered.reduce((acc, r) => acc + r.realizedPnl, 0);
+  const maxDrawdown = filtered.reduce((acc, r) => Math.min(acc, r.maxDrawdown), 0);
   const avgWinRate =
     filtered.length === 0
       ? 0
-      : (() => {
-          const vals = filtered
-            .map((r) => (Number.isFinite(r.winRate) ? r.winRate : null))
-            .filter((v) => v !== null) as number[];
-          if (!vals.length) return 0;
-          const sum = vals.reduce((acc, v) => acc + v, 0);
-          return Math.round(sum / vals.length);
-        })();
-
+      : Math.round(
+          filtered.reduce((acc, r) => acc + r.winRate, 0) / filtered.length,
+        );
   const bestSession =
     filtered.length === 0
       ? null
       : [...filtered].sort((a, b) => b.realizedPnl - a.realizedPnl)[0];
 
-  // --- Table config ----------------------------------------------------------
-
   const columns = [
     {
-      key: "sessionDate",
+      key: "session",
       header: "Session",
-      cellClassName: "font-mono text-[0.7rem] text-slate-300",
-    },
-    {
-      key: "symbol",
-      header: "Symbol",
-      cellClassName: "font-mono text-xs",
+      render: (_: any, row: AnalyticsRow) => (
+        <div className="flex flex-col leading-tight">
+          <span className="font-mono text-[0.75rem] text-slate-200">
+            {row.sessionDate}
+          </span>
+          <span className="text-[0.65rem] text-slate-500">{row.symbol}</span>
+        </div>
+      ),
     },
     {
       key: "strategy",
       header: "Strategy",
-      cellClassName: "text-xs",
+      cellClassName: "text-[0.75rem]",
+    },
+    {
+      key: "trades",
+      header: "Trades",
+      cellClassName: "text-right font-mono text-[0.75rem]",
     },
     {
       key: "realizedPnl",
       header: "Realized PnL",
-      cellClassName: "text-right text-xs",
-      render: (_value: any, row: AnalyticsRow) => {
+      cellClassName: "text-right font-mono text-[0.75rem]",
+      render: (_: any, row: AnalyticsRow) => {
         const tone =
           row.realizedPnl > 0
             ? "text-emerald-300"
@@ -279,7 +282,7 @@ export default function Analytics() {
             : "text-slate-300";
         const sign = row.realizedPnl > 0 ? "+" : "";
         return (
-          <span className={`font-mono ${tone}`}>
+          <span className={tone}>
             {sign}
             {row.realizedPnl.toFixed(0)}
           </span>
@@ -287,63 +290,28 @@ export default function Analytics() {
       },
     },
     {
-      key: "unrealizedPnl",
-      header: "Unrealized PnL",
-      cellClassName: "text-right text-xs",
-      render: (_value: any, row: AnalyticsRow) => {
-        const tone =
-          row.unrealizedPnl > 0
-            ? "text-emerald-300"
-            : row.unrealizedPnl < 0
-            ? "text-rose-300"
-            : "text-slate-300";
-        const sign = row.unrealizedPnl > 0 ? "+" : "";
-        return (
-          <span className={`font-mono ${tone}`}>
-            {sign}
-            {row.unrealizedPnl.toFixed(0)}
-          </span>
-        );
-      },
-    },
-    {
       key: "maxDrawdown",
       header: "Max DD",
-      cellClassName: "text-right text-xs",
-      render: (_value: any, row: AnalyticsRow) => (
-        <span className="font-mono">{row.maxDrawdown.toFixed(0)}</span>
-      ),
-    },
-    {
-      key: "trades",
-      header: "Trades",
-      cellClassName: "text-right text-xs",
-      render: (_value: any, row: AnalyticsRow) => (
-        <span className="font-mono">{row.trades}</span>
-      ),
+      cellClassName: "text-right font-mono text-[0.75rem]",
     },
     {
       key: "winRate",
       header: "Win %",
-      cellClassName: "text-right text-xs",
-      render: (_value: any, row: AnalyticsRow) => (
-        <span className="font-mono">{row.winRate.toFixed(0)}%</span>
-      ),
+      cellClassName: "text-right font-mono text-[0.75rem]",
+      render: (_: any, row: AnalyticsRow) => <span>{row.winRate.toFixed(0)}%</span>,
     },
     {
       key: "avgRMultiple",
       header: "Avg R",
-      cellClassName: "text-right text-xs",
-      render: (_value: any, row: AnalyticsRow) => (
-        <span className="font-mono">
+      cellClassName: "text-right font-mono text-[0.75rem]",
+      render: (_: any, row: AnalyticsRow) => (
+        <span>
           {row.avgRMultiple > 0 ? "+" : ""}
           {row.avgRMultiple.toFixed(2)}
         </span>
       ),
     },
   ];
-
-  const tableData = filtered;
 
   const handleResetFilters = () => {
     setFilters(INITIAL_FILTERS);
@@ -353,200 +321,119 @@ export default function Analytics() {
     setSelected(row);
   };
 
-  // --- Render ----------------------------------------------------------------
-
   return (
-    <div className="analytics-v2-root flex flex-col gap-4">
-      {/* Header */}
-      <header className="flex flex-col gap-1">
-        <div className="flex items-center justify-between gap-3">
-          <div>
-            <h1 className="text-base font-semibold text-slate-100">Analytics</h1>
-            <p className="text-xs text-slate-400">
-              Session-level PnL, drawdown and R-multiples by symbol & strategy.
-            </p>
-          </div>
-          <div className="flex flex-col items-end gap-1 text-[0.7rem]">
-            <span data-testid="badge" tone="blue">
-              Live PnL analytics
-            </span>
-            <span data-testid="badge" tone="gray">
-              Backed by /api/analytics (mock fallback if offline)
-            </span>
-          </div>
+    <div className="a3-page-root">
+      <header className="a3-page-header">
+        <div>
+          <div className="a3-page-section-label">Performance cockpit</div>
+          <h1>Analytics – Canonical tickets</h1>
+          <p>Sessions, realised PnL, and R-multiples sourced from /api/tickets.</p>
         </div>
-        {(loading || error) && (
-          <div className="mt-1 text-[0.7rem] text-slate-400">
-            {loading && <span>Loading analytics from engine…</span>}
-            {!loading && error && (
-              <span>Engine analytics unavailable; using illustrative data.</span>
-            )}
+        <div className="flex flex-col items-end gap-3">
+          <div className="a3-page-header-meta">
+            <Badge tone="blue" size="xs">
+              Analytics feed
+            </Badge>
+            <Badge tone="gray" size="xs">
+              Tickets-only
+            </Badge>
           </div>
-        )}
+          <Button size="xs" tone="ghost" onClick={() => setRefreshToken((c) => c + 1)}>
+            Refresh
+          </Button>
+        </div>
       </header>
 
-      {/* Filters */}
-      <Card>
-        <CardBody>
-          <FiltersBar>
-            <div className="flex flex-wrap items-center gap-3 text-xs">
-              {/* Symbol */}
-              <select
-                className="h-8 rounded-md bg-slate-900 border border-slate-700 text-slate-100 px-2"
-                value={filters.symbol}
-                onChange={(e) =>
-                  setFilters((f) => ({ ...f, symbol: e.target.value }))
-                }
-              >
-                <option value="ALL">ALL symbols</option>
-                {symbols.map((sym) => (
-                  <option key={sym} value={sym}>
-                    {sym}
-                  </option>
-                ))}
-              </select>
+      <section className="a3-page-main-card">
+        <FiltersBar />
+        <div className="a3-page-kpi-strip">
+          <Kpi label="Sessions" value={totalSessions} tone="indigo" sublabel={`last ${RANGE_DAYS} days`} />
+          <Kpi
+            label="Net realized"
+            value={netRealized.toFixed(0)}
+            tone={netRealized >= 0 ? "emerald" : "rose"}
+            sublabel="USD"
+          />
+          <Kpi
+            label="Best session"
+            value={bestSession ? `#${bestSession.sessionDate}` : "—"}
+            tone="emerald"
+            sublabel={bestSession ? formatStrategyLabel(bestSession.strategy) : "No standout"}
+          />
+          <Kpi label="Avg win %" value={`${avgWinRate}%`} tone="amber" sublabel="per session" />
+        </div>
 
-              {/* Strategy */}
-              <select
-                className="h-8 rounded-md bg-slate-900 border border-slate-700 text-slate-100 px-2"
-                value={filters.strategy}
-                onChange={(e) =>
-                  setFilters((f) => ({ ...f, strategy: e.target.value }))
-                }
-              >
-                <option value="ALL">ALL strategies</option>
-                {strategies.map((s) => (
-                  <option key={s} value={s}>
-                    {s}
-                  </option>
-                ))}
-              </select>
-
-              {/* Search */}
-              <input
-                type="search"
-                className="h-8 w-48 rounded-md bg-slate-900 border border-slate-700 text-slate-100 px-2"
-                placeholder="Search session, symbol, strategy…"
-                value={filters.search}
-                onChange={(e) =>
-                  setFilters((f) => ({ ...f, search: e.target.value }))
-                }
-              />
-
-              {/* Reset */}
-              <Button size="sm" onClick={handleResetFilters}>
-                Reset
-              </Button>
-            </div>
-          </FiltersBar>
-        </CardBody>
-      </Card>
-
-      {/* KPI strip */}
-      <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
-        <Kpi
-          label="Sessions"
-          value={totalSessions}
-          hint="Visible sessions after filters."
-        />
-        <Kpi
-          label="Net realized"
-          value={netRealized.toFixed(0)}
-          hint="Aggregate realized PnL across visible sessions."
-        />
-        <Kpi
-          label="Worst max DD"
-          value={maxDrawdown.toFixed(0)}
-          hint="Most negative max drawdown across visible sessions."
-        />
-        <Kpi
-          label="Avg win rate"
-          value={`${avgWinRate.toFixed(0)}%`}
-          hint="Average win rate across visible sessions."
-        />
-      </div>
-
-      {/* Main layout */}
-      <div className="flex flex-col gap-4 lg:flex-row lg:items-start">
-        {/* Table */}
-        <Card className="flex-1 min-w-0">
-          <CardBody>
-            <div className="overflow-x-auto rounded-xl border border-slate-800 bg-slate-950">
-              <DataTable
-                columns={columns}
-                data={tableData}
-                onRowClick={handleRowClick}
-              />
-              {isEmpty && (
-                <div className="px-4 py-6 text-center text-xs text-slate-400">
-                  No analytics rows match the current filters.
+        <div className="grid grid-cols-[minmax(0,2.2fr)_minmax(260px,0.9fr)] gap-3">
+        <Card className="a3-page-table-card min-h-[420px]">
+          <CardBody className="flex flex-col h-full">
+            <div className="a3-table-headline">
+              <div className="a3-page-section-label">Sessions</div>
+              {(loading || error) && (
+                <div className="text-[0.7rem] text-slate-300">
+                  {loading && <span>Loading analytics…</span>}
+                  {!loading && error && <span>{error}</span>}
                 </div>
+              )}
+            </div>
+
+            <div className="a3-page-table-scroll a3-scroll-soft min-h-[320px]">
+              {isEmpty ? (
+                <div className="px-6 py-10 text-center text-sm text-slate-400">
+                  Failed to load analytics history. No ticket history in the selected range.
+                </div>
+              ) : (
+                <DataTable
+                  rows={filtered}
+                  columns={columns}
+                  keyField="id"
+                  size="compact"
+                  onRowClick={handleRowClick}
+                  selectedRowKey={selected?.id ?? null}
+                />
               )}
             </div>
           </CardBody>
         </Card>
 
-        {/* Details panel */}
-        <Card className="w-full max-w-md shrink-0">
-          <CardBody>
-            <h2 className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-400">
-              Session details
-            </h2>
-
-            {!selected && (
-              <p className="mt-3 text-xs text-slate-400">
-                Select a session row to see a breakdown.
-              </p>
-            )}
-
-            {selected && (
-              <div className="mt-3 space-y-3 text-xs text-slate-200">
-                <div className="flex flex-wrap items-center gap-2">
-                  <span className="font-mono text-[0.8rem]">
-                    {selected.sessionDate} · {selected.symbol}
-                  </span>
-                  <Badge tone="blue">{selected.strategy}</Badge>
-                  <Badge tone={selected.realizedPnl >= 0 ? "green" : "red"}>
-                    {selected.realizedPnl >= 0 ? "Profitable" : "Losing"}
-                  </Badge>
+        <Card className="a3-page-side-panel min-h-[420px]">
+          <CardBody className="flex flex-col h-full gap-3">
+            <div className="flex items-center justify-between">
+              <div>
+                <div className="a3-page-section-label">Session detail</div>
+                <div className="text-sm font-semibold text-slate-50">
+                  {selected
+                    ? `${selected.sessionDate} · ${formatStrategyLabel(selected.strategy)}`
+                    : "No session selected"}
                 </div>
+              </div>
+            </div>
 
-                <div className="grid grid-cols-2 gap-2 text-[0.7rem] text-slate-300">
+            {selected ? (
+              <div className="flex flex-col gap-3 text-[0.75rem] text-slate-200">
+                <div className="grid grid-cols-2 gap-2">
                   <div>
-                    <div className="text-slate-500">Realized PnL</div>
+                    <div className="text-[0.65rem] text-slate-500 mb-0.5">Trades</div>
+                    <div className="font-mono">
+                      {selected.trades} trades
+                    </div>
+                  </div>
+                  <div>
+                    <div className="text-[0.65rem] text-slate-500 mb-0.5">Win rate</div>
+                    <div className="font-mono">{selected.winRate.toFixed(0)}%</div>
+                  </div>
+                  <div>
+                    <div className="text-[0.65rem] text-slate-500 mb-0.5">Realized PnL</div>
                     <div className="font-mono">
                       {selected.realizedPnl > 0 ? "+" : ""}
-                      {selected.realizedPnl.toFixed(0)}
+                      {selected.realizedPnl.toFixed(2)}
                     </div>
                   </div>
                   <div>
-                    <div className="text-slate-500">Unrealized PnL</div>
-                    <div className="font-mono">
-                      {selected.unrealizedPnl > 0 ? "+" : ""}
-                      {selected.unrealizedPnl.toFixed(0)}
-                    </div>
+                    <div className="text-[0.65rem] text-slate-500 mb-0.5">Max drawdown</div>
+                    <div className="font-mono">{selected.maxDrawdown.toFixed(2)}</div>
                   </div>
                   <div>
-                    <div className="text-slate-500">Max drawdown</div>
-                    <div className="font-mono">
-                      {selected.maxDrawdown.toFixed(0)}
-                    </div>
-                  </div>
-                  <div>
-                    <div className="text-slate-500">Trades</div>
-                    <div className="font-mono">{selected.trades}</div>
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-2 gap-2 text-[0.7rem] text-slate-300">
-                  <div>
-                    <div className="text-slate-500">Win rate</div>
-                    <div className="font-mono">
-                      {selected.winRate.toFixed(0)}%
-                    </div>
-                  </div>
-                  <div>
-                    <div className="text-slate-500">Avg R multiple</div>
+                    <div className="text-[0.65rem] text-slate-500 mb-0.5">Avg R-multiple</div>
                     <div className="font-mono">
                       {selected.avgRMultiple > 0 ? "+" : ""}
                       {selected.avgRMultiple.toFixed(2)}
@@ -554,22 +441,25 @@ export default function Analytics() {
                   </div>
                 </div>
 
-                <div className="pt-2 border-t border-slate-800 text-[0.7rem] text-slate-400">
-                  <Tooltip content="Analytics is read-only and should match engine PnL; any discrepancies are engine/back-office concerns, not dashboard logic.">
-                    <p>
-                      This panel summarises the economic outcome of the
-                      engine+operator decisions for the session. Any actual
-                      corrections must go through the engine and back office,
-                      not this dashboard.
-                    </p>
-                  </Tooltip>
+                <div className="pt-2 border-t border-slate-800 text-[0.7rem]">
+                  <div className="mb-1 uppercase tracking-[0.18em] text-slate-500 text-[0.65rem]">
+                    Strategy badge
+                  </div>
+                  <div className="flex flex-wrap gap-1">
+                    <Badge tone="blue">{formatStrategyLabel(selected.strategy)}</Badge>
+                    <Badge tone="gray">{selected.symbol}</Badge>
+                  </div>
                 </div>
+              </div>
+            ) : (
+              <div className="flex-1 flex items-center justify-center text-[0.75rem] text-slate-500">
+                Select a session to inspect drawdown and trade mix.
               </div>
             )}
           </CardBody>
         </Card>
       </div>
+      </section>
     </div>
   );
 }
-

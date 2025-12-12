@@ -53,7 +53,13 @@ export default function CopyOcoButton({
   };
 
   return (
-    <Button size="sm" variant="primary" disabled={disabled} onClick={handleCopy} title="Copy OCO details">
+    <Button
+      size="sm"
+      tone="primary"
+      disabled={disabled}
+      onClick={handleCopy}
+      title="Copy OCO details"
+    >
       Copy OCO
     </Button>
   );

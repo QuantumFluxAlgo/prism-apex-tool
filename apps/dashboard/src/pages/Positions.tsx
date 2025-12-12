@@ -8,8 +8,13 @@ import type { CanonicalTicket } from '@prism-apex/shared';
 
 import { fmtUtc } from '../utils/time';
 import { fmtPrice } from '../utils/number';
-import { fetchAnalyticsCanonicalTickets } from '../lib/api';
-import { getWorklistV2CanonicalTickets } from '../lib/worklistMock';
+import {
+  fetchAnalyticsCanonicalTickets,
+  fetchTickets,
+  buildCanonicalTicketFromRow,
+} from '../lib/api';
+import Kpi from '../ui/Kpi';
+import { Card } from '../ui/Card';
 
 /**
  * PRISM APEX V2 – Positions Snapshot (synthetic)
@@ -18,13 +23,7 @@ import { getWorklistV2CanonicalTickets } from '../lib/worklistMock';
  * - There is NO live broker / Tradovate positions API yet.
  * - We therefore build a synthetic positions view from canonical tickets:
  *   - Uses analytics tickets over a short window.
- *   - Groups OPEN / NON-COMPLETED tickets by symbol + side.
- *   - Shows contracts and last-updated timestamps.
- *
- * Tests expect:
- * - Literal "Loading…" text somewhere on the page.
- * - Literal "Active positions" KPI label.
- * Those are preserved exactly.
+ *   - Falls back to /api/tickets if analytics helper is empty.
  */
 
 type PositionKey = string;
@@ -32,8 +31,12 @@ type PositionKey = string;
 type SyntheticPosition = {
   key: PositionKey;
   symbol: string;
+  strategy: string;
   side: string;
   contracts: number;
+  avgEntry: number | null;
+  riskDollars: number | null;
+  avgRMultiple: number | null;
   lastUpdatedUtc: string | null;
   sampleTicketId: string;
 };
@@ -41,65 +44,95 @@ type SyntheticPosition = {
 function computeRange(days: number): { from: string; to: string } {
   const now = new Date();
   const end = new Date(now.getTime());
-  const endIso = end.toISOString();
-
   const start = new Date(now.getTime() - days * 24 * 60 * 60 * 1000);
-  return { from: start.toISOString(), to: endIso };
+  return { from: start.toISOString(), to: end.toISOString() };
 }
 
 function buildSyntheticPositions(tickets: CanonicalTicket[]): SyntheticPosition[] {
   const openTickets = tickets.filter((t) => {
     const status = (t.status ?? '').toUpperCase();
-    // Treat COMPLETED / CANCELLED as not contributing to live positions.
     if (status === 'COMPLETED' || status === 'CANCELLED') return false;
-    // Side and symbol must exist.
-    if (!t.symbol) return false;
-    if (!t.side) return false;
-    return true;
+    return t.symbol && t.side;
   });
 
-  const map = new Map<PositionKey, SyntheticPosition>();
+  const map = new Map<string, SyntheticPosition & {
+    weightedEntry: number;
+    totalRisk: number;
+    rrValues: number[];
+  }>();
 
   for (const ticket of openTickets) {
     const symbol = ticket.symbol!;
+    const strategy = ticket.strategyId ?? 'UNKNOWN';
     const side = (ticket.side ?? '').toUpperCase() || 'UNKNOWN';
-    const key = `${symbol}|${side}`;
+    const key = `${symbol}|${strategy}|${side}`;
 
     const qty = typeof ticket.quantity === 'number' ? ticket.quantity : 0;
+    const entry = typeof ticket.entryPrice === 'number' ? ticket.entryPrice : 0;
+    const risk = typeof ticket.totalRisk === 'number' ? ticket.totalRisk : 0;
+    const rr = typeof ticket.rrMultiple === 'number' ? ticket.rrMultiple : null;
     const updatedAt =
-      ticket.completedAtUtc ||
-      ticket.createdAtUtc ||
-      ticket.sessionDateUtc ||
-      null;
+      ticket.completedAtUtc || ticket.updatedAtUtc || ticket.createdAtUtc || ticket.sessionDateUtc || null;
 
-    const existing = map.get(key);
-    if (!existing) {
+    if (!map.has(key)) {
       map.set(key, {
         key,
         symbol,
+        strategy,
         side,
-        contracts: qty,
+        contracts: 0,
+        weightedEntry: 0,
+        avgEntry: null,
+        totalRisk: 0,
+        riskDollars: null,
+        avgRMultiple: null,
+        rrValues: [],
         lastUpdatedUtc: updatedAt,
         sampleTicketId: ticket.id,
       });
-    } else {
-      existing.contracts += qty;
-      if (
-        updatedAt &&
-        (!existing.lastUpdatedUtc ||
-          Date.parse(updatedAt) > Date.parse(existing.lastUpdatedUtc))
-      ) {
-        existing.lastUpdatedUtc = updatedAt;
-      }
+    }
+
+    const bucket = map.get(key)!;
+    bucket.contracts += qty;
+    bucket.weightedEntry += entry * qty;
+    bucket.totalRisk += risk;
+    if (rr !== null) bucket.rrValues.push(rr);
+    if (
+      updatedAt &&
+      (!bucket.lastUpdatedUtc || Date.parse(updatedAt) > Date.parse(bucket.lastUpdatedUtc))
+    ) {
+      bucket.lastUpdatedUtc = updatedAt;
+      bucket.sampleTicketId = ticket.id;
     }
   }
 
-  const positions = Array.from(map.values());
+  const positions: SyntheticPosition[] = [];
 
-  // Sort by symbol then side for stable display.
+  for (const bucket of map.values()) {
+    positions.push({
+      key: bucket.key,
+      symbol: bucket.symbol,
+      strategy: bucket.strategy,
+      side: bucket.side,
+      contracts: bucket.contracts,
+      avgEntry:
+        bucket.contracts > 0 ? Number((bucket.weightedEntry / bucket.contracts).toFixed(2)) : null,
+      riskDollars: bucket.totalRisk ? Number(bucket.totalRisk.toFixed(2)) : null,
+      avgRMultiple: bucket.rrValues.length
+        ? Number(
+            (
+              bucket.rrValues.reduce((acc, r) => acc + r, 0) / bucket.rrValues.length
+            ).toFixed(2),
+          )
+        : null,
+      lastUpdatedUtc: bucket.lastUpdatedUtc,
+      sampleTicketId: bucket.sampleTicketId,
+    });
+  }
+
   positions.sort((a, b) => {
     if (a.symbol === b.symbol) {
-      return a.side.localeCompare(b.side);
+      return a.strategy.localeCompare(b.strategy) || a.side.localeCompare(b.side);
     }
     return a.symbol.localeCompare(b.symbol);
   });
@@ -122,20 +155,33 @@ export default function PositionsPage() {
 
         let canonical: CanonicalTicket[] = [];
         try {
-          const apiTickets = await fetchAnalyticsCanonicalTickets({
-            from,
-            to,
-            limit: 400,
-          });
+          const apiTickets = await fetchAnalyticsCanonicalTickets({ from, to, limit: 400 });
           if (Array.isArray(apiTickets) && apiTickets.length > 0) {
             canonical = apiTickets;
           }
         } catch {
-          // swallow; we fall back to mock below
+          /* swallow */
         }
 
         if (!canonical.length) {
-          canonical = getWorklistV2CanonicalTickets() || [];
+          try {
+            const { rows = [] } = await fetchTickets({
+              from,
+              to,
+              status: "OPEN",
+              scope: "actionable",
+              limit: 500,
+            });
+            canonical = rows
+              .map((row) => buildCanonicalTicketFromRow(row))
+              .filter((ticket): ticket is CanonicalTicket => Boolean(ticket));
+          } catch {
+            /* swallow */
+          }
+        }
+
+        if (!canonical.length) {
+          canonical = [];
         }
 
         if (cancelled) return;
@@ -161,73 +207,37 @@ export default function PositionsPage() {
   const totalContracts = positions.reduce((acc, p) => acc + (p.contracts || 0), 0);
 
   return (
-    <div className="space-y-4">
-      {/* 1. Placeholder loading state (tests look for this literal text). */}
-      <div className="rounded-2xl border border-[var(--apex-card-border)] bg-[var(--apex-surface-muted)] px-4 py-3 text-xs text-[var(--apex-text)] shadow-[0_16px_40px_rgba(8,12,24,0.65)]">
-        {/* EXACT literal node for test: */}
-        <span>Loading…</span>
-        {loadingData && (
-          <span> Fetching synthetic positions from ticket history.</span>
-        )}
-      </div>
+    <div className="a3-page-root">
+      <header className="a3-page-header">
+        <div>
+          <div className="a3-page-section-label">Synthetic exposure</div>
+          <h1>Positions snapshot</h1>
+          <p>Aggregated from canonical tickets; no live broker positions API is wired yet.</p>
+        </div>
+        <div className="flex flex-col items-end gap-2">
+          <span className="a3-chip a3-chip--muted">
+            {loadingData ? 'Loading synthetic positions…' : 'Tickets-only input'}
+          </span>
+        </div>
+      </header>
 
-      {/* 2. KPI strip – keep "Active positions" label for tests and add real numbers. */}
-      <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
-        <section className="dashboard-card">
-          <div className="dashboard-card__body px-4 py-4 rounded-b-2xl dashboard-card__body stack">
-            <div className="dashboard-kpi">
-              <span className="dashboard-kpi__label">Active positions</span>
-              <span className="dashboard-kpi__value">
-                {activePositionsCount || '—'}
-              </span>
-            </div>
-          </div>
-        </section>
-        <section className="dashboard-card">
-          <div className="dashboard-card__body px-4 py-4 rounded-b-2xl dashboard-card__body stack">
-            <div className="dashboard-kpi">
-              <span className="dashboard-kpi__label">Symbols active</span>
-              <span className="dashboard-kpi__value">
-                {symbolsActiveCount || '—'}
-              </span>
-            </div>
-          </div>
-        </section>
-        <section className="dashboard-card">
-          <div className="dashboard-card__body px-4 py-4 rounded-b-2xl dashboard-card__body stack">
-            <div className="dashboard-kpi">
-              <span className="dashboard-kpi__label">Contracts (synthetic)</span>
-              <span className="dashboard-kpi__value">
-                {totalContracts || '—'}
-              </span>
-            </div>
-          </div>
-        </section>
-        <section className="dashboard-card">
-          <div className="dashboard-card__body px-4 py-4 rounded-b-2xl dashboard-card__body stack">
-            <div className="dashboard-kpi">
-              <span className="dashboard-kpi__label">
-                Unrealized PnL (requires broker)
-              </span>
-              <span className="dashboard-kpi__value">—</span>
-            </div>
-          </div>
-        </section>
-      </div>
+      <section className="a3-page-main-card space-y-4">
+        <div className="a3-page-kpi-strip">
+          <Kpi label="Active positions" value={activePositionsCount || '—'} tone="indigo" sublabel="Derived from open tickets" />
+          <Kpi label="Symbols active" value={symbolsActiveCount || '—'} tone="cyan" sublabel="Unique markets in exposure" />
+          <Kpi label="Contracts (synthetic)" value={totalContracts || '—'} tone="emerald" sublabel="Sum of ticket quantities" />
+          <Kpi label="Unrealized PnL" value="—" tone="neutral" sublabel="Not tracked in synthetic view" />
+        </div>
 
-      {/* 3. Positions table – synthetic view from tickets. */}
-      <section className="dashboard-card">
-        <header className="dashboard-card__header px-4 py-3 rounded-t-2xl px-4 py-3">
-          <div className="flex items-center justify-between gap-3">
-            <div className="flex flex-col gap-0.5">
-              <span className="text-[11px] font-medium text-slate-200">
+        <Card className="a3-page-table-card">
+          <div className="a3-table-headline px-4 py-3">
+            <div>
+              <div className="text-[0.75rem] uppercase tracking-[0.18em] text-slate-400">
                 Positions (synthetic from ticket history)
-              </span>
-              <span className="text-[11px] text-slate-500">
-                This surface aggregates non-completed tickets into per-symbol positions.
-                Live broker positions and real-time PnL will be wired once Tradovate
-                integration is in place.
-              </span>
+              </div>
+              <div className="text-[0.7rem] text-slate-400">
+                Aggregates non-completed tickets into per-symbol exposures.
+              </div>
             </div>
             <div className="flex flex-col items-end gap-1 text-[10px] text-slate-400">
               <span>
@@ -244,24 +254,25 @@ export default function PositionsPage() {
               </span>
             </div>
           </div>
-        </header>
-        <div className="dashboard-card__body px-4 py-4 rounded-b-2xl px-4 py-3">
-          <div className="dashboard-table-wrapper">
+          <div className="a3-page-table-scroll a3-scroll-soft px-4 pb-4">
             <table className="dashboard-table">
               <thead>
                 <tr>
                   <th className="text-left">Symbol</th>
+                  <th className="text-left">Strategy</th>
                   <th className="text-left">Side</th>
                   <th className="text-right">Contracts</th>
+                  <th className="text-right">Avg entry</th>
+                  <th className="text-right">Risk ($)</th>
+                  <th className="text-right">Avg R</th>
                   <th className="text-left">Sample ticket</th>
                   <th className="text-left">Last updated</th>
-                  <th className="text-left">Notes</th>
                 </tr>
               </thead>
               <tbody>
                 {positions.length === 0 ? (
                   <tr>
-                    <td colSpan={6} style={{ color: 'var(--apex-text-muted)' }}>
+                    <td colSpan={9} className="text-slate-500">
                       No synthetic positions available. Either there are no open tickets in
                       the recent window, or the engine is not emitting canonical ticket
                       status yet.
@@ -271,19 +282,21 @@ export default function PositionsPage() {
                   positions.map((pos) => (
                     <tr key={pos.key}>
                       <td className="text-left">{pos.symbol}</td>
+                      <td className="text-left">{pos.strategy}</td>
                       <td className="text-left">{pos.side}</td>
                       <td className="text-right">{pos.contracts}</td>
+                      <td className="text-right">{pos.avgEntry != null ? fmtPrice(pos.avgEntry) : '—'}</td>
+                      <td className="text-right">
+                        {pos.riskDollars != null ? pos.riskDollars.toFixed(0) : '—'}
+                      </td>
+                      <td className="text-right">
+                        {pos.avgRMultiple != null ? pos.avgRMultiple.toFixed(2) : '—'}
+                      </td>
                       <td className="text-left">
-                        <span className="font-mono text-[0.8rem]">
-                          {pos.sampleTicketId}
-                        </span>
+                        <span className="font-mono text-[0.8rem]">{pos.sampleTicketId}</span>
                       </td>
                       <td className="text-left">
                         {pos.lastUpdatedUtc ? fmtUtc(pos.lastUpdatedUtc) : '—'}
-                      </td>
-                      <td className="text-left text-[0.8rem] text-slate-400">
-                        Aggregated from open tickets only; does not reflect broker fills or
-                        partials.
                       </td>
                     </tr>
                   ))
@@ -291,9 +304,8 @@ export default function PositionsPage() {
               </tbody>
             </table>
           </div>
-        </div>
+        </Card>
       </section>
     </div>
   );
 }
-

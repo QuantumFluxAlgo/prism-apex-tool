@@ -25,6 +25,7 @@ import {
 import type { TicketRiskDecisionDto } from './dto/riskDecisionDto.js';
 import { applyQualityFilters, parseTicketQualityFilters } from './ticketQualityFilters.js';
 import { emitTicketQualityTelemetry } from '../services/tickets/ticketsTelemetry.js';
+import { computeEngineTicketScoreFromRow } from '../services/tickets/engineTicketScore.js';
 
 type Query = {
   limit?: string;
@@ -78,6 +79,9 @@ export type TicketRowDto = {
   rrMultiple?: number | null;
   canonicalCandidate?: CanonicalCandidateTicket | null;
   canonicalApproved?: ReturnType<typeof buildCanonicalApprovedTicketView>;
+  // Engine ticket score
+  score?: number | null;
+  scoreTrend?: 'UP' | 'FLAT' | 'DOWN' | null;
 } & Record<string, unknown>;
 
 const DEFAULT_RISK_DECISION: TicketRiskDecisionDto = {
@@ -181,7 +185,8 @@ export default async function ticketsRoute(app: FastifyInstance) {
         opened_at_utc, closed_at_utc,
         entry_price, stop_price, target_price, pnl, rr,
         actionable, non_actionable_reason AS reason,
-        completed_by, completed_note, completed_at_utc
+        completed_by, completed_note, completed_at_utc,
+        meta
       FROM tickets
       ${whereSql}
       ORDER BY symbol, strategy, direction, opened_at_utc DESC, completed_at_utc DESC NULLS LAST, id DESC
@@ -253,7 +258,6 @@ export default async function ticketsRoute(app: FastifyInstance) {
   app.get('/api/tickets', handler);
 }
 
-
 const MAX_SESSION_METRICS_KEYS = DEFAULT_MAX_SESSION_METRICS_KEYS;
 
 function getSessionKeyFromRow(row: any): SessionMetricsKey | null {
@@ -280,13 +284,15 @@ function getSessionFlagsForRow(row: any): SessionFlagsSummary {
 }
 
 async function populateSessionMetricsForTickets(rows: any[]): Promise<TicketRowDto[]> {
-  const baseTickets = rows.map((row) => {
+  const baseTickets: TicketRowDto[] = rows.map((row) => {
     const withRisk = attachRiskFields(row);
     return {
       ...withRisk,
       sessionMetrics: null,
       sessionFlags: getSessionFlagsForRow(withRisk),
       riskDecision: (withRisk.riskDecision as TicketRiskDecisionDto | null) ?? DEFAULT_RISK_DECISION,
+      score: null,
+      scoreTrend: null,
     } as TicketRowDto;
   });
 
@@ -301,17 +307,36 @@ async function populateSessionMetricsForTickets(rows: any[]): Promise<TicketRowD
     seen.add(keyStr);
     keyList.push(key);
     if (keyList.length > MAX_SESSION_METRICS_KEYS) {
-      return baseTickets;
+      // Too many distinct sessions – attach no metrics, but still score.
+      return baseTickets.map((t) => {
+        const { score, trend } = computeEngineTicketScoreFromRow(t);
+        return { ...t, score, scoreTrend: trend };
+      });
     }
   }
 
   if (!keyList.length) {
-    return baseTickets;
+    // No session keys – still compute scores.
+    return baseTickets.map((t) => {
+      const { score, trend } = computeEngineTicketScoreFromRow(t);
+      return { ...t, score, scoreTrend: trend };
+    });
   }
 
   const summaryMap = await fetchSessionMetricsBatch(keyList, {
     maxKeys: MAX_SESSION_METRICS_KEYS,
   });
 
-  return attachSessionMetricsToRows(baseTickets, summaryMap, (ticket) => getSessionKeyFromRow(ticket));
+  const withMetrics = attachSessionMetricsToRows(
+    baseTickets,
+    summaryMap,
+    (ticket) => getSessionKeyFromRow(ticket),
+  );
+
+  // Final pass: compute engine score per row.
+  return withMetrics.map((t) => {
+    const { score, trend } = computeEngineTicketScoreFromRow(t);
+    return { ...t, score, scoreTrend: trend };
+  });
 }
+

@@ -1,600 +1,485 @@
 // @ts-nocheck
-/* PRISM APEX – Worklist V2 A3 Cockpit
+/* PRISM APEX – Worklist V2 A3 Cockpit (canonical)
  *
- * Operator-facing worklist cockpit:
+ * Operator-facing Worklist cockpit:
  * - Header under ExecutionShell
  * - Filters strip
  * - KPI strip
- * - Main table
- * - Details panel
+ * - Main table (canonical Worklist tickets)
+ * - Details panel with risk + session context
  *
- * Data is sourced via useWorklistTickets:
- * - Primary: /api/worklist (engine-backed).
- * - Fallback: in-memory mock data with realistic shape.
+ * Data:
+ * - Primary: /api/worklist (backend canonical)
+ * - Fallback: /api/tickets (status=OPEN, scope=actionable)
  */
 
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
+
 import { Card, CardBody } from "../ui/Card";
 import Button from "../ui/Button";
 import Badge from "../ui/Badge";
 import Kpi from "../ui/Kpi";
-import FiltersBar from "../ui/FiltersBar";
+import FiltersBar from "../components/FiltersBar";
 import DataTable from "../ui/DataTable";
-import Tooltip from "../ui/Tooltip";
 
-// 👉 runtime vs type-only split
-import type {
-  WorklistTicket,
-  WorklistRiskBucket,
-  WorklistSide,
+import {
+  useWorklistTickets,
+  type WorklistTicket,
+  type WorklistTrend,
+  type WorklistRiskBucket,
 } from "../hooks/useWorklistTickets";
-import { useWorklistTickets } from "../hooks/useWorklistTickets";
+import { fetchYahooHealth } from "../lib/api";
+import {
+  deriveIngestState,
+  summarizeIngestRows,
+  statusChipTone,
+  getWorstLagSeconds,
+  formatLag,
+  RED_THRESHOLD_SECONDS,
+  type IngestState,
+} from "../lib/ingestState";
 
-// --- Temporary canonical-shaped mock data ------------------------------------
-const MOCK_WORKLIST_ROWS: WorklistTicket[] = [
+function trendTone(trend: WorklistTrend): string {
+  switch (trend) {
+    case "UP":
+      return "text-emerald-400";
+    case "DOWN":
+      return "text-rose-400";
+    default:
+      return "text-slate-400";
+  }
+}
+
+function renderTrendArrow(trend: WorklistTrend): string {
+  switch (trend) {
+    case "UP":
+      return "▲";
+    case "DOWN":
+      return "▼";
+    default:
+      return "◆";
+  }
+}
+
+function riskBucketTone(bucket: WorklistRiskBucket): "emerald" | "amber" | "rose" {
+  switch (bucket) {
+    case "GREEN":
+      return "emerald";
+    case "RED":
+      return "rose";
+    case "AMBER":
+    default:
+      return "amber";
+  }
+}
+
+const columns = [
   {
-    ticketId: "t-orr-001",
-    symbol: "MESZ4",
-    strategy: "ORR",
-    side: "LONG",
-    score: 86,
-    riskBucket: "GREEN",
-    ageMinutes: 4,
-    pnlTicks: 10,
-    sessionDate: "2025-12-08",
-    createdAt: "2025-12-08T14:00:00Z",
-    notes: "Clean OR reversal after strong open drive.",
+    key: "ticketId",
+    header: "Ticket",
+    width: "80px",
+    cellClassName: "font-mono text-[0.7rem] text-slate-300",
   },
   {
-    ticketId: "t-orr-002",
-    symbol: "NQZ4",
-    strategy: "ORR",
-    side: "SHORT",
-    score: 78,
-    riskBucket: "AMBER",
-    ageMinutes: 9,
-    pnlTicks: -4,
-    sessionDate: "2025-12-08",
-    createdAt: "2025-12-08T13:55:00Z",
-    notes: "Aggressive fade; news risk elevated.",
+    key: "symbol",
+    header: "Symbol",
+    width: "80px",
+    cellClassName: "font-mono text-[0.75rem] text-slate-100",
   },
   {
-    ticketId: "t-osb-010",
-    symbol: "CLF5",
-    strategy: "OSB",
-    side: "LONG",
-    score: 72,
-    riskBucket: "GREEN",
-    ageMinutes: 16,
-    pnlTicks: 0,
-    sessionDate: "2025-12-08",
-    createdAt: "2025-12-08T13:48:00Z",
-    notes: "Breakout from OR high, low volatility regime.",
+    key: "strategy",
+    header: "Strat",
+    width: "72px",
+    cellClassName: "font-mono text-[0.7rem] text-slate-300",
   },
   {
-    ticketId: "t-vwapft-021",
-    symbol: "MESZ4",
-    strategy: "VWAP-FT",
-    side: "SHORT",
-    score: 65,
-    riskBucket: "RED",
-    ageMinutes: 22,
-    pnlTicks: -12,
-    sessionDate: "2025-12-08",
-    createdAt: "2025-12-08T13:40:00Z",
-    notes: "Fade against strong trend; poor session quality.",
+    key: "side",
+    header: "Side",
+    width: "64px",
+    render: (_: any, row: WorklistTicket) => (
+      <Badge tone={row.side === "LONG" ? "emerald" : "rose"}>{row.side}</Badge>
+    ),
+  },
+  {
+    key: "score",
+    header: "Score",
+    width: "90px",
+    cellClassName: "text-right text-[0.7rem]",
+    render: (_value: any, row: WorklistTicket) => (
+      <span className="inline-flex items-center justify-end gap-1 font-mono">
+        <span>{row.score}</span>
+        <span className={trendTone(row.trend)}>{renderTrendArrow(row.trend)}</span>
+        <span className="text-[10px] text-slate-500">{row.delta}</span>
+      </span>
+    ),
+  },
+  {
+    key: "riskDecision",
+    header: "Risk",
+    width: "80px",
+    render: (_value: any, row: WorklistTicket) => (
+      <Badge tone={riskBucketTone(row.riskBucket)}>
+        {row.riskDecision?.allowed ? "ALLOW" : "BLOCK"}
+      </Badge>
+    ),
+  },
+  {
+    key: "rrMultiple",
+    header: "RR",
+    width: "72px",
+    cellClassName: "text-right font-mono text-[0.7rem]",
+    render: (_: any, row: WorklistTicket) =>
+      typeof row.rrMultiple === "number" ? row.rrMultiple.toFixed(2) : "—",
+  },
+  {
+    key: "contracts",
+    header: "Qty",
+    width: "60px",
+    cellClassName: "text-right font-mono text-[0.7rem]",
+    render: (_: any, row: WorklistTicket) =>
+      row.contracts != null ? row.contracts : "—",
+  },
+  {
+    key: "riskDollars",
+    header: "Risk ($)",
+    width: "90px",
+    cellClassName: "text-right font-mono text-[0.7rem]",
+    render: (_: any, row: WorklistTicket) =>
+      typeof row.riskDollars === "number" ? row.riskDollars.toFixed(0) : "—",
+  },
+  {
+    key: "pnlTicks",
+    header: "PnL (ticks)",
+    width: "96px",
+    cellClassName: "text-right font-mono text-[0.7rem]",
+    render: (_: any, row: WorklistTicket) => {
+      if (typeof row.pnlTicks !== "number") return "—";
+      const v = row.pnlTicks;
+      const cls =
+        v > 0 ? "text-emerald-400" : v < 0 ? "text-rose-400" : "text-slate-300";
+      return <span className={cls}>{v}</span>;
+    },
+  },
+  {
+    key: "ageMinutes",
+    header: "Age (min)",
+    width: "76px",
+    cellClassName: "text-right font-mono text-[0.7rem] text-slate-400",
+  },
+  {
+    key: "sessionDate",
+    header: "Session",
+    width: "120px",
+    cellClassName: "text-[0.7rem] text-slate-400",
+    render: (_: any, row: WorklistTicket) => (
+      <div className="flex flex-col leading-tight">
+        <span className="font-mono text-slate-300">{row.sessionDate}</span>
+        <span className="text-[0.6rem] uppercase text-slate-500">
+          {row.sessionMetrics?.sessionQualityFlag ?? "—"}
+        </span>
+      </div>
+    ),
+  },
+  {
+    key: "flags",
+    header: "Flags",
+    width: "120px",
+    cellClassName: "text-[0.65rem] text-slate-300",
+    render: (_: any, row: WorklistTicket) =>
+      row.sessionFlags?.flags?.length ? (
+        <div className="flex flex-wrap gap-1">
+          {row.sessionFlags.flags.map((flag) => (
+            <Badge key={flag}>{flag}</Badge>
+          ))}
+        </div>
+      ) : (
+        "None"
+      ),
   },
 ];
 
-// --- Filters state -----------------------------------------------------------
+export default function WorklistV2() {
+  const { tickets, loading, error, selected, setSelected, refresh } =
+    useWorklistTickets();
+  const [ingestState, setIngestState] = useState<IngestState>("UNKNOWN");
+  const [ingestCounts, setIngestCounts] = useState({ GREEN: 0, AMBER: 0, RED: 0 });
+  const [worstLag, setWorstLag] = useState<number | null>(null);
 
-type SideFilter = "ALL" | WorklistSide;
-type RiskFilter = "ALL" | WorklistRiskBucket;
-
-interface FiltersState {
-  symbol: string;
-  strategy: string;
-  side: SideFilter;
-  riskBucket: RiskFilter;
-  minScore: number;
-  maxAgeMinutes: number | null;
-  search: string;
-}
-
-const DEFAULT_FILTERS: FiltersState = {
-  symbol: "ALL",
-  strategy: "ALL",
-  side: "ALL",
-  riskBucket: "ALL",
-  minScore: 0,
-  maxAgeMinutes: 30,
-  search: "",
-};
-
-// --- Component ---------------------------------------------------------------
-
-const WorklistV2: React.FC = () => {
-  const { tickets, loading, error } = useWorklistTickets({
-    mockFallback: MOCK_WORKLIST_ROWS,
-  });
-
-  const [filters, setFilters] = useState<FiltersState>(DEFAULT_FILTERS);
-  const [selected, setSelected] = useState<WorklistTicket | null>(null);
-
-  const symbols = useMemo(
-    () => Array.from(new Set(tickets.map((r) => r.symbol))).sort(),
-    [tickets]
-  );
-  const strategies = useMemo(
-    () => Array.from(new Set(tickets.map((r) => r.strategy))).sort(),
-    [tickets]
-  );
-
-  const filteredRows = useMemo(() => {
-    return tickets.filter((row) => {
-      if (filters.symbol !== "ALL" && row.symbol !== filters.symbol) return false;
-      if (filters.strategy !== "ALL" && row.strategy !== filters.strategy)
-        return false;
-      if (filters.side !== "ALL" && row.side !== filters.side) return false;
-      if (filters.riskBucket !== "ALL" && row.riskBucket !== filters.riskBucket)
-        return false;
-      if (row.score < filters.minScore) return false;
-      if (
-        filters.maxAgeMinutes != null &&
-        row.ageMinutes > filters.maxAgeMinutes
-      )
-        return false;
-
-      if (filters.search.trim()) {
-        const q = filters.search.trim().toLowerCase();
-        const haystack = [
-          row.ticketId,
-          row.symbol,
-          row.strategy,
-          row.side,
-          row.notes ?? "",
-        ]
-          .join(" ")
-          .toLowerCase();
-        if (!haystack.includes(q)) return false;
+  useEffect(() => {
+    let cancelled = false;
+    async function loadIngest() {
+      try {
+        const response = await fetchYahooHealth();
+        if (cancelled) return;
+        const rows = response?.rows ?? [];
+        setIngestState(deriveIngestState(rows));
+        setIngestCounts(summarizeIngestRows(rows));
+        setWorstLag(getWorstLagSeconds(rows));
+      } catch {
+        if (!cancelled) {
+          setIngestState("UNKNOWN");
+          setIngestCounts({ GREEN: 0, AMBER: 0, RED: 0 });
+          setWorstLag(null);
+        }
       }
+    }
+    loadIngest();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
-      return true;
-    });
-  }, [tickets, filters]);
+  const kpis = useMemo(() => {
+    const total = tickets.length;
+    const actionable = tickets.filter((t) => t.riskDecision?.allowed !== false).length;
+    const blocked = total - actionable;
+    const avgScore =
+      total > 0
+        ? Math.round(
+            tickets.reduce((acc, t) => acc + (t.score ?? 0), 0) / total,
+          )
+        : 0;
 
-  // --- KPI calculations ------------------------------------------------------
-
-  const kpiTotalTickets = filteredRows.length;
-  const kpiGreen = filteredRows.filter((r) => r.riskBucket === "GREEN").length;
-  const kpiAmber = filteredRows.filter((r) => r.riskBucket === "AMBER").length;
-  const kpiRed = filteredRows.filter((r) => r.riskBucket === "RED").length;
-
-  const avgScore =
-    filteredRows.length === 0
-      ? 0
-      : Math.round(
-          filteredRows.reduce((acc, r) => acc + r.score, 0) /
-            filteredRows.length
-        );
-
-  const latestTicket = filteredRows[0] ?? null;
-
-  // --- Table configuration ---------------------------------------------------
-
-  const columns = [
-    {
-      key: "ticketId",
-      header: "Ticket ID",
-      cellClassName: "font-mono text-[0.7rem] text-slate-200",
-    },
-    {
-      key: "symbol",
-      header: "Symbol",
-      cellClassName: "font-mono text-[0.7rem] text-slate-100",
-    },
-    {
-      key: "strategy",
-      header: "Strategy",
-      cellClassName: "font-mono text-[0.7rem] text-slate-100",
-      render: (_value, row: WorklistTicket) => (
-        <span className="inline-flex items-center gap-1">
-          <span>{row.strategy}</span>
-          <Badge tone="blue" data-testid="badge">
-            OR
-          </Badge>
-        </span>
-      ),
-    },
-    {
-      key: "side",
-      header: "Side",
-      cellClassName: "text-[0.7rem]",
-      render: (_value, row: WorklistTicket) => (
-        <Badge tone={row.side === "LONG" ? "green" : "red"}>{row.side}</Badge>
-      ),
-    },
-    {
-      key: "score",
-      header: "Score",
-      cellClassName: "text-right text-[0.7rem]",
-      render: (_value, row: WorklistTicket) => (
-        <span className="font-mono">{row.score}</span>
-      ),
-    },
-    {
-      key: "riskBucket",
-      header: "Risk",
-      cellClassName: "text-[0.7rem]",
-      render: (_value, row: WorklistTicket) => {
-        const tone =
-          row.riskBucket === "GREEN"
-            ? "green"
-            : row.riskBucket === "AMBER"
-            ? "amber"
-            : "red";
-        return (
-          <Badge tone={tone} data-testid="badge">
-            {row.riskBucket}
-          </Badge>
-        );
-      },
-    },
-    {
-      key: "pnlTicks",
-      header: "PnL (ticks)",
-      cellClassName: "text-right text-[0.7rem]",
-      render: (_value, row: WorklistTicket) => {
-        const sign = row.pnlTicks > 0 ? "+" : row.pnlTicks < 0 ? "−" : "";
-        const abs = Math.abs(row.pnlTicks);
-        const tone =
-          row.pnlTicks > 0 ? "green" : row.pnlTicks < 0 ? "red" : "gray";
-
-        return (
-          <Tooltip content={`${row.pnlTicks} ticks`}>
-            <span
-              className={`font-mono ${
-                tone === "green"
-                  ? "text-emerald-300"
-                  : tone === "red"
-                  ? "text-rose-300"
-                  : "text-slate-300"
-              }`}
-            >
-              {sign}
-              {abs}
-            </span>
-          </Tooltip>
-        );
-      },
-    },
-    {
-      key: "ageMinutes",
-      header: "Age (min)",
-      cellClassName: "text-right text-[0.7rem] text-slate-300",
-      render: (_value, row: WorklistTicket) => (
-        <span className="font-mono">{row.ageMinutes}</span>
-      ),
-    },
-    {
-      key: "createdAt",
-      header: "Created at",
-      cellClassName: "text-right text-[0.65rem] text-slate-400",
-      render: (_value, row: WorklistTicket) => (
-        <span className="font-mono">
-          {row.createdAt.replace("T", " ").replace("Z", "")}
-        </span>
-      ),
-    },
-  ];
-
-  const tableData = filteredRows.map((row) => ({
-    ...row,
-  }));
-
-  // --- Handlers --------------------------------------------------------------
-
-  const handleResetFilters = () => {
-    setFilters(DEFAULT_FILTERS);
-  };
-
-  const handleRowClick = (row: WorklistTicket) => {
-    setSelected(row);
-  };
-
-  // --- Render ----------------------------------------------------------------
+    return { total, actionable, blocked, avgScore };
+  }, [tickets]);
+  const ingestUnsafe =
+    ingestState === "NOT LIVE" ||
+    (typeof worstLag === "number" && worstLag > RED_THRESHOLD_SECONDS);
 
   return (
-    <div className="worklist-v2-root flex flex-col gap-4">
+    <div className="a3-page-root">
       {/* Header */}
-      <header className="flex flex-col gap-1">
-        <div className="flex items-center justify-between gap-3">
-          <div>
-            <h1 className="text-base font-semibold text-slate-100">Worklist</h1>
-            <p className="text-xs text-slate-400">
-              Canonical worklist tickets for the current environment. Read-only
-              cockpit – no order routing.
-            </p>
+      <header className="a3-page-header">
+        <div>
+          <div className="a3-page-section-label">Operator cockpit</div>
+          <h1>Worklist V2 – Canonical tickets</h1>
+          <p>Actionable guardrail-approved tickets the operator keys into Tradovate as an OCO.</p>
+        </div>
+        <div className="flex flex-col items-end gap-3">
+          <div className="a3-page-header-meta">
+            <span className="a3-chip a3-chip--muted">Manual OCO entry</span>
+            <span className="a3-chip a3-chip--muted">Tickets only</span>
           </div>
-          <div className="flex flex-col items-end gap-1 text-[0.7rem]">
-            <Badge tone="blue" data-testid="badge">
-              Live · SIM environment
+          <div className="flex items-center gap-2 text-[10px] text-slate-400">
+            <Badge tone={statusChipTone[ingestState]} size="xs">
+              Ingest {ingestState} · {formatLag(worstLag)}
             </Badge>
-            <Badge tone="gray" data-testid="badge">
-              ORR · OSB · VWAP-FT
-            </Badge>
+            <span className="font-geist-mono">
+              G:{ingestCounts.GREEN} A:{ingestCounts.AMBER} R:{ingestCounts.RED}
+            </span>
+          </div>
+          <div className="flex items-center gap-2">
+            <Button size="xs" tone="ghost" onClick={refresh}>
+              Refresh
+            </Button>
           </div>
         </div>
-        {(loading || error) && (
-          <div className="mt-1 text-[0.7rem] text-slate-400">
-            {loading && <span>Loading worklist from engine…</span>}
-            {!loading && error && (
-              <span>
-                Engine worklist unavailable; using illustrative tickets only.
-              </span>
-            )}
-          </div>
-        )}
       </header>
 
-      {/* Filters */}
-      <Card>
-        <CardBody>
-          <FiltersBar>
-            <div className="flex flex-wrap items-center gap-3 text-xs">
-              {/* Symbol */}
-              <select
-                className="h-8 rounded-md bg-slate-900 border border-slate-700 text-slate-100 px-2"
-                value={filters.symbol}
-                onChange={(e) =>
-                  setFilters((f) => ({ ...f, symbol: e.target.value }))
-                }
-              >
-                <option value="ALL">ALL symbols</option>
-                {symbols.map((sym) => (
-                  <option key={sym} value={sym}>
-                    {sym}
-                  </option>
-                ))}
-              </select>
+      {ingestUnsafe && (
+        <div className="mt-3 rounded-xl border border-rose-500/30 bg-rose-500/10 px-4 py-2 text-[0.8rem] text-rose-100">
+          TRADING UNSAFE — ingest not live or lagged. Check Status.
+        </div>
+      )}
 
-              {/* Strategy */}
-              <select
-                className="h-8 rounded-md bg-slate-900 border border-slate-700 text-slate-100 px-2"
-                value={filters.strategy}
-                onChange={(e) =>
-                  setFilters((f) => ({ ...f, strategy: e.target.value }))
-                }
-              >
-                <option value="ALL">ALL strategies</option>
-                {strategies.map((s) => (
-                  <option key={s} value={s}>
-                    {s}
-                  </option>
-                ))}
-              </select>
+      <section className="a3-page-main-card">
+        {/* Filters + KPIs */}
+        <FiltersBar />
+        <div className="a3-page-kpi-strip">
+          <Kpi
+            label="Actionable tickets"
+            value={kpis.actionable}
+            tone="emerald"
+            sublabel={`of ${kpis.total} open`}
+          />
+          <Kpi
+            label="Blocked by risk"
+            value={kpis.blocked}
+            tone="rose"
+            sublabel="guardrail blocks"
+          />
+          <Kpi
+            label="Average score"
+            value={kpis.avgScore}
+            tone="indigo"
+            sublabel="0–100"
+          />
+          <Kpi
+            label="Selected RR"
+            value={
+              selected && typeof selected.rrMultiple === "number"
+                ? selected.rrMultiple.toFixed(2)
+                : "—"
+            }
+            tone="amber"
+            sublabel={selected?.symbol ?? "—"}
+          />
+        </div>
 
-              {/* Side */}
-              <select
-                className="h-8 rounded-md bg-slate-900 border border-slate-700 text-slate-100 px-2"
-                value={filters.side}
-                onChange={(e) =>
-                  setFilters((f) => ({
-                    ...f,
-                    side: e.target.value as SideFilter,
-                  }))
-                }
-              >
-                <option value="ALL">ALL sides</option>
-                <option value="LONG">LONG</option>
-                <option value="SHORT">SHORT</option>
-              </select>
-
-              {/* Risk bucket */}
-              <select
-                className="h-8 rounded-md bg-slate-900 border border-slate-700 text-slate-100 px-2"
-                value={filters.riskBucket}
-                onChange={(e) =>
-                  setFilters((f) => ({
-                    ...f,
-                    riskBucket: e.target.value as RiskFilter,
-                  }))
-                }
-              >
-                <option value="ALL">ALL risk</option>
-                <option value="GREEN">GREEN</option>
-                <option value="AMBER">AMBER</option>
-                <option value="RED">RED</option>
-              </select>
-
-              {/* Min score */}
-              <div className="flex items-center gap-1">
-                <span className="text-[0.7rem] text-slate-400">Min score</span>
-                <input
-                  type="number"
-                  min={0}
-                  max={100}
-                  className="h-8 w-16 rounded-md bg-slate-900 border border-slate-700 text-slate-100 px-2 text-right text-xs"
-                  value={filters.minScore}
-                  onChange={(e) =>
-                    setFilters((f) => ({
-                      ...f,
-                      minScore: Number.isNaN(parseInt(e.target.value, 10))
-                        ? 0
-                        : Math.max(
-                            0,
-                            Math.min(100, parseInt(e.target.value, 10))
-                          ),
-                    }))
-                  }
-                />
-              </div>
-
-              {/* Max age */}
-              <div className="flex items-center gap-1">
-                <span className="text-[0.7rem] text-slate-400">Max age</span>
-                <input
-                  type="number"
-                  min={0}
-                  className="h-8 w-16 rounded-md bg-slate-900 border border-slate-700 text-slate-100 px-2 text-right text-xs"
-                  value={filters.maxAgeMinutes ?? ""}
-                  onChange={(e) => {
-                    const v = parseInt(e.target.value, 10);
-                    setFilters((f) => ({
-                      ...f,
-                      maxAgeMinutes: Number.isNaN(v) ? null : v,
-                    }));
-                  }}
-                  placeholder="∞"
-                />
-                <span className="text-[0.7rem] text-slate-500">min</span>
-              </div>
-
-              {/* Search */}
-              <input
-                type="search"
-                className="h-8 w-48 rounded-md bg-slate-900 border border-slate-700 text-slate-100 px-2"
-                placeholder="Search ticket, symbol, notes…"
-                value={filters.search}
-                onChange={(e) =>
-                  setFilters((f) => ({ ...f, search: e.target.value }))
-                }
-              />
-
-              {/* Reset */}
-              <Button size="sm" onClick={handleResetFilters}>
-                Reset
-              </Button>
-            </div>
-          </FiltersBar>
-        </CardBody>
-      </Card>
-
-      {/* KPI strip */}
-      <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
-        <Kpi
-          label="Tickets"
-          value={kpiTotalTickets}
-          hint="Visible tickets after filters."
-        />
-        <Kpi
-          label="Avg score"
-          value={avgScore}
-          hint="Average engine score for visible tickets."
-        />
-        <Kpi
-          label="Risk buckets"
-          value={`${kpiGreen}G / ${kpiAmber}A / ${kpiRed}R`}
-          hint="Count of tickets by risk bucket."
-        />
-        <Kpi
-          label="Latest ticket"
-          value={latestTicket ? latestTicket.ticketId : "—"}
-          hint={latestTicket ? latestTicket.symbol : "No tickets in view."}
-        />
-      </div>
-
-      {/* Main layout: table + details */}
-      <div className="flex flex-col gap-4 lg:flex-row lg:items-start">
-        <Card className="flex-1 min-w-0">
-          <CardBody>
-            <div className="overflow-x-auto rounded-xl border border-slate-800 bg-slate-950">
-              <DataTable
-                columns={columns}
-                data={tableData}
-                onRowClick={handleRowClick}
-              />
-              {tableData.length === 0 && !loading && (
-                <div className="px-4 py-6 text-center text-xs text-slate-400">
-                  No tickets match the current filters.
-                </div>
-              )}
-              {tableData.length === 0 && loading && (
-                <div className="px-4 py-6 text-center text-xs text-slate-400">
-                  Loading tickets…
-                </div>
-              )}
-            </div>
-          </CardBody>
-        </Card>
-
-        {/* Details panel */}
-        <Card className="w-full max-w-md shrink-0">
-          <CardBody>
-            <h2 className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-400">
-              Ticket details
-            </h2>
-            {!selected && (
-              <p className="mt-3 text-xs text-slate-400">
-                Select a ticket from the table to see session context, guardrails,
-                and notes.
-              </p>
-            )}
-
-            {selected && (
-              <div className="mt-3 space-y-3 text-xs text-slate-200">
-                <div className="flex flex-wrap items-center gap-2">
-                  <span className="font-mono text-[0.8rem]">
-                    {selected.ticketId}
-                  </span>
-                  <Badge tone="blue">{selected.symbol}</Badge>
-                  <Badge tone="gray">{selected.strategy}</Badge>
-                  <Badge tone={selected.side === "LONG" ? "green" : "red"}>
-                    {selected.side}
-                  </Badge>
-                  <Badge tone="amber">{selected.riskBucket}</Badge>
-                </div>
-
-                <div className="grid grid-cols-2 gap-2 text-[0.7rem] text-slate-300">
-                  <div>
-                    <div className="text-slate-500">Score</div>
-                    <div className="font-mono">{selected.score}</div>
-                  </div>
-                  <div>
-                    <div className="text-slate-500">PnL (ticks)</div>
-                    <div className="font-mono">
-                      {selected.pnlTicks > 0 ? "+" : ""}
-                      {selected.pnlTicks}
-                    </div>
-                  </div>
-                  <div>
-                    <div className="text-slate-500">Age</div>
-                    <div className="font-mono">
-                      {selected.ageMinutes} min
-                    </div>
-                  </div>
-                  <div>
-                    <div className="text-slate-500">Created</div>
-                    <div className="font-mono">
-                      {selected.createdAt.replace("T", " ").replace("Z", "")}
-                    </div>
-                  </div>
-                </div>
-
-                {selected.notes && (
-                  <div className="pt-2 border-t border-slate-800 text-[0.75rem] text-slate-200">
-                    <div className="mb-1 text-[0.7rem] uppercase tracking-[0.18em] text-slate-500">
-                      Engine notes
-                    </div>
-                    <p>{selected.notes}</p>
+        {/* Main layout: table + details */}
+        <div className="grid grid-cols-[minmax(0,2.2fr)_minmax(260px,0.9fr)] gap-3 min-h-[420px]">
+          {/* Table card */}
+          <Card className="a3-page-table-card min-h-[420px]">
+            <CardBody className="flex flex-col h-full">
+              <div className="a3-table-headline">
+                <div className="a3-page-section-label">Tickets</div>
+                {(loading || error) && (
+                  <div className="text-[0.7rem] text-slate-300">
+                    {loading && <span>Loading worklist from engine…</span>}
+                    {!loading && error && (
+                      <span>
+                        Engine tickets unavailable; Worklist feed unavailable.
+                      </span>
+                    )}
                   </div>
                 )}
-
-                <div className="pt-2 border-t border-slate-800 text-[0.7rem] text-slate-400">
-                  <p>
-                    This panel is read-only. Actual order sizing, routing, and
-                    guardrail enforcement live in the engine and back-office
-                    config, not the dashboard.
-                  </p>
-                </div>
               </div>
-            )}
-          </CardBody>
-        </Card>
-      </div>
+
+              <div className="a3-page-table-scroll a3-scroll-soft min-h-[320px]">
+                <DataTable
+                  rows={tickets}
+                  columns={columns}
+                  keyField="ticketId"
+                  size="compact"
+                  onRowClick={(row: WorklistTicket) => setSelected(row)}
+                  selectedRowKey={selected?.ticketId ?? null}
+                />
+              </div>
+            </CardBody>
+          </Card>
+
+          {/* Details panel */}
+          <Card className="a3-page-side-panel min-h-[420px]">
+            <CardBody className="flex flex-col h-full gap-3">
+              <div className="flex items-center justify-between">
+                <div>
+                  <div className="a3-page-section-label">Details</div>
+                  <div className="text-sm font-semibold text-slate-50">
+                    {selected
+                      ? `${selected.symbol} – ${selected.strategy}`
+                      : "No ticket selected"}
+                  </div>
+                </div>
+                {selected && (
+                  <Badge tone={riskBucketTone(selected.riskBucket)}>
+                    {selected.riskDecision?.allowed ? "ALLOW" : "BLOCK"}
+                  </Badge>
+                )}
+              </div>
+
+              {selected ? (
+                <div className="flex flex-col gap-3 text-[0.75rem] text-slate-200">
+                  {/* Core metrics */}
+                  <div className="grid grid-cols-2 gap-2">
+                    <div>
+                      <div className="text-[0.65rem] text-slate-500 mb-0.5">
+                        Score
+                      </div>
+                      <div className="font-mono">
+                        {selected.score}{" "}
+                        <span className={trendTone(selected.trend)}>
+                          {renderTrendArrow(selected.trend)}
+                        </span>{" "}
+                        <span className="text-[0.6rem] text-slate-500">
+                          Δ {selected.delta}
+                        </span>
+                      </div>
+                    </div>
+                    <div>
+                      <div className="text-[0.65rem] text-slate-500 mb-0.5">
+                        RR / Qty / Risk
+                      </div>
+                      <div className="font-mono">
+                        {selected.rrMultiple != null
+                          ? selected.rrMultiple.toFixed(2)
+                          : "—"}{" "}
+                        RR · {selected.contracts ?? "—"} x · {selected.riskDollars != null ? `$${selected.riskDollars.toFixed(0)}` : "—"}
+                      </div>
+                    </div>
+                    <div>
+                      <div className="text-[0.65rem] text-slate-500 mb-0.5">
+                        PnL (ticks)
+                      </div>
+                      <div className="font-mono">
+                        {typeof selected.pnlTicks === "number" ? selected.pnlTicks : "—"}
+                      </div>
+                    </div>
+                    <div>
+                      <div className="text-[0.65rem] text-slate-500 mb-0.5">
+                        Age / Session
+                      </div>
+                      <div className="font-mono">
+                        {selected.ageMinutes} min · {selected.sessionDate}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Risk decision */}
+                  {selected.riskDecision && (
+                    <div className="pt-2 border-t border-slate-800 text-[0.7rem] space-y-1">
+                      <div className="text-[0.65rem] uppercase tracking-[0.18em] text-slate-500">
+                        Risk decision
+                      </div>
+                      <dl className="grid grid-cols-2 gap-2">
+                        <div>
+                          <dt className="text-slate-500">Allowed</dt>
+                          <dd className="font-mono">
+                            {selected.riskDecision.allowed ? "YES" : "NO"}
+                          </dd>
+                        </div>
+                        <div>
+                          <dt className="text-slate-500">Codes</dt>
+                          <dd className="font-mono">
+                            {selected.riskDecision.codes?.join(", ") || "—"}
+                          </dd>
+                        </div>
+                        <div>
+                          <dt className="text-slate-500">Warnings</dt>
+                          <dd>{selected.riskDecision.warnings?.join("; ") || "None"}</dd>
+                        </div>
+                        <div>
+                          <dt className="text-slate-500">Reason</dt>
+                          <dd>{selected.riskDecision.reason || "—"}</dd>
+                        </div>
+                      </dl>
+                    </div>
+                  )}
+
+                  {/* Session flags */}
+                  <div className="pt-2 border-t border-slate-800 text-[0.7rem]">
+                    <div className="mb-1 uppercase tracking-[0.18em] text-slate-500 text-[0.65rem]">
+                      Session flags
+                    </div>
+                    <div className="flex flex-wrap gap-1">
+                      {selected.sessionFlags?.flags?.length
+                        ? selected.sessionFlags.flags.map((flag) => (
+                            <Badge key={flag}>{flag}</Badge>
+                          ))
+                        : "No session flags"}
+                    </div>
+                  </div>
+
+                  {/* Notes */}
+                  {selected.notes && (
+                    <div className="pt-2 border-t border-slate-800 text-[0.7rem]">
+                      <div className="mb-1 uppercase tracking-[0.18em] text-slate-500 text-[0.65rem]">
+                        Notes
+                      </div>
+                      <p className="text-slate-200 whitespace-pre-wrap">
+                        {selected.notes}
+                      </p>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div className="flex-1 flex items-center justify-center text-[0.75rem] text-slate-500">
+                  Select a ticket from the table to view details.
+                </div>
+              )}
+            </CardBody>
+          </Card>
+        </div>
+      </section>
     </div>
   );
-};
-
-export default WorklistV2;
-
+}

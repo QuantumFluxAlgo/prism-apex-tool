@@ -1,27 +1,27 @@
-import React, { useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Card, CardBody, CardHeader } from '../ui/Card';
 import Badge from '../ui/Badge';
-
-/**
- * PRISM APEX V2 – Alerts Cockpit (Synthetic)
- *
- * Synthetic but realistic alert feed:
- * - No backend wiring yet.
- * - Severity and state filters as pill-style controls.
- * - Matches V2 tests:
- *   - Title "Alerts"
- *   - Badges "Critical alerts present" and "Synthetic · Read-only"
- *   - Headline "Active alert stream"
- *   - Filters row with class ".alerts-filters-row"
- *   - Filter groups with class ".alerts-filter-group"
- *   - Active pills have "alerts-filter-pill alerts-filter-pill--active" in className
- */
+import Kpi from '../ui/Kpi';
+import Button from '../ui/Button';
+import {
+  fetchYahooHealth,
+  fetchSystemJobs,
+  fetchSystemTelemetry,
+  type YahooHealthResponse,
+  type SystemJobStatus,
+  type SystemTelemetrySnapshot,
+} from '../lib/api';
+import {
+  deriveIngestState,
+  formatLag,
+  getWorstLagSeconds,
+} from '../lib/ingestState';
 
 type Severity = 'info' | 'warning' | 'critical';
 type AlertState = 'open' | 'acknowledged' | 'cleared';
 type AlertSource = 'risk' | 'system' | 'engine' | 'infra' | 'external';
 
-interface AlertRow {
+export interface AlertRow {
   id: string;
   severity: Severity;
   state: AlertState;
@@ -30,48 +30,6 @@ interface AlertRow {
   message: string;
   createdAt: string;
 }
-
-const SEED_ALERTS: AlertRow[] = [
-  {
-    id: 'alert-critical-risk',
-    severity: 'critical',
-    state: 'open',
-    source: 'risk',
-    title: 'Daily risk limit reached',
-    message:
-      'Total realised + unrealised loss has hit the configured daily cap; new tickets will be blocked by guardrails.',
-    createdAt: '2025-12-06T15:20:00Z',
-  },
-  {
-    id: 'alert-warning-guardrail',
-    severity: 'warning',
-    state: 'open',
-    source: 'risk',
-    title: 'Guardrail intervention on ticket sizing',
-    message:
-      'Recent ticket batch was size-capped based on recent volatility and account phase.',
-    createdAt: '2025-12-06T15:10:00Z',
-  },
-  {
-    id: 'alert-warning-session-metrics',
-    severity: 'warning',
-    state: 'acknowledged',
-    source: 'system',
-    title: 'Session metrics job lagging',
-    message:
-      'Session metrics are delayed by more than 3 minutes; Worklist scores may be stale.',
-    createdAt: '2025-12-06T14:55:00Z',
-  },
-  {
-    id: 'alert-info-maintenance',
-    severity: 'info',
-    state: 'cleared',
-    source: 'external',
-    title: 'Scheduled venue maintenance completed',
-    message: 'Connectivity and routing returned to normal after planned maintenance.',
-    createdAt: '2025-12-06T13:00:00Z',
-  },
-];
 
 const SEVERITY_LABEL: Record<Severity, string> = {
   info: 'Info',
@@ -93,11 +51,219 @@ const SOURCE_LABEL: Record<AlertSource, string> = {
   external: 'External',
 };
 
+type JobHealth = {
+  missing: boolean;
+  stale: boolean;
+  lastOk: boolean;
+  lastRunUtc: string | null;
+  everyMs: number | null;
+};
+
+function analyzeSystemJob(job?: SystemJobStatus | null): JobHealth {
+  if (!job || !job.name) {
+    return {
+      missing: true,
+      stale: true,
+      lastOk: false,
+      lastRunUtc: null,
+      everyMs: null,
+    };
+  }
+  const everyMs =
+    job.everyMs ?? job.intervalMs ?? job.interval_ms ?? 60_000;
+  const lastRun =
+    job.lastRunUtc ??
+    job.lastRunAt ??
+    job.lastRunAtUtc ??
+    job.last_run_utc ??
+    null;
+  const lastRunMs = lastRun ? Date.parse(lastRun) : NaN;
+  const threshold = Math.max(everyMs * 3, 5 * 60 * 1000);
+  const stale =
+    !lastRun ||
+    !Number.isFinite(lastRunMs) ||
+    Date.now() - Number(lastRunMs) > threshold;
+  const lastOk = job.lastOk ?? job.ok ?? true;
+  return {
+    missing: false,
+    stale,
+    lastOk,
+    lastRunUtc: lastRun,
+    everyMs,
+  };
+}
+
+function describeJobHealth(name: string, health: JobHealth): string {
+  const interval =
+    health.everyMs && Number.isFinite(health.everyMs)
+      ? `${Math.round(health.everyMs / 1000)}s`
+      : '—';
+  return `${name}: lastRun=${health.lastRunUtc ?? '—'} · lastOk=${
+    health.lastOk ? 'true' : 'false'
+  } · stale=${health.stale ? 'true' : 'false'} · interval=${interval}`;
+}
+
 export default function AlertsPage() {
   const [severityFilter, setSeverityFilter] = useState<'all' | Severity>('all');
   const [stateFilter, setStateFilter] = useState<'all' | AlertState>('all');
+  const [health, setHealth] = useState<YahooHealthResponse | null>(null);
+  const [jobs, setJobs] = useState<SystemJobStatus[]>([]);
+  const [telemetry, setTelemetry] = useState<SystemTelemetrySnapshot[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  const alerts = SEED_ALERTS;
+  useEffect(() => {
+    let cancelled = false;
+    async function load() {
+      try {
+        const [healthRes, jobsRes, telemetryRes] = await Promise.all([
+          fetchYahooHealth(),
+          fetchSystemJobs(),
+          fetchSystemTelemetry(),
+        ]);
+        if (cancelled) return;
+        setHealth(healthRes ?? null);
+        setJobs(Array.isArray(jobsRes) ? jobsRes : []);
+        setTelemetry(Array.isArray(telemetryRes) ? telemetryRes : []);
+      } catch {
+        if (!cancelled) {
+          setError('Unable to load alerts');
+        }
+      } finally {
+        if (!cancelled) {
+          setLoading(false);
+        }
+      }
+    }
+    load();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const ingestRows = useMemo(
+    () => health?.rows ?? [],
+    [health],
+  );
+  const ingestState = useMemo(
+    () => deriveIngestState(ingestRows),
+    [ingestRows],
+  );
+  const worstLagSeconds = useMemo(
+    () => getWorstLagSeconds(ingestRows),
+    [ingestRows],
+  );
+  const jobMap = useMemo(() => {
+    const map = new Map<string, SystemJobStatus>();
+    for (const job of jobs) {
+      if (job.name) {
+        map.set(job.name.toLowerCase(), job);
+      }
+    }
+    return map;
+  }, [jobs]);
+  const getJobHealth = useCallback(
+    (name: string) =>
+      analyzeSystemJob(jobMap.get(name.toLowerCase()) ?? null),
+    [jobMap],
+  );
+
+  const alerts = useMemo<AlertRow[]>(() => {
+    const results: AlertRow[] = [];
+    const nowIso = new Date().toISOString();
+
+    if (ingestState === 'NOT LIVE') {
+      results.push({
+        id: 'ingest-stop',
+        severity: 'critical',
+        state: 'open',
+        source: 'system',
+        title: 'Market ingest halted',
+        message: `Ingest offline (lag ${formatLag(worstLagSeconds)})`,
+        createdAt: nowIso,
+      });
+    }
+
+    for (const row of ingestRows) {
+      if (row.status === 'RED') {
+        results.push({
+          id: `ingest-${row.symbol}`,
+          severity: 'critical',
+          state: 'open',
+          source: 'system',
+          title: 'Ingest lag',
+          message: `${row.symbol} lagged ${Math.round(row.lag_seconds)}s`,
+          createdAt: nowIso,
+        });
+      }
+    }
+
+    const localJobMap = new Map(jobMap);
+    const now = Date.now();
+    for (const job of localJobMap.values()) {
+      const lastRun =
+        job.lastRunUtc ??
+        job.lastRunAt ??
+        job.lastRunAtUtc ??
+        job.last_run_utc ??
+        null;
+      const lastRunMs = lastRun ? Date.parse(lastRun) : NaN;
+      const everyMs =
+        job.everyMs ?? job.intervalMs ?? job.interval_ms ?? 60_000;
+      const stale =
+        Number.isFinite(lastRunMs) && now - Number(lastRunMs) > everyMs * 3;
+      const jobName = job.name ?? 'unknown';
+      if (job.lastOk === false || stale || !lastRun) {
+        const normalized = jobName.toLowerCase();
+        const isTicketizer = normalized === 'ticketizer-manual';
+        results.push({
+          id: `job-${jobName}`,
+          severity:
+            job.lastOk === false || (isTicketizer && stale)
+              ? 'critical'
+              : 'warning',
+          state: 'open',
+          source: 'engine',
+          title: 'Job issue',
+          message: `${jobName} ${
+            job.lastOk === false ? 'reported errors' : 'is stale'
+          }`,
+          createdAt: nowIso,
+        });
+      }
+    }
+    const ticketizerHealth = getJobHealth('ticketizer-manual');
+    if (ticketizerHealth.missing) {
+      results.push({
+        id: 'job-ticketizer-manual-missing',
+        severity: 'critical',
+        state: 'open',
+        source: 'engine',
+        title: 'Job issue',
+        message: 'ticketizer-manual missing from scheduler payload',
+        createdAt: nowIso,
+      });
+    }
+
+    for (const snap of telemetry) {
+      if (
+        snap.errorCount > 0 ||
+        snap.ingestGaps > 0 ||
+        snap.metricsFailures > 0
+      ) {
+        results.push({
+          id: `telemetry-${snap.jobName}`,
+          severity: 'warning',
+          state: 'open',
+          source: 'system',
+          title: 'Telemetry errors',
+          message: `${snap.jobName} reported ${snap.errorCount} errors`,
+          createdAt: nowIso,
+        });
+      }
+    }
+    return results;
+  }, [health, jobs, telemetry, ingestRows, ingestState, worstLagSeconds, getJobHealth]);
 
   const filteredAlerts = useMemo(() => {
     return alerts.filter((alert) => {
@@ -120,62 +286,97 @@ export default function AlertsPage() {
   const inactiveClass = 'bg-slate-900 text-slate-300';
 
   return (
-    <div className="space-y-4">
-      <section className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
-        <div className="flex flex-col gap-1">
-          <h1 className="text-base font-semibold text-slate-100">Alerts</h1>
-          <p className="text-xs text-slate-400">
+    <div className="a3-page-root">
+      <header className="a3-page-header">
+        <div>
+          <div className="a3-page-section-label">Alert stream</div>
+          <h1>Alerts</h1>
+          <p>
             Canonical alerts across risk, system, engine, infra and external dependencies.
             Use severity and lifecycle filters to triage what needs attention now.
           </p>
         </div>
-        <div className="flex flex-wrap items-center gap-2">
+        <div className="flex flex-col items-end gap-2">
           <Badge tone={criticalCount > 0 ? 'red' : 'green'} className="text-[10px]">
             {criticalCount > 0 ? 'Critical alerts present' : 'No critical alerts'}
           </Badge>
           <Badge tone="neutral" className="text-[10px]">
-            Synthetic · Read-only
+            Source: /health/yahoo & /api/system
           </Badge>
+          <Button
+            size="xs"
+            tone="ghost"
+            onClick={async () => {
+              const timestamp = new Date().toISOString();
+              const lines: string[] = [];
+              lines.push(`Incident summary @ ${timestamp}`);
+              lines.push(
+                `Ingest state: ${ingestState} (lag ${formatLag(
+                  worstLagSeconds,
+                )})`,
+              );
+              const failingJobs: string[] = [];
+              ['yahoo-ingest-manual', 'ticketizer-manual', 'DISK_TICKETS_SYNC'].forEach(
+                (name) => {
+                  const healthStatus = getJobHealth(name);
+                  if (
+                    healthStatus.missing ||
+                    healthStatus.stale ||
+                    !healthStatus.lastOk
+                  ) {
+                    failingJobs.push(describeJobHealth(name, healthStatus));
+                  }
+                },
+              );
+              if (failingJobs.length === 0) {
+                failingJobs.push('None');
+              }
+              lines.push('Failing jobs:');
+              lines.push(...failingJobs);
+              lines.push('Top alerts:');
+              const topAlerts = alerts.slice(0, 5);
+              if (topAlerts.length === 0) {
+                lines.push('None');
+              } else {
+                topAlerts.forEach((alert, idx) => {
+                  lines.push(
+                    `${idx + 1}. [${alert.severity.toUpperCase()}] ${
+                      alert.title
+                    } — ${alert.message}`,
+                  );
+                });
+              }
+              const payload = lines.join('\n');
+              try {
+                if (typeof navigator !== 'undefined' && navigator.clipboard?.writeText) {
+                  await navigator.clipboard.writeText(payload);
+                }
+              } catch {
+                // no-op; clipboard not available
+              }
+            }}
+          >
+            Copy incident summary
+          </Button>
+          {error && (
+            <span className="text-[10px] text-rose-400">{error}</span>
+          )}
         </div>
-      </section>
+      </header>
 
-      <section className="grid gap-3 md:grid-cols-3">
-        <Card>
-          <CardBody className="flex items-center justify-between gap-2 px-4 py-3">
-            <div className="flex flex-col gap-0.5">
-              <span className="text-[11px] font-medium text-slate-300">Open alerts</span>
-              <span className="text-[11px] text-slate-500">
-                Including risk, system, engine, infra and external sources.
-              </span>
-            </div>
-            <span className="font-geist-mono text-lg text-slate-50">{openCount}</span>
-          </CardBody>
-        </Card>
-        <Card>
-          <CardBody className="flex items-center justify-between gap-2 px-4 py-3">
-            <div className="flex flex-col gap-0.5">
-              <span className="text-[11px] font-medium text-slate-300">Critical open</span>
-              <span className="text-[11px] text-slate-500">Highest-severity issues.</span>
-            </div>
-            <span className="font-geist-mono text-lg text-rose-300">{criticalCount}</span>
-          </CardBody>
-        </Card>
-        <Card>
-          <CardBody className="flex items-center justify-between gap-2 px-4 py-3">
-            <div className="flex flex-col gap-0.5">
-              <span className="text-[11px] font-medium text-slate-300">In workflow</span>
-              <span className="text-[11px] text-slate-500">
-                Alerts acknowledged and being handled.
-              </span>
-            </div>
-            <span className="font-geist-mono text-lg text-amber-200">
-              {inWorkflowCount}
-            </span>
-          </CardBody>
-        </Card>
-      </section>
+      <section className="a3-page-main-card space-y-4">
+        <div className="a3-page-kpi-strip">
+          <Kpi
+            label="Open alerts"
+            value={openCount}
+            tone="indigo"
+            sublabel="Risk, system, engine, infra, external"
+          />
+          <Kpi label="Critical open" value={criticalCount} tone="rose" sublabel="Highest severity issues" />
+          <Kpi label="In workflow" value={inWorkflowCount} tone="amber" sublabel="Acknowledged alerts" />
+        </div>
 
-      <Card>
+      <Card className="a3-page-table-card">
         <CardHeader className="flex items-center justify-between gap-3 px-4 py-3">
           <div className="flex flex-col gap-0.5">
             <span className="text-[11px] font-medium text-slate-200">
@@ -303,43 +504,54 @@ export default function AlertsPage() {
                 </tr>
               </thead>
               <tbody>
-                {filteredAlerts.map((alert) => (
-                  <tr
-                    key={alert.id}
-                    className="border-b border-slate-900/60 last:border-0 hover:bg-slate-900/60"
-                  >
-                    <td className="px-3 py-2 align-top text-[11px] text-slate-500">
-                      {alert.createdAt}
-                    </td>
-                    <td className="px-3 py-2 align-top">
-                      <Badge
-                        tone={
-                          alert.severity === 'critical'
-                            ? 'red'
-                            : alert.severity === 'warning'
-                            ? 'amber'
-                            : 'blue'
-                        }
-                        className="text-[9px]"
-                      >
-                        {SEVERITY_LABEL[alert.severity]}
-                      </Badge>
-                    </td>
-                    <td className="px-3 py-2 align-top text-[11px] text-slate-300">
-                      {STATE_LABEL[alert.state]}
-                    </td>
-                    <td className="px-3 py-2 align-top text-[11px] text-slate-300">
-                      {SOURCE_LABEL[alert.source]}
-                    </td>
-                    <td className="px-3 py-2 align-top text-[11px] text-slate-100">
-                      {alert.title}
-                    </td>
-                    <td className="px-3 py-2 align-top text-[11px] text-slate-300">
-                      {alert.message}
+                {loading && (
+                  <tr>
+                    <td
+                      colSpan={6}
+                      className="px-3 py-4 text-center text-[11px] text-slate-500"
+                    >
+                      Loading alerts…
                     </td>
                   </tr>
-                ))}
-                {filteredAlerts.length === 0 && (
+                )}
+                {!loading &&
+                  filteredAlerts.map((alert) => (
+                    <tr
+                      key={alert.id}
+                      className="border-b border-slate-900/60 last:border-0 hover:bg-slate-900/60"
+                    >
+                      <td className="px-3 py-2 align-top text-[11px] text-slate-500">
+                        {alert.createdAt}
+                      </td>
+                      <td className="px-3 py-2 align-top">
+                        <Badge
+                          tone={
+                            alert.severity === 'critical'
+                              ? 'red'
+                              : alert.severity === 'warning'
+                              ? 'amber'
+                              : 'blue'
+                          }
+                          className="text-[9px]"
+                        >
+                          {SEVERITY_LABEL[alert.severity]}
+                        </Badge>
+                      </td>
+                      <td className="px-3 py-2 align-top text-[11px] text-slate-300">
+                        {STATE_LABEL[alert.state]}
+                      </td>
+                      <td className="px-3 py-2 align-top text-[11px] text-slate-300">
+                        {SOURCE_LABEL[alert.source]}
+                      </td>
+                      <td className="px-3 py-2 align-top text-[11px] text-slate-100">
+                        {alert.title}
+                      </td>
+                      <td className="px-3 py-2 align-top text-[11px] text-slate-300">
+                        {alert.message}
+                      </td>
+                    </tr>
+                  ))}
+                {!loading && filteredAlerts.length === 0 && (
                   <tr>
                     <td
                       colSpan={6}
@@ -354,7 +566,7 @@ export default function AlertsPage() {
           </div>
         </CardBody>
       </Card>
+      </section>
     </div>
   );
 }
-

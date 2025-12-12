@@ -1,7 +1,7 @@
 import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
 import { osbSuggest, vwapFirstTouchSuggest, type Bar } from '@prism-apex/signals';
-import { applyGuardrails } from '../lib/guard.js';
+import { evaluateCandidate, type GuardDecisionDto } from '../lib/guard.js';
 
 export async function signalRoutes(app: FastifyInstance) {
   const BarSchema = z.object({
@@ -27,20 +27,21 @@ export async function signalRoutes(app: FastifyInstance) {
     if (!p.success) return reply.code(400).send({ error: 'Invalid payload' });
     const out = osbSuggest(p.data.symbol, p.data.session, p.data.bars as Bar[]);
     const first = out.suggestions[0];
-    const guard: ReturnType<typeof applyGuardrails> = first
-      ? applyGuardrails({
+    const guard: GuardDecisionDto = first
+      ? await evaluateCandidate({
           symbol: first.symbol,
-          side: first.side === 'BUY' ? 'long' : 'short',
+          contract: first.symbol,
+          direction: first.side,
           entry: first.entry,
           stop: first.stop,
-          target: first.targets[0]!,
+          target: first.targets?.[0],
+          strategy: 'OSB',
         })
-      : { accepted: false, reasons: ['no suggestion'] };
-    if (!guard.accepted) {
+      : { allowed: false, codes: ['no-suggestion'], warnings: [], reason: 'no suggestion', sizing: null };
+    if (!guard.allowed) {
       app.log.warn(
         {
-          reasons: guard.reasons,
-          rr: guard.rr,
+          reasons: guard.codes,
           route: '/signals/osb',
           symbol: first?.symbol,
           side: first?.side,
@@ -56,20 +57,21 @@ export async function signalRoutes(app: FastifyInstance) {
     if (!p.success) return reply.code(400).send({ error: 'Invalid payload' });
     const out = vwapFirstTouchSuggest(p.data.symbol, p.data.bars as Bar[]);
     const first = out.suggestions[0];
-    const guard: ReturnType<typeof applyGuardrails> = first
-      ? applyGuardrails({
+    const guard: GuardDecisionDto = first
+      ? await evaluateCandidate({
           symbol: first.symbol,
-          side: first.side === 'BUY' ? 'long' : 'short',
+          contract: first.symbol,
+          direction: first.side,
           entry: first.entry,
           stop: first.stop,
-          target: first.targets[0]!,
+          target: first.targets?.[0],
+          strategy: 'VWAP_FT',
         })
-      : { accepted: false, reasons: ['no suggestion'] };
-    if (!guard.accepted) {
+      : { allowed: false, codes: ['no-suggestion'], warnings: [], reason: 'no suggestion', sizing: null };
+    if (!guard.allowed) {
       app.log.warn(
         {
-          reasons: guard.reasons,
-          rr: guard.rr,
+          reasons: guard.codes,
           route: '/signals/vwap-first-touch',
           symbol: first?.symbol,
           side: first?.side,

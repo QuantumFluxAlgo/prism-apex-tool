@@ -161,7 +161,11 @@ export default async function statusRoute(app: FastifyInstance) {
     let dbHealth: Health = 'grey';
     let ticketsHealth: Health = relaxed ? 'grey' : 'red';
     let gapfillHealth: Health = 'grey';
-    const yahooRows: { symbol: string; last_bar_utc: string; minutes_behind: number }[] = [];
+    const yahooRows: {
+      symbol: string;
+      last_bar_timestamp: string;
+      lag_seconds: number;
+    }[] = [];
 
     const client = new Client({ connectionString: databaseUrl });
     try {
@@ -200,11 +204,11 @@ export default async function statusRoute(app: FastifyInstance) {
           }
           entry.last_utc = last ? last.toISOString() : null;
           entry.age_ms = age;
-          if (last) {
+          if (last && age !== null) {
             yahooRows.push({
               symbol: row.symbol,
-              last_bar_utc: last.toISOString(),
-              minutes_behind: age !== null ? age / 60_000 : Number.POSITIVE_INFINITY,
+              last_bar_timestamp: last.toISOString(),
+              lag_seconds: age / 1000,
             });
           }
           entry.health = age === null ? (relaxed ? 'grey' : 'red') : healthFromAge(age, relaxed);

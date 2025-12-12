@@ -80,6 +80,16 @@ Use `make proxy-down` to stop/remove the proxy + tunnel combo when you’re done
 - Tickets-only posture is enforced: `TICKETS_ONLY=true`, `ORDERS_DISABLED=true`
 - Generated artifacts under `data/` (e.g., `tickets.jsonl`) are now ignored by Git
 - If port 55433 conflicts, override `PGHOSTPORT` when invoking `make up` or `docker compose`
+
+### Yahoo ingest cadence controls
+
+- Set `INGEST_YAHOO_SYMBOLS="ES=F,MES=F,..."` in your `.env.dev` when you want the API scheduler to run the Yahoo backfill job. Leave it unset to disable the poller.
+- `YAHOO_POLL_INTERVAL_MS` (default `45000`) controls how often the scheduler launches the bounded ingest. `YAHOO_POLL_LOOKBACK_MINUTES` (default `20`) dictates how much history each run re-requests. For SIM/local you can set `YAHOO_POLL_INTERVAL_MS=90000` and `YAHOO_POLL_LOOKBACK_MINUTES=90`; for PROD leave the defaults (≈45s cadence, ≈20min window).
+- Confirm bars are landing by curling the health endpoint (status returns GREEN when `lag_seconds <= 120`):
+
+  ```
+  curl -fsS http://localhost:3000/health/yahoo | jq .
+  ```
 - Dashboard env defaults: hot reload uses `http://localhost:3000` unless you export `VITE_API_BASE`; Docker builds default to a relative base (`''`) so proxy/tunnel calls stay on the same origin. Pass `--build-arg VITE_API_BASE=...` when you need an absolute host.
 
 ## Cleanup (SAFE / dry-run)

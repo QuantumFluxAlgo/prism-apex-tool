@@ -21,7 +21,15 @@ import { Card, CardBody } from "../ui/Card";
 import Badge from "../ui/Badge";
 import Kpi from "../ui/Kpi";
 import Tooltip from "../ui/Tooltip";
-import { fetchTickets } from "../lib/api";
+import { fetchTickets, fetchYahooHealth } from "../lib/api";
+import {
+  deriveIngestState,
+  summarizeIngestRows,
+  statusChipTone,
+  getWorstLagSeconds,
+  formatLag,
+  type IngestState,
+} from "../lib/ingestState";
 
 /**
  * Local filters model.
@@ -86,6 +94,33 @@ export default function TicketsPage() {
   const [error, setError] = useState<string | null>(null);
   const [rows, setRows] = useState<any[]>([]);
   const [selected, setSelected] = useState<any | null>(null);
+  const [ingestState, setIngestState] = useState<IngestState>("UNKNOWN");
+  const [ingestCounts, setIngestCounts] = useState({ GREEN: 0, AMBER: 0, RED: 0 });
+  const [worstLag, setWorstLag] = useState<number | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    async function loadIngest() {
+      try {
+        const response = await fetchYahooHealth();
+        if (cancelled) return;
+        const rows = response?.rows ?? [];
+        setIngestState(deriveIngestState(rows));
+        setIngestCounts(summarizeIngestRows(rows));
+        setWorstLag(getWorstLagSeconds(rows));
+      } catch {
+        if (!cancelled) {
+          setIngestState("UNKNOWN");
+          setIngestCounts({ GREEN: 0, AMBER: 0, RED: 0 });
+          setWorstLag(null);
+        }
+      }
+    }
+    loadIngest();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -172,84 +207,95 @@ export default function TicketsPage() {
   // --- Render ---------------------------------------------------------------
 
   return (
-    <div className="flex flex-col gap-4">
-      {/* Page header (A3-ish, but shell-less) */}
-      <header className="flex flex-col gap-1">
-        <div className="flex items-center justify-between gap-3">
-          <div>
-            <h1 className="text-base font-semibold text-slate-100">Tickets</h1>
-            <p className="text-xs text-slate-400">
-              Canonical ticket history for the current environment.
-            </p>
-          </div>
-          <div className="flex flex-col items-end gap-1 text-[0.7rem]">
-            <span data-testid="badge" tone="blue">
+    <div className="a3-page-root">
+      {/* Page header */}
+      <header className="a3-page-header">
+        <div>
+          <div className="a3-page-section-label">Ticket archive</div>
+          <h1>Tickets</h1>
+          <p>Canonical ticket history for the current environment.</p>
+        </div>
+        <div className="flex flex-col items-end gap-2">
+          <div className="a3-page-header-meta">
+            <Badge tone="blue" size="xs">
               Read-only ticket history
-            </span>
-            <span data-testid="badge" tone="gray">
+            </Badge>
+            <Badge tone="gray" size="xs">
               Backed by /api/tickets
+            </Badge>
+          </div>
+          <div className="flex items-center gap-2 text-[10px] text-slate-400">
+            <Badge tone={statusChipTone[ingestState]} size="xs">
+              Ingest {ingestState} · {formatLag(worstLag)}
+            </Badge>
+            <span className="font-geist-mono">
+              G:{ingestCounts.GREEN} A:{ingestCounts.AMBER} R:{ingestCounts.RED}
             </span>
           </div>
         </div>
       </header>
 
-      {/* Filters strip */}
-      <Card>
-        <CardBody>
-          <div className="flex flex-wrap items-center gap-3 text-xs">
-            {/* Symbol */}
+      <section className="a3-page-main-card">
+        {/* Filters strip */}
+        <div className="a3-filter-bar flex-wrap">
+          <label className="a3-filter-field">
+            <span>Symbol</span>
             <select
               value={filters.symbol}
               onChange={(e) =>
                 setFilters((prev) => ({ ...prev, symbol: e.target.value }))
               }
-              className="h-8 rounded-md bg-slate-900 border border-slate-700 text-slate-100 px-2"
             >
               {["ALL", "ES", "NQ", "CL", "YM"].map((s) => (
                 <option key={s}>{s}</option>
               ))}
             </select>
+          </label>
 
-            {/* Strategy */}
+          <label className="a3-filter-field">
+            <span>Strategy</span>
             <select
               value={filters.strategy}
               onChange={(e) =>
                 setFilters((prev) => ({ ...prev, strategy: e.target.value }))
               }
-              className="h-8 rounded-md bg-slate-900 border border-slate-700 text-slate-100 px-2"
             >
               {["ALL", "ORR", "OSB", "VWAP-FT"].map((s) => (
                 <option key={s}>{s}</option>
               ))}
             </select>
+          </label>
 
-            {/* Side */}
+          <label className="a3-filter-field">
+            <span>Side</span>
             <select
               value={filters.side}
               onChange={(e) =>
                 setFilters((prev) => ({ ...prev, side: e.target.value }))
               }
-              className="h-8 rounded-md bg-slate-900 border border-slate-700 text-slate-100 px-2"
             >
               {["ALL", "LONG", "SHORT"].map((s) => (
                 <option key={s}>{s}</option>
               ))}
             </select>
+          </label>
 
-            {/* Status */}
+          <label className="a3-filter-field">
+            <span>Status</span>
             <select
               value={filters.status}
               onChange={(e) =>
                 setFilters((prev) => ({ ...prev, status: e.target.value }))
               }
-              className="h-8 rounded-md bg-slate-900 border border-slate-700 text-slate-100 px-2"
             >
               {["ALL", "OPEN", "CLOSED"].map((s) => (
                 <option key={s}>{s}</option>
               ))}
             </select>
+          </label>
 
-            {/* Search */}
+          <label className="a3-filter-field">
+            <span>Search</span>
             <input
               type="search"
               placeholder="Search…"
@@ -257,152 +303,168 @@ export default function TicketsPage() {
               onChange={(e) =>
                 setFilters((prev) => ({ ...prev, search: e.target.value }))
               }
-              className="h-8 w-48 rounded-md bg-slate-900 border border-slate-700 text-slate-100 px-2"
             />
-          </div>
-        </CardBody>
-      </Card>
+          </label>
+        </div>
 
-      {/* KPI strip */}
-      <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
-        <Kpi
-          label="Tickets"
-          value={totalTickets}
-          hint="Visible tickets after filters."
-        />
-        <Kpi
-          label="LONG / SHORT"
-          value={`${longCount}L / ${shortCount}S`}
-          hint="Directional breakdown."
-        />
-        <Kpi
-          label="Avg R multiple"
-          value={avgRr}
-          hint="Average R multiple across visible tickets."
-        />
-        <Kpi
-          label="Latest ticket"
-          value={latest ? latest.id : "—"}
-          hint={latest ? latest.symbol : "No tickets in view."}
-        />
-      </div>
+        {/* KPI strip */}
+        <div className="a3-page-kpi-strip">
+          <Kpi
+            label="Tickets"
+            value={totalTickets}
+            tone="indigo"
+            sublabel="Visible after filters"
+          />
+          <Kpi
+            label="LONG / SHORT"
+            value={`${longCount}L / ${shortCount}S`}
+            tone="cyan"
+            sublabel="Directional split"
+          />
+          <Kpi
+            label="Avg R multiple"
+            value={avgRr}
+            tone="amber"
+            sublabel="Across filtered tickets"
+          />
+          <Kpi
+            label="Latest ticket"
+            value={latest ? latest.id : "—"}
+            tone="emerald"
+            sublabel={latest ? `Symbol ${latest.symbol}` : "No tickets in view"}
+          />
+        </div>
 
-      {/* Main layout: table + details */}
-      <div className="flex flex-col gap-4 lg:flex-row lg:items-start">
-        {/* Table card */}
-        <Card className="flex-1 min-w-0">
-          <CardBody>
-            <div className="overflow-x-auto rounded-xl border border-slate-800 bg-slate-950">
-              <table className="dashboard-table min-w-full border-collapse">
-                <thead>
-                  <tr>
-                    <th className="px-3 py-2">Ticket ID</th>
-                    <th className="px-3 py-2">Symbol</th>
-                    <th className="px-3 py-2">Strategy</th>
-                    <th className="px-3 py-2">Side</th>
-                    <th className="px-3 py-2">Entry</th>
-                    <th className="px-3 py-2">Stop</th>
-                    <th className="px-3 py-2">Target</th>
-                    <th className="px-3 py-2">R multiple</th>
-                    <th className="px-3 py-2">Created at</th>
-                  </tr>
-                </thead>
+        {/* Main layout: table + details */}
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-start">
+          {/* Table card */}
+          <Card className="a3-page-table-card flex-1 min-w-0">
+            <CardBody className="flex flex-col h-full">
+              <div className="a3-table-headline">
+                <div className="a3-page-section-label">Tickets</div>
+                {(loading || error) && (
+                  <div className="text-[0.7rem] text-slate-300">
+                    {loading && <span>Loading ticket feed…</span>}
+                    {!loading && error && (
+                      <span>Ticket fetch failed: {error}</span>
+                    )}
+                  </div>
+                )}
+              </div>
 
-                <tbody>
-                  {loading && (
+              <div className="a3-page-table-scroll a3-scroll-soft min-h-[320px]">
+                <table className="dashboard-table min-w-full border-collapse">
+                  <thead>
                     <tr>
-                      <td
-                        colSpan={9}
-                        className="px-3 py-3 text-center text-slate-400"
-                      >
-                        {/* Keep this exact string – tests depend on it */}
-                        Loading tickets…
-                      </td>
+                      <th className="px-3 py-2">Ticket ID</th>
+                      <th className="px-3 py-2">Symbol</th>
+                      <th className="px-3 py-2">Strategy</th>
+                      <th className="px-3 py-2">Side</th>
+                      <th className="px-3 py-2">Entry</th>
+                      <th className="px-3 py-2">Stop</th>
+                      <th className="px-3 py-2">Target</th>
+                      <th className="px-3 py-2">R multiple</th>
+                      <th className="px-3 py-2">Created at</th>
                     </tr>
-                  )}
+                  </thead>
 
-                  {error && !loading && (
-                    <tr>
-                      <td
-                        colSpan={9}
-                        className="px-3 py-3 text-center text-rose-400"
-                      >
-                        {/* Keep this pattern – tests check this prefix */}
-                        Error loading tickets: {error}
-                      </td>
-                    </tr>
-                  )}
-
-                  {isEmpty && (
-                    <tr>
-                      <td
-                        colSpan={9}
-                        className="px-3 py-3 text-center text-slate-400"
-                      >
-                        {/* Keep this exact string – tests depend on it */}
-                        No tickets returned for the current filters.
-                      </td>
-                    </tr>
-                  )}
-
-                  {!loading &&
-                    !error &&
-                    filtered.map((t) => (
-                      <tr
-                        key={t.id}
-                        className={`border-b border-slate-800/50 cursor-pointer hover:bg-slate-900/70 ${
-                          selected && selected.id === t.id
-                            ? "bg-slate-900/80"
-                            : ""
-                        }`}
-                        onClick={() => setSelected(t)}
-                      >
-                        <td className="px-3 py-2">{t.id}</td>
-                        <td className="px-3 py-2">{t.symbol}</td>
-                        <td className="px-3 py-2">{t.strategyId}</td>
-                        <td className="px-3 py-2">{t.side}</td>
-                        <td className="px-3 py-2 text-right">
-                          {t.entryPrice != null ? t.entryPrice.toFixed(2) : "—"}
-                        </td>
-                        <td className="px-3 py-2 text-right">
-                          {t.stopPrice != null ? t.stopPrice.toFixed(2) : "—"}
-                        </td>
-                        <td className="px-3 py-2 text-right">
-                          {t.targetPrice != null
-                            ? t.targetPrice.toFixed(2)
-                            : "—"}
-                        </td>
-                        <td className="px-3 py-2 text-right">
-                          {t.rrMultiple != null
-                            ? t.rrMultiple.toFixed(2)
-                            : "—"}
-                        </td>
-                        <td className="px-3 py-2 text-right text-slate-400">
-                          {t.createdAtUtc}
+                  <tbody>
+                    {loading && (
+                      <tr>
+                        <td
+                          colSpan={9}
+                          className="px-3 py-3 text-center text-slate-400"
+                        >
+                          {/* Keep this exact string – tests depend on it */}
+                          Loading tickets…
                         </td>
                       </tr>
-                    ))}
-                </tbody>
-              </table>
-            </div>
-          </CardBody>
-        </Card>
+                    )}
 
-        {/* Details panel */}
-        <Card className="w-full max-w-md shrink-0">
-          <CardBody>
-            <h2 className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-400">
-              Ticket details
-            </h2>
+                    {error && !loading && (
+                      <tr>
+                        <td
+                          colSpan={9}
+                          className="px-3 py-3 text-center text-rose-400"
+                        >
+                          {/* Keep this pattern – tests check this prefix */}
+                          Error loading tickets: {error}
+                        </td>
+                      </tr>
+                    )}
 
-            {!selected && (
-              <p className="mt-3 text-xs text-slate-400">
-                Select a ticket from the table to see a drilldown.
-              </p>
-            )}
+                    {isEmpty && (
+                      <tr>
+                        <td
+                          colSpan={9}
+                          className="px-3 py-3 text-center text-slate-400"
+                        >
+                          {/* Keep this exact string – tests depend on it */}
+                          No tickets returned for the current filters.
+                        </td>
+                      </tr>
+                    )}
 
-            {selected && (
-              <div className="mt-3 space-y-4 text-xs text-slate-200">
+                    {!loading &&
+                      !error &&
+                      filtered.map((t) => (
+                        <tr
+                          key={t.id}
+                          className={`border-b border-slate-800/50 cursor-pointer hover:bg-slate-900/70 ${
+                            selected && selected.id === t.id
+                              ? "bg-slate-900/80"
+                              : ""
+                          }`}
+                          onClick={() => setSelected(t)}
+                        >
+                          <td className="px-3 py-2">{t.id}</td>
+                          <td className="px-3 py-2">{t.symbol}</td>
+                          <td className="px-3 py-2">{t.strategyId}</td>
+                          <td className="px-3 py-2">{t.side}</td>
+                          <td className="px-3 py-2 text-right">
+                            {t.entryPrice != null
+                              ? t.entryPrice.toFixed(2)
+                              : "—"}
+                          </td>
+                          <td className="px-3 py-2 text-right">
+                            {t.stopPrice != null
+                              ? t.stopPrice.toFixed(2)
+                              : "—"}
+                          </td>
+                          <td className="px-3 py-2 text-right">
+                            {t.targetPrice != null
+                              ? t.targetPrice.toFixed(2)
+                              : "—"}
+                          </td>
+                          <td className="px-3 py-2 text-right">
+                            {t.rrMultiple != null
+                              ? t.rrMultiple.toFixed(2)
+                              : "—"}
+                          </td>
+                          <td className="px-3 py-2 text-right text-slate-400">
+                            {t.createdAtUtc}
+                          </td>
+                        </tr>
+                      ))}
+                  </tbody>
+                </table>
+              </div>
+            </CardBody>
+          </Card>
+
+          {/* Details panel */}
+          <Card className="a3-page-side-panel w-full max-w-md shrink-0">
+            <CardBody className="flex flex-col gap-3">
+              <div className="a3-page-section-label">Ticket details</div>
+
+              {!selected && (
+                <p className="text-xs text-slate-400">
+                  Select a ticket from the table to see a drilldown.
+                </p>
+              )}
+
+              {selected && (
+                <div className="space-y-4 text-xs text-slate-200">
                 {/* Top chips */}
                 <div className="flex flex-wrap items-center gap-2">
                   <span className="font-mono text-[0.8rem]">{selected.id}</span>
@@ -488,7 +550,7 @@ export default function TicketsPage() {
           </CardBody>
         </Card>
       </div>
+    </section>
     </div>
   );
 }
-

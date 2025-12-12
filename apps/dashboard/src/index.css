@@ -4,6 +4,7 @@
 
 /* Import A2 layout/panel system for V2 dashboard pages */
 @import "./styles/a2.css";
+@import "./styles/a3-pages.css";
 
 /* === PRISM APEX – A2 DESIGN TOKENS (Dashboard scope) === */
 :root {

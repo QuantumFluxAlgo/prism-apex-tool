@@ -28,6 +28,14 @@ import Tooltip from "../ui/Tooltip";
 import FiltersBar from "../ui/FiltersBar";
 import DataTable from "../ui/DataTable";
 import Button from "../ui/Button";
+import { fetchYahooHealth } from "../lib/api";
+import {
+  deriveIngestState,
+  getWorstLagSeconds,
+  formatLag,
+  statusChipTone,
+  type IngestState,
+} from "../lib/ingestState";
 
 type MarketsRiskBucket = "GREEN" | "AMBER" | "RED";
 
@@ -147,6 +155,8 @@ export default function MarketData() {
   const [selected, setSelected] = useState<MarketRow | null>(MOCK_MARKETS_ROWS[0]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
+  const [ingestState, setIngestState] = useState<IngestState>("UNKNOWN");
+  const [worstLag, setWorstLag] = useState<number | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -197,6 +207,28 @@ export default function MarketData() {
     }
 
     load();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+    async function loadIngest() {
+      try {
+        const response = await fetchYahooHealth();
+        if (cancelled) return;
+        const rows = response?.rows ?? [];
+        setIngestState(deriveIngestState(rows));
+        setWorstLag(getWorstLagSeconds(rows));
+      } catch {
+        if (!cancelled) {
+          setIngestState("UNKNOWN");
+          setWorstLag(null);
+        }
+      }
+    }
+    loadIngest();
     return () => {
       cancelled = true;
     };
@@ -360,25 +392,25 @@ export default function MarketData() {
   // --- Render ----------------------------------------------------------------
 
   return (
-    <div className="markets-v2-root flex flex-col gap-4">
+    <div className="a3-page-root">
       {/* Header – tests look for "Session Context" heading + specific copy */}
-      <header className="flex flex-col gap-1">
-        <div className="flex items-center justify-between gap-3">
-          <div>
-            <h1 className="text-base font-semibold text-slate-100">
-              Session Context
-            </h1>
-            <p className="text-xs text-slate-400">
-              Price overlays, OR / ATR footprint, VWAP slope, and regime flags
-            </p>
-          </div>
-          <div className="flex flex-col items-end gap-1 text-[0.7rem]">
-            <span data-testid="badge" tone="blue">
+      <header className="a3-page-header">
+        <div>
+          <div className="a3-page-section-label">Session cockpit</div>
+          <h1>Session Context</h1>
+          <p>Price overlays, OR / ATR footprint, VWAP slope, and regime flags</p>
+        </div>
+        <div className="flex flex-col items-end gap-2">
+          <div className="a3-page-header-meta">
+            <Badge tone="blue" size="xs">
               Session · UTC
-            </span>
-            <span data-testid="badge" tone="gray">
+            </Badge>
+            <Badge tone="gray" size="xs">
               Environment · A3 Shell
-            </span>
+            </Badge>
+            <Badge tone={statusChipTone[ingestState]} size="xs">
+              Ingest {ingestState} · {formatLag(worstLag)}
+            </Badge>
           </div>
         </div>
       </header>
@@ -389,277 +421,276 @@ export default function MarketData() {
         available
       </p>
 
-      {/* Filters – wrapped in .markets-a3-filters as per tests */}
-      <Card>
-        <CardBody>
-          <div className="markets-a3-filters flex flex-col gap-2">
-            <FiltersBar>
-              <div className="flex flex-wrap items-center gap-3 text-xs">
-                {/* Symbol label + selector (tests look for /^Symbol$/) */}
-                <div className="flex items-center gap-2">
-                  <span className="text-[0.7rem] text-slate-500">Symbol</span>
-                  <select
-                    className="h-8 rounded-md bg-slate-900 border border-slate-700 text-slate-100 px-2"
-                    value={filters.symbol}
-                    onChange={(e) =>
-                      setFilters((f) => ({ ...f, symbol: e.target.value }))
-                    }
-                  >
-                    <option value="ALL">ALL symbols</option>
-                    {symbols.map((sym) => (
-                      <option key={sym} value={sym}>
-                        {sym}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                {/* Status (hidden from a11y tree so tests see a single combobox) */}
-                <select
-                  className="h-8 rounded-md bg-slate-900 border border-slate-700 text-slate-100 px-2"
-                  value={filters.status}
-                  onChange={(e) =>
-                    setFilters((f) => ({
-                      ...f,
-                      status: e.target.value as MarketsFilters["status"],
-                    }))
-                  }
-                  aria-hidden="true"
-                >
-                  <option value="ALL">ALL status</option>
-                  <option value="PRE">PRE</option>
-                  <option value="OPEN">OPEN</option>
-                  <option value="CLOSED">CLOSED</option>
-                </select>
-
-                {/* Risk bucket (also hidden from a11y tree) */}
-                <select
-                  className="h-8 rounded-md bg-slate-900 border border-slate-700 text-slate-100 px-2"
-                  value={filters.riskBucket}
-                  onChange={(e) =>
-                    setFilters((f) => ({
-                      ...f,
-                      riskBucket: e.target.value as MarketsFilters["riskBucket"],
-                    }))
-                  }
-                  aria-hidden="true"
-                >
-                  <option value="ALL">ALL risk</option>
-                  <option value="GREEN">GREEN</option>
-                  <option value="AMBER">AMBER</option>
-                  <option value="RED">RED</option>
-                </select>
-
-                {/* Search */}
-                <input
-                  type="search"
-                  className="h-8 w-48 rounded-md bg-slate-900 border border-slate-700 text-slate-100 px-2"
-                  placeholder="Search symbol, regime, date…"
-                  value={filters.search}
-                  onChange={(e) =>
-                    setFilters((f) => ({ ...f, search: e.target.value }))
-                  }
-                />
-
-                {/* Overlay toggles – tests expect OR band, VWAP trace, ATR marker */}
-                <div className="flex flex-wrap items-center gap-2 text-[0.7rem]">
-                  <span className="text-slate-500">Overlays</span>
-                  <Button type="button" size="xs" variant="ghost">
-                    OR band
-                  </Button>
-                  <Button type="button" size="xs" variant="ghost">
-                    VWAP trace
-                  </Button>
-                  <Button type="button" size="xs" variant="ghost">
-                    ATR marker
-                  </Button>
-                  <Button type="button" size="xs" variant="ghost">
-                    Regime flags
-                  </Button>
-                </div>
-
-                {/* Reset */}
-                <Button size="sm" onClick={handleResetFilters}>
-                  Reset
-                </Button>
-              </div>
-            </FiltersBar>
-
-            {/* Filters meta area – tests assert on text containing "Session metrics" */}
-            <div className="markets-a3-filters-meta text-[0.7rem] text-slate-400">
-              {loading ? "Session metrics: loading…" : "Session metrics: live"}
-              {error && !loading && (
-                <span className="ml-2 text-rose-400">
-                  (Engine error: {error})
-                </span>
-              )}
+      <section className="a3-page-main-card space-y-4">
+        {/* Filters – wrapped in .markets-a3-filters as per tests */}
+        <div className="markets-a3-filters flex flex-col gap-2">
+          <FiltersBar className="flex flex-wrap items-center gap-3 text-xs">
+            {/* Symbol label + selector (tests look for /^Symbol$/) */}
+            <div className="flex items-center gap-2">
+              <span className="text-[0.7rem] text-slate-500">Symbol</span>
+              <select
+                className="h-8 rounded-md bg-slate-900 border border-slate-700 text-slate-100 px-2"
+                value={filters.symbol}
+                onChange={(e) =>
+                  setFilters((f) => ({ ...f, symbol: e.target.value }))
+                }
+              >
+                <option value="ALL">ALL symbols</option>
+                {symbols.map((sym) => (
+                  <option key={sym} value={sym}>
+                    {sym}
+                  </option>
+                ))}
+              </select>
             </div>
+
+            {/* Status (hidden from a11y tree so tests see a single combobox) */}
+            <select
+              className="h-8 rounded-md bg-slate-900 border border-slate-700 text-slate-100 px-2"
+              value={filters.status}
+              onChange={(e) =>
+                setFilters((f) => ({
+                  ...f,
+                  status: e.target.value as MarketsFilters["status"],
+                }))
+              }
+              aria-hidden="true"
+            >
+              <option value="ALL">ALL status</option>
+              <option value="PRE">PRE</option>
+              <option value="OPEN">OPEN</option>
+              <option value="CLOSED">CLOSED</option>
+            </select>
+
+            {/* Risk bucket (also hidden from a11y tree) */}
+            <select
+              className="h-8 rounded-md bg-slate-900 border border-slate-700 text-slate-100 px-2"
+              value={filters.riskBucket}
+              onChange={(e) =>
+                setFilters((f) => ({
+                  ...f,
+                  riskBucket: e.target.value as MarketsFilters["riskBucket"],
+                }))
+              }
+              aria-hidden="true"
+            >
+              <option value="ALL">ALL risk</option>
+              <option value="GREEN">GREEN</option>
+              <option value="AMBER">AMBER</option>
+              <option value="RED">RED</option>
+            </select>
+
+            {/* Search */}
+            <input
+              type="search"
+              className="h-8 w-48 rounded-md bg-slate-900 border border-slate-700 text-slate-100 px-2"
+              placeholder="Search symbol, regime, date…"
+              value={filters.search}
+              onChange={(e) =>
+                setFilters((f) => ({ ...f, search: e.target.value }))
+              }
+            />
+
+            {/* Overlay toggles – tests expect OR band, VWAP trace, ATR marker */}
+            <div className="flex flex-wrap items-center gap-2 text-[0.7rem]">
+              <span className="text-slate-500">Overlays</span>
+              <Button type="button" size="xs" tone="ghost">
+                OR band
+              </Button>
+              <Button type="button" size="xs" tone="ghost">
+                VWAP trace
+              </Button>
+              <Button type="button" size="xs" tone="ghost">
+                ATR marker
+              </Button>
+              <Button type="button" size="xs" tone="ghost">
+                Regime flags
+              </Button>
+            </div>
+
+            {/* Reset */}
+            <Button size="xs" tone="secondary" onClick={handleResetFilters}>
+              Reset
+            </Button>
+          </FiltersBar>
+
+          {/* Filters meta area – tests assert on text containing "Session metrics" */}
+          <div className="markets-a3-filters-meta text-[0.7rem] text-slate-400">
+            {loading ? "Session metrics: loading…" : "Session metrics: live"}
+            {error && !loading && (
+              <span className="ml-2 text-rose-400">
+                (Engine error: {error})
+              </span>
+            )}
           </div>
-        </CardBody>
-      </Card>
+        </div>
 
-      {/* KPI strip */}
-      <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
-        <Kpi
-          label="Markets"
-          value={kpiMarkets}
-          hint="Visible markets after filters."
-        />
-        <Kpi
-          label="Risk buckets"
-          value={`${kpiGreen}G / ${kpiAmber}A / ${kpiRed}R`}
-          hint="Count of markets by risk bucket."
-        />
-        <Kpi
-          label="Avg score"
-          value={avgScore}
-          hint="Average session score for visible markets."
-        />
-        <Kpi
-          label="Worst market"
-          value={worstMarket ? worstMarket.symbol : "—"}
-          hint={
-            worstMarket
-              ? `${worstMarket.sessionDate} · score ${worstMarket.score}`
-              : "No markets in view."
-          }
-        />
-      </div>
+        {/* KPI strip */}
+        <div className="a3-page-kpi-strip">
+          <Kpi
+            label="Markets"
+            value={kpiMarkets}
+            tone="cyan"
+            sublabel="Visible markets after filters"
+          />
+          <Kpi
+            label="Risk buckets"
+            value={`${kpiGreen}G / ${kpiAmber}A / ${kpiRed}R`}
+            tone="amber"
+            sublabel="Count by risk bucket"
+          />
+          <Kpi
+            label="Avg score"
+            value={avgScore}
+            tone="indigo"
+            sublabel="Average session score"
+          />
+          <Kpi
+            label="Worst market"
+            value={worstMarket ? worstMarket.symbol : "—"}
+            tone="rose"
+            sublabel={
+              worstMarket
+                ? `${worstMarket.sessionDate} · score ${worstMarket.score}`
+                : "No markets in view"
+            }
+          />
+        </div>
 
-      {/* Main layout */}
-      <div className="flex flex-col gap-4 lg:flex-row lg:items-start">
-        {/* Left side: chart shell + table */}
-        <Card className="flex-1 min-w-0">
-          <CardBody>
-            {/* Chart shell wrapper – tests look for .markets-a3-chart-shell */}
-            <div className="markets-a3-chart-shell mb-3">
-              <p className="text-[0.7rem] text-slate-400">
-                Session overlays & context chart shell (metrics wiring WIP).
-              </p>
-            </div>
+        {/* Main layout */}
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-start">
+          {/* Left side: chart shell + table */}
+          <Card className="a3-page-table-card flex-1 min-w-0">
+            <CardBody className="flex flex-col h-full">
+              {/* Chart shell wrapper – tests look for .markets-a3-chart-shell */}
+              <div className="markets-a3-chart-shell mb-3">
+                <p className="text-[0.7rem] text-slate-400">
+                  Session overlays & context chart shell (metrics wiring WIP).
+                </p>
+              </div>
 
-            <div className="overflow-x-auto rounded-xl border border-slate-800 bg-slate-950">
-              <DataTable
-                columns={columns}
-                data={tableData}
-                onRowClick={handleRowClick}
-              />
-              {isEmpty && (
-                <div className="px-4 py-6 text-center text-xs text-slate-400">
-                  No markets match the current filters.
+              <div className="a3-page-table-scroll a3-scroll-soft min-h-[320px]">
+                <DataTable
+                  columns={columns}
+                  data={tableData}
+                  onRowClick={handleRowClick}
+                />
+                {isEmpty && (
+                  <div className="px-4 py-6 text-center text-xs text-slate-400">
+                    No markets match the current filters.
+                  </div>
+                )}
+              </div>
+            </CardBody>
+          </Card>
+
+          {/* Details panel */}
+          <Card className="a3-page-side-panel w-full max-w-md shrink-0">
+            <CardBody className="flex flex-col gap-3">
+              <div className="a3-page-section-label">Market details</div>
+
+              {!selected && (
+                <p className="text-xs text-slate-400">
+                  Select a market row to see session context and risk posture.
+                </p>
+              )}
+
+              {selected && (
+                <div className="space-y-3 text-xs text-slate-200">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="font-mono text-[0.8rem]">
+                      {selected.symbol} · {selected.sessionDate}
+                    </span>
+                    <Badge tone="blue">{selected.regime}</Badge>
+                    <Badge tone="gray">{`ATR ${selected.atrBucket}`}</Badge>
+                    <Badge
+                      tone={
+                        selected.status === "OPEN"
+                          ? "green"
+                          : selected.status === "PRE"
+                          ? "amber"
+                          : "gray"
+                      }
+                    >
+                      {selected.status}
+                    </Badge>
+                    <Badge
+                      tone={
+                        selected.riskBucket === "GREEN"
+                          ? "green"
+                          : selected.riskBucket === "AMBER"
+                          ? "amber"
+                          : "red"
+                      }
+                    >
+                      {selected.riskBucket}
+                    </Badge>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-2 text-[0.7rem] text-slate-300">
+                    <div>
+                      <div className="text-slate-500">OR range (ticks)</div>
+                      <div className="font-mono">
+                        {selected.orRangeTicks ?? "—"}
+                      </div>
+                    </div>
+                    <div>
+                      <div className="text-slate-500">VWAP drift (ticks)</div>
+                      <div className="font-mono">
+                        {selected.vwapDriftTicks > 0 ? "+" : ""}
+                        {selected.vwapDriftTicks}
+                      </div>
+                    </div>
+                    <div>
+                      <div className="text-slate-500">Session score</div>
+                      <div className="font-mono">{selected.score}</div>
+                    </div>
+                    <div>
+                      <div className="text-slate-500">Last updated</div>
+                      <div className="font-mono">
+                        {selected.lastUpdated
+                          .replace("T", " ")
+                          .replace("Z", "")}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-3 gap-2 text-[0.7rem] text-slate-300">
+                    <div>
+                      <div className="text-slate-500">ORR signals</div>
+                      <div className="font-mono">
+                        {selected.signalsOrr ?? 0}
+                      </div>
+                    </div>
+                    <div>
+                      <div className="text-slate-500">OSB signals</div>
+                      <div className="font-mono">
+                        {selected.signalsOsb ?? 0}
+                      </div>
+                    </div>
+                    <div>
+                      <div className="text-slate-500">VWAP-FT signals</div>
+                      <div className="font-mono">
+                        {selected.signalsVwap ?? 0}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="pt-2 border-t border-slate-800 text-[0.7rem] text-slate-400">
+                    <Tooltip content="Markets cockpit is informational only – guardrails and sizing live in the engine.">
+                      <p>
+                        This panel gives you a session-level read on each market;
+                        actual sizing, guardrails and execution are driven by
+                        the engine and back office, not this dashboard.
+                      </p>
+                    </Tooltip>
+                  </div>
                 </div>
               )}
-            </div>
-          </CardBody>
-        </Card>
-
-        {/* Details panel */}
-        <Card className="w-full max-w-md shrink-0">
-          <CardBody>
-            <h2 className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-400">
-              Market details
-            </h2>
-
-            {!selected && (
-              <p className="mt-3 text-xs text-slate-400">
-                Select a market row to see session context and risk posture.
-              </p>
-            )}
-
-            {selected && (
-              <div className="mt-3 space-y-3 text-xs text-slate-200">
-                <div className="flex flex-wrap items-center gap-2">
-                  <span className="font-mono text-[0.8rem]">
-                    {selected.symbol} · {selected.sessionDate}
-                  </span>
-                  <Badge tone="blue">{selected.regime}</Badge>
-                  <Badge tone="gray">{`ATR ${selected.atrBucket}`}</Badge>
-                  <Badge
-                    tone={
-                      selected.status === "OPEN"
-                        ? "green"
-                        : selected.status === "PRE"
-                        ? "amber"
-                        : "gray"
-                    }
-                  >
-                    {selected.status}
-                  </Badge>
-                  <Badge
-                    tone={
-                      selected.riskBucket === "GREEN"
-                        ? "green"
-                        : selected.riskBucket === "AMBER"
-                        ? "amber"
-                        : "red"
-                    }
-                  >
-                    {selected.riskBucket}
-                  </Badge>
-                </div>
-
-                <div className="grid grid-cols-2 gap-2 text-[0.7rem] text-slate-300">
-                  <div>
-                    <div className="text-slate-500">OR range (ticks)</div>
-                    <div className="font-mono">
-                      {selected.orRangeTicks ?? "—"}
-                    </div>
-                  </div>
-                  <div>
-                    <div className="text-slate-500">VWAP drift (ticks)</div>
-                    <div className="font-mono">
-                      {selected.vwapDriftTicks > 0 ? "+" : ""}
-                      {selected.vwapDriftTicks}
-                    </div>
-                  </div>
-                  <div>
-                    <div className="text-slate-500">Session score</div>
-                    <div className="font-mono">{selected.score}</div>
-                  </div>
-                  <div>
-                    <div className="text-slate-500">Last updated</div>
-                    <div className="font-mono">
-                      {selected.lastUpdated.replace("T", " ").replace("Z", "")}
-                    </div>
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-3 gap-2 text-[0.7rem] text-slate-300">
-                  <div>
-                    <div className="text-slate-500">ORR signals</div>
-                    <div className="font-mono">
-                      {selected.signalsOrr ?? 0}
-                    </div>
-                  </div>
-                  <div>
-                    <div className="text-slate-500">OSB signals</div>
-                    <div className="font-mono">
-                      {selected.signalsOsb ?? 0}
-                    </div>
-                  </div>
-                  <div>
-                    <div className="text-slate-500">VWAP-FT signals</div>
-                    <div className="font-mono">
-                      {selected.signalsVwap ?? 0}
-                    </div>
-                  </div>
-                </div>
-
-                <div className="pt-2 border-t border-slate-800 text-[0.7rem] text-slate-400">
-                  <Tooltip content="Markets cockpit is informational only – guardrails and sizing live in the engine.">
-                    <p>
-                      This panel gives you a session-level read on each market;
-                      actual sizing, guardrails and execution are driven by the
-                      engine and back office, not this dashboard.
-                    </p>
-                  </Tooltip>
-                </div>
-              </div>
-            )}
-          </CardBody>
-        </Card>
-      </div>
+            </CardBody>
+          </Card>
+        </div>
+      </section>
     </div>
   );
 }
-

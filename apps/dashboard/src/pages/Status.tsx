@@ -1,185 +1,478 @@
-import React from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Card, CardBody, CardHeader } from '../ui/Card';
 import Badge from '../ui/Badge';
+import Kpi from '../ui/Kpi';
+import Button from '../ui/Button';
+import {
+  fetchSystemJobs,
+  fetchSystemTelemetry,
+  fetchYahooHealth,
+  type SystemJobStatus,
+  type SystemTelemetrySnapshot,
+  type YahooHealthResponse,
+} from '../lib/api';
+import {
+  deriveIngestState,
+  formatLag,
+  getWorstLagSeconds,
+  statusChipTone,
+  summarizeIngestRows,
+  AMBER_THRESHOLD_SECONDS,
+  RED_THRESHOLD_SECONDS,
+  type IngestState,
+} from '../lib/ingestState';
 
-type StatusKind = 'healthy' | 'degraded' | 'down';
-type Category = 'engine' | 'jobs' | 'external' | 'infra';
+const TARGET_JOB_NAMES = [
+  'yahoo-ingest-manual',
+  'ticketizer-manual',
+  'DISK_TICKETS_SYNC',
+] as const;
 
-interface StatusItem {
-  id: string;
-  category: Category;
-  name: string;
-  status: StatusKind;
-  details: string;
-  lastUpdated: string;
+type TargetJobName = (typeof TARGET_JOB_NAMES)[number];
+const REFRESH_INTERVAL_MS = 30_000;
+
+type NormalizedJobRow = {
+  name: TargetJobName;
+  everyMs: number | null;
+  lastRunUtc: string | null;
+  lastOk: boolean | null;
+  lastDurationMs: number | null;
+  telemetry?: SystemTelemetrySnapshot;
+};
+
+function normalizeJobRows(
+  jobStatuses: SystemJobStatus[],
+  telemetry: SystemTelemetrySnapshot[],
+): NormalizedJobRow[] {
+  const jobMap = new Map<string, SystemJobStatus>();
+  for (const job of jobStatuses) {
+    if (job.name) {
+      jobMap.set(job.name.toLowerCase(), job);
+    }
+  }
+  const telemetryMap = new Map<string, SystemTelemetrySnapshot>();
+  for (const snap of telemetry) {
+    telemetryMap.set(snap.jobName.toLowerCase(), snap);
+  }
+
+  return TARGET_JOB_NAMES.map((target) => {
+    const job = jobMap.get(target.toLowerCase());
+    const snap = telemetryMap.get(target.toLowerCase());
+    const everyMs =
+      job?.everyMs ?? job?.intervalMs ?? job?.interval_ms ?? null;
+    const lastRunUtc =
+      job?.lastRunUtc ??
+      job?.lastRunAtUtc ??
+      job?.lastRunAt ??
+      job?.last_run_utc ??
+      snap?.lastRunAt ??
+      null;
+    const lastDurationMs =
+      job?.lastDurationMs ?? job?.lastDuration ?? job?.last_duration_ms ?? snap?.lastDurationMs ?? null;
+    const lastOk =
+      job?.lastOk ?? job?.ok ?? snap?.lastOk ?? null;
+
+    return {
+      name: target,
+      everyMs,
+      lastRunUtc,
+      lastOk,
+      lastDurationMs,
+      telemetry: snap,
+    };
+  });
 }
 
-const STATUS_LABEL: Record<StatusKind, string> = {
-  healthy: 'Healthy',
-  degraded: 'Degraded',
-  down: 'Down',
+function deriveJobTone(job: NormalizedJobRow): 'green' | 'amber' | 'red' {
+  const now = Date.now();
+  const lastRunMs = job.lastRunUtc ? Date.parse(job.lastRunUtc) : NaN;
+  const threshold =
+    job.everyMs && job.everyMs > 0 ? job.everyMs * 3 : 5 * 60 * 1000;
+  const stale =
+    Number.isFinite(lastRunMs) && now - Number(lastRunMs) > threshold;
+  if (!job.lastRunUtc || Number.isNaN(lastRunMs)) {
+    return 'red';
+  }
+  if (job.lastOk === false) {
+    return 'red';
+  }
+  if (stale) {
+    return 'amber';
+  }
+  if (
+    job.telemetry &&
+    (job.telemetry.errorCount > 0 ||
+      job.telemetry.ingestGaps > 0 ||
+      job.telemetry.metricsFailures > 0)
+  ) {
+    return 'amber';
+  }
+  return 'green';
+}
+
+function formatLagSeconds(value: number): string {
+  if (!Number.isFinite(value)) return '—';
+  return `${Math.round(value)}s`;
+}
+
+type JobHealth = {
+  missing: boolean;
+  stale: boolean;
+  lastOk: boolean;
+  lastRunUtc: string | null;
+  everyMs: number | null;
 };
 
-const CATEGORY_LABEL: Record<Category, string> = {
-  engine: 'Engine',
-  jobs: 'Prism core jobs',
-  external: 'External dependency',
-  infra: 'Infrastructure',
-};
+function analyzeJobHealth(job?: NormalizedJobRow | null): JobHealth {
+  if (!job) {
+    return {
+      missing: true,
+      stale: true,
+      lastOk: false,
+      lastRunUtc: null,
+      everyMs: null,
+    };
+  }
+  const everyMs =
+    job.everyMs && job.everyMs > 0 ? job.everyMs : 60_000;
+  const threshold = Math.max(everyMs * 3, 5 * 60 * 1000);
+  const lastRunMs = job.lastRunUtc ? Date.parse(job.lastRunUtc) : NaN;
+  const stale =
+    !job.lastRunUtc ||
+    !Number.isFinite(lastRunMs) ||
+    Date.now() - Number(lastRunMs) > threshold;
+  const lastOk = job.lastOk !== false;
+  return {
+    missing: false,
+    stale,
+    lastOk,
+    lastRunUtc: job.lastRunUtc ?? null,
+    everyMs,
+  };
+}
 
-// NOTE: These are synthetic but realistic.
-// Swap to /api/status, /api/system.jobs, /api/system.telemetry when ready.
-const CORE_STATUS: StatusItem[] = [
-  {
-    id: 'engine-run',
-    category: 'engine',
-    name: 'Strategy engine runtime',
-    status: 'healthy',
-    details: 'Engine jobs running on schedule; last cycle completed without errors.',
-    lastUpdated: '2025-12-08T17:30:00Z',
-  },
-  {
-    id: 'session-metrics',
-    category: 'jobs',
-    name: 'Session metrics pipeline',
-    status: 'healthy',
-    details: 'Session metrics up to date; delay < 30 seconds.',
-    lastUpdated: '2025-12-08T17:29:30Z',
-  },
-  {
-    id: 'ticketizer',
-    category: 'jobs',
-    name: 'Ticketizer fanout',
-    status: 'healthy',
-    details: 'Ticket generation and persistence stable.',
-    lastUpdated: '2025-12-08T17:29:00Z',
-  },
-  {
-    id: 'disk-sync',
-    category: 'jobs',
-    name: 'Tickets disk sync',
-    status: 'healthy',
-    details: 'Disk snapshots current; last sync successful.',
-    lastUpdated: '2025-12-08T17:28:45Z',
-  },
-];
-
-const EXTERNAL_STATUS: StatusItem[] = [
-  {
-    id: 'tradovate-api',
-    category: 'external',
-    // Tests expect this phrase; we mark it clearly as planned/synthetic.
-    name: 'Tradovate API connectivity (planned)',
-    status: 'healthy',
-    details:
-      'Planned venue connectivity check. This is a synthetic placeholder until Tradovate integration is wired.',
-    lastUpdated: '2025-12-08T17:30:05Z',
-  },
-  {
-    id: 'yahoo-feed',
-    category: 'external',
-    name: 'Yahoo data feed',
-    status: 'degraded',
-    details: 'Occasional lag observed; last bar delayed by ~60 seconds.',
-    lastUpdated: '2025-12-08T17:29:50Z',
-  },
-  {
-    id: 'infra-core',
-    category: 'infra',
-    name: 'Core infrastructure',
-    status: 'healthy',
-    details: 'Host, storage and network checks all passing.',
-    lastUpdated: '2025-12-08T17:29:40Z',
-  },
-];
+function describeJobHealth(
+  name: string,
+  health: JobHealth,
+): string {
+  const intervalLabel =
+    health.everyMs && Number.isFinite(health.everyMs)
+      ? `${Math.round(health.everyMs / 1000)}s`
+      : '—';
+  return `${name} unhealthy (lastRun: ${health.lastRunUtc ?? '—'} · interval ${intervalLabel} · lastOk ${
+    health.lastOk ? 'true' : 'false'
+  } · stale ${health.stale ? 'true' : 'false'})`;
+}
 
 export default function Status() {
-  const mergedStatus: StatusItem[] = [...CORE_STATUS, ...EXTERNAL_STATUS];
+  const [yahooHealth, setYahooHealth] = useState<YahooHealthResponse | null>(null);
+  const [jobs, setJobs] = useState<SystemJobStatus[]>([]);
+  const [telemetry, setTelemetry] = useState<SystemTelemetrySnapshot[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [lastRefreshedAt, setLastRefreshedAt] = useState<string | null>(null);
+  const [autoRefresh, setAutoRefresh] = useState(false);
+  const cancelRef = useRef(false);
 
-  const healthyCount = mergedStatus.filter((s) => s.status === 'healthy').length;
-  const degradedCount = mergedStatus.filter((s) => s.status === 'degraded').length;
-  const downCount = mergedStatus.filter((s) => s.status === 'down').length;
-
-  const jobsStatus = mergedStatus.filter(
-    (s) => s.category === 'engine' || s.category === 'jobs',
+  useEffect(
+    () => () => {
+      cancelRef.current = true;
+    },
+    [],
   );
-  const externalStatus = mergedStatus.filter(
-    (s) => s.category === 'external' || s.category === 'infra',
+
+  const loadStatus = useCallback(
+    async (options?: { silent?: boolean }) => {
+      const silent = options?.silent ?? false;
+      if (!silent && !cancelRef.current) {
+        setLoading(true);
+      }
+      if (!cancelRef.current) {
+        setError(null);
+      }
+      try {
+        const [healthRes, jobsRes, telemetryRes] = await Promise.all([
+          fetchYahooHealth(),
+          fetchSystemJobs(),
+          fetchSystemTelemetry(),
+        ]);
+        if (cancelRef.current) return;
+        setYahooHealth(healthRes ?? null);
+        setJobs(Array.isArray(jobsRes) ? jobsRes : []);
+        setTelemetry(Array.isArray(telemetryRes) ? telemetryRes : []);
+        setLastRefreshedAt(new Date().toISOString());
+      } catch {
+        if (!cancelRef.current) {
+          setError('Unable to load system status');
+        }
+      } finally {
+        if (!cancelRef.current) {
+          if (!silent) {
+            setLoading(false);
+          }
+        }
+      }
+    },
+    [],
   );
 
-  const overallTone =
-    downCount > 0 ? 'red' : degradedCount > 0 ? 'amber' : 'green';
+  useEffect(() => {
+    loadStatus();
+  }, [loadStatus]);
+
+  useEffect(() => {
+    if (!autoRefresh) return;
+    const id = setInterval(() => {
+      loadStatus({ silent: true });
+    }, REFRESH_INTERVAL_MS);
+    return () => clearInterval(id);
+  }, [autoRefresh, loadStatus]);
+
+  const ingestRows = useMemo(() => {
+    const rows = yahooHealth?.rows ?? [];
+    return [...rows].sort((a, b) => a.symbol.localeCompare(b.symbol));
+  }, [yahooHealth]);
+
+  const ingestCounts = useMemo(
+    () => summarizeIngestRows(ingestRows),
+    [ingestRows],
+  );
+
+  const jobRows = useMemo(
+    () => normalizeJobRows(jobs, telemetry),
+    [jobs, telemetry],
+  );
+
+  const ingestState = deriveIngestState(ingestRows);
+  const overallTone = statusChipTone[ingestState];
+
+  const ingestSummary = {
+    live: ingestCounts.GREEN,
+    degraded: ingestCounts.AMBER,
+    down: ingestCounts.RED,
+  };
+
+  const jobTones = useMemo(() => {
+    const toneMap = new Map<TargetJobName, ReturnType<typeof deriveJobTone>>();
+    for (const job of jobRows) {
+      toneMap.set(job.name, deriveJobTone(job));
+    }
+    return toneMap;
+  }, [jobRows]);
+
+  const tradingIssues = useMemo(() => {
+    const issues: string[] = [];
+    if (ingestState !== 'LIVE') {
+      issues.push('Market ingest not live');
+    }
+    const yahooTone = jobTones.get('yahoo-ingest-manual');
+    if (yahooTone !== 'green') {
+      issues.push('yahoo-ingest-manual unhealthy');
+    }
+    const ticketizerTone = jobTones.get('ticketizer-manual');
+    if (ticketizerTone !== 'green') {
+      issues.push('ticketizer-manual unhealthy');
+    }
+    return issues;
+  }, [ingestState, jobTones]);
+
+  const tradingSafe = tradingIssues.length === 0;
+  const lastRefreshedLabel = lastRefreshedAt
+    ? new Date(lastRefreshedAt).toISOString()
+    : '—';
+  const worstLagSeconds = useMemo(
+    () => getWorstLagSeconds(ingestRows),
+    [ingestRows],
+  );
+  const ingestStop =
+    ingestState === 'NOT LIVE' ||
+    (typeof worstLagSeconds === 'number' &&
+      worstLagSeconds > RED_THRESHOLD_SECONDS);
+  const yahooJob = jobRows.find(
+    (job) => job.name === 'yahoo-ingest-manual',
+  );
+  const ticketizerJob = jobRows.find(
+    (job) => job.name === 'ticketizer-manual',
+  );
+  const diskSyncJob = jobRows.find(
+    (job) => job.name === 'DISK_TICKETS_SYNC',
+  );
+  const yahooHealthStatus = analyzeJobHealth(yahooJob);
+  const ticketizerHealthStatus = analyzeJobHealth(ticketizerJob);
+  const diskHealthStatus = analyzeJobHealth(diskSyncJob);
+  const ticketizerStop =
+    ticketizerHealthStatus.missing ||
+    ticketizerHealthStatus.stale ||
+    !ticketizerHealthStatus.lastOk;
+  const ingestJobStop =
+    yahooHealthStatus.missing ||
+    yahooHealthStatus.stale ||
+    !yahooHealthStatus.lastOk;
+  const diskSyncDegraded =
+    diskHealthStatus.missing ||
+    diskHealthStatus.stale ||
+    !diskHealthStatus.lastOk;
+  const stopReasons: string[] = [];
+  if (ingestStop) {
+    stopReasons.push(
+      `Market ingest ${ingestState} (lag ${formatLag(
+        worstLagSeconds,
+      )})`,
+    );
+  }
+  if (ingestJobStop) {
+    stopReasons.push(
+      describeJobHealth('yahoo-ingest-manual', yahooHealthStatus),
+    );
+  }
+  if (ticketizerStop) {
+    stopReasons.push(
+      describeJobHealth('ticketizer-manual', ticketizerHealthStatus),
+    );
+  }
+  const degradeReasons: string[] = [];
+  if (diskSyncDegraded) {
+    degradeReasons.push(
+      describeJobHealth('DISK_TICKETS_SYNC', diskHealthStatus),
+    );
+  }
+  const anyStop = stopReasons.length > 0;
 
   return (
-    <div className="space-y-4">
+    <div className="a3-page-root">
       {/* Header */}
-      <section className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
-        <div className="flex flex-col gap-1">
-          <h1 className="text-base font-semibold text-slate-100">System Status</h1>
-          <p className="text-xs text-slate-400">
-            High-level view of Prism engine, external dependencies, and infrastructure
-            health. Currently driven by synthetic snapshots; wire to /api/status when
-            telemetry is ready.
+      <header className="a3-page-header">
+        <div>
+          <div className="a3-page-section-label">Telemetry snapshot</div>
+          <h1>System Status</h1>
+          <p>
+            High-level view of ingest freshness, scheduler jobs, and telemetry. Data is
+            sourced live from /health/yahoo and /api/system routes.
           </p>
         </div>
-        <div className="flex flex-wrap items-center gap-2">
+        <div className="flex flex-col items-end gap-1 text-right">
           <Badge tone={overallTone as any} className="text-[10px]">
-            {downCount > 0
-              ? 'Issues detected'
-              : degradedCount > 0
-              ? 'Minor degradation'
-              : 'All green'}
+            {ingestState}
           </Badge>
-          {/* Tests expect this phrase to exist somewhere */}
           <Badge tone="neutral" className="text-[10px]">
-            Healthy components
+            Symbols monitored: {ingestRows.length}
           </Badge>
+          {error && (
+            <span className="text-[10px] text-rose-400">{error}</span>
+          )}
         </div>
-      </section>
+      </header>
 
-      {/* KPI strip */}
-      <section className="grid gap-3 md:grid-cols-3">
-        <Card>
-          <CardBody className="flex items-center justify-between gap-2 px-4 py-3">
-            <div className="flex flex-col gap-0.5">
-              <span className="text-[11px] font-medium text-slate-300">Healthy</span>
-              <span className="text-[11px] text-slate-500">
-                Components operating normally.
+      <section className="a3-page-main-card space-y-4">
+        <Card className="a3-page-table-card">
+          <CardHeader className="flex items-center justify-between px-4 py-3">
+            <div className="flex flex-col gap-1">
+              <span className="text-[11px] font-semibold text-slate-100">
+                STOP CONDITIONS
+              </span>
+              <span className="text-[11px] text-slate-400">
+                Deterministic go/no-go checks for ingest + scheduler guardrails.
               </span>
             </div>
-            <span className="font-geist-mono text-lg text-emerald-300">
-              {healthyCount}
-            </span>
-          </CardBody>
-        </Card>
-        <Card>
-          <CardBody className="flex items-center justify-between gap-2 px-4 py-3">
-            <div className="flex flex-col gap-0.5">
-              <span className="text-[11px] font-medium text-slate-300">Degraded</span>
-              <span className="text-[11px] text-slate-500">
-                Components with minor issues.
+            <div className="flex items-center gap-2">
+              <Badge tone={anyStop ? 'rose' : 'emerald'} size="xs">
+                {anyStop ? 'STOP' : 'CLEAR'}
+              </Badge>
+              {error && (
+                <Badge tone="rose" size="xs">
+                  STALE DATA
+                </Badge>
+              )}
+            </div>
+          </CardHeader>
+          <CardBody className="space-y-3 px-4 py-3 text-[11px] text-slate-200">
+            {anyStop ? (
+              <ul className="list-disc space-y-1 pl-5">
+                {stopReasons.map((reason) => (
+                  <li key={reason}>{reason}</li>
+                ))}
+              </ul>
+            ) : (
+              <p>Trading safe (per telemetry).</p>
+            )}
+            {degradeReasons.length > 0 && (
+              <div className="text-amber-200">
+                <div className="font-semibold uppercase tracking-[0.18em] text-[10px] text-amber-300">
+                  Degraded
+                </div>
+                <ul className="list-disc space-y-1 pl-5">
+                  {degradeReasons.map((reason) => (
+                    <li key={reason}>{reason}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
+            <div className="flex flex-wrap items-center gap-3 text-[10px] text-slate-400">
+              <Button
+                size="xs"
+                tone="ghost"
+                onClick={() => loadStatus()}
+                disabled={loading}
+              >
+                Refresh now
+              </Button>
+              <label className="flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  checked={autoRefresh}
+                  onChange={(event) => setAutoRefresh(event.target.checked)}
+                  aria-label="Auto-refresh (30s)"
+                  className="h-3 w-3 rounded border border-slate-600 bg-transparent text-emerald-500"
+                />
+                Auto-refresh (30s)
+              </label>
+              <span className="font-geist-mono text-slate-300">
+                Last successful refresh: {lastRefreshedLabel}
               </span>
             </div>
-            <span className="font-geist-mono text-lg text-amber-200">
-              {degradedCount}
-            </span>
           </CardBody>
         </Card>
-        <Card>
-          <CardBody className="flex items-center justify-between gap-2 px-4 py-3">
-            <div className="flex flex-col gap-0.5">
-              <span className="text-[11px] font-medium text-slate-300">Down</span>
-              <span className="text-[11px] text-slate-500">
-                Components requiring attention.
-              </span>
-            </div>
-            <span className="font-geist-mono text-lg text-rose-300">{downCount}</span>
-          </CardBody>
-        </Card>
-      </section>
 
-      {/* Prism core jobs card – tests look for this label */}
-      <Card>
+        <div
+          className={`rounded-xl border px-4 py-3 text-[11px] ${
+            tradingSafe
+              ? 'border-emerald-500/40 bg-emerald-500/10 text-emerald-50'
+              : 'border-rose-500/40 bg-rose-500/10 text-rose-100'
+          }`}
+        >
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <div className="text-[11px] font-semibold tracking-[0.2em]">
+                {tradingSafe ? 'TRADING SAFE' : 'TRADING UNSAFE'}
+              </div>
+              <p className="text-[11px] text-slate-200">
+                {tradingSafe
+                  ? 'Ingest and scheduler guardrails are healthy.'
+                  : 'Guardrails flagged the following blockers:'}
+              </p>
+            </div>
+            <Badge tone={tradingSafe ? 'emerald' : 'rose'} size="xs">
+              {ingestState}
+            </Badge>
+          </div>
+          {!tradingSafe && (
+            <ul className="mt-2 list-disc space-y-1 pl-5 text-[11px] text-slate-200">
+              {tradingIssues.map((issue) => (
+                <li key={issue}>{issue}</li>
+              ))}
+            </ul>
+          )}
+        </div>
+
+        {/* KPI strip */}
+        <div className="a3-page-kpi-strip">
+          <Kpi label="GREEN" value={ingestSummary.live} tone="emerald" sublabel="Lag ≤ 120s" />
+          <Kpi label="AMBER" value={ingestSummary.degraded} tone="amber" sublabel="Lag ≤ 300s" />
+          <Kpi label="RED" value={ingestSummary.down} tone="rose" sublabel="Lag > 300s" />
+        </div>
+
+        {/* Prism core jobs card */}
+        <Card className="a3-page-table-card">
         <CardHeader className="px-4 py-3">
           <div className="flex items-center justify-between gap-3">
             <div className="flex flex-col gap-0.5">
@@ -187,7 +480,7 @@ export default function Status() {
                 Prism core jobs
               </span>
               <span className="text-[11px] text-slate-500">
-                Engine runtime, session metrics, ticketizer and disk sync health.
+                Ingest, ticketizer, and disk sync cadence pulled from /api/system/jobs.
               </span>
             </div>
           </div>
@@ -199,42 +492,43 @@ export default function Status() {
                 <tr className="border-b border-slate-800/80 bg-slate-950/80 text-[10px] uppercase tracking-[0.18em] text-slate-500">
                   <th className="px-3 py-2 font-normal">Job</th>
                   <th className="px-3 py-2 font-normal">Status</th>
-                  <th className="px-3 py-2 font-normal">Details</th>
-                  <th className="px-3 py-2 font-normal">Last updated</th>
+                  <th className="px-3 py-2 font-normal">Interval</th>
+                  <th className="px-3 py-2 font-normal">Last run (UTC)</th>
                 </tr>
               </thead>
               <tbody>
-                {jobsStatus.map((item) => (
+                {jobRows.map((row) => {
+                  const tone = deriveJobTone(row);
+                  return (
                   <tr
-                    key={item.id}
+                    key={row.name}
                     className="border-b border-slate-900/60 last:border-0 hover:bg-slate-900/60"
                   >
                     <td className="px-3 py-2 align-top text-[11px] text-slate-100">
-                      {item.name}
+                      {row.name}
                     </td>
                     <td className="px-3 py-2 align-top">
                       <Badge
-                        tone={
-                          item.status === 'healthy'
-                            ? 'green'
-                            : item.status === 'degraded'
-                            ? 'amber'
-                            : 'red'
-                        }
+                        tone={tone}
                         className="text-[9px]"
                       >
-                        {STATUS_LABEL[item.status]}
+                        {tone === 'green'
+                          ? 'Healthy'
+                          : tone === 'amber'
+                          ? 'Degraded'
+                          : 'Down'}
                       </Badge>
                     </td>
                     <td className="px-3 py-2 align-top text-[11px] text-slate-300">
-                      {item.details}
+                      {row.everyMs != null ? `${Math.round(row.everyMs / 1000)}s` : '—'}
                     </td>
                     <td className="px-3 py-2 align-top text-[11px] text-slate-400">
-                      {item.lastUpdated}
+                      {row.lastRunUtc ?? '—'}
                     </td>
                   </tr>
-                ))}
-                {jobsStatus.length === 0 && (
+                );
+                })}
+                {!jobRows.length && (
                   <tr>
                     <td
                       colSpan={4}
@@ -250,17 +544,16 @@ export default function Status() {
         </CardBody>
       </Card>
 
-      {/* External dependencies – includes explicit "Tradovate API connectivity" substring */}
-      <Card>
+      {/* Ingest freshness */}
+      <Card className="a3-page-table-card">
         <CardHeader className="px-4 py-3">
           <div className="flex items-center justify-between gap-3">
             <div className="flex flex-col gap-0.5">
               <span className="text-[11px] font-medium text-slate-200">
-                External dependencies & infra
+                Ingest freshness
               </span>
               <span className="text-[11px] text-slate-500">
-                Synthetic checks for future venues and data feeds. Replace with real status
-                routes as integrations land.
+                Derived directly from /health/yahoo.
               </span>
             </div>
           </div>
@@ -270,50 +563,61 @@ export default function Status() {
             <table className="min-w-full border-collapse text-left text-[11px] text-slate-200">
               <thead>
                 <tr className="border-b border-slate-800/80 bg-slate-950/80 text-[10px] uppercase tracking-[0.18em] text-slate-500">
-                  <th className="px-3 py-2 font-normal">Check</th>
+                  <th className="px-3 py-2 font-normal">Symbol</th>
+                  <th className="px-3 py-2 font-normal">Lag</th>
                   <th className="px-3 py-2 font-normal">Status</th>
-                  <th className="px-3 py-2 font-normal">Details</th>
-                  <th className="px-3 py-2 font-normal">Last updated</th>
+                  <th className="px-3 py-2 font-normal">Last bar</th>
                 </tr>
               </thead>
               <tbody>
-                {externalStatus.map((item) => (
-                  <tr
-                    key={item.id}
-                    className="border-b border-slate-900/60 last:border-0 hover:bg-slate-900/60"
-                  >
-                    <td className="px-3 py-2 align-top text-[11px] text-slate-100">
-                      {item.name}
-                    </td>
-                    <td className="px-3 py-2 align-top">
-                      <Badge
-                        tone={
-                          item.status === 'healthy'
-                            ? 'green'
-                            : item.status === 'degraded'
-                            ? 'amber'
-                            : 'red'
-                        }
-                        className="text-[9px]"
-                      >
-                        {STATUS_LABEL[item.status]}
-                      </Badge>
-                    </td>
-                    <td className="px-3 py-2 align-top text-[11px] text-slate-300">
-                      {item.details}
-                    </td>
-                    <td className="px-3 py-2 align-top text-[11px] text-slate-400">
-                      {item.lastUpdated}
-                    </td>
-                  </tr>
-                ))}
-                {externalStatus.length === 0 && (
+                {loading && (
                   <tr>
                     <td
                       colSpan={4}
                       className="px-3 py-4 text-center text-[11px] text-slate-500"
                     >
-                      No external dependency telemetry available.
+                      Loading status…
+                    </td>
+                  </tr>
+                )}
+                {!loading &&
+                  ingestRows.map((row) => (
+                  <tr
+                    key={row.symbol}
+                    className="border-b border-slate-900/60 last:border-0 hover:bg-slate-900/60"
+                  >
+                    <td className="px-3 py-2 align-top text-[11px] text-slate-100">
+                      {row.symbol}
+                    </td>
+                    <td className="px-3 py-2 align-top">
+                      <Badge
+                        tone={
+                          row.status === 'GREEN'
+                            ? 'green'
+                            : row.status === 'AMBER'
+                            ? 'amber'
+                            : 'red'
+                        }
+                        className="text-[9px]"
+                      >
+                        {row.status}
+                      </Badge>
+                    </td>
+                    <td className="px-3 py-2 align-top text-[11px] text-slate-300">
+                      {formatLagSeconds(row.lag_seconds)}
+                    </td>
+                    <td className="px-3 py-2 align-top text-[11px] text-slate-400">
+                      {row.last_bar_timestamp}
+                    </td>
+                  </tr>
+                  ))}
+                {!loading && !ingestRows.length && (
+                  <tr>
+                    <td
+                      colSpan={4}
+                      className="px-3 py-4 text-center text-[11px] text-slate-500"
+                    >
+                      No ingest telemetry available.
                     </td>
                   </tr>
                 )}
@@ -322,7 +626,7 @@ export default function Status() {
           </div>
         </CardBody>
       </Card>
+      </section>
     </div>
   );
 }
-

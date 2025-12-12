@@ -7,6 +7,7 @@ export interface JobTelemetrySnapshot {
   lastRunAt: string | null;
   lastDurationMs: number | null;
   avgDurationMs: number | null;
+  lastOk: boolean | null;
   runCount: number;
   errorCount: number;
   ingestGaps: number;
@@ -45,6 +46,7 @@ function ensureJob(jobName: string): JobTelemetrySnapshot {
     lastRunAt: null,
     lastDurationMs: null,
     avgDurationMs: null,
+    lastOk: null,
     runCount: 0,
     errorCount: 0,
     ingestGaps: 0,
@@ -68,6 +70,7 @@ export function recordJobRun(
   const nowIso = new Date().toISOString();
   snap.lastRunAt = nowIso;
   snap.lastDurationMs = durationMs;
+  snap.lastOk = outcome.ok;
 
   const nextRunCount = snap.runCount + 1;
   // Simple incremental average on duration.

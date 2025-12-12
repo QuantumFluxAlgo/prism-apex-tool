@@ -1,115 +1,364 @@
-/* eslint-disable @typescript-eslint/ban-ts-comment */
-// @ts-nocheck
-// V2 HARDENING (auto-waive): TS waiver for this API file. See PRISM_APEX_V2_BUILD_AUDIT.md.
+// apps/api/src/routes/worklist.ts
 
-import type { FastifyInstance } from 'fastify';
-import { trackEvent } from '@prism-apex/analytics';
+/* PRISM APEX – Worklist V2 backend
+ *
+ * Canonical Worklist feed for operator cockpit.
+ *
+ * Goals:
+ * - Replace mock data with DB-backed tickets.
+ * - Reuse canonical ticket + session metrics + scoring logic.
+ * - Surface risk decision, session flags, PnL ticks, score & scoreDelta.
+ *
+ * This route is read-only and non-invasive:
+ * - No schema changes.
+ * - Uses existing `tickets` table and session metrics jobs.
+ */
 
-type WorklistSide = 'LONG' | 'SHORT';
-type WorklistRiskBucket = 'GREEN' | 'AMBER' | 'RED';
+import { Client } from 'pg';
+import type { FastifyInstance, FastifyRequest } from 'fastify';
+
+import { computeEngineTicketScoreFromRow } from '../services/tickets/engineTicketScore.js';
+import { buildCanonicalApprovedTicketView } from './dto/canonicalTicketView.js';
+import {
+  fetchSessionMetricsBatch,
+  sessionMetricsKeyToString,
+  type SessionMetricsKey,
+} from '../jobs/session-metrics/batch.js';
+import { createSessionFlagsService } from '../jobs/session-metrics/session-flags-service.js';
+import type { TicketRiskDecisionDto } from './dto/riskDecisionDto.js';
+
+import { computePnL } from '@prism-apex/shared/pnl';
+
+const DEFAULT_DATABASE_URL =
+  process.env.DATABASE_URL ?? 'postgres://apex:apex@db:5432/prismapex';
+
+const sessionFlagsService = createSessionFlagsService();
 
 export interface WorklistTicketDto {
   ticketId: string;
   symbol: string;
-  strategy: 'ORR' | 'OSB' | 'VWAP-FT';
-  side: WorklistSide;
+  strategy: string;
+  side: 'LONG' | 'SHORT';
+
+  contracts: number | null;
+  riskDollars: number | null;
+  rrMultiple: number | null;
+
+  entryPrice: number;
+  stopPrice: number;
+  targetPrice: number | null;
+
+  createdAt: string;
+  sessionDate: string;
+
+  // Engine scoring
   score: number; // 0–100
-  riskBucket: WorklistRiskBucket;
+  scoreTrend: 'UP' | 'FLAT' | 'DOWN';
+  scoreDelta: 'UP' | 'FLAT' | 'DOWN';
+
+  // PnL / time
+  pnlTicks: number;
   ageMinutes: number;
-  pnlTicks: number; // positive/negative ticks
-  sessionDate: string; // YYYY-MM-DD
-  createdAt: string; // ISO
+
+  // Risk + context
+  riskDecision: TicketRiskDecisionDto | null;
+  sessionMetrics: Record<string, unknown> | null;
+  sessionFlags: ReturnType<typeof sessionFlagsService.getFlagsForSession> | null;
+
+  // Canonical ticket view
+  canonical: ReturnType<typeof buildCanonicalApprovedTicketView> | null;
+
+  // Operator notes
   notes?: string;
 }
 
+type WorklistQuery = {
+  symbol?: string;
+  strategy?: string;
+  limit?: string;
+};
+
 /**
- * Temporary canonical-shaped mock data for Worklist V2.
- * This mirrors the A3 cockpit layout used on the dashboard.
- *
- * Phase A: replace this with a real engine-backed implementation.
+ * Compute minutes since createdAt (UTC ISO string).
  */
-function buildMockWorklistTickets(now: Date = new Date()): WorklistTicketDto[] {
-  // Anchor to a stable session date derived from "now"
-  const sessionDate = now.toISOString().slice(0, 10);
-
-  const mk = (partial: Omit<WorklistTicketDto, 'sessionDate'>): WorklistTicketDto => ({
-    ...partial,
-    sessionDate: partial.createdAt.slice(0, 10) || sessionDate,
-  });
-
-  return [
-    mk({
-      ticketId: 't-orr-001',
-      symbol: 'MESZ4',
-      strategy: 'ORR',
-      side: 'LONG',
-      score: 86,
-      riskBucket: 'GREEN',
-      ageMinutes: 4,
-      pnlTicks: 10,
-      createdAt: `${sessionDate}T14:00:00Z`,
-      notes: 'Clean OR reversal after strong open drive.',
-    }),
-    mk({
-      ticketId: 't-orr-002',
-      symbol: 'NQZ4',
-      strategy: 'ORR',
-      side: 'SHORT',
-      score: 78,
-      riskBucket: 'AMBER',
-      ageMinutes: 9,
-      pnlTicks: -4,
-      createdAt: `${sessionDate}T13:55:00Z`,
-      notes: 'Aggressive fade; news risk elevated.',
-    }),
-    mk({
-      ticketId: 't-osb-010',
-      symbol: 'CLF5',
-      strategy: 'OSB',
-      side: 'LONG',
-      score: 72,
-      riskBucket: 'GREEN',
-      ageMinutes: 16,
-      pnlTicks: 0,
-      createdAt: `${sessionDate}T13:48:00Z`,
-      notes: 'Breakout from OR high, low volatility regime.',
-    }),
-    mk({
-      ticketId: 't-vwapft-021',
-      symbol: 'MESZ4',
-      strategy: 'VWAP-FT',
-      side: 'SHORT',
-      score: 65,
-      riskBucket: 'RED',
-      ageMinutes: 22,
-      pnlTicks: -12,
-      createdAt: `${sessionDate}T13:40:00Z`,
-      notes: 'Fade against strong trend; poor session quality.',
-    }),
-  ];
+function toMinutesAgo(createdAt: string | null | undefined): number {
+  if (!createdAt) return 0;
+  const created = Date.parse(createdAt);
+  if (!Number.isFinite(created)) return 0;
+  return Math.max(0, Math.floor((Date.now() - created) / 60000));
 }
 
-export default async function worklistRoute(app: FastifyInstance) {
-  async function handler() {
-    const tickets = buildMockWorklistTickets();
-    trackEvent('worklist.summary', { count: tickets.length });
+/**
+ * Derive pnlTicks from canonical view + pnl where possible.
+ */
+function computePnlTicksFromCanonical(canonical: any, pnl: number | null): number {
+  if (!canonical) return 0;
 
-    // Shape is intentionally simple; UI can evolve to use `total` or other fields later.
-    return {
-      total: tickets.length,
-      tickets,
-    };
+  const stopTicks = canonical.stopTicks;
+  const perContractRisk = canonical.perContractRisk;
+  const qty = canonical.quantity ?? 1;
+
+  if (
+    !Number.isFinite(stopTicks) ||
+    !Number.isFinite(perContractRisk) ||
+    stopTicks <= 0
+  ) {
+    return 0;
   }
 
-  // Support both legacy and API-prefixed paths, like status/tickets routes.
-  app.get('/worklist', async (_req, reply) => {
-    const payload = await handler();
-    return reply.send(payload);
+  const tickValue = perContractRisk / stopTicks;
+  if (!Number.isFinite(tickValue) || tickValue <= 0) return 0;
+
+  if (Number.isFinite(pnl)) {
+    return Math.round((pnl as number) / (tickValue * qty));
+  }
+
+  const entry = canonical.entryPrice;
+  const target = canonical.targetPrice;
+  const stop = canonical.stopPrice;
+
+  if ([entry, target, stop].some((v: number) => typeof v !== 'number')) {
+    return 0;
+  }
+
+  const result = computePnL({
+    entryPrice: entry,
+    targetPrice: target,
+    stopPrice: stop,
+    direction: canonical.side,
+    tickSize: tickValue / qty,
+    tickValueUSD: tickValue,
   });
 
-  app.get('/api/worklist', async (_req, reply) => {
-    const payload = await handler();
-    return reply.send(payload);
-  });
+  if (!result.ok || !Number.isFinite(result.ticksToTarget)) return 0;
+  return result.ticksToTarget as number;
 }
 
+/**
+ * Pulls latest actionable OPEN tickets from `tickets` with a DISTINCT ON
+ * to dedupe per (symbol, strategy, direction, opened_at_utc).
+ */
+async function fetchRawTickets(client: Client, q: WorklistQuery) {
+  const filters: string[] = ["actionable IS TRUE", "status = 'OPEN'"];
+  const params: any[] = [];
+
+  const addFilter = (sql: string, value?: any) => {
+    if (value === undefined || value === null || value === '') return;
+    params.push(value);
+    filters.push(sql.replace('?', `$${params.length}`));
+  };
+
+  addFilter('symbol = ?', q.symbol);
+  addFilter('strategy = ?', q.strategy);
+
+  const limit = Math.max(
+    1,
+    Math.min(200, Number.parseInt(q.limit ?? '100', 10) || 100),
+  );
+
+  const whereSql = filters.length ? `WHERE ${filters.join(' AND ')}` : '';
+
+  const baseDistinct = `
+    SELECT DISTINCT ON (symbol, strategy, direction, opened_at_utc)
+      id,
+      symbol,
+      strategy,
+      direction,
+      status,
+      actionable,
+      opened_at_utc,
+      completed_at_utc,
+      session_date_utc,
+      entry_price,
+      stop_price,
+      target_price,
+      pnl,
+      rr,
+      risk_decision,
+      meta
+    FROM tickets
+    ${whereSql}
+    ORDER BY symbol,
+             strategy,
+             direction,
+             opened_at_utc DESC,
+             completed_at_utc DESC NULLS LAST,
+             id DESC
+  `;
+
+  const sql = `
+    WITH ranked AS (${baseDistinct})
+    SELECT *
+    FROM ranked
+    ORDER BY opened_at_utc DESC, id DESC
+    LIMIT ${limit}
+  `;
+
+  const res = await client.query(sql, params);
+  return res.rows;
+}
+
+function getSessionKey(row: any): SessionMetricsKey | null {
+  if (!row.symbol) return null;
+
+  const rawDate =
+    row.session_date_utc ??
+    (typeof row.opened_at_utc === 'string'
+      ? (row.opened_at_utc as string).slice(0, 10)
+      : null);
+
+  if (!rawDate) return null;
+
+  return { symbol: row.symbol, sessionDate: rawDate };
+}
+
+/**
+ * Main route registration.
+ */
+export default async function worklistRoute(app: FastifyInstance) {
+  app.get(
+    '/api/worklist',
+    async (req: FastifyRequest<{ Querystring: WorklistQuery }>, reply) => {
+      const client = new Client({ connectionString: DEFAULT_DATABASE_URL });
+
+      await client.connect();
+      try {
+        const rows = await fetchRawTickets(client, req.query ?? {});
+
+        // Build unique session keys for batch session metrics lookup
+        const sessionKeys: SessionMetricsKey[] = [];
+        const seen = new Set<string>();
+
+        for (const row of rows) {
+          const key = getSessionKey(row);
+          if (!key) continue;
+          const keyStr = sessionMetricsKeyToString(key);
+          if (seen.has(keyStr)) continue;
+          seen.add(keyStr);
+          sessionKeys.push(key);
+        }
+
+        const metricsMap =
+          sessionKeys.length > 0
+            ? await fetchSessionMetricsBatch(sessionKeys, { maxKeys: 64 })
+            : {};
+
+        const now = new Date();
+
+        const tickets: WorklistTicketDto[] = rows.map((row) => {
+          const canonical = buildCanonicalApprovedTicketView(row);
+          const riskDecision =
+            (row.risk_decision as TicketRiskDecisionDto | null) ?? null;
+
+          const sessionKey = getSessionKey(row);
+          const metricsKey =
+            sessionKey && sessionMetricsKeyToString(sessionKey);
+
+          const sessionMetrics =
+            metricsKey && metricsMap[metricsKey]
+              ? (metricsMap[metricsKey] as Record<string, unknown>)
+              : null;
+
+          const sessionFlags =
+            sessionKey !== null
+              ? sessionFlagsService.getFlagsForSession(
+                  sessionKey.symbol,
+                  sessionKey.sessionDate,
+                )
+              : sessionFlagsService.getFlagsForSession(
+                  row.symbol,
+                  now.toISOString().slice(0, 10),
+                );
+
+          const { score, trend } = computeEngineTicketScoreFromRow({
+            ...row,
+            sessionMetrics,
+            riskDecision,
+            canonicalApproved: canonical,
+          });
+
+          const pnlTicks = computePnlTicksFromCanonical(
+            canonical,
+            row.pnl ?? null,
+          );
+
+          const meta = (row.meta ?? {}) as Record<string, unknown>;
+
+          const contracts = (meta.contracts as number | undefined) ?? null;
+          const riskDollars =
+            (meta.riskDollars as number | undefined) ??
+            (meta.risk_dollars as number | undefined) ??
+            null;
+          const rrMultiple =
+            (meta.rrMultiple as number | undefined) ??
+            (meta.rr as number | undefined) ??
+            (row.rr as number | undefined) ??
+            null;
+
+          const createdAt = row.opened_at_utc as string;
+
+          return {
+            ticketId: String(row.id),
+            symbol: row.symbol,
+            strategy: row.strategy,
+            side: ((row.direction ?? 'LONG') as 'LONG' | 'SHORT') ?? 'LONG',
+
+            contracts,
+            riskDollars,
+            rrMultiple,
+
+            entryPrice: row.entry_price,
+            stopPrice: row.stop_price,
+            targetPrice: row.target_price,
+
+            createdAt,
+            sessionDate: createdAt.slice(0, 10),
+
+            score,
+            scoreTrend: trend,
+            scoreDelta: 'FLAT', // Filled in a second pass below
+
+            pnlTicks,
+            ageMinutes: toMinutesAgo(createdAt),
+
+            riskDecision,
+            sessionMetrics,
+            sessionFlags,
+            canonical,
+
+            notes: (meta.notes as string | undefined) ?? undefined,
+          };
+        });
+
+        // Second pass: compute scoreDelta per (symbol, strategy) stream
+        const lastScoreByKey = new Map<string, number>();
+
+        for (const ticket of tickets) {
+          const key = `${ticket.symbol}|${ticket.strategy}`;
+          const prev = lastScoreByKey.get(key);
+
+          if (typeof prev === 'number') {
+            if (ticket.score > prev) {
+              ticket.scoreDelta = 'UP';
+            } else if (ticket.score < prev) {
+              ticket.scoreDelta = 'DOWN';
+            } else {
+              ticket.scoreDelta = 'FLAT';
+            }
+          }
+
+          lastScoreByKey.set(key, ticket.score);
+        }
+
+        return reply.send({ total: tickets.length, tickets });
+      } finally {
+        await client.end();
+      }
+    },
+  );
+
+  // Legacy path kept only to guide callers to canonical API.
+  app.get('/worklist', async (_req, reply) =>
+    reply.send({ warning: 'Use /api/worklist for Worklist V2 feed.' }),
+  );
+}

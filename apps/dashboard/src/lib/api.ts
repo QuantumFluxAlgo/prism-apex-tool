@@ -200,6 +200,72 @@ export const Market: {
 };
 
 /**
+ * System health + telemetry helpers
+ */
+
+export type YahooHealthRow = {
+  symbol: string;
+  lag_seconds: number;
+  last_bar_timestamp: string;
+  status: 'GREEN' | 'AMBER' | 'RED';
+};
+
+export type YahooHealthResponse = {
+  status?: string;
+  rows?: YahooHealthRow[];
+  now_utc?: string;
+};
+
+export async function fetchYahooHealth(): Promise<YahooHealthResponse> {
+  return fetchJson<YahooHealthResponse>('/health/yahoo');
+}
+
+export type SystemJobStatus = {
+  name?: string;
+  everyMs?: number | null;
+  intervalMs?: number | null;
+  interval_ms?: number | null;
+  lastRunUtc?: string | null;
+  lastRunAtUtc?: string | null;
+  lastRunAt?: string | null;
+  last_run_utc?: string | null;
+  lastOk?: boolean | null;
+  ok?: boolean | null;
+  lastDurationMs?: number | null;
+  lastDuration?: number | null;
+  last_duration_ms?: number | null;
+};
+
+export async function fetchSystemJobs(): Promise<SystemJobStatus[]> {
+  const data = await fetchJson<SystemJobStatus[] | { jobs?: SystemJobStatus[] }>(
+    '/api/system/jobs',
+  );
+  if (Array.isArray(data)) return data;
+  if (data && Array.isArray(data.jobs)) return data.jobs;
+  return [];
+}
+
+export type SystemTelemetrySnapshot = {
+  jobName: string;
+  lastRunAt: string | null;
+  lastDurationMs: number | null;
+  avgDurationMs: number | null;
+  runCount: number;
+  errorCount: number;
+  ingestGaps: number;
+  metricsFailures: number;
+  lastOk?: boolean | null;
+};
+
+export async function fetchSystemTelemetry(): Promise<SystemTelemetrySnapshot[]> {
+  const payload = await fetchJson<{ jobs?: SystemTelemetrySnapshot[] }>(
+    '/api/system/telemetry',
+  );
+  if (payload && Array.isArray(payload.jobs)) return payload.jobs;
+  return [];
+}
+
+/**
  * Shared helpers
  */
 
@@ -649,4 +715,3 @@ export async function fetchSessionMetricsBatch(
 
   return result;
 }
-

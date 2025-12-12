@@ -69,10 +69,44 @@ declare module '@prism-apex/accounts' {
 }
 
 declare module '@prism-apex/rules-apex' {
-  export type TicketInput = any;
-  export function evaluateTicket(...args: any[]): any;
-  export function withinSuppressionWindow(...args: any[]): any;
-  export function suggestPercent(...args: any[]): any;
-  const rest: any;
-  export default rest;
+  export type AccountPhase = 'eval' | 'funded';
+  export type StrategyId = 'VWAP_FT' | 'OSB' | 'APX-DDB-01';
+  export type Suggestion = {
+    symbol: string;
+    side: 'BUY' | 'SELL';
+    entry: number;
+    stop?: number;
+    qty: number;
+    strategy: StrategyId;
+    target?: number;
+  };
+  export type Ticket = {
+    symbol: string;
+    side: 'BUY' | 'SELL';
+    entry: number;
+    stop: number;
+    qty: number;
+    accountId: string;
+    timestampUtc: string;
+    meta: {
+      strategy: StrategyId;
+      rr: number;
+      guardrails: string[];
+      sizingHint?: string;
+      consistencyNotes?: string;
+    };
+    target: number;
+  };
+  export type GuardContext = {
+    phase: AccountPhase;
+    account: { id: string; maxContracts: number };
+    bufferCleared: boolean;
+    recentSizes: number[];
+    contract: string;
+    now?: Date;
+  };
+  export function applyGuardWithSizing(
+    suggestion: Suggestion,
+    context: GuardContext,
+  ): { accepted: boolean; ticket?: Ticket; reasons?: string[] };
 }
