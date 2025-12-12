@@ -373,52 +373,11 @@ export async function fetchComplianceSnapshot(): Promise<ComplianceSnapshot> {
  * LEGACY: prefer fetchTickets(...) + canonical mapping.
  * Kept for V1/legacy surfaces only.
  */
-export async function fetchLiveTickets(): Promise<TicketRow[]> {
-  const data = (await fetchJson('/api/tickets/live')) as TicketsResponse;
-  return Array.isArray(data.rows) ? data.rows : [];
-}
-
-/**
- * Detailed ticket info (non-canonical order fields for the Tickets drilldown).
- */
 export async function fetchTicketDetail(id: string): Promise<Ticket | null> {
   const res = (await fetchJson(`/api/tickets/${encodeURIComponent(id)}`)) as {
     ticket?: Ticket;
   };
   return res.ticket ?? null;
-}
-
-/**
- * LEGACY: prefer fetchTickets(...) + useTicketsHistory for history.
- */
-export async function fetchTicketHistory(): Promise<TicketRow[]> {
-  const data = (await fetchJson('/api/tickets/history')) as TicketsResponse;
-  return Array.isArray(data.rows) ? data.rows : [];
-}
-
-export async function fetchTicketAlerts(): Promise<any[]> {
-  return (await fetchJson('/api/tickets/alerts')) as any[];
-}
-
-export async function fetchTicketRecipients(): Promise<any> {
-  return fetchJson('/api/tickets/recipients');
-}
-
-export async function addTicketRecipients(
-  update: Partial<{
-    email: string[];
-    telegram: string[];
-    slack: string[];
-    sms: string[];
-  }>,
-) {
-  const res = await fetch(`${API_BASE}/api/tickets/recipients`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(update),
-  });
-  if (!res.ok) throw new Error('Failed to update recipients');
-  return res.json();
 }
 
 /**
