@@ -1350,7 +1350,7 @@ This audit is maintained by the expert panel.
 |--------|------|-----------|-------|
 | Worklist V2 | `pages/WorklistV2.tsx` | ✅ | Correctly wired to `/api/worklist` with fallback. |
 | Tickets | `pages/Tickets.tsx` | ✅ | Pure A3 cockpit using canonical ticket feed. |
-| Market Data | `pages/MarketData.tsx` | ✅ | Uses session metrics batch + symbol meta. |
+| Market Data | `pages/MarketData.tsx` | ✅ | Uses `/api/market/{symbols,sessions}` aliases + session metrics batch. |
 | Analytics | `pages/Analytics.tsx` | ✅ | Uses canonical analytics ticket feed + session overlays. |
 | Strategy Lab | `pages/StrategyLab.tsx` | ✅ | Lab semantics over canonical analytics feed. |
 | Status | `pages/Status.tsx` | ✅ | System telemetry + jobs + alerts via unified view. |
@@ -1446,6 +1446,16 @@ Repo index correctly identifies every legacy file and marks scope restrictions.
 
 **Conclusion:**  
 Legacy boundaries are documented and enforced.
+
+## 15.6 Contract Telemetry (Epic 1)
+
+- `apps/dashboard/src/lib/contractTelemetry.ts` now emits page-load markers + contract-error breadcrumbs for every dashboard surface.
+- `fetchJson` in `apps/dashboard/src/lib/apiBase.ts` calls that logger whenever a non-2xx response is returned, so Status/Alerts/etc. no longer fail silently.
+- Page components (Worklist, Tickets, MarketData, Analytics, StrategyLab, Status, Alerts, Positions) all register a `logPageLoad('<PageName>')` inside their initial `useEffect`, and catch blocks call `logContractError` with the offending endpoint.
+- MarketData, Worklist, and other pages also report ingest failures by pointing the telemetry logger at `/api/health/yahoo`.
+
+**Result:**  
+Contract errors are observable without opening DevTools, satisfying ST-007 of Epic 1.
 
 ---
 

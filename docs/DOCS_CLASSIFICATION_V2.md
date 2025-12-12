@@ -30,6 +30,7 @@ _Source of truth for what each doc is, how “live” it is, and whether it’s 
 | `PRISM_APEX_V2_DASHBOARD_PLAN.md` | UI / Dashboards | Canonical V2 | Keep |
 | `PRISM_APEX_V2_ENGINE_WIRING_BACKLOG.md` | Architecture / wiring | Canonical V2 | Keep |
 | `PRISM_APEX_V2_MASTER_PLAN.md` | Product / delivery | Canonical V2 | Keep |
+| `UPGRADE_DASHBOARD.md` | UI / Dashboards | Canonical V2 | Keep (per-epic delivery log) |
 | `REPO_INDEX_V2.md` | Misc | Canonical V2 | Keep |
 | `data/README.md` | Data model & metrics | Supporting | Keep |
 | `data/PRISM_APEX_DATA_MODEL.md` | Data model & metrics | Supporting | Keep |
@@ -63,3 +64,6 @@ _Source of truth for what each doc is, how “live” it is, and whether it’s 
 | `ui/specs/PRISM_APEX_UI_SYSTEM_V2.md` | UI / Dashboards | Canonical V2 | Keep |
 | `ui/specs/PRISM_APEX_UI_WORKLIST_V2.md` | UI / Dashboards | Canonical V2 | Keep |
 
+### Epic delivery logs
+
+- `docs/UPGRADE_DASHBOARD.md` now carries the canonical record for Epic 1 (A3 Dashboard Contract Hardening). Supporting scan output lives under `reports/upgrade_dashboard/epic1_contract_alignment/OUTCOME_REPORT_FINAL.txt` (ignored by git but referenced from the doc). Keep both in sync when future dashboard epics ship.

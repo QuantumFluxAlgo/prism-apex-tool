@@ -2286,12 +2286,38 @@ Plain textANTLR4BashCC#CSSCoffeeScriptCMakeDartDjangoDockerEJSErlangGitGoGraphQL
 *   apps/api/src/routes/system.telemetry.ts.
 *   Runtime metrics (duration, ingest gaps, errors) for Status/Alerts dashboards.
 
+#### 5.3.8 GET /api/health/yahoo
+
+*   apps/api/src/routes/health.yahoo.ts (mirrors `/health/yahoo` for direct access).
+*   Epic 1 made the `/api/*` variant the canonical operator surface so dashboards can fetch ingest lag data through the Nginx proxy.
+*   Consumers: Tickets, MarketData, Status, Alerts (ingest lag widgets).
+
+#### 5.3.9 GET /api/market/symbols
+
+*   apps/api/src/routes/market.ts (delegates to the legacy `/market/symbols` handler).
+*   Added in Epic 1 so MarketData’s filters work under the `/api` proxy.
+*   Returns `{ symbols: string[] }`.
+
+#### 5.3.10 GET /api/market/sessions
+
+*   Same module as above; alias of `/market/sessions`.
+*   Returns trading windows (RTH/ETH) for UI chips.
+
+#### 5.3.11 `/api/telemetry/*`
+
+*   apps/api/src/routes/telemetry.ts now serves both `/telemetry/*` and `/api/telemetry/*`.
+*   Endpoints:
+    *   `/api/telemetry/positions?accountId=...`
+    *   `/api/telemetry/account?accountId=...`
+    *   `/api/telemetry/fills?accountId=...&date=YYYY-MM-DD`
+*   Backed by `apps/api/src/store/telemetry.ts`; consumed by Positions, Status, and ops tooling without leaving the `/api` namespace.
+
 #### 5.3.8 GET /alerts/peek & POST /alerts/ack
 
 *   apps/api/src/routes/alerts.ts.
 *   Lightweight incident endpoints used by the STOP block copy button + ops tooling.
 
-#### 5.3.9 GET /api/reports.dashboard
+#### 5.3.12 GET /api/reports.dashboard
 
 *   apps/api/src/routes/reports.dashboard.ts.
 *   Provides dashboard-level telemetry snapshots for export/CI.
