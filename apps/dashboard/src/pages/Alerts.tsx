@@ -301,7 +301,7 @@ export default function AlertsPage() {
             {criticalCount > 0 ? 'Critical alerts present' : 'No critical alerts'}
           </Badge>
           <Badge tone="neutral" className="text-[10px]">
-            Source: /health/yahoo & /api/system
+            Source: /api/health/yahoo plus /api/system/alerts, /api/system/jobs, and /api/system/telemetry
           </Badge>
           <Button
             size="xs"

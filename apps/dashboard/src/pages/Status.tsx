@@ -347,7 +347,8 @@ export default function Status() {
           <h1>System Status</h1>
           <p>
             High-level view of ingest freshness, scheduler jobs, and telemetry. Data is
-            sourced live from /health/yahoo and /api/system routes.
+            sourced from /api/health/yahoo plus /api/system/alerts, /api/system/jobs,
+            and /api/system/telemetry.
           </p>
         </div>
         <div className="flex flex-col items-end gap-1 text-right">
@@ -480,7 +481,8 @@ export default function Status() {
                 Prism core jobs
               </span>
               <span className="text-[11px] text-slate-500">
-                Ingest, ticketizer, and disk sync cadence pulled from /api/system/jobs.
+                Ingest, ticketizer, and disk sync cadence pulled directly from
+                /api/system/jobs.
               </span>
             </div>
           </div>
