@@ -36,6 +36,7 @@ When in doubt, the **code + this SOT** win.
 
 - `apps/api` – Fastify API, jobs, ingest and engine wiring.
 - `apps/dashboard` – React operator dashboard (A3 surfaces).
+- `apps/e2e` – Playwright smoke tests (TEST fixture safeguarding A2/A3 flows).
 - `packages/shared` – Canonical shared types: tickets, sessions, audit, etc.
 - `packages/rules-apex` – Strategy/risk rules used by the engine/ticketizer.
 - `packages/ticketizer` – Ticket generation logic.
@@ -2164,7 +2165,21 @@ SessionMetricsDto\[\] for the current and recent sessions.
 *   Risk engine internal checks.
     
 
-#### 5.2.4 GET /api/strategy-config
+#### 5.2.4 GET /api/market
+
+**Purpose**Deliver a single-symbol session snapshot (session status, OR/ATR/VWAP context) without fetching the entire batch payload.
+
+**Implementation files**
+
+*   apps/api/src/routes/market.ts.
+*   Shares DTOs with session-metrics and symbols routes.
+
+**Consumers**
+
+*   MarketData cockpit quick-looks.
+*   Ops tooling that needs a concise context call.
+
+#### 5.2.5 GET /api/strategy-config
 
 **Purpose**Expose current strategy configurations for operator review and future edits.
 
@@ -2188,7 +2203,7 @@ Plain textANTLR4BashCC#CSSCoffeeScriptCMakeDartDjangoDockerEJSErlangGitGoGraphQL
 *   Engine replay CLI (defaults pull configs from here).
     
 
-#### 5.2.5 GET /api/risk-status (Operator Risk Summary)
+#### 5.2.6 GET /api/risk-status (Operator Risk Summary)
 
 **Purpose**Surface real-time risk summary to dashboard headers and alerts.
 
@@ -2251,6 +2266,36 @@ Plain textANTLR4BashCC#CSSCoffeeScriptCMakeDartDjangoDockerEJSErlangGitGoGraphQL
     
 *   Mandatory for deployment.
     
+#### 5.3.4 GET /api/ready
+
+*   apps/api/src/routes/ready.ts.
+*   Readiness probe for Compose/Kubernetes; ensures backing stores/DB are initialised.
+
+#### 5.3.5 GET /api/system.jobs
+
+*   apps/api/src/routes/system.jobs.ts.
+*   Scheduler/job telemetry consumed by Status and Alerts.
+
+#### 5.3.6 GET /api/system.alerts
+
+*   apps/api/src/routes/system.alerts.ts.
+*   Canonical alert stream for the Alerts page (severity/state filters).
+
+#### 5.3.7 GET /api/system.telemetry
+
+*   apps/api/src/routes/system.telemetry.ts.
+*   Runtime metrics (duration, ingest gaps, errors) for Status/Alerts dashboards.
+
+#### 5.3.8 GET /alerts/peek & POST /alerts/ack
+
+*   apps/api/src/routes/alerts.ts.
+*   Lightweight incident endpoints used by the STOP block copy button + ops tooling.
+
+#### 5.3.9 GET /api/reports.dashboard
+
+*   apps/api/src/routes/reports.dashboard.ts.
+*   Provides dashboard-level telemetry snapshots for export/CI.
+
 
 ### 5.4 Internal Routes (Engine ↔ Jobs integration)
 
@@ -2280,13 +2325,21 @@ Rule: **no endpoint may invent fields**; all additions must originate from share
     
 *   session-metrics.ts
     
+*   market.ts
+    
 *   strategy-config.ts
     
 *   risk.ts (or risk-status equivalent)
     
 *   status.ts
     
-*   healthz.ts
+*   health.ts / ready.ts
+    
+*   system.jobs.ts / system.alerts.ts / system.telemetry.ts
+    
+*   alerts.ts (peek/ack)
+    
+*   reports.dashboard.ts
     
 
 **Optional relocations**
@@ -4174,7 +4227,9 @@ Right now, there is **no safe deletion** in the Dockerfile set.
 
 Local multi-container topology is defined by:
 
-*   docker-compose.yml
+*   docker-compose.yml (dev/prod profile aware)
+*   docker-compose.v2.local.yml (prod-like local stack: Postgres + API + dashboard)
+*   docker-compose.v2.server.yml (server-ready manifest; set PUBLIC_API_BASE/POSTGRES_PASSWORD)
     
 
 From inspection, it defines at least:
@@ -4216,13 +4271,9 @@ This file is the **single source of truth** for how containers talk to each othe
 
 **Safe deletion guidance**
 
-*   KEEP: docker-compose.yml – this is required for local Docker workflows.
+*   KEEP: docker-compose.yml and the v2 variants – all three are actively referenced by docs/runbooks.
     
-*   There is currently **no alternate compose file** in the repo (e.g. compose.local.yml or docker-compose.override.yml). If such files appear in future:
-    
-    *   You may delete obsolete overrides once all developers converge on a single approach.
-        
-    *   But **today**, there are no redundant compose artefacts to remove.
+*   Older override files may be retired only once the team agrees on a single manifest; the v2 files are now canonical examples and must remain.
         
 
 ### 9.4 Server deployment – systemd + Nginx
@@ -4291,6 +4342,13 @@ This is the **canonical template** for:
     
 *   In production, you will have a concrete prism-apex.conf (or equivalent) on the server – that file is **not** in this repo, so irrelevant to deletion.
     
+#### 9.4.3 Deploy templates & helper configs
+
+*   `deploy/nginx.conf` – portable reverse-proxy config used by Docker/edge deployments (aligns with PUBLIC_API_BASE expectations surfaced in compose files).
+*   `deploy/db/*.sql` – scheduled maintenance scripts referenced by the compose stacks.
+
+Treat these as canonical examples; keep them synced with docker-compose.v2.\* manifests and infra docs.
+
 
 ### 9.5 CI / pipeline wiring
 
@@ -4407,7 +4465,7 @@ Not mounted in apps/dashboard/src/App.tsx (routing now uses WorklistV2).
 
 Only referenced from:
 
-apps/dashboard/src/__tests__/WorklistPnLColumns.test.tsx (PnL cell tests referencing PnLDataCell, PnLRRCell).
+apps/dashboard/src/__tests__/WorklistPnLCell.test.tsx (PnL cell tests referencing PnLDataCell, PnLRRCell).
 
 Canonical replacement
 
@@ -4419,7 +4477,7 @@ Action
 
 If you want to keep legacy PnL cell tests:
 
-KEEP Worklist.tsx and __tests__/WorklistPnLColumns.test.tsx for now.
+KEEP Worklist.tsx and __tests__/WorklistPnLCell.test.tsx for now.
 
 If you are comfortable dropping A1/A2 Worklist entirely:
 
@@ -4427,7 +4485,7 @@ Delete both:
 
 apps/dashboard/src/pages/Worklist.tsx
 
-apps/dashboard/src/__tests__/WorklistPnLColumns.test.tsx
+apps/dashboard/src/__tests__/WorklistPnLCell.test.tsx
 
 This is safe for the V2 runtime because App.tsx doesn’t route to this page.
 
@@ -4670,7 +4728,7 @@ Legacy Worklist & sync glue
 
 apps/dashboard/src/pages/Worklist.tsx
 
-apps/dashboard/src/__tests__/WorklistPnLColumns.test.tsx
+apps/dashboard/src/__tests__/WorklistPnLCell.test.tsx
 
 apps/dashboard/src/pages/WorklistV2.legacy.tsx
 

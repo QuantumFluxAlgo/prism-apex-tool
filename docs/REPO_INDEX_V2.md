@@ -109,6 +109,7 @@ prism-apex-tool/
 │ ├── dashboard/ # Operator UI (CANONICAL)
 │ ├── ingest/ # Batch ingest (CANONICAL)
 │ ├── ingress-yahoo-dev/ # Yahoo dev ingress (CANONICAL)
+│ ├── e2e/ # Playwright regression harness (TEST_FIXTURE, keeps A3 flows honest)
 │ └── tickets/ # CLI utility (LEGACY/utility)
 │
 ├── packages/ # Shared domain libraries (CANONICAL)
@@ -183,6 +184,7 @@ Each app under `apps/` is documented with:
   - `tickets.ts`
   - `systemAlerts.ts`
   - `systemTelemetry.ts`
+  - `telemetry.ts`
   - `operatorConfig.ts`
   - `riskAuditLog.ts`
 - `dto/` – Data transfer objects for engine/strategy/config
@@ -261,7 +263,6 @@ apps/dashboard/src/
 │
 ├── components/ # Domain-specific composites
 │ ├── WorklistPnLCell.tsx
-│ ├── WorklistPnLColumns.tsx
 │ ├── SystemStatus.tsx
 │ └── (additional small domain components)
 │
@@ -357,12 +358,11 @@ Each V2 page adheres to the A3 surface contract:
 
 **Path:** `apps/dashboard/src/__tests__/`  
 **Status:**  
-All V2 tests currently **pass** (11/11 files, 28/28 tests).
+All V2 tests currently **pass** (10 spec files across Alerts/Analytics/App/MarketData/Positions/StrategyLab/Tickets/WorklistPnLCell/Status plus the shared `pnlDisplay` utility).
 
 Tests cover:
 
 - Worklist PnL cell  
-- Worklist columns  
 - Tickets  
 - Analytics  
 - Markets  
@@ -404,6 +404,17 @@ Local-only service to stream Yahoo bars during development.
 
 Small CLI utilities for ticket workflows.  
 Not part of V2 UI or canonical engine pipelines.
+
+# 4.6 `apps/e2e` – Playwright Smoke Suite (**TEST_FIXTURE**)
+
+**Purpose:**  
+Provides repeatable, automated browser coverage of A2/A3 pages against a running stack.
+
+### Notes
+
+- Uses Playwright (`playwright.config.ts`, `tests/` tree).  
+- Runs read-only flows (worklist drill, tickets filtering, analytics drill-down) to ensure regressions surface quickly.  
+- Does **not** ship to production artifacts but remains part of canonical QA; update specs whenever flows change.
 
 # 5. Shared Packages (`packages/*`)
 
@@ -827,14 +838,18 @@ These routes form the **official API** consumed by the dashboard and internal to
 - `/ticketQualityFilters`
 - `/analytics`
 - `/session-metrics`
+- `/worklist`
 - `/symbols` & `/symbols.v2`
+- `/market`
 
 ### **System & Operations**
 - `/status`
 - `/opsStatus`
+- `/ready`
 - `/version`
 - `/health`
 - `/health.yahoo`
+- `/reports.dashboard`
 
 ### **Strategy / Risk / Engine**
 - `/strategies.config`
@@ -842,6 +857,8 @@ These routes form the **official API** consumed by the dashboard and internal to
 - `/strategy-engine`
 - `/signals`
 - `/operator-risk`
+- `/operator-config`
+- `/operator-actions`
 - `/operatorSizing`
 - `/dto/*` (data transfer object helpers)
 
@@ -850,6 +867,7 @@ These routes form the **official API** consumed by the dashboard and internal to
 - `/system.jobs`
 - `/system.telemetry`
 - `/telemetry`
+- `/alerts/peek` / `/alerts/ack`
 
 > **Rule:**  
 > No page in the dashboard may invent its own API endpoints.  
@@ -934,6 +952,8 @@ Consumed by:
 - `systemd/prism-apex.service` — Systemd unit  
 - `systemd/prism-apex.env.example` — Env template  
 - `.env.prod.example` — Production `.env` template  
+- `docker-compose.v2.local.yml` / `.server.yml` — Canonical container stacks (API + dashboard + Postgres)  
+- `deploy/nginx.conf`, `deploy/db/*.sql` — packaged configs for edge proxies and maintenance jobs  
 
 ---
 
@@ -1523,4 +1543,3 @@ Copy code
 
 This index is now canonical and aligned with all V2 surfaces, DTOs, API routes, and EPICs.  
 Any change to runtime behaviour, UI surfaces, or data flows must update this file.
-
