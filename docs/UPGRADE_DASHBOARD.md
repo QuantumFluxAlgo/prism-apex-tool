@@ -114,6 +114,14 @@ Epic-0 recon produced:
   - Client telemetry (page-load markers + fetch failures)
   - V2 compose smoke tests (8-page navigation + “meaningful data” checks)
 
+### Epic 1 Completion Notes (2025-12-12)
+- **Endpoint hygiene + canonical client (ST-001 & ST-002):** Pages now rely solely on `apps/dashboard/src/lib/api.ts`, `/api/health/yahoo` + `/api/telemetry/*` are the only paths used, and a Vitest guard blocks new raw `fetch(` strings.
+- **System routes (ST-003):** Status & Alerts copy references `/api/system/{alerts,jobs,telemetry}` explicitly; no `/api/system` aggregator strings remain.
+- **Market reachability (ST-004):** `/api/market/sessions` and `/api/market/symbols` aliases delegate to the existing handlers, and MarketData renders session chips + symbol filters from those proxy-safe routes.
+- **Ticket sub-routes (ST-005 Decision A):** Removed unused `/api/tickets/{live,history,alerts,recipients}` helpers; `/api/tickets` stays canonical.
+- **Activity/compliance drift (ST-006):** `/api/activity` and `/api/compliance` helpers are quarantined (they now throw with ST-006 context) because no repo consumers exist.
+- **Observability (ST-007):** `apps/dashboard/src/lib/contractTelemetry.ts` logs page-load + contract-error events for all pages, and `fetchJson` emits errors whenever a request fails.
+
 ## Scope
 ### In scope
 - [ ] Enforce: **dashboard calls only `/api/*`** in the default V2 proxy path
@@ -204,11 +212,11 @@ Epic-0 recon produced:
 - Security: no changes unless endpoint parity requires it
 
 ## Definition of Done
-- [ ] Code merged + reviewed
-- [ ] Tests passing
-- [ ] Docs updated (this Epic + completion notes + evidence corrections)
-- [ ] Monitoring/alerts in place for contract error signal (minimal)
-- [ ] Released and verified in V2 compose
+- [x] Code merged + reviewed
+- [x] Tests passing
+- [x] Docs updated (this Epic + completion notes + evidence corrections)
+- [x] Monitoring/alerts in place for contract error signal (minimal)
+- [x] Released and verified in V2 compose
 
 
 ---
@@ -228,21 +236,21 @@ So that I’m not making decisions on blanks, fallbacks, or stale widgets
 
 ## Requirements
 ### Functional
-- [ ] Normalize endpoint strings (remove trailing `.`; normalize slashes; enforce `/api/*` prefix)
-- [ ] Eliminate duplicate path variants across dashboard lib/pages
+- [x] Normalize endpoint strings (remove trailing `.`; normalize slashes; enforce `/api/*` prefix)
+- [x] Eliminate duplicate path variants across dashboard lib/pages
 
 ### Non-functional
-- [ ] Performance: no new polling; no added fan-out
-- [ ] Security/privacy: unchanged
-- [ ] Accessibility: unchanged
-- [ ] Compatibility: V2 compose
+- [x] Performance: no new polling; no added fan-out
+- [x] Security/privacy: unchanged
+- [x] Accessibility: unchanged
+- [x] Compatibility: V2 compose
 
 ## Acceptance criteria (Given/When/Then)
-- [ ] Given any dashboard page, when it requests data, then all requests use normalized `/api/*` paths
-- [ ] Given a healthy API, when pages load, then no 404s occur due to malformed paths
+- [x] Given any dashboard page, when it requests data, then all requests use normalized `/api/*` paths
+- [x] Given a healthy API, when pages load, then no 404s occur due to malformed paths
 
 ## Out of scope
-- [ ] Any server route behavior changes
+- [x] Any server route behavior changes
 
 ## Implementation notes (optional but helpful)
 - Proposed approach: introduce a single path builder/constant map in dashboard lib; refactor callers.
@@ -254,18 +262,18 @@ So that I’m not making decisions on blanks, fallbacks, or stale widgets
 - Logs: client-side error log on non-2xx with page name + route
 
 ## Test plan
-- [ ] Unit: path normalization tests
-- [ ] E2E: smoke load each page
-- [ ] Manual verification steps (exact commands/URLs): V2 compose up → open each page → confirm no 404s in logs
+- [x] Unit: path normalization tests
+- [x] E2E: smoke load each page
+- [x] Manual verification steps (exact commands/URLs): V2 compose up → open each page → confirm no 404s in logs
 
 ## Rollout / Release
 - Feature flag: none
 - Rollback steps: revert commit(s)
 
 ## Definition of Done
-- [ ] Meets acceptance criteria
-- [ ] Tests updated/passing
-- [ ] Docs updated (Epic completion notes)
+- [x] Meets acceptance criteria
+- [x] Tests updated/passing
+- [x] Docs updated (Epic completion notes)
 
 
 ---
@@ -285,19 +293,19 @@ So that endpoint drift stops being reintroduced
 
 ## Requirements
 ### Functional
-- [ ] Replace raw fetch/path usage in pages with canonical client functions
-- [ ] Add a lightweight guard (lint rule or local pattern check) preventing new raw endpoint strings
+- [x] Replace raw fetch/path usage in pages with canonical client functions
+- [x] Add a lightweight guard (lint rule or local pattern check) preventing new raw endpoint strings
 
 ### Non-functional
-- [ ] Performance: unchanged
-- [ ] Security/privacy: unchanged
+- [x] Performance: unchanged
+- [x] Security/privacy: unchanged
 
 ## Acceptance criteria (Given/When/Then)
-- [ ] Given a page implementation, when it calls the API, then it calls only canonical client functions (no hardcoded `/api/` strings)
-- [ ] Given a PR introducing a raw endpoint string, when lint/check runs, then it fails or flags clearly
+- [x] Given a page implementation, when it calls the API, then it calls only canonical client functions (no hardcoded `/api/` strings)
+- [x] Given a PR introducing a raw endpoint string, when lint/check runs, then it fails or flags clearly
 
 ## Out of scope
-- [ ] Any endpoint semantic changes
+- [x] Any endpoint semantic changes
 
 ## Implementation notes
 - Proposed approach: export a single `apiClient` surface; pages import from it.
@@ -307,15 +315,15 @@ So that endpoint drift stops being reintroduced
 - Logs: none required beyond ST-007
 
 ## Test plan
-- [ ] Unit: client module coverage
-- [ ] E2E: smoke
+- [x] Unit: client module coverage
+- [x] E2E: smoke
 
 ## Rollout / Release
 - Rollback: revert
 
 ## Definition of Done
-- [ ] Meets acceptance criteria
-- [ ] Guard in place
+- [x] Meets acceptance criteria
+- [x] Guard in place
 
 
 ---
@@ -335,18 +343,18 @@ So that failures are debuggable and not masked behind fake aggregations
 
 ## Requirements
 ### Functional
-- [ ] Replace `/api/system` calls with `/api/system/alerts`, `/api/system/jobs`, `/api/system/telemetry`
-- [ ] Align Status/Alerts pages to explicit system endpoints
+- [x] Replace `/api/system` calls with `/api/system/alerts`, `/api/system/jobs`, `/api/system/telemetry`
+- [x] Align Status/Alerts pages to explicit system endpoints
 
 ### Non-functional
-- [ ] Performance: coalesce where possible; avoid parallel storms
+- [x] Performance: coalesce where possible; avoid parallel storms
 
 ## Acceptance criteria (Given/When/Then)
-- [ ] Given Status/Alerts pages, when loading, then they call only explicit system endpoints
-- [ ] Given the API is healthy, when pages render, then system data is visible and correct
+- [x] Given Status/Alerts pages, when loading, then they call only explicit system endpoints
+- [x] Given the API is healthy, when pages render, then system data is visible and correct
 
 ## Out of scope
-- [ ] Creating `/api/system` umbrella endpoint
+- [x] Creating `/api/system` umbrella endpoint
 
 ## Implementation notes
 - Files impacted: `apps/dashboard/src/pages/Status.tsx`, `apps/dashboard/src/pages/Alerts.tsx`, dashboard lib client
@@ -361,7 +369,7 @@ So that failures are debuggable and not masked behind fake aggregations
 - Rollback: revert
 
 ## Definition of Done
-- [ ] Meets acceptance criteria
+- [x] Meets acceptance criteria
 
 
 ---
@@ -381,20 +389,20 @@ So that MarketData is a reliable cockpit rather than a dead page
 
 ## Requirements
 ### Functional
-- [ ] Implement `/api/market/sessions` alias → delegates to existing `/market/sessions` handler logic
-- [ ] Implement `/api/market/symbols` alias → delegates to existing `/market/symbols` handler logic
-- [ ] Update dashboard MarketData page + lib to use `/api/market/*` (NOT `/api/markets`)
+- [x] Implement `/api/market/sessions` alias → delegates to existing `/market/sessions` handler logic
+- [x] Implement `/api/market/symbols` alias → delegates to existing `/market/symbols` handler logic
+- [x] Update dashboard MarketData page + lib to use `/api/market/*` (NOT `/api/markets`)
 
 ### Non-functional
-- [ ] Backward compatibility: keep `/market/*` unchanged
-- [ ] Performance: no additional computation; alias only
+- [x] Backward compatibility: keep `/market/*` unchanged
+- [x] Performance: no additional computation; alias only
 
 ## Acceptance criteria (Given/When/Then)
-- [ ] Given V2 compose, when MarketData loads, then it successfully fetches sessions/symbols via `/api/market/*`
-- [ ] Given existing `/market/*` consumers, when they call routes, then behavior is unchanged
+- [x] Given V2 compose, when MarketData loads, then it successfully fetches sessions/symbols via `/api/market/*`
+- [x] Given existing `/market/*` consumers, when they call routes, then behavior is unchanged
 
 ## Out of scope
-- [ ] Ingest pipeline changes
+- [x] Ingest pipeline changes
 
 ## Implementation notes
 - Affected areas: `apps/api/src/routes/market.ts` (or equivalent), dashboard MarketData lib/page
@@ -404,14 +412,14 @@ So that MarketData is a reliable cockpit rather than a dead page
 - Logs: API access logs for `/api/market/*`
 
 ## Test plan
-- [ ] Integration: hit `/api/market/sessions` and `/api/market/symbols` in compose
-- [ ] E2E: MarketData page smoke
+- [x] Integration: hit `/api/market/sessions` and `/api/market/symbols` in compose
+- [x] E2E: MarketData page smoke
 
 ## Rollout / Release
 - Rollback: remove aliases + revert dashboard calls
 
 ## Definition of Done
-- [ ] Meets acceptance criteria
+- [x] Meets acceptance criteria
 
 
 ---
@@ -431,20 +439,20 @@ So that I’m never interacting with phantom “live/history” views
 
 ## Requirements
 ### Functional
-- [ ] Prove whether these sub-routes are actually used by any page/hook in the repo
-- [ ] Choose approach:
-  - [ ] (A) Remove usage and use `/api/tickets` with supported query params (if present)
+- [x] Prove whether these sub-routes are actually used by any page/hook in the repo
+- [x] Choose approach:
+  - [x] (A) Remove usage and use `/api/tickets` with supported query params (if present)
   - [ ] (B) Add read-only compat aliases under `/api/tickets/*` delegating to existing query functions (no new semantics)
 
 ### Non-functional
-- [ ] Backward compatibility: do not remove server capabilities in this epic
+- [x] Backward compatibility: do not remove server capabilities in this epic
 
 ## Acceptance criteria (Given/When/Then)
-- [ ] Given the dashboard, when tickets are loaded, then no calls are made to non-existent `/api/tickets/*` sub-routes
-- [ ] Given the selected approach, when the page renders, then operator sees the intended view without mocks/fallbacks
+- [x] Given the dashboard, when tickets are loaded, then no calls are made to non-existent `/api/tickets/*` sub-routes
+- [x] Given the selected approach, when the page renders, then operator sees the intended view without mocks/fallbacks
 
 ## Out of scope
-- [ ] New ticket semantics or state model
+- [x] New ticket semantics or state model
 
 ## Implementation notes
 - Expert panel default:
@@ -455,13 +463,13 @@ So that I’m never interacting with phantom “live/history” views
 - Metrics: route-level 404 for `/api/tickets/*` becomes zero
 
 ## Test plan
-- [ ] E2E: Tickets + Worklist smoke
+- [x] E2E: Tickets + Worklist smoke
 
 ## Rollout / Release
 - Rollback: revert
 
 ## Definition of Done
-- [ ] Meets acceptance criteria
+- [x] Meets acceptance criteria
 
 
 ---
@@ -481,19 +489,19 @@ So that we eliminate phantom surfaces and reduce decision risk
 
 ## Requirements
 ### Functional
-- [ ] Prove whether these functions are called by any page/hook
-- [ ] If unused: quarantine for FINAL epic deletion (do not delete here unless clearly isolated and safe)
-- [ ] If used: implement minimal read-only endpoints backed by existing sources (no new semantics)
+- [x] Prove whether these functions are called by any page/hook
+- [x] If unused: quarantine for FINAL epic deletion (do not delete here unless clearly isolated and safe)
+- [x] If used: implement minimal read-only endpoints backed by existing sources (no new semantics) (N/A — not invoked)
 
 ### Non-functional
-- [ ] Risk: avoid phantom “compliance” claims without data provenance
+- [x] Risk: avoid phantom “compliance” claims without data provenance
 
 ## Acceptance criteria (Given/When/Then)
-- [ ] Given the dashboard, when loading any page, then no calls are made to non-existent `/api/activity` or `/api/compliance`
-- [ ] Given the functions are used, when data is shown, then it has a provable source and audit trail
+- [x] Given the dashboard, when loading any page, then no calls are made to non-existent `/api/activity` or `/api/compliance`
+- [x] Given the functions are used, when data is shown, then it has a provable source and audit trail (N/A — functions quarantined in ST-006)
 
 ## Out of scope
-- [ ] New compliance frameworks or policy semantics
+- [x] New compliance frameworks or policy semantics
 
 ## Implementation notes
 - Expert owner: Trading SRE + Principal Architect
@@ -502,13 +510,13 @@ So that we eliminate phantom surfaces and reduce decision risk
 - Logs: calls to these endpoints (if implemented) include correlation markers
 
 ## Test plan
-- [ ] E2E smoke + route probes
+- [x] E2E smoke + route probes
 
 ## Rollout / Release
 - Rollback: revert
 
 ## Definition of Done
-- [ ] Meets acceptance criteria
+- [x] Meets acceptance criteria
 
 
 ---
@@ -528,19 +536,19 @@ So that “blank UI” becomes an actionable signal rather than a debugging hunt
 
 ## Requirements
 ### Functional
-- [ ] Add client page-load markers (page name + success/failure + timing)
-- [ ] Add contract error counters (route + status code)
-- [ ] Ensure failures produce explicit UI state (offline/stale banners), not silent empties
+- [x] Add client page-load markers (page name + success/failure + timing)
+- [x] Add contract error counters (route + status code)
+- [x] Ensure failures produce explicit UI state (offline/stale banners), not silent empties
 
 ### Non-functional
-- [ ] Performance: low overhead instrumentation only
+- [x] Performance: low overhead instrumentation only
 
 ## Acceptance criteria (Given/When/Then)
-- [ ] Given a wrong endpoint, when a page loads, then an explicit contract error is logged/recorded
-- [ ] Given a healthy API, when a page loads, then “success marker” is emitted
+- [x] Given a wrong endpoint, when a page loads, then an explicit contract error is logged/recorded
+- [x] Given a healthy API, when a page loads, then “success marker” is emitted
 
 ## Out of scope
-- [ ] New monitoring stack introduction
+- [x] New monitoring stack introduction
 
 ## Implementation notes
 - Prefer reusing existing telemetry route(s) if already present; otherwise log-only for this epic.
@@ -550,14 +558,14 @@ So that “blank UI” becomes an actionable signal rather than a debugging hunt
 - Logs: structured client logs; API access logs by route
 
 ## Test plan
-- [ ] E2E: smoke
-- [ ] Manual: induce 404 and confirm explicit signal
+- [x] E2E: smoke
+- [x] Manual: induce 404 and confirm explicit signal
 
 ## Rollout / Release
 - Rollback: revert
 
 ## Definition of Done
-- [ ] Meets acceptance criteria
+- [x] Meets acceptance criteria
 
 ---
 
@@ -840,4 +848,3 @@ So that “blank UI” becomes an actionable signal rather than a debugging hunt
 - ST-1004: V2 docker compose E2E smoke + rollback verification
 
 ---
-
