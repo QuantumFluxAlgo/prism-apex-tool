@@ -16,6 +16,7 @@ import FiltersBar from "../ui/FiltersBar";
 import DataTable from "../ui/DataTable";
 import Button from "../ui/Button";
 import { fetchTickets, buildCanonicalTicketFromRow } from "../lib/api";
+import { logContractError, logPageLoad } from "../lib/contractTelemetry";
 
 const RANGE_DAYS = 10;
 
@@ -152,6 +153,10 @@ export default function Analytics() {
   const [refreshToken, setRefreshToken] = useState(0);
 
   useEffect(() => {
+    logPageLoad("Analytics");
+  }, []);
+
+  useEffect(() => {
     let cancelled = false;
 
     async function load() {
@@ -185,6 +190,11 @@ export default function Analytics() {
           setError(err?.message ?? "Failed to load analytics history.");
           setRows([]);
           setSelected(null);
+          logContractError({
+            pageId: "Analytics",
+            endpoint: "/api/tickets",
+            error: err,
+          });
         }
       } finally {
         if (!cancelled) {

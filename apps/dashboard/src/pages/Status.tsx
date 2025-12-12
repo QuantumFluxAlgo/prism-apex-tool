@@ -21,6 +21,7 @@ import {
   RED_THRESHOLD_SECONDS,
   type IngestState,
 } from '../lib/ingestState';
+import { logContractError, logPageLoad } from '../lib/contractTelemetry';
 
 const TARGET_JOB_NAMES = [
   'yahoo-ingest-manual',
@@ -174,6 +175,10 @@ export default function Status() {
   const [autoRefresh, setAutoRefresh] = useState(false);
   const cancelRef = useRef(false);
 
+  useEffect(() => {
+    logPageLoad('Status');
+  }, []);
+
   useEffect(
     () => () => {
       cancelRef.current = true;
@@ -201,9 +206,14 @@ export default function Status() {
         setJobs(Array.isArray(jobsRes) ? jobsRes : []);
         setTelemetry(Array.isArray(telemetryRes) ? telemetryRes : []);
         setLastRefreshedAt(new Date().toISOString());
-      } catch {
+      } catch (err) {
         if (!cancelRef.current) {
           setError('Unable to load system status');
+          logContractError({
+            pageId: 'Status',
+            endpoint: 'status.loadBatch',
+            error: err,
+          });
         }
       } finally {
         if (!cancelRef.current) {

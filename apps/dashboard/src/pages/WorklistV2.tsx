@@ -38,6 +38,7 @@ import {
   RED_THRESHOLD_SECONDS,
   type IngestState,
 } from "../lib/ingestState";
+import { logContractError, logPageLoad } from "../lib/contractTelemetry";
 
 function trendTone(trend: WorklistTrend): string {
   switch (trend) {
@@ -206,6 +207,10 @@ export default function WorklistV2() {
   const [worstLag, setWorstLag] = useState<number | null>(null);
 
   useEffect(() => {
+    logPageLoad("WorklistV2");
+  }, []);
+
+  useEffect(() => {
     let cancelled = false;
     async function loadIngest() {
       try {
@@ -215,11 +220,16 @@ export default function WorklistV2() {
         setIngestState(deriveIngestState(rows));
         setIngestCounts(summarizeIngestRows(rows));
         setWorstLag(getWorstLagSeconds(rows));
-      } catch {
+      } catch (err: any) {
         if (!cancelled) {
           setIngestState("UNKNOWN");
           setIngestCounts({ GREEN: 0, AMBER: 0, RED: 0 });
           setWorstLag(null);
+          logContractError({
+            pageId: "WorklistV2",
+            endpoint: "/api/health/yahoo",
+            error: err,
+          });
         }
       }
     }

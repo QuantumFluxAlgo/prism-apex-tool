@@ -35,6 +35,7 @@ import {
   fetchMarketSessions,
   type MarketSessionDefinition,
 } from "../lib/api";
+import { logContractError, logPageLoad } from "../lib/contractTelemetry";
 import {
   deriveIngestState,
   getWorstLagSeconds,
@@ -167,6 +168,10 @@ export default function MarketData() {
   const [apiSymbols, setApiSymbols] = useState<string[]>([]);
 
   useEffect(() => {
+    logPageLoad("MarketData");
+  }, []);
+
+  useEffect(() => {
     let cancelled = false;
 
     async function load() {
@@ -203,6 +208,11 @@ export default function MarketData() {
           setError(err?.message ?? "Unknown error");
           setRows(MOCK_MARKETS_ROWS);
           setSelected(MOCK_MARKETS_ROWS[0]);
+          logContractError({
+            pageId: "MarketData",
+            endpoint: "market.snapshots",
+            error: err,
+          });
         }
       } finally {
         if (!cancelled) {
@@ -226,10 +236,15 @@ export default function MarketData() {
         const rows = response?.rows ?? [];
         setIngestState(deriveIngestState(rows));
         setWorstLag(getWorstLagSeconds(rows));
-      } catch {
+      } catch (err: any) {
         if (!cancelled) {
           setIngestState("UNKNOWN");
           setWorstLag(null);
+          logContractError({
+            pageId: "MarketData",
+            endpoint: "/api/health/yahoo",
+            error: err,
+          });
         }
       }
     }

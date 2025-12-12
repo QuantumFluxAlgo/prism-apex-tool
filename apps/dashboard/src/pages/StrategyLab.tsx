@@ -30,6 +30,7 @@ import {
   statusChipTone,
   type IngestState,
 } from '../lib/ingestState';
+import { logContractError, logPageLoad } from '../lib/contractTelemetry';
 import '../styles/strategy-lab-a3.css';
 
 type FetchState<T> = {
@@ -191,6 +192,10 @@ export default function StrategyLabPage() {
   const [worstLag, setWorstLag] = useState<number | null>(null);
 
   useEffect(() => {
+    logPageLoad('StrategyLab');
+  }, []);
+
+  useEffect(() => {
     let cancelled = false;
 
     async function loadAnalytics() {
@@ -212,6 +217,11 @@ export default function StrategyLabPage() {
             error: `Error loading analytics tickets: ${String(err)}`,
             data: null,
           });
+          logContractError({
+            pageId: 'StrategyLab',
+            endpoint: 'analytics.canonical',
+            error: err,
+          });
         }
       }
     }
@@ -232,10 +242,15 @@ export default function StrategyLabPage() {
         const rows = response?.rows ?? [];
         setIngestState(deriveIngestState(rows));
         setWorstLag(getWorstLagSeconds(rows));
-      } catch {
+      } catch (err) {
         if (!cancelled) {
           setIngestState('UNKNOWN');
           setWorstLag(null);
+          logContractError({
+            pageId: 'StrategyLab',
+            endpoint: '/api/health/yahoo',
+            error: err,
+          });
         }
       }
     }

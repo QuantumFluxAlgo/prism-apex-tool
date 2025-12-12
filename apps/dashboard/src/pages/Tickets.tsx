@@ -30,6 +30,7 @@ import {
   formatLag,
   type IngestState,
 } from "../lib/ingestState";
+import { logContractError, logPageLoad } from "../lib/contractTelemetry";
 
 /**
  * Local filters model.
@@ -99,6 +100,10 @@ export default function TicketsPage() {
   const [worstLag, setWorstLag] = useState<number | null>(null);
 
   useEffect(() => {
+    logPageLoad("Tickets");
+  }, []);
+
+  useEffect(() => {
     let cancelled = false;
     async function loadIngest() {
       try {
@@ -108,11 +113,16 @@ export default function TicketsPage() {
         setIngestState(deriveIngestState(rows));
         setIngestCounts(summarizeIngestRows(rows));
         setWorstLag(getWorstLagSeconds(rows));
-      } catch {
+      } catch (err) {
         if (!cancelled) {
           setIngestState("UNKNOWN");
           setIngestCounts({ GREEN: 0, AMBER: 0, RED: 0 });
           setWorstLag(null);
+          logContractError({
+            pageId: "Tickets",
+            endpoint: "/api/health/yahoo",
+            error: err,
+          });
         }
       }
     }
@@ -141,6 +151,11 @@ export default function TicketsPage() {
         setError(err?.message ?? "Unknown error");
         setRows([]);
         setSelected(null);
+        logContractError({
+          pageId: "Tickets",
+          endpoint: "/api/tickets",
+          error: err,
+        });
       } finally {
         if (!cancelled) setLoading(false);
       }

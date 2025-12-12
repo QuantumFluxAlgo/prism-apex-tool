@@ -13,6 +13,7 @@ import {
   fetchTickets,
   buildCanonicalTicketFromRow,
 } from '../lib/api';
+import { logContractError, logPageLoad } from '../lib/contractTelemetry';
 import Kpi from '../ui/Kpi';
 import { Card } from '../ui/Card';
 
@@ -146,6 +147,10 @@ export default function PositionsPage() {
   const [positions, setPositions] = React.useState<SyntheticPosition[]>([]);
 
   React.useEffect(() => {
+    logPageLoad('Positions');
+  }, []);
+
+  React.useEffect(() => {
     let cancelled = false;
 
     async function load() {
@@ -159,8 +164,12 @@ export default function PositionsPage() {
           if (Array.isArray(apiTickets) && apiTickets.length > 0) {
             canonical = apiTickets;
           }
-        } catch {
-          /* swallow */
+        } catch (err) {
+          logContractError({
+            pageId: 'Positions',
+            endpoint: 'analytics.canonical',
+            error: err,
+          });
         }
 
         if (!canonical.length) {
@@ -175,8 +184,12 @@ export default function PositionsPage() {
             canonical = rows
               .map((row) => buildCanonicalTicketFromRow(row))
               .filter((ticket): ticket is CanonicalTicket => Boolean(ticket));
-          } catch {
-            /* swallow */
+          } catch (err) {
+            logContractError({
+              pageId: 'Positions',
+              endpoint: '/api/tickets',
+              error: err,
+            });
           }
         }
 

@@ -11,6 +11,7 @@ import {
   type SystemJobStatus,
   type SystemTelemetrySnapshot,
 } from '../lib/api';
+import { logContractError, logPageLoad } from '../lib/contractTelemetry';
 import {
   deriveIngestState,
   formatLag,
@@ -113,6 +114,10 @@ export default function AlertsPage() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    logPageLoad('Alerts');
+  }, []);
+
+  useEffect(() => {
     let cancelled = false;
     async function load() {
       try {
@@ -125,9 +130,14 @@ export default function AlertsPage() {
         setHealth(healthRes ?? null);
         setJobs(Array.isArray(jobsRes) ? jobsRes : []);
         setTelemetry(Array.isArray(telemetryRes) ? telemetryRes : []);
-      } catch {
+      } catch (err) {
         if (!cancelled) {
           setError('Unable to load alerts');
+          logContractError({
+            pageId: 'Alerts',
+            endpoint: 'alerts.loadBatch',
+            error: err,
+          });
         }
       } finally {
         if (!cancelled) {

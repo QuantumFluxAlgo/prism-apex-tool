@@ -1,5 +1,7 @@
 // apps/dashboard/src/lib/apiBase.ts
 
+import { logContractError } from './contractTelemetry';
+
 // Central API base + tolerant JSON fetch helper used by all dashboard data calls.
 //
 // Goals:
@@ -117,6 +119,19 @@ export async function fetchJson<T = any>(
     const message = bodySnippet
       ? `${statusText} (${status}) ${bodySnippet}`
       : `${statusText} (${status})`;
+
+    const endpoint =
+      typeof url === 'string'
+      ? url
+      : (typeof (url as any)?.url === 'string' && (url as any)?.url) ||
+        (typeof (url as any)?.toString === 'function' ? String(url) : '(unknown)');
+
+    logContractError({
+      pageId: 'unknown',
+      endpoint,
+      status,
+      error: new Error(message),
+    });
 
     throw new Error(message);
   }
