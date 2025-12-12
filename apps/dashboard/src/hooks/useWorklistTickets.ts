@@ -24,6 +24,7 @@ import {
 export type WorklistSide = "LONG" | "SHORT";
 export type WorklistRiskBucket = "GREEN" | "AMBER" | "RED";
 export type WorklistTrend = "UP" | "FLAT" | "DOWN";
+export type WorklistScoreSource = "ENGINE" | "FALLBACK";
 
 export interface WorklistTicket {
   ticketId: string;
@@ -35,6 +36,8 @@ export interface WorklistTicket {
   score: number; // 0–100
   trend: WorklistTrend;
   delta: WorklistTrend;
+  scoreSource: WorklistScoreSource;
+  rank: number;
 
   // Risk
   contracts: number | null;
@@ -232,14 +235,16 @@ export function useWorklistTickets(): UseWorklistTicketsResult {
           sourceRows = rows;
         }
 
-        const mapped: WorklistTicket[] = [];
+        const mapped: Array<WorklistTicket & { rawIndex: number }> = [];
 
-        for (const row of sourceRows) {
+        sourceRows.forEach((row, rawIndex) => {
           // Prefer backend-provided canonical, fall back to builder from /api/tickets row
           const canonical =
             (row.canonical as any | undefined) ?? buildCanonicalTicketFromRow(row);
 
-          if (!canonical) continue;
+          if (!canonical) {
+            return;
+          }
 
           const sessionMetrics =
             (row.sessionMetrics as SessionMetricsDto | null) ?? null;
@@ -250,23 +255,23 @@ export function useWorklistTickets(): UseWorklistTicketsResult {
           const riskDecision =
             (row.riskDecision as TicketRiskDecision | null) ?? null;
 
-          const backendScore = normalizeScore(row.score);
-          const backendTrend = normalizeTrend(row.scoreTrend);
-          const backendDelta = normalizeTrend(row.scoreDelta);
+          const engineScore =
+            typeof row.score === "number" && Number.isFinite(row.score)
+              ? normalizeScore(row.score)
+              : null;
+          const trend = normalizeTrend(row.scoreTrend);
+          const delta = normalizeTrend(row.scoreDelta);
+          const scoreSource: WorklistScoreSource = engineScore !== null ? "ENGINE" : "FALLBACK";
 
           const score =
-            backendScore > 0 || backendTrend !== "FLAT"
-              ? backendScore
+            engineScore !== null
+              ? engineScore
               : computeScoreLocally(canonical, riskDecision);
 
-          const trend =
-            row.scoreTrend === "UP" ||
-            row.scoreTrend === "DOWN" ||
-            row.scoreTrend === "FLAT"
-              ? (row.scoreTrend as WorklistTrend)
+          const resolvedTrend =
+            trend !== "FLAT" || engineScore !== null
+              ? trend
               : deriveTrendLocally(canonical, riskDecision);
-
-          const delta = backendDelta;
 
           const riskBucket = deriveRiskBucket(riskDecision);
 
@@ -331,8 +336,10 @@ export function useWorklistTickets(): UseWorklistTicketsResult {
             strategy: row.strategy ?? canonical.strategy,
             side,
             score,
-            trend,
+            trend: resolvedTrend,
             delta,
+            scoreSource,
+            rank: 0,
             contracts,
             rrMultiple,
             riskDollars,
@@ -345,15 +352,38 @@ export function useWorklistTickets(): UseWorklistTicketsResult {
             sessionFlags,
             canonical,
             notes,
+            rawIndex,
           });
-        }
+        });
+
+        mapped.sort((a, b) => {
+          if (b.score !== a.score) {
+            return b.score - a.score;
+          }
+          if (a.rawIndex !== b.rawIndex) {
+            return a.rawIndex - b.rawIndex;
+          }
+          return 0;
+        });
+
+        const ranked: WorklistTicket[] = mapped.map((ticket, index) => {
+          const { rawIndex, ...rest } = ticket;
+          return {
+            ...rest,
+            rank: index + 1,
+          };
+        });
 
         if (cancelled) return;
 
-        setTickets(mapped);
-        if (!selected || !mapped.some((t) => t.ticketId === selected.ticketId)) {
-          setSelected(mapped[0] ?? null);
-        }
+        setTickets(ranked);
+        setSelected((current) => {
+          if (!current) {
+            return ranked[0] ?? null;
+          }
+          const match = ranked.find((t) => t.ticketId === current.ticketId);
+          return match ?? (ranked[0] ?? null);
+        });
       } catch (err: any) {
         if (cancelled) return;
         setError(err?.message ?? "Failed to load Worklist tickets.");
