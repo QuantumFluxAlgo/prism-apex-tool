@@ -21,6 +21,7 @@ import Badge from "../ui/Badge";
 import Kpi from "../ui/Kpi";
 import FiltersBar from "../components/FiltersBar";
 import DataTable from "../ui/DataTable";
+import { fmtPrice } from "../utils/number";
 
 import {
   useWorklistTickets,
@@ -73,6 +74,24 @@ function riskBucketTone(bucket: WorklistRiskBucket): "emerald" | "amber" | "rose
       return "amber";
   }
 }
+
+const formatTicks = (value: number | null | undefined): string | null => {
+  if (typeof value !== "number" || !Number.isFinite(value)) return null;
+  const signed = value > 0 ? `+${value.toFixed(0)}` : value.toFixed(0);
+  return `${signed}t`;
+};
+
+const renderPriceWithTicks = (price: number | null, ticks: number | null) => {
+  const ticksLabel = formatTicks(ticks);
+  return (
+    <div className="text-right font-mono text-[0.7rem] leading-tight">
+      {price != null ? fmtPrice(price) : "—"}
+      {ticksLabel && (
+        <div className="text-[0.55rem] text-slate-500">{ticksLabel}</div>
+      )}
+    </div>
+  );
+};
 
 const columns = [
   {
@@ -131,6 +150,28 @@ const columns = [
     cellClassName: "text-right font-mono text-[0.7rem]",
     render: (_: any, row: WorklistTicket) =>
       typeof row.rrMultiple === "number" ? row.rrMultiple.toFixed(2) : "—",
+  },
+  {
+    key: "entryPrice",
+    header: "Entry",
+    width: "90px",
+    cellClassName: "text-right font-mono text-[0.7rem]",
+    render: (_: any, row: WorklistTicket) =>
+      row.entryPrice != null ? fmtPrice(row.entryPrice) : "—",
+  },
+  {
+    key: "stopPrice",
+    header: "Stop",
+    width: "90px",
+    render: (_: any, row: WorklistTicket) =>
+      renderPriceWithTicks(row.stopPrice, row.stopTicks),
+  },
+  {
+    key: "targetPrice",
+    header: "Target",
+    width: "90px",
+    render: (_: any, row: WorklistTicket) =>
+      renderPriceWithTicks(row.targetPrice, row.targetTicks),
   },
   {
     key: "contracts",
@@ -404,6 +445,52 @@ export default function WorklistV2() {
                           ? selected.rrMultiple.toFixed(2)
                           : "—"}{" "}
                         RR · {selected.contracts ?? "—"} x · {selected.riskDollars != null ? `$${selected.riskDollars.toFixed(0)}` : "—"}
+                      </div>
+                    </div>
+                    <div>
+                      <div className="text-[0.65rem] text-slate-500 mb-0.5">
+                        Entry
+                      </div>
+                      <div className="font-mono">
+                        {selected.entryPrice != null
+                          ? fmtPrice(selected.entryPrice)
+                          : "—"}
+                      </div>
+                    </div>
+                    <div>
+                      <div className="text-[0.65rem] text-slate-500 mb-0.5">
+                        Stop
+                      </div>
+                      <div className="font-mono leading-tight">
+                        {selected.stopPrice != null
+                          ? fmtPrice(selected.stopPrice)
+                          : "—"}
+                        {selected.stopTicks != null &&
+                          Number.isFinite(selected.stopTicks) && (
+                            <div className="text-[0.6rem] text-slate-500">
+                              {selected.stopTicks > 0
+                                ? `+${selected.stopTicks.toFixed(0)}t`
+                                : `${selected.stopTicks.toFixed(0)}t`}
+                            </div>
+                          )}
+                      </div>
+                    </div>
+                    <div>
+                      <div className="text-[0.65rem] text-slate-500 mb-0.5">
+                        Target
+                      </div>
+                      <div className="font-mono leading-tight">
+                        {selected.targetPrice != null
+                          ? fmtPrice(selected.targetPrice)
+                          : "—"}
+                        {selected.targetTicks != null &&
+                          Number.isFinite(selected.targetTicks) && (
+                            <div className="text-[0.6rem] text-slate-500">
+                              {selected.targetTicks > 0
+                                ? `+${selected.targetTicks.toFixed(0)}t`
+                                : `${selected.targetTicks.toFixed(0)}t`}
+                            </div>
+                          )}
                       </div>
                     </div>
                     <div>

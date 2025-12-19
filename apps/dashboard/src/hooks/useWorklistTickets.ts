@@ -31,6 +31,11 @@ export interface WorklistTicket {
   symbol: string;
   strategy: string;
   side: WorklistSide;
+  entryPrice: number | null;
+  stopPrice: number | null;
+  targetPrice: number | null;
+  stopTicks: number | null;
+  targetTicks: number | null;
 
   // Engine score
   score: number; // 0–100
@@ -275,6 +280,41 @@ export function useWorklistTickets(): UseWorklistTicketsResult {
 
           const riskBucket = deriveRiskBucket(riskDecision);
 
+          const entryPrice =
+            typeof row.entryPrice === "number"
+              ? row.entryPrice
+              : typeof canonical.entryPrice === "number"
+              ? canonical.entryPrice
+              : null;
+
+          const stopPrice =
+            typeof row.stopPrice === "number"
+              ? row.stopPrice
+              : typeof canonical.stopPrice === "number"
+              ? canonical.stopPrice
+              : null;
+
+          const targetPrice =
+            typeof row.targetPrice === "number"
+              ? row.targetPrice
+              : typeof canonical.targetPrice === "number"
+              ? canonical.targetPrice
+              : null;
+
+          const stopTicksValue =
+            typeof row.stopTicks === "number"
+              ? row.stopTicks
+              : typeof canonical.stopTicks === "number"
+              ? canonical.stopTicks
+              : null;
+
+          const targetTicksValue =
+            typeof row.targetTicks === "number"
+              ? row.targetTicks
+              : typeof canonical.targetTicks === "number"
+              ? canonical.targetTicks
+              : null;
+
           const createdAt: string | null =
             (row.createdAt as string | undefined) ??
             (row.opened_at_utc as string | undefined) ??
@@ -335,6 +375,11 @@ export function useWorklistTickets(): UseWorklistTicketsResult {
             symbol: row.symbol ?? canonical.symbol,
             strategy: row.strategy ?? canonical.strategy,
             side,
+            entryPrice,
+            stopPrice,
+            targetPrice,
+            stopTicks: stopTicksValue,
+            targetTicks: targetTicksValue,
             score,
             trend: resolvedTrend,
             delta,
