@@ -145,7 +145,19 @@ function toPositiveNumber(value: string | undefined, fallback: number): number {
   return Number.isFinite(n) && n > 0 ? n : fallback;
 }
 
-const DEFAULT_MANUAL_SYMBOLS = ['ES=F', 'NQ=F', 'MES=F', 'MNQ=F'];
+const DEFAULT_MANUAL_SYMBOLS = [
+  'ES=F',
+  'NQ=F',
+  'MES=F',
+  'MNQ=F',
+  'YM=F',
+  'RTY=F',
+  'GC=F',
+  'CL=F',
+  '6E=F',
+  'EURUSD=X',
+  'BTC-USD',
+];
 const DEFAULT_MANUAL_STRATEGIES: EnginePreviewRequest['strategy'][] = ['APX-DDB-01'];
 
 function resolveManualSymbolsFromEnv(value?: string): string[] {
