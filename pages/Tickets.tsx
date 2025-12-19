@@ -41,7 +41,9 @@ type ViewTicket = {
   reasonCategory: string;
   reasonSummary: string;
   entry: string;
+  stopPrice: string;
   stopTicks: string;
+  targetPrice: string;
   targetTicks: string;
 };
 
@@ -203,6 +205,30 @@ function deriveTicks(value: any): string {
   return `${sign}${value.toFixed(0)}t`;
 }
 
+function deriveStopPrice(row: any): string {
+  const stop =
+    row.stopPrice ??
+    row.stop_price ??
+    row.canonicalApproved?.stopPrice ??
+    null;
+  if (typeof stop === 'number' && Number.isFinite(stop)) {
+    return fmtPrice(stop);
+  }
+  return '—';
+}
+
+function deriveTargetPrice(row: any): string {
+  const target =
+    row.targetPrice ??
+    row.target_price ??
+    row.canonicalApproved?.targetPrice ??
+    null;
+  if (typeof target === 'number' && Number.isFinite(target)) {
+    return fmtPrice(target);
+  }
+  return '—';
+}
+
 function mapToViewTicket(row: any): ViewTicket {
   const symbol = safeString(row.symbol ?? row.canonicalApproved?.symbol ?? '—');
   const strategyId =
@@ -253,7 +279,9 @@ function mapToViewTicket(row: any): ViewTicket {
     reasonCategory: deriveReasonCategory(row),
     reasonSummary: deriveReasonSummary(row),
     entry: entry == null ? '—' : fmtPrice(entry),
+    stopPrice: deriveStopPrice(row),
     stopTicks: deriveTicks(stopTicks),
+    targetPrice: deriveTargetPrice(row),
     targetTicks: deriveTicks(targetTicks),
   };
 }
@@ -597,8 +625,8 @@ export default function TicketsPage() {
                       <th className="text-left">Reason Category</th>
                       <th className="text-left">Reason Summary</th>
                       <th className="text-right">Entry</th>
-                      <th className="text-right">Stop (t)</th>
-                      <th className="text-right">Target (t)</th>
+                      <th className="text-right">Stop</th>
+                      <th className="text-right">Target</th>
                       <th className="text-center">Spark</th>
                     </tr>
                   </thead>
@@ -650,10 +678,20 @@ export default function TicketsPage() {
                             {vt.entry}
                           </td>
                           <td className="tickets-cell-mono text-right">
-                            {vt.stopTicks}
+                            {vt.stopPrice}
+                            {vt.stopTicks !== '—' && (
+                              <div className="text-[0.6rem] text-slate-500">
+                                {vt.stopTicks}
+                              </div>
+                            )}
                           </td>
                           <td className="tickets-cell-mono text-right">
-                            {vt.targetTicks}
+                            {vt.targetPrice}
+                            {vt.targetTicks !== '—' && (
+                              <div className="text-[0.6rem] text-slate-500">
+                                {vt.targetTicks}
+                              </div>
+                            )}
                           </td>
                           <td className="text-center">
                             <Sparkline id={vt.key} />
@@ -729,13 +767,23 @@ export default function TicketsPage() {
                     <div className="font-mono text-[0.8rem] text-slate-100">
                       {selectedTicket.entry}
                     </div>
-                    <div className="text-xs text-slate-400">Stop (ticks)</div>
+                    <div className="text-xs text-slate-400">Stop</div>
                     <div className="font-mono text-[0.8rem] text-slate-100">
-                      {selectedTicket.stopTicks}
+                      {selectedTicket.stopPrice}
+                      {selectedTicket.stopTicks !== '—' && (
+                        <span className="ml-1 text-[0.7rem] text-slate-400">
+                          ({selectedTicket.stopTicks})
+                        </span>
+                      )}
                     </div>
-                    <div className="text-xs text-slate-400">Target (ticks)</div>
+                    <div className="text-xs text-slate-400">Target</div>
                     <div className="font-mono text-[0.8rem] text-slate-100">
-                      {selectedTicket.targetTicks}
+                      {selectedTicket.targetPrice}
+                      {selectedTicket.targetTicks !== '—' && (
+                        <span className="ml-1 text-[0.7rem] text-slate-400">
+                          ({selectedTicket.targetTicks})
+                        </span>
+                      )}
                     </div>
                   </div>
                 </section>
@@ -765,4 +813,3 @@ export default function TicketsPage() {
     </section>
   );
 }
-
