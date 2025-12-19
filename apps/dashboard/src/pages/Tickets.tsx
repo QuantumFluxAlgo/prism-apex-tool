@@ -371,7 +371,6 @@ export default function TicketsPage() {
                 <table className="dashboard-table min-w-full border-collapse">
                   <thead>
                     <tr>
-                      <th className="px-3 py-2">Ticket ID</th>
                       <th className="px-3 py-2">Symbol</th>
                       <th className="px-3 py-2">Strategy</th>
                       <th className="px-3 py-2">Side</th>
@@ -387,7 +386,7 @@ export default function TicketsPage() {
                     {loading && (
                       <tr>
                         <td
-                          colSpan={9}
+                          colSpan={8}
                           className="px-3 py-3 text-center text-slate-400"
                         >
                           {/* Keep this exact string – tests depend on it */}
@@ -399,7 +398,7 @@ export default function TicketsPage() {
                     {error && !loading && (
                       <tr>
                         <td
-                          colSpan={9}
+                          colSpan={8}
                           className="px-3 py-3 text-center text-rose-400"
                         >
                           {/* Keep this pattern – tests check this prefix */}
@@ -411,7 +410,7 @@ export default function TicketsPage() {
                     {isEmpty && (
                       <tr>
                         <td
-                          colSpan={9}
+                          colSpan={8}
                           className="px-3 py-3 text-center text-slate-400"
                         >
                           {/* Keep this exact string – tests depend on it */}
@@ -432,7 +431,6 @@ export default function TicketsPage() {
                           }`}
                           onClick={() => setSelected(t)}
                         >
-                          <td className="px-3 py-2">{t.id}</td>
                           <td className="px-3 py-2">{t.symbol}</td>
                           <td className="px-3 py-2">{t.strategyId}</td>
                           <td className="px-3 py-2">{t.side}</td>

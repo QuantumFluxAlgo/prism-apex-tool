@@ -95,12 +95,6 @@ const renderPriceWithTicks = (price: number | null, ticks: number | null) => {
 
 const columns = [
   {
-    key: "ticketId",
-    header: "Ticket",
-    width: "80px",
-    cellClassName: "font-mono text-[0.7rem] text-slate-300",
-  },
-  {
     key: "symbol",
     header: "Symbol",
     width: "80px",
