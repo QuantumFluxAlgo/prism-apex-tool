@@ -58,6 +58,7 @@ type JobHealth = {
   lastOk: boolean;
   lastRunUtc: string | null;
   everyMs: number | null;
+  disabled: boolean;
 };
 
 function analyzeSystemJob(job?: SystemJobStatus | null): JobHealth {
@@ -68,10 +69,17 @@ function analyzeSystemJob(job?: SystemJobStatus | null): JobHealth {
       lastOk: false,
       lastRunUtc: null,
       everyMs: null,
+      disabled: false,
     };
   }
-  const everyMs =
-    job.everyMs ?? job.intervalMs ?? job.interval_ms ?? 60_000;
+  const rawInterval =
+    job.everyMs ?? job.intervalMs ?? job.interval_ms ?? null;
+  const numericInterval =
+    typeof rawInterval === 'number' && Number.isFinite(rawInterval)
+      ? rawInterval
+      : null;
+  const disabled = numericInterval === null || numericInterval <= 0;
+  const everyMs = disabled ? null : numericInterval;
   const lastRun =
     job.lastRunUtc ??
     job.lastRunAt ??
@@ -79,11 +87,14 @@ function analyzeSystemJob(job?: SystemJobStatus | null): JobHealth {
     job.last_run_utc ??
     null;
   const lastRunMs = lastRun ? Date.parse(lastRun) : NaN;
-  const threshold = Math.max(everyMs * 3, 5 * 60 * 1000);
-  const stale =
-    !lastRun ||
-    !Number.isFinite(lastRunMs) ||
-    Date.now() - Number(lastRunMs) > threshold;
+  const intervalForThreshold =
+    everyMs && everyMs > 0 ? everyMs : 60_000;
+  const threshold = Math.max(intervalForThreshold * 3, 5 * 60 * 1000);
+  const stale = disabled
+    ? false
+    : !lastRun ||
+      !Number.isFinite(lastRunMs) ||
+      Date.now() - Number(lastRunMs) > threshold;
   const lastOk = job.lastOk ?? job.ok ?? true;
   return {
     missing: false,
@@ -91,10 +102,14 @@ function analyzeSystemJob(job?: SystemJobStatus | null): JobHealth {
     lastOk,
     lastRunUtc: lastRun,
     everyMs,
+    disabled,
   };
 }
 
 function describeJobHealth(name: string, health: JobHealth): string {
+  if (health.disabled) {
+    return `${name}: disabled (manual trigger)`;
+  }
   const interval =
     health.everyMs && Number.isFinite(health.everyMs)
       ? `${Math.round(health.everyMs / 1000)}s`
@@ -209,34 +224,28 @@ export default function AlertsPage() {
     }
 
     const localJobMap = new Map(jobMap);
-    const now = Date.now();
     for (const job of localJobMap.values()) {
-      const lastRun =
-        job.lastRunUtc ??
-        job.lastRunAt ??
-        job.lastRunAtUtc ??
-        job.last_run_utc ??
-        null;
-      const lastRunMs = lastRun ? Date.parse(lastRun) : NaN;
-      const everyMs =
-        job.everyMs ?? job.intervalMs ?? job.interval_ms ?? 60_000;
-      const stale =
-        Number.isFinite(lastRunMs) && now - Number(lastRunMs) > everyMs * 3;
+      const jobHealth = analyzeSystemJob(job);
       const jobName = job.name ?? 'unknown';
-      if (job.lastOk === false || stale || !lastRun) {
+      const missingRun = !jobHealth.lastRunUtc;
+      if (
+        jobHealth.lastOk === false ||
+        jobHealth.stale ||
+        (missingRun && !jobHealth.disabled)
+      ) {
         const normalized = jobName.toLowerCase();
         const isTicketizer = normalized === 'ticketizer-manual';
         results.push({
           id: `job-${jobName}`,
           severity:
-            job.lastOk === false || (isTicketizer && stale)
+            jobHealth.lastOk === false || (isTicketizer && jobHealth.stale)
               ? 'critical'
               : 'warning',
           state: 'open',
           source: 'engine',
           title: 'Job issue',
           message: `${jobName} ${
-            job.lastOk === false ? 'reported errors' : 'is stale'
+            jobHealth.lastOk === false ? 'reported errors' : 'is stale'
           }`,
           createdAt: nowIso,
         });
@@ -331,8 +340,8 @@ export default function AlertsPage() {
                   const healthStatus = getJobHealth(name);
                   if (
                     healthStatus.missing ||
-                    healthStatus.stale ||
-                    !healthStatus.lastOk
+                    (!healthStatus.disabled &&
+                      (healthStatus.stale || !healthStatus.lastOk))
                   ) {
                     failingJobs.push(describeJobHealth(name, healthStatus));
                   }
