@@ -93,146 +93,6 @@ const renderPriceWithTicks = (price: number | null, ticks: number | null) => {
   );
 };
 
-const columns = [
-  {
-    key: "symbol",
-    header: "Symbol",
-    width: "80px",
-    cellClassName: "font-mono text-[0.75rem] text-slate-100",
-  },
-  {
-    key: "strategy",
-    header: "Strat",
-    width: "72px",
-    cellClassName: "font-mono text-[0.7rem] text-slate-300",
-  },
-  {
-    key: "side",
-    header: "Side",
-    width: "64px",
-    render: (_: any, row: WorklistTicket) => (
-      <Badge tone={row.side === "LONG" ? "emerald" : "rose"}>{row.side}</Badge>
-    ),
-  },
-  {
-    key: "score",
-    header: "Score",
-    width: "90px",
-    cellClassName: "text-right text-[0.7rem]",
-    render: (_value: any, row: WorklistTicket) => (
-      <span className="inline-flex items-center justify-end gap-1 font-mono">
-        <span>{row.score}</span>
-        <span className={trendTone(row.trend)}>{renderTrendArrow(row.trend)}</span>
-        <span className="text-[10px] text-slate-500">{row.delta}</span>
-      </span>
-    ),
-  },
-  {
-    key: "riskDecision",
-    header: "Risk",
-    width: "80px",
-    render: (_value: any, row: WorklistTicket) => (
-      <Badge tone={riskBucketTone(row.riskBucket)}>
-        {row.riskDecision?.allowed ? "ALLOW" : "BLOCK"}
-      </Badge>
-    ),
-  },
-  {
-    key: "rrMultiple",
-    header: "RR",
-    width: "72px",
-    cellClassName: "text-right font-mono text-[0.7rem]",
-    render: (_: any, row: WorklistTicket) =>
-      typeof row.rrMultiple === "number" ? row.rrMultiple.toFixed(2) : "—",
-  },
-  {
-    key: "entryPrice",
-    header: "Entry",
-    width: "90px",
-    cellClassName: "text-right font-mono text-[0.7rem]",
-    render: (_: any, row: WorklistTicket) =>
-      row.entryPrice != null ? fmtPrice(row.entryPrice) : "—",
-  },
-  {
-    key: "stopPrice",
-    header: "Stop",
-    width: "90px",
-    render: (_: any, row: WorklistTicket) =>
-      renderPriceWithTicks(row.stopPrice, row.stopTicks),
-  },
-  {
-    key: "targetPrice",
-    header: "Target",
-    width: "90px",
-    render: (_: any, row: WorklistTicket) =>
-      renderPriceWithTicks(row.targetPrice, row.targetTicks),
-  },
-  {
-    key: "contracts",
-    header: "Qty",
-    width: "60px",
-    cellClassName: "text-right font-mono text-[0.7rem]",
-    render: (_: any, row: WorklistTicket) =>
-      row.contracts != null ? row.contracts : "—",
-  },
-  {
-    key: "riskDollars",
-    header: "Risk ($)",
-    width: "90px",
-    cellClassName: "text-right font-mono text-[0.7rem]",
-    render: (_: any, row: WorklistTicket) =>
-      typeof row.riskDollars === "number" ? row.riskDollars.toFixed(0) : "—",
-  },
-  {
-    key: "pnlTicks",
-    header: "PnL (ticks)",
-    width: "96px",
-    cellClassName: "text-right font-mono text-[0.7rem]",
-    render: (_: any, row: WorklistTicket) => {
-      if (typeof row.pnlTicks !== "number") return "—";
-      const v = row.pnlTicks;
-      const cls =
-        v > 0 ? "text-emerald-400" : v < 0 ? "text-rose-400" : "text-slate-300";
-      return <span className={cls}>{v}</span>;
-    },
-  },
-  {
-    key: "ageMinutes",
-    header: "Age (min)",
-    width: "76px",
-    cellClassName: "text-right font-mono text-[0.7rem] text-slate-400",
-  },
-  {
-    key: "sessionDate",
-    header: "Session",
-    width: "120px",
-    cellClassName: "text-[0.7rem] text-slate-400",
-    render: (_: any, row: WorklistTicket) => (
-      <div className="flex flex-col leading-tight">
-        <span className="font-mono text-slate-300">{row.sessionDate}</span>
-        <span className="text-[0.6rem] uppercase text-slate-500">
-          {row.sessionMetrics?.sessionQualityFlag ?? "—"}
-        </span>
-      </div>
-    ),
-  },
-  {
-    key: "flags",
-    header: "Flags",
-    width: "120px",
-    cellClassName: "text-[0.65rem] text-slate-300",
-    render: (_: any, row: WorklistTicket) =>
-      row.sessionFlags?.flags?.length ? (
-        <div className="flex flex-wrap gap-1">
-          {row.sessionFlags.flags.map((flag) => (
-            <Badge key={flag}>{flag}</Badge>
-          ))}
-        </div>
-      ) : (
-        "None"
-      ),
-  },
-];
 
 export default function WorklistV2() {
   const { tickets, loading, error, selected, setSelected, refresh } =
@@ -381,14 +241,145 @@ export default function WorklistV2() {
               </div>
 
               <div className="a3-page-table-scroll a3-scroll-soft min-h-[320px]">
-                <DataTable
-                  rows={tickets}
-                  columns={columns}
-                  keyField="ticketId"
-                  size="compact"
-                  onRowClick={(row: WorklistTicket) => setSelected(row)}
-                  selectedRowKey={selected?.ticketId ?? null}
-                />
+                <table className="dashboard-table tickets-table min-w-full">
+                  <thead>
+                    <tr>
+                      <th className="text-left">Symbol</th>
+                      <th className="text-left">Strategy</th>
+                      <th className="text-center">Side</th>
+                      <th className="text-right">Score</th>
+                      <th className="text-center">Risk</th>
+                      <th className="text-right">RR</th>
+                      <th className="text-right">Entry</th>
+                      <th className="text-right">Stop</th>
+                      <th className="text-right">Target</th>
+                      <th className="text-right">Qty</th>
+                      <th className="text-right">Risk ($)</th>
+                      <th className="text-right">PnL (ticks)</th>
+                      <th className="text-right">Age (min)</th>
+                      <th className="text-left">Session</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {loading && (
+                      <tr>
+                        <td colSpan={14} className="tickets-v2-status-line">
+                          Loading worklist from engine…
+                        </td>
+                      </tr>
+                    )}
+                    {error && !loading && (
+                      <tr>
+                        <td
+                          colSpan={14}
+                          className="tickets-v2-status-line tickets-v2-status-error"
+                        >
+                          Engine tickets unavailable; Worklist feed unavailable.
+                        </td>
+                      </tr>
+                    )}
+                    {!loading && !error && tickets.length === 0 && (
+                      <tr>
+                        <td colSpan={14} className="tickets-v2-status-line">
+                          No worklist tickets returned for the current filters.
+                        </td>
+                      </tr>
+                    )}
+                    {!loading &&
+                      !error &&
+                      tickets.map((row) => {
+                        const isActive =
+                          selected && selected.ticketId === row.ticketId;
+                        return (
+                          <tr
+                            key={row.ticketId}
+                            className={
+                              isActive
+                                ? "tickets-row tickets-row-active"
+                                : "tickets-row"
+                            }
+                            onClick={() => setSelected(row)}
+                          >
+                            <td className="tickets-cell-mono">{row.symbol}</td>
+                            <td className="text-slate-300">{row.strategy}</td>
+                            <td className="text-center">
+                              <Badge
+                                tone={row.side === "LONG" ? "emerald" : "rose"}
+                              >
+                                {row.side}
+                              </Badge>
+                            </td>
+                            <td className="tickets-cell-mono text-right">
+                              <span className="inline-flex items-center justify-end gap-1">
+                                <span>{row.score}</span>
+                                <span className={trendTone(row.trend)}>
+                                  {renderTrendArrow(row.trend)}
+                                </span>
+                                <span className="text-[0.6rem] text-slate-500">
+                                  Δ {row.delta}
+                                </span>
+                              </span>
+                            </td>
+                            <td className="text-center">
+                              <Badge tone={riskBucketTone(row.riskBucket)}>
+                                {row.riskDecision?.allowed ? "ALLOW" : "BLOCK"}
+                              </Badge>
+                            </td>
+                            <td className="tickets-cell-mono text-right">
+                              {row.rrMultiple != null
+                                ? row.rrMultiple.toFixed(2)
+                                : "—"}
+                            </td>
+                            <td className="tickets-cell-mono text-right">
+                              {row.entryPrice != null
+                                ? fmtPrice(row.entryPrice)
+                                : "—"}
+                            </td>
+                            <td>{renderPriceWithTicks(row.stopPrice, row.stopTicks)}</td>
+                            <td>{renderPriceWithTicks(row.targetPrice, row.targetTicks)}</td>
+                            <td className="tickets-cell-mono text-right">
+                              {row.contracts ?? "—"}
+                            </td>
+                            <td className="tickets-cell-mono text-right">
+                              {row.riskDollars != null
+                                ? row.riskDollars.toFixed(0)
+                                : "—"}
+                            </td>
+                            <td className="tickets-cell-mono text-right">
+                              {typeof row.pnlTicks === "number" ? (
+                                <span
+                                  className={
+                                    row.pnlTicks > 0
+                                      ? "text-emerald-400"
+                                      : row.pnlTicks < 0
+                                      ? "text-rose-400"
+                                      : "text-slate-300"
+                                  }
+                                >
+                                  {row.pnlTicks}
+                                </span>
+                              ) : (
+                                "—"
+                              )}
+                            </td>
+                            <td className="tickets-cell-mono text-right">
+                              {row.ageMinutes}
+                            </td>
+                            <td className="text-slate-300">
+                              <div className="flex flex-col leading-tight">
+                                <span className="font-mono text-slate-200">
+                                  {row.sessionDate}
+                                </span>
+                                <span className="text-[0.6rem] uppercase text-slate-500">
+                                  {row.sessionMetrics?.sessionQualityFlag ?? "—"}
+                                </span>
+                              </div>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                  </tbody>
+                </table>
               </div>
             </CardBody>
           </Card>
