@@ -145,6 +145,24 @@ function toPositiveNumber(value: string | undefined, fallback: number): number {
   return Number.isFinite(n) && n > 0 ? n : fallback;
 }
 
+const DEFAULT_MANUAL_SYMBOLS = ['ES=F', 'NQ=F', 'MES=F', 'MNQ=F'];
+const DEFAULT_MANUAL_STRATEGIES: EnginePreviewRequest['strategy'][] = ['APX-DDB-01'];
+
+function resolveManualSymbolsFromEnv(value?: string): string[] {
+  const parsed = parseCsv(value);
+  if (parsed.length) return parsed;
+  const ingestSymbols = resolveSymbols();
+  if (ingestSymbols.length) return ingestSymbols;
+  return DEFAULT_MANUAL_SYMBOLS;
+}
+
+function resolveSessionDateFromEnv(value?: string): string {
+  if (value && value.trim().length >= 10) {
+    return value.trim().slice(0, 10);
+  }
+  return new Date().toISOString().slice(0, 10);
+}
+
 /**
  * Yahoo ingest job configuration:
  * - INGEST_YAHOO_SYMBOLS: comma-separated Yahoo symbols (e.g. "ES=F,MES=F").
@@ -231,17 +249,11 @@ if (runIngestOnStart) {
 }
 
 const SESSION_METRICS_JOB_NAME = 'session-metrics-manual';
-const SESSION_METRICS_JOB_INTERVAL_MS = Number(process.env.SESSION_METRICS_JOB_INTERVAL_MS ?? '0');
+const SESSION_METRICS_JOB_INTERVAL_MS = Number(process.env.SESSION_METRICS_JOB_INTERVAL_MS ?? '300000');
 
 async function runSessionMetricsJob(): Promise<void> {
-  const symbols = parseCsv(process.env.SESSION_METRICS_JOB_SYMBOLS ?? process.env.INGEST_YAHOO_SYMBOLS ?? '');
-  const sessionDate = process.env.SESSION_METRICS_JOB_SESSION_DATE;
-  if (!symbols.length || !sessionDate) {
-    console.info(
-      `[${SESSION_METRICS_JOB_NAME}] skipped: SESSION_METRICS_JOB_SYMBOLS or SESSION_METRICS_JOB_SESSION_DATE missing`,
-    );
-    return;
-  }
+  const symbols = resolveManualSymbolsFromEnv(process.env.SESSION_METRICS_JOB_SYMBOLS);
+  const sessionDate = resolveSessionDateFromEnv(process.env.SESSION_METRICS_JOB_SESSION_DATE);
   const service = createSessionMetricsService();
   const started = Date.now();
   console.info(`[${SESSION_METRICS_JOB_NAME}] computing metrics for symbols=${symbols.join(',')} session=${sessionDate}`);
@@ -252,72 +264,85 @@ async function runSessionMetricsJob(): Promise<void> {
 }
 
 registerJob(SESSION_METRICS_JOB_NAME, SESSION_METRICS_JOB_INTERVAL_MS, runSessionMetricsJob);
+if (SESSION_METRICS_JOB_INTERVAL_MS > 0) {
+  void runJobNow(SESSION_METRICS_JOB_NAME);
+}
 
 const STRATEGIES_JOB_NAME = 'strategies-manual';
-const STRATEGIES_JOB_INTERVAL_MS = Number(process.env.STRATEGIES_JOB_INTERVAL_MS ?? '0');
+const STRATEGIES_JOB_INTERVAL_MS = Number(process.env.STRATEGIES_JOB_INTERVAL_MS ?? '600000');
 
 async function runStrategiesJob(): Promise<void> {
-  const strategies = parseCsv(process.env.STRATEGIES_JOB_STRATEGIES ?? '');
-  const symbols = parseCsv(process.env.STRATEGIES_JOB_SYMBOLS ?? process.env.INGEST_YAHOO_SYMBOLS ?? '');
-  const sessionDate = process.env.STRATEGIES_JOB_SESSION_DATE;
-  if (!strategies.length || !symbols.length || !sessionDate) {
-    console.info(
-      `[${STRATEGIES_JOB_NAME}] skipped: STRATEGIES_JOB_STRATEGIES, STRATEGIES_JOB_SYMBOLS, or STRATEGIES_JOB_SESSION_DATE missing`,
-    );
-    return;
-  }
+  let strategies = parseCsv(process.env.STRATEGIES_JOB_STRATEGIES ?? '');
+  if (!strategies.length) strategies = [...DEFAULT_MANUAL_STRATEGIES];
+  const symbols = resolveManualSymbolsFromEnv(process.env.STRATEGIES_JOB_SYMBOLS);
+  const sessionDate = resolveSessionDateFromEnv(process.env.STRATEGIES_JOB_SESSION_DATE);
   const started = Date.now();
   console.info(
     `[${STRATEGIES_JOB_NAME}] running strategies=${strategies.join(',')} symbols=${symbols.join(',')} session=${sessionDate}`,
   );
-  for (const strategy of strategies) {
-    for (const symbol of symbols) {
-      const request: EnginePreviewRequest = { strategy: strategy as EnginePreviewRequest['strategy'], symbol, sessionDate };
-      const preview = await runEnginePreview(request);
-      const signals = Array.isArray(preview?.signals) ? preview.signals.length : 0;
-      console.info(`[${STRATEGIES_JOB_NAME}] ${strategy} ${symbol} signals=${signals}`);
+  try {
+    for (const strategy of strategies) {
+      for (const symbol of symbols) {
+        const request: EnginePreviewRequest = {
+          strategy: strategy as EnginePreviewRequest['strategy'],
+          symbol,
+          sessionDate,
+        };
+        const preview = await runEnginePreview(request);
+        const signals = Array.isArray(preview?.signals) ? preview.signals.length : 0;
+        console.info(`[${STRATEGIES_JOB_NAME}] ${strategy} ${symbol} signals=${signals}`);
+      }
     }
+    console.info(`[${STRATEGIES_JOB_NAME}] completed in ${Date.now() - started}ms`);
+  } catch (error) {
+    console.warn(`[${STRATEGIES_JOB_NAME}] skipped: ${(error as Error)?.message ?? error}`);
   }
-  console.info(`[${STRATEGIES_JOB_NAME}] completed in ${Date.now() - started}ms`);
 }
 
 registerJob(STRATEGIES_JOB_NAME, STRATEGIES_JOB_INTERVAL_MS, runStrategiesJob);
+if (STRATEGIES_JOB_INTERVAL_MS > 0) {
+  void runJobNow(STRATEGIES_JOB_NAME);
+}
 
 const TICKETIZER_JOB_NAME = 'ticketizer-manual';
-const TICKETIZER_JOB_INTERVAL_MS = Number(process.env.TICKETIZER_JOB_INTERVAL_MS ?? '0');
+const TICKETIZER_JOB_INTERVAL_MS = Number(process.env.TICKETIZER_JOB_INTERVAL_MS ?? '600000');
 
 async function runTicketizerJob(): Promise<void> {
-  const strategies = parseCsv(
+  let strategies = parseCsv(
     process.env.TICKETIZER_JOB_STRATEGIES ?? process.env.STRATEGIES_JOB_STRATEGIES ?? '',
   );
-  const symbols = parseCsv(
-    process.env.TICKETIZER_JOB_SYMBOLS ?? process.env.STRATEGIES_JOB_SYMBOLS ?? process.env.INGEST_YAHOO_SYMBOLS ?? '',
+  if (!strategies.length) strategies = [...DEFAULT_MANUAL_STRATEGIES];
+  const symbols = resolveManualSymbolsFromEnv(
+    process.env.TICKETIZER_JOB_SYMBOLS ?? process.env.STRATEGIES_JOB_SYMBOLS ?? undefined,
   );
-  const sessionDate = process.env.TICKETIZER_JOB_SESSION_DATE ?? process.env.STRATEGIES_JOB_SESSION_DATE;
-  if (!strategies.length || !symbols.length || !sessionDate) {
-    console.info(
-      `[${TICKETIZER_JOB_NAME}] skipped: strategy, symbol, or sessionDate env vars missing`,
-    );
-    return;
-  }
+  const sessionDate = resolveSessionDateFromEnv(
+    process.env.TICKETIZER_JOB_SESSION_DATE ?? process.env.STRATEGIES_JOB_SESSION_DATE,
+  );
   const started = Date.now();
   console.info(
     `[${TICKETIZER_JOB_NAME}] running ticketizer pipeline strategies=${strategies.join(',')} symbols=${symbols.join(',')} session=${sessionDate}`,
   );
-  for (const strategy of strategies) {
-    for (const symbol of symbols) {
-      await runEngineSessionJob({
-        strategy: strategy as EnginePreviewRequest['strategy'],
-        symbol,
-        sessionDate,
-        meta: { source: TICKETIZER_JOB_NAME },
-      });
+  try {
+    for (const strategy of strategies) {
+      for (const symbol of symbols) {
+        await runEngineSessionJob({
+          strategy: strategy as EnginePreviewRequest['strategy'],
+          symbol,
+          sessionDate,
+          meta: { source: TICKETIZER_JOB_NAME },
+        });
+      }
     }
+    console.info(`[${TICKETIZER_JOB_NAME}] completed in ${Date.now() - started}ms`);
+  } catch (error) {
+    console.warn(`[${TICKETIZER_JOB_NAME}] skipped: ${(error as Error)?.message ?? error}`);
   }
-  console.info(`[${TICKETIZER_JOB_NAME}] completed in ${Date.now() - started}ms`);
 }
 
 registerJob(TICKETIZER_JOB_NAME, TICKETIZER_JOB_INTERVAL_MS, runTicketizerJob);
+if (TICKETIZER_JOB_INTERVAL_MS > 0) {
+  void runJobNow(TICKETIZER_JOB_NAME);
+}
 
 export async function runPipelineOnceForMaintenance(): Promise<void> {
   await runJobNow(INGEST_JOB_NAME);
