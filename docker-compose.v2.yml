@@ -33,6 +33,8 @@ services:
       INGEST_YAHOO_SYMBOLS: "${INGEST_YAHOO_SYMBOLS:-ES=F,NQ=F,MES=F,MNQ=F}"
       YAHOO_POLL_INTERVAL_MS: "${YAHOO_POLL_INTERVAL_MS:-45000}"
       YAHOO_POLL_LOOKBACK_MINUTES: "${YAHOO_POLL_LOOKBACK_MINUTES:-20}"
+      YAHOO_GREEN_LAG_SECONDS: "${YAHOO_GREEN_LAG_SECONDS:-900}"
+      YAHOO_AMBER_LAG_SECONDS: "${YAHOO_AMBER_LAG_SECONDS:-1500}"
       SESSION_METRICS_JOB_INTERVAL_MS: "${SESSION_METRICS_JOB_INTERVAL_MS:-300000}"
       STRATEGIES_JOB_INTERVAL_MS: "${STRATEGIES_JOB_INTERVAL_MS:-600000}"
       TICKETIZER_JOB_INTERVAL_MS: "${TICKETIZER_JOB_INTERVAL_MS:-600000}"
@@ -87,6 +89,37 @@ services:
       timeout: 5s
       retries: 3
     restart: unless-stopped
+
+  jobs-seed:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: api
+    container_name: prismapex-jobs-seed
+    profiles: ["jobs"]
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: "${DATABASE_URL:-postgres://prismapex:${POSTGRES_PASSWORD:-prismapex}@postgres:5432/prismapex}"
+      YAHOO_SYMBOLS: "${INGEST_YAHOO_SYMBOLS:-ES=F,NQ=F,MES=F,MNQ=F}"
+      YAHOO_RANGE: "${YAHOO_RANGE:-30d}"
+      YAHOO_INTERVAL: "${YAHOO_INTERVAL:-1m}"
+      TICKETS_DAYS: "${TICKETS_DAYS:-30}"
+    entrypoint:
+      - bash
+      - -lc
+      - |
+        set -euo pipefail
+        echo "[jobs-seed] Backfill Yahoo bars..."
+        node apps/ingest/dist/backfill.js
+        echo "[jobs-seed] Gapfill Yahoo bars..."
+        node apps/ingest/dist/gapfill.js
+        echo "[jobs-seed] Backfill tickets..."
+        node apps/tickets/dist/backfill-orr.js
+        echo "[jobs-seed] Completed."
+    restart: "no"
 
 volumes:
   prismapex_pgdata:
