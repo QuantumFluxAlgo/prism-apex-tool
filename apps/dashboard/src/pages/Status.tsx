@@ -35,6 +35,7 @@ const REFRESH_INTERVAL_MS = 30_000;
 type NormalizedJobRow = {
   name: TargetJobName;
   everyMs: number | null;
+  disabled: boolean;
   lastRunUtc: string | null;
   lastOk: boolean | null;
   lastDurationMs: number | null;
@@ -59,8 +60,13 @@ function normalizeJobRows(
   return TARGET_JOB_NAMES.map((target) => {
     const job = jobMap.get(target.toLowerCase());
     const snap = telemetryMap.get(target.toLowerCase());
-    const everyMs =
+    const rawInterval =
       job?.everyMs ?? job?.intervalMs ?? job?.interval_ms ?? null;
+    const everyMs =
+      typeof rawInterval === 'number' && Number.isFinite(rawInterval)
+        ? rawInterval
+        : null;
+    const disabled = everyMs === null || everyMs <= 0;
     const lastRunUtc =
       job?.lastRunUtc ??
       job?.lastRunAtUtc ??
@@ -76,6 +82,7 @@ function normalizeJobRows(
     return {
       name: target,
       everyMs,
+      disabled,
       lastRunUtc,
       lastOk,
       lastDurationMs,
@@ -85,6 +92,7 @@ function normalizeJobRows(
 }
 
 function deriveJobTone(job: NormalizedJobRow): 'green' | 'amber' | 'red' {
+  if (job.disabled) return 'green';
   const now = Date.now();
   const lastRunMs = job.lastRunUtc ? Date.parse(job.lastRunUtc) : NaN;
   const threshold =
@@ -122,6 +130,7 @@ type JobHealth = {
   lastOk: boolean;
   lastRunUtc: string | null;
   everyMs: number | null;
+  disabled: boolean;
 };
 
 function analyzeJobHealth(job?: NormalizedJobRow | null): JobHealth {
@@ -132,6 +141,17 @@ function analyzeJobHealth(job?: NormalizedJobRow | null): JobHealth {
       lastOk: false,
       lastRunUtc: null,
       everyMs: null,
+      disabled: false,
+    };
+  }
+  if (job.disabled) {
+    return {
+      missing: false,
+      stale: false,
+      lastOk: true,
+      lastRunUtc: job.lastRunUtc ?? null,
+      everyMs: null,
+      disabled: true,
     };
   }
   const everyMs =
@@ -149,6 +169,7 @@ function analyzeJobHealth(job?: NormalizedJobRow | null): JobHealth {
     lastOk,
     lastRunUtc: job.lastRunUtc ?? null,
     everyMs,
+    disabled: false,
   };
 }
 
@@ -156,6 +177,9 @@ function describeJobHealth(
   name: string,
   health: JobHealth,
 ): string {
+  if (health.disabled) {
+    return `${name} disabled (manual trigger)`;
+  }
   const intervalLabel =
     health.everyMs && Number.isFinite(health.everyMs)
       ? `${Math.round(health.everyMs / 1000)}s`
@@ -280,11 +304,14 @@ export default function Status() {
       issues.push('yahoo-ingest-manual unhealthy');
     }
     const ticketizerTone = jobTones.get('ticketizer-manual');
-    if (ticketizerTone !== 'green') {
+    const ticketizerRow = jobRows.find(
+      (job) => job.name === 'ticketizer-manual',
+    );
+    if (ticketizerTone !== 'green' && !ticketizerRow?.disabled) {
       issues.push('ticketizer-manual unhealthy');
     }
     return issues;
-  }, [ingestState, jobTones]);
+  }, [ingestState, jobTones, jobRows]);
 
   const tradingSafe = tradingIssues.length === 0;
   const lastRefreshedLabel = lastRefreshedAt
@@ -311,9 +338,10 @@ export default function Status() {
   const ticketizerHealthStatus = analyzeJobHealth(ticketizerJob);
   const diskHealthStatus = analyzeJobHealth(diskSyncJob);
   const ticketizerStop =
-    ticketizerHealthStatus.missing ||
-    ticketizerHealthStatus.stale ||
-    !ticketizerHealthStatus.lastOk;
+    !ticketizerHealthStatus.disabled &&
+    (ticketizerHealthStatus.missing ||
+      ticketizerHealthStatus.stale ||
+      !ticketizerHealthStatus.lastOk);
   const ingestJobStop =
     yahooHealthStatus.missing ||
     yahooHealthStatus.stale ||
@@ -511,6 +539,18 @@ export default function Status() {
               <tbody>
                 {jobRows.map((row) => {
                   const tone = deriveJobTone(row);
+                  const intervalLabel =
+                    row.disabled || row.everyMs == null
+                      ? 'manual'
+                      : `${Math.round(row.everyMs / 1000)}s`;
+                  const statusLabel = row.disabled
+                    ? 'Disabled'
+                    : tone === 'green'
+                    ? 'Healthy'
+                    : tone === 'amber'
+                    ? 'Degraded'
+                    : 'Down';
+                  const badgeTone = row.disabled ? 'neutral' : tone;
                   return (
                   <tr
                     key={row.name}
@@ -521,18 +561,14 @@ export default function Status() {
                     </td>
                     <td className="px-3 py-2 align-top">
                       <Badge
-                        tone={tone}
+                        tone={badgeTone as any}
                         className="text-[9px]"
                       >
-                        {tone === 'green'
-                          ? 'Healthy'
-                          : tone === 'amber'
-                          ? 'Degraded'
-                          : 'Down'}
+                        {statusLabel}
                       </Badge>
                     </td>
                     <td className="px-3 py-2 align-top text-[11px] text-slate-300">
-                      {row.everyMs != null ? `${Math.round(row.everyMs / 1000)}s` : '—'}
+                      {intervalLabel}
                     </td>
                     <td className="px-3 py-2 align-top text-[11px] text-slate-400">
                       {row.lastRunUtc ?? '—'}
