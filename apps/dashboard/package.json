@@ -8,7 +8,8 @@
     "build": "vite build",
     "test": "vitest run",
     "typecheck": "tsc -p tsconfig.json --noEmit",
-    "lint": "ESLINT_USE_FLAT_CONFIG=false eslint src --ext .ts,.tsx"
+    "lint": "ESLINT_USE_FLAT_CONFIG=false eslint src --ext .ts,.tsx",
+    "prebuild": "sh scripts/verify-api-base.sh"
   },
   "dependencies": {
     "@prism-apex/shared": "workspace:*",

@@ -40,7 +40,7 @@ function parseJsonSafely<T>(res: Response): Promise<T> {
  * GET /api/operator-risk/sizing
  */
 export async function fetchOperatorSizing(): Promise<OperatorSizingPayload | null> {
-  const res = await fetch('/api/operator-risk/sizing', {
+  const res = await fetch(`${import.meta.env.VITE_API_BASE}/api/operator-risk/sizing', {
     method: 'GET',
     headers: {
       'Content-Type': 'application/json',

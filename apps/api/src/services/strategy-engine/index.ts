@@ -200,6 +200,31 @@ export interface StrategySuggestionLike {
   };
 }
 
+function normalizeBaseSymbol(value?: string | null): string | null {
+  if (!value) return null;
+  const trimmed = value.trim().toUpperCase();
+  if (!trimmed) return null;
+  return trimmed;
+}
+
+function safePriceDiffToTicks(symbol: string | null, from: number, to: number): number | null {
+  if (!symbol) return null;
+  try {
+    return Math.abs(priceDiffToTicks(symbol, from, to));
+  } catch {
+    return null;
+  }
+}
+
+function safeTicksToDollars(symbol: string | null, ticks: number): number | null {
+  if (!symbol) return null;
+  try {
+    return Math.abs(ticksToDollars(symbol, ticks));
+  } catch {
+    return null;
+  }
+}
+
 export function buildCanonicalCandidateTicket(
   suggestion: StrategySuggestionLike,
 ): CanonicalCandidateTicket {
@@ -209,23 +234,50 @@ export function buildCanonicalCandidateTicket(
   const targetPrice = Number.isFinite(target) ? target : entryPrice;
   const quantity = typeof qty === 'number' && Number.isFinite(qty) && qty > 0 ? qty : 0;
 
-  const rawStopTicks =
+  const baseSymbol = normalizeBaseSymbol(symbol ?? contract ?? null);
+
+  const metaStopTicks =
     typeof meta?.stopTicks === 'number' && Number.isFinite(meta.stopTicks)
       ? Math.abs(meta.stopTicks)
-      : Math.max(Math.abs(entryPrice - stopPrice), 1);
-  const rawTargetTicks =
+      : null;
+  const metaTargetTicks =
     typeof meta?.targetTicks === 'number' && Number.isFinite(meta.targetTicks)
       ? Math.abs(meta.targetTicks)
-      : Math.max(Math.abs(targetPrice - entryPrice), 1);
+      : null;
 
-  const perContractRisk = Math.max(Math.abs(entryPrice - stopPrice), 0);
-  const totalRisk = perContractRisk * Math.max(quantity, 1);
-  const expectedReward = Math.abs(targetPrice - entryPrice) * Math.max(quantity, 1);
+  const computedStopTicks =
+    metaStopTicks ?? safePriceDiffToTicks(baseSymbol, entryPrice, stopPrice);
+  const stopTicks = computedStopTicks && computedStopTicks > 0
+    ? computedStopTicks
+    : Math.max(Math.abs(entryPrice - stopPrice), 1);
+
+  const computedTargetTicks =
+    metaTargetTicks ?? safePriceDiffToTicks(baseSymbol, entryPrice, targetPrice);
+  const targetTicks = computedTargetTicks && computedTargetTicks > 0
+    ? computedTargetTicks
+    : Math.max(Math.abs(targetPrice - entryPrice), 1);
+
+  const computedRiskDollars = safeTicksToDollars(baseSymbol, stopTicks);
+  const perContractRisk =
+    typeof computedRiskDollars === 'number' && Number.isFinite(computedRiskDollars)
+      ? computedRiskDollars
+      : Math.abs(entryPrice - stopPrice);
+
+  const computedRewardDollars = safeTicksToDollars(baseSymbol, targetTicks);
+  const perContractReward =
+    typeof computedRewardDollars === 'number' && Number.isFinite(computedRewardDollars)
+      ? computedRewardDollars
+      : Math.abs(targetPrice - entryPrice);
+
+  const totalRisk = quantity > 0 ? perContractRisk * quantity : 0;
+  const expectedReward = quantity > 0 ? perContractReward * quantity : 0;
+
+  const derivedRR = perContractRisk > 0 ? perContractReward / perContractRisk : 1;
   const rrMultiple =
     typeof meta?.rr === 'number' && Number.isFinite(meta.rr)
       ? meta.rr
-      : perContractRisk > 0
-      ? (expectedReward / Math.max(perContractRisk, 1)) || 1
+      : derivedRR > 0
+      ? derivedRR
       : 1;
 
   const sessionDateUtc = new Date(timestampUtc).toISOString().slice(0, 10) + 'T00:00:00Z';
@@ -241,8 +293,8 @@ export function buildCanonicalCandidateTicket(
     targetPrice,
     exitPrice: null,
     entryTicksFromRef: null,
-    stopTicks: rawStopTicks,
-    targetTicks: rawTargetTicks,
+    stopTicks,
+    targetTicks,
     quantity,
     perContractRisk,
     totalRisk,

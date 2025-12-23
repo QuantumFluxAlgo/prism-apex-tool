@@ -13,7 +13,6 @@ COPY tsconfig.paths.json tsconfig.paths.json
 # Source
 COPY packages packages
 COPY apps apps
-COPY sdks sdks
 COPY tests tests
 COPY apex apex
 COPY types types
@@ -73,7 +72,6 @@ RUN apk add --no-cache wget
 # Copy the prepared runtime (node_modules + API dist + apex) as a unit
 COPY --from=build /app/runtime/ /app/
 COPY configs /configs
-COPY README.md /app/README.md
 
 EXPOSE 3000
 CMD ["node", "/app/apps/api/dist/index.cjs"]

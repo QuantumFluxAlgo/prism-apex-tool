@@ -34,4 +34,12 @@ describe('App', () => {
     const headings = await screen.findAllByText(/Operator Dashboard/);
     expect(headings[0]).toBeInTheDocument();
   });
+
+  it('lands on Worklist V2 by default', async () => {
+    render(<App />);
+    const worklistHeading = await screen.findByRole('heading', {
+      name: /Worklist V2/i,
+    });
+    expect(worklistHeading).toBeInTheDocument();
+  });
 });

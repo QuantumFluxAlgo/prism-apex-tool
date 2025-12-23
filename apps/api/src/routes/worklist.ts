@@ -27,7 +27,7 @@ import {
 import { createSessionFlagsService } from '../jobs/session-metrics/session-flags-service.js';
 import type { TicketRiskDecisionDto } from './dto/riskDecisionDto.js';
 
-import { computePnL } from '@prism-apex/shared/pnl';
+import { computePnL } from '@prism-apex/shared';
 
 const DEFAULT_DATABASE_URL =
   process.env.DATABASE_URL ?? 'postgres://apex:apex@db:5432/prismapex';
@@ -174,8 +174,8 @@ async function fetchRawTickets(client: Client, q: WorklistQuery) {
       target_price,
       pnl,
       rr,
-      risk_decision,
-      meta
+      meta,
+      meta -> 'riskDecision' AS risk_decision
     FROM tickets
     ${whereSql}
     ORDER BY symbol,
@@ -295,7 +295,13 @@ export default async function worklistRoute(app: FastifyInstance) {
             (row.rr as number | undefined) ??
             null;
 
-          const createdAt = row.opened_at_utc as string;
+          const openedAt = row.opened_at_utc;
+          const createdAt =
+            typeof openedAt === 'string'
+              ? openedAt
+              : openedAt instanceof Date
+              ? openedAt.toISOString()
+              : new Date(openedAt ?? Date.now()).toISOString();
 
           return {
             ticketId: String(row.id),

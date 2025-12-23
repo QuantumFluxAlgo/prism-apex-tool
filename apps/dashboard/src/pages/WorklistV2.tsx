@@ -18,10 +18,11 @@ import React, { useEffect, useMemo, useState } from "react";
 import { Card, CardBody } from "../ui/Card";
 import Button from "../ui/Button";
 import Badge from "../ui/Badge";
-import Kpi from "../ui/Kpi";
 import FiltersBar from "../components/FiltersBar";
 import DataTable from "../ui/DataTable";
 import { fmtPrice } from "../utils/number";
+import { worklistV2Columns, resolveColumnCell } from "./WorklistV2.columns";
+import "../styles/worklist-v2.css";
 
 import {
   useWorklistTickets,
@@ -75,28 +76,10 @@ function riskBucketTone(bucket: WorklistRiskBucket): "emerald" | "amber" | "rose
   }
 }
 
-const formatTicks = (value: number | null | undefined): string | null => {
-  if (typeof value !== "number" || !Number.isFinite(value)) return null;
-  const signed = value > 0 ? `+${value.toFixed(0)}` : value.toFixed(0);
-  return `${signed}t`;
-};
-
-const renderPriceWithTicks = (price: number | null, ticks: number | null) => {
-  const ticksLabel = formatTicks(ticks);
-  return (
-    <div className="text-right font-mono text-[0.7rem] leading-tight">
-      {price != null ? fmtPrice(price) : "—"}
-      {ticksLabel && (
-        <div className="text-[0.55rem] text-slate-500">{ticksLabel}</div>
-      )}
-    </div>
-  );
-};
-
-
 export default function WorklistV2() {
   const { tickets, loading, error, selected, setSelected, refresh } =
     useWorklistTickets();
+  const columnCount = worklistV2Columns.length;
   const [ingestState, setIngestState] = useState<IngestState>("UNKNOWN");
   const [ingestCounts, setIngestCounts] = useState({ GREEN: 0, AMBER: 0, RED: 0 });
   const [worstLag, setWorstLag] = useState<number | null>(null);
@@ -152,7 +135,7 @@ export default function WorklistV2() {
     (typeof worstLag === "number" && worstLag > RED_THRESHOLD_SECONDS);
 
   return (
-    <div className="a3-page-root">
+    <div className="a3-page-root worklist-v2">
       {/* Header */}
       <header className="a3-page-header">
         <div>
@@ -190,42 +173,39 @@ export default function WorklistV2() {
       <section className="a3-page-main-card">
         {/* Filters + KPIs */}
         <FiltersBar />
-        <div className="a3-page-kpi-strip">
-          <Kpi
-            label="Actionable tickets"
-            value={kpis.actionable}
-            tone="emerald"
-            sublabel={`of ${kpis.total} open`}
-          />
-          <Kpi
-            label="Blocked by risk"
-            value={kpis.blocked}
-            tone="rose"
-            sublabel="guardrail blocks"
-          />
-          <Kpi
-            label="Average score"
-            value={kpis.avgScore}
-            tone="indigo"
-            sublabel="0–100"
-          />
-          <Kpi
-            label="Selected RR"
-            value={
-              selected && typeof selected.rrMultiple === "number"
+        <div className="worklist-context-strip">
+          <div className="worklist-context-item">
+            <span className="worklist-context-label">Actionable tickets</span>
+            <span className="worklist-context-value">{kpis.actionable}</span>
+            <span className="worklist-context-meta">of {kpis.total} open</span>
+          </div>
+          <div className="worklist-context-item">
+            <span className="worklist-context-label">Blocked by risk</span>
+            <span className="worklist-context-value">{kpis.blocked}</span>
+            <span className="worklist-context-meta">guardrail blocks</span>
+          </div>
+          <div className="worklist-context-item">
+            <span className="worklist-context-label">Average score</span>
+            <span className="worklist-context-value">{kpis.avgScore}</span>
+            <span className="worklist-context-meta">0–100</span>
+          </div>
+          <div className="worklist-context-item">
+            <span className="worklist-context-label">Selected RR</span>
+            <span className="worklist-context-value">
+              {selected && typeof selected.rrMultiple === "number"
                 ? selected.rrMultiple.toFixed(2)
-                : "—"
-            }
-            tone="amber"
-            sublabel={selected?.symbol ?? "—"}
-          />
+                : "—"}
+            </span>
+            <span className="worklist-context-meta">{selected?.symbol ?? "—"}</span>
+          </div>
         </div>
 
         {/* Main layout: table + details */}
-        <div className="grid grid-cols-[minmax(0,2.2fr)_minmax(260px,0.9fr)] gap-3 min-h-[420px]">
+        <div className="worklist-main">
           {/* Table card */}
-          <Card className="a3-page-table-card min-h-[420px]">
-            <CardBody className="flex flex-col h-full">
+          <div className="worklist-table-region">
+            <Card className="a3-page-table-card worklist-table-card min-h-[420px] h-full">
+              <CardBody className="flex flex-col h-full">
               <div className="a3-table-headline">
                 <div className="a3-page-section-label">Tickets</div>
                 {(loading || error) && (
@@ -244,26 +224,20 @@ export default function WorklistV2() {
                 <table className="dashboard-table tickets-table min-w-full">
                   <thead>
                     <tr>
-                      <th className="text-left">Symbol</th>
-                      <th className="text-left">Strategy</th>
-                      <th className="text-center">Side</th>
-                      <th className="text-right">Score</th>
-                      <th className="text-center">Risk</th>
-                      <th className="text-right">RR</th>
-                      <th className="text-right">Entry</th>
-                      <th className="text-right">Stop</th>
-                      <th className="text-right">Target</th>
-                      <th className="text-right">Qty</th>
-                      <th className="text-right">Risk ($)</th>
-                      <th className="text-right">PnL (ticks)</th>
-                      <th className="text-right">Age (min)</th>
-                      <th className="text-left">Session</th>
+                      {worklistV2Columns.map((col) => (
+                        <th
+                          key={col.key}
+                          className={`px-3 py-3 text-[0.65rem] uppercase tracking-wide ${col.headerClassName ?? ""}`}
+                        >
+                          {col.header}
+                        </th>
+                      ))}
                     </tr>
                   </thead>
                   <tbody>
                     {loading && (
                       <tr>
-                        <td colSpan={14} className="tickets-v2-status-line">
+                        <td colSpan={columnCount} className="tickets-v2-status-line">
                           Loading worklist from engine…
                         </td>
                       </tr>
@@ -271,7 +245,7 @@ export default function WorklistV2() {
                     {error && !loading && (
                       <tr>
                         <td
-                          colSpan={14}
+                          colSpan={columnCount}
                           className="tickets-v2-status-line tickets-v2-status-error"
                         >
                           Engine tickets unavailable; Worklist feed unavailable.
@@ -280,7 +254,7 @@ export default function WorklistV2() {
                     )}
                     {!loading && !error && tickets.length === 0 && (
                       <tr>
-                        <td colSpan={14} className="tickets-v2-status-line">
+                        <td colSpan={columnCount} className="tickets-v2-status-line">
                           No worklist tickets returned for the current filters.
                         </td>
                       </tr>
@@ -290,107 +264,48 @@ export default function WorklistV2() {
                       tickets.map((row) => {
                         const isActive =
                           selected && selected.ticketId === row.ticketId;
+                        const rowClasses = [
+                          "tickets-row",
+                          isActive && "tickets-row-active",
+                          row.side === "LONG" ? "tickets-row-long" : "tickets-row-short",
+                          row.riskBucket
+                            ? `tickets-row-risk-${row.riskBucket.toLowerCase()}`
+                            : null,
+                        ]
+                          .filter(Boolean)
+                          .join(" ");
                         return (
                           <tr
                             key={row.ticketId}
-                            className={
-                              isActive
-                                ? "tickets-row tickets-row-active"
-                                : "tickets-row"
-                            }
+                            className={rowClasses}
                             onClick={() => setSelected(row)}
                           >
-                            <td className="tickets-cell-mono">{row.symbol}</td>
-                            <td className="text-slate-300">{row.strategy}</td>
-                            <td className="text-center">
-                              <Badge
-                                tone={row.side === "LONG" ? "emerald" : "rose"}
+                            {worklistV2Columns.map((col) => (
+                              <td
+                                key={col.key}
+                                className={`px-3 py-3 align-middle ${col.cellClassName ?? "tickets-cell-mono"}`}
                               >
-                                {row.side}
-                              </Badge>
-                            </td>
-                            <td className="tickets-cell-mono text-right">
-                              <span className="inline-flex items-center justify-end gap-1">
-                                <span>{row.score}</span>
-                                <span className={trendTone(row.trend)}>
-                                  {renderTrendArrow(row.trend)}
-                                </span>
-                                <span className="text-[0.6rem] text-slate-500">
-                                  Δ {row.delta}
-                                </span>
-                              </span>
-                            </td>
-                            <td className="text-center">
-                              <Badge tone={riskBucketTone(row.riskBucket)}>
-                                {row.riskDecision?.allowed ? "ALLOW" : "BLOCK"}
-                              </Badge>
-                            </td>
-                            <td className="tickets-cell-mono text-right">
-                              {row.rrMultiple != null
-                                ? row.rrMultiple.toFixed(2)
-                                : "—"}
-                            </td>
-                            <td className="tickets-cell-mono text-right">
-                              {row.entryPrice != null
-                                ? fmtPrice(row.entryPrice)
-                                : "—"}
-                            </td>
-                            <td>{renderPriceWithTicks(row.stopPrice, row.stopTicks)}</td>
-                            <td>{renderPriceWithTicks(row.targetPrice, row.targetTicks)}</td>
-                            <td className="tickets-cell-mono text-right">
-                              {row.contracts ?? "—"}
-                            </td>
-                            <td className="tickets-cell-mono text-right">
-                              {row.riskDollars != null
-                                ? row.riskDollars.toFixed(0)
-                                : "—"}
-                            </td>
-                            <td className="tickets-cell-mono text-right">
-                              {typeof row.pnlTicks === "number" ? (
-                                <span
-                                  className={
-                                    row.pnlTicks > 0
-                                      ? "text-emerald-400"
-                                      : row.pnlTicks < 0
-                                      ? "text-rose-400"
-                                      : "text-slate-300"
-                                  }
-                                >
-                                  {row.pnlTicks}
-                                </span>
-                              ) : (
-                                "—"
-                              )}
-                            </td>
-                            <td className="tickets-cell-mono text-right">
-                              {row.ageMinutes}
-                            </td>
-                            <td className="text-slate-300">
-                              <div className="flex flex-col leading-tight">
-                                <span className="font-mono text-slate-200">
-                                  {row.sessionDate}
-                                </span>
-                                <span className="text-[0.6rem] uppercase text-slate-500">
-                                  {row.sessionMetrics?.sessionQualityFlag ?? "—"}
-                                </span>
-                              </div>
-                            </td>
+                                {resolveColumnCell(col, row)}
+                              </td>
+                            ))}
                           </tr>
                         );
                       })}
                   </tbody>
                 </table>
               </div>
-            </CardBody>
-          </Card>
+              </CardBody>
+            </Card>
+          </div>
 
           {/* Details panel */}
-          <Card className="a3-page-side-panel min-h-[420px]">
-            <CardBody className="flex flex-col h-full gap-3">
-              <div className="flex items-center justify-between">
+          <aside className="worklist-details-panel">
+            <Card className="a3-page-side-panel worklist-details-card min-h-[420px] h-full">
+              <CardBody className="flex flex-col h-full gap-4">
+              <div className="worklist-details-header">
                 <div>
                   <div className="a3-page-section-label">Details</div>
-                  <div className="text-sm font-semibold text-slate-50">
+                  <div className="worklist-details-title">
                     {selected
                       ? `${selected.symbol} – ${selected.strategy}`
                       : "No ticket selected"}
@@ -404,153 +319,177 @@ export default function WorklistV2() {
               </div>
 
               {selected ? (
-                <div className="flex flex-col gap-3 text-[0.75rem] text-slate-200">
-                  {/* Core metrics */}
-                  <div className="grid grid-cols-2 gap-2">
-                    <div>
-                      <div className="text-[0.65rem] text-slate-500 mb-0.5">
-                        Score
+                <div className="worklist-details-content">
+                  <section className="worklist-details-section">
+                    <div className="worklist-details-section-title">Identity</div>
+                    <div className="worklist-details-pairs">
+                      <div>
+                        <div className="worklist-details-label">Symbol</div>
+                        <div className="worklist-details-value font-mono">
+                          {selected.symbol}
+                        </div>
                       </div>
-                      <div className="font-mono">
-                        {selected.score}{" "}
-                        <span className={trendTone(selected.trend)}>
-                          {renderTrendArrow(selected.trend)}
-                        </span>{" "}
-                        <span className="text-[0.6rem] text-slate-500">
-                          Δ {selected.delta}
-                        </span>
+                      <div>
+                        <div className="worklist-details-label">Strategy</div>
+                        <div className="worklist-details-value">
+                          {selected.strategy}
+                        </div>
                       </div>
-                    </div>
-                    <div>
-                      <div className="text-[0.65rem] text-slate-500 mb-0.5">
-                        RR / Qty / Risk
-                      </div>
-                      <div className="font-mono">
-                        {selected.rrMultiple != null
-                          ? selected.rrMultiple.toFixed(2)
-                          : "—"}{" "}
-                        RR · {selected.contracts ?? "—"} x · {selected.riskDollars != null ? `$${selected.riskDollars.toFixed(0)}` : "—"}
-                      </div>
-                    </div>
-                    <div>
-                      <div className="text-[0.65rem] text-slate-500 mb-0.5">
-                        Entry
-                      </div>
-                      <div className="font-mono">
-                        {selected.entryPrice != null
-                          ? fmtPrice(selected.entryPrice)
-                          : "—"}
+                      <div>
+                        <div className="worklist-details-label">Side</div>
+                        <div
+                          className={`worklist-details-value ${
+                            selected.side === "LONG"
+                              ? "text-emerald-300"
+                              : "text-rose-300"
+                          }`}
+                        >
+                          {selected.side}
+                        </div>
                       </div>
                     </div>
-                    <div>
-                      <div className="text-[0.65rem] text-slate-500 mb-0.5">
-                        Stop
-                      </div>
-                      <div className="font-mono leading-tight">
-                        {selected.stopPrice != null
-                          ? fmtPrice(selected.stopPrice)
-                          : "—"}
-                        {selected.stopTicks != null &&
-                          Number.isFinite(selected.stopTicks) && (
-                            <div className="text-[0.6rem] text-slate-500">
-                              {selected.stopTicks > 0
-                                ? `+${selected.stopTicks.toFixed(0)}t`
-                                : `${selected.stopTicks.toFixed(0)}t`}
-                            </div>
-                          )}
-                      </div>
-                    </div>
-                    <div>
-                      <div className="text-[0.65rem] text-slate-500 mb-0.5">
-                        Target
-                      </div>
-                      <div className="font-mono leading-tight">
-                        {selected.targetPrice != null
-                          ? fmtPrice(selected.targetPrice)
-                          : "—"}
-                        {selected.targetTicks != null &&
-                          Number.isFinite(selected.targetTicks) && (
-                            <div className="text-[0.6rem] text-slate-500">
-                              {selected.targetTicks > 0
-                                ? `+${selected.targetTicks.toFixed(0)}t`
-                                : `${selected.targetTicks.toFixed(0)}t`}
-                            </div>
-                          )}
-                      </div>
-                    </div>
-                    <div>
-                      <div className="text-[0.65rem] text-slate-500 mb-0.5">
-                        PnL (ticks)
-                      </div>
-                      <div className="font-mono">
-                        {typeof selected.pnlTicks === "number" ? selected.pnlTicks : "—"}
-                      </div>
-                    </div>
-                    <div>
-                      <div className="text-[0.65rem] text-slate-500 mb-0.5">
-                        Age / Session
-                      </div>
-                      <div className="font-mono">
-                        {selected.ageMinutes} min · {selected.sessionDate}
-                      </div>
-                    </div>
-                  </div>
+                  </section>
 
-                  {/* Risk decision */}
-                  {selected.riskDecision && (
-                    <div className="pt-2 border-t border-slate-800 text-[0.7rem] space-y-1">
-                      <div className="text-[0.65rem] uppercase tracking-[0.18em] text-slate-500">
-                        Risk decision
+                  <section className="worklist-details-section">
+                    <div className="worklist-details-section-title">Prices</div>
+                    <div className="worklist-details-pairs">
+                      <div>
+                        <div className="worklist-details-label">Entry</div>
+                        <div className="worklist-details-value font-mono">
+                          {selected.entryPrice != null
+                            ? fmtPrice(selected.entryPrice)
+                            : "—"}
+                        </div>
                       </div>
-                      <dl className="grid grid-cols-2 gap-2">
-                        <div>
-                          <dt className="text-slate-500">Allowed</dt>
-                          <dd className="font-mono">
-                            {selected.riskDecision.allowed ? "YES" : "NO"}
-                          </dd>
+                      <div>
+                        <div className="worklist-details-label">Stop</div>
+                        <div className="worklist-details-value font-mono">
+                          {selected.stopPrice != null
+                            ? fmtPrice(selected.stopPrice)
+                            : "—"}
+                          {selected.stopTicks != null &&
+                            Number.isFinite(selected.stopTicks) && (
+                              <div className="worklist-details-meta">
+                                {selected.stopTicks > 0
+                                  ? `+${selected.stopTicks.toFixed(0)}t`
+                                  : `${selected.stopTicks.toFixed(0)}t`}
+                              </div>
+                            )}
                         </div>
-                        <div>
-                          <dt className="text-slate-500">Codes</dt>
-                          <dd className="font-mono">
-                            {selected.riskDecision.codes?.join(", ") || "—"}
-                          </dd>
+                      </div>
+                      <div>
+                        <div className="worklist-details-label">Target</div>
+                        <div className="worklist-details-value font-mono">
+                          {selected.targetPrice != null
+                            ? fmtPrice(selected.targetPrice)
+                            : "—"}
+                          {selected.targetTicks != null &&
+                            Number.isFinite(selected.targetTicks) && (
+                              <div className="worklist-details-meta">
+                                {selected.targetTicks > 0
+                                  ? `+${selected.targetTicks.toFixed(0)}t`
+                                  : `${selected.targetTicks.toFixed(0)}t`}
+                              </div>
+                            )}
                         </div>
-                        <div>
-                          <dt className="text-slate-500">Warnings</dt>
-                          <dd>{selected.riskDecision.warnings?.join("; ") || "None"}</dd>
-                        </div>
-                        <div>
-                          <dt className="text-slate-500">Reason</dt>
-                          <dd>{selected.riskDecision.reason || "—"}</dd>
-                        </div>
-                      </dl>
+                      </div>
                     </div>
-                  )}
+                  </section>
 
-                  {/* Session flags */}
-                  <div className="pt-2 border-t border-slate-800 text-[0.7rem]">
-                    <div className="mb-1 uppercase tracking-[0.18em] text-slate-500 text-[0.65rem]">
-                      Session flags
+                  <section className="worklist-details-section">
+                    <div className="worklist-details-section-title">Risk & RR</div>
+                    <div className="worklist-details-pairs">
+                      <div>
+                        <div className="worklist-details-label">Score</div>
+                        <div className="worklist-details-value font-mono">
+                          {selected.score}{" "}
+                          <span className={trendTone(selected.trend)}>
+                            {renderTrendArrow(selected.trend)}
+                          </span>{" "}
+                          <span className="worklist-details-meta">Δ {selected.delta}</span>
+                        </div>
+                      </div>
+                      <div>
+                        <div className="worklist-details-label">RR / Qty / Risk</div>
+                        <div className="worklist-details-value font-mono">
+                          {selected.rrMultiple != null
+                            ? selected.rrMultiple.toFixed(2)
+                            : "—"}{" "}
+                          RR · {selected.contracts ?? "—"} x ·{" "}
+                          {selected.riskDollars != null
+                            ? `$${selected.riskDollars.toFixed(0)}`
+                            : "—"}
+                        </div>
+                      </div>
+                      <div>
+                        <div className="worklist-details-label">PnL (ticks)</div>
+                        <div className="worklist-details-value font-mono">
+                          {typeof selected.pnlTicks === "number"
+                            ? selected.pnlTicks
+                            : "—"}
+                        </div>
+                      </div>
                     </div>
-                    <div className="flex flex-wrap gap-1">
-                      {selected.sessionFlags?.flags?.length
-                        ? selected.sessionFlags.flags.map((flag) => (
-                            <Badge key={flag}>{flag}</Badge>
-                          ))
-                        : "No session flags"}
-                    </div>
-                  </div>
+                    {selected.riskDecision && (
+                      <div className="worklist-risk-decision">
+                        <div className="worklist-details-label uppercase">
+                          Risk decision
+                        </div>
+                        <dl>
+                          <div>
+                            <dt>Allowed</dt>
+                            <dd className="font-mono">
+                              {selected.riskDecision.allowed ? "YES" : "NO"}
+                            </dd>
+                          </div>
+                          <div>
+                            <dt>Codes</dt>
+                            <dd className="font-mono">
+                              {selected.riskDecision.codes?.join(", ") || "—"}
+                            </dd>
+                          </div>
+                          <div>
+                            <dt>Warnings</dt>
+                            <dd>
+                              {selected.riskDecision.warnings?.join("; ") || "None"}
+                            </dd>
+                          </div>
+                          <div>
+                            <dt>Reason</dt>
+                            <dd>{selected.riskDecision.reason || "—"}</dd>
+                          </div>
+                        </dl>
+                      </div>
+                    )}
+                  </section>
 
-                  {/* Notes */}
+                  <section className="worklist-details-section">
+                    <div className="worklist-details-section-title">Session / flags</div>
+                    <div className="worklist-details-pairs">
+                      <div>
+                        <div className="worklist-details-label">Age / Session</div>
+                        <div className="worklist-details-value font-mono">
+                          {selected.ageMinutes} min · {selected.sessionDate}
+                        </div>
+                      </div>
+                    </div>
+                    <div className="worklist-session-flags">
+                      <div className="worklist-details-label uppercase">Session flags</div>
+                      <div className="flex flex-wrap gap-1">
+                        {selected.sessionFlags?.flags?.length
+                          ? selected.sessionFlags.flags.map((flag) => (
+                              <Badge key={flag}>{flag}</Badge>
+                            ))
+                          : "No session flags"}
+                      </div>
+                    </div>
+                  </section>
+
                   {selected.notes && (
-                    <div className="pt-2 border-t border-slate-800 text-[0.7rem]">
-                      <div className="mb-1 uppercase tracking-[0.18em] text-slate-500 text-[0.65rem]">
-                        Notes
-                      </div>
-                      <p className="text-slate-200 whitespace-pre-wrap">
-                        {selected.notes}
-                      </p>
-                    </div>
+                    <section className="worklist-details-section">
+                      <div className="worklist-details-section-title">Notes</div>
+                      <p className="worklist-details-note">{selected.notes}</p>
+                    </section>
                   )}
                 </div>
               ) : (
@@ -558,8 +497,9 @@ export default function WorklistV2() {
                   Select a ticket from the table to view details.
                 </div>
               )}
-            </CardBody>
-          </Card>
+              </CardBody>
+            </Card>
+          </aside>
         </div>
       </section>
     </div>

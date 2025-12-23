@@ -33,7 +33,7 @@ function parseJsonSafely<T>(res: Response): Promise<T> {
 }
 
 export async function fetchStrategyConfig(): Promise<StrategyConfigSet[]> {
-  const res = await fetch('/api/strategies/config', {
+  const res = await fetch(`${import.meta.env.VITE_API_BASE}/api/strategies/config', {
     method: 'GET',
     headers: {
       'Content-Type': 'application/json',

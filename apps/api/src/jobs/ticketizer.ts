@@ -160,6 +160,43 @@ function onSuggestion(s: Suggestion): void {
   void handleSuggestion(s);
 }
 
+function applySizingToCanonical(
+  canonical: CanonicalCandidateTicket,
+  ticket: Ticket,
+): CanonicalCandidateTicket {
+  const sizedQuantity =
+    typeof ticket.qty === 'number' && Number.isFinite(ticket.qty) && ticket.qty > 0
+      ? ticket.qty
+      : canonical.quantity;
+  if (!sizedQuantity || sizedQuantity <= 0) {
+    return canonical;
+  }
+
+  const perContractRisk =
+    typeof canonical.perContractRisk === 'number' && Number.isFinite(canonical.perContractRisk)
+      ? canonical.perContractRisk
+      : Math.abs(ticket.entry - ticket.stop);
+
+  const computedRR =
+    typeof canonical.rrMultiple === 'number' && Number.isFinite(canonical.rrMultiple)
+      ? canonical.rrMultiple
+      : perContractRisk > 0
+      ? Math.abs(ticket.target - ticket.entry) / Math.max(perContractRisk, 1)
+      : 1;
+
+  const perContractReward = perContractRisk > 0 ? perContractRisk * computedRR : 0;
+
+  return {
+    ...canonical,
+    quantity: sizedQuantity,
+    perContractRisk,
+    rrMultiple: computedRR,
+    totalRisk: perContractRisk > 0 ? perContractRisk * sizedQuantity : canonical.totalRisk,
+    expectedReward:
+      perContractReward > 0 ? perContractReward * sizedQuantity : canonical.expectedReward,
+  };
+}
+
 async function handleSuggestion(s: Suggestion): Promise<void> {
   jobManager.beat('TICKETIZER');
   ticketizer.lastSuggestionTs = s.timestampUtc;
@@ -230,33 +267,34 @@ async function handleSuggestion(s: Suggestion): Promise<void> {
   }
   const canonicalKey = canonicalCandidate?.id ?? null;
   const canonical = canonicalKey ? canonicalCandidateCache.get(canonicalKey) : undefined;
-  const enrichedTicket: Ticket = canonical
+  const sizedCanonical = canonical ? applySizingToCanonical(canonical, t) : undefined;
+  const enrichedTicket: Ticket = sizedCanonical
     ? {
         ...t,
         meta: {
           ...t.meta,
           canonicalCandidate: {
-            id: canonical.id,
-            symbol: canonical.symbol,
-            sessionDateUtc: canonical.sessionDateUtc,
-            side: canonical.side,
-            entryPrice: canonical.entryPrice,
-            stopPrice: canonical.stopPrice,
-            targetPrice: canonical.targetPrice,
-            stopTicks: canonical.stopTicks,
-            targetTicks: canonical.targetTicks,
-            quantity: canonical.quantity,
-            rrMultiple: canonical.rrMultiple,
-            perContractRisk: canonical.perContractRisk,
-            totalRisk: canonical.totalRisk,
-            expectedReward: canonical.expectedReward,
-            strategyId: canonical.strategyId,
-            contextRegime: canonical.contextRegime,
-            contextAtrBucket: canonical.contextAtrBucket,
-            contextOrType: canonical.contextOrType,
-            tags: canonical.tags,
-            createdAtUtc: canonical.createdAtUtc,
-            source: canonical.source,
+            id: sizedCanonical.id,
+            symbol: sizedCanonical.symbol,
+            sessionDateUtc: sizedCanonical.sessionDateUtc,
+            side: sizedCanonical.side,
+            entryPrice: sizedCanonical.entryPrice,
+            stopPrice: sizedCanonical.stopPrice,
+            targetPrice: sizedCanonical.targetPrice,
+            stopTicks: sizedCanonical.stopTicks,
+            targetTicks: sizedCanonical.targetTicks,
+            quantity: sizedCanonical.quantity,
+            rrMultiple: sizedCanonical.rrMultiple,
+            perContractRisk: sizedCanonical.perContractRisk,
+            totalRisk: sizedCanonical.totalRisk,
+            expectedReward: sizedCanonical.expectedReward,
+            strategyId: sizedCanonical.strategyId,
+            contextRegime: sizedCanonical.contextRegime,
+            contextAtrBucket: sizedCanonical.contextAtrBucket,
+            contextOrType: sizedCanonical.contextOrType,
+            tags: sizedCanonical.tags,
+            createdAtUtc: sizedCanonical.createdAtUtc,
+            source: sizedCanonical.source,
           },
         },
       }

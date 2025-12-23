@@ -1,4 +1,4 @@
-import rawContractsSpec from '../../../config/contracts-spec.json' assert { type: 'json' };
+import rawContractsSpec from '../config/contracts-spec.json' assert { type: 'json' };
 
 export type ContractType = 'standard' | 'micro' | 'spot' | 'index';
 

@@ -29,7 +29,7 @@ function parseJsonSafely<T>(res: Response): Promise<T> {
  * GET /api/operator-risk/audit
  */
 export async function fetchRiskAuditLog(): Promise<RiskAuditEntry[]> {
-  const res = await fetch('/api/operator-risk/audit', {
+  const res = await fetch(`${import.meta.env.VITE_API_BASE}/api/operator-risk/audit', {
     method: 'GET',
     headers: {
       'Content-Type': 'application/json',

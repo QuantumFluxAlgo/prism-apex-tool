@@ -373,7 +373,7 @@ export function useWorklistTickets(): UseWorklistTicketsResult {
           mapped.push({
             ticketId,
             symbol: row.symbol ?? canonical.symbol,
-            strategy: row.strategy ?? canonical.strategy,
+            strategy: row.strategy ?? canonical.strategyId ?? "",
             side,
             entryPrice,
             stopPrice,

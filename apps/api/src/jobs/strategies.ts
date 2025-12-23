@@ -246,10 +246,18 @@ function onBar(bar: BarMessage): void {
       );
       if (res.length > 0) {
         cs.debounce.vwapActive = true;
+        const suggestion = res[0];
+        const entryPrice = suggestion.entry;
+        const stopPrice = suggestion.stop ?? entryPrice;
+        const targetPrice = suggestion.target ?? entryPrice;
+        const toTicks = (from: number, to: number) =>
+          tick.tickSize > 0 ? Math.round(Math.abs((to - from) / tick.tickSize)) : 0;
+        const stopTicks = Math.max(1, toTicks(entryPrice, stopPrice));
+        const targetTicks = Math.max(1, toTicks(entryPrice, targetPrice));
         emitSuggestion({
-          ...res[0],
+          ...suggestion,
           contract: bar.contract,
-          meta: { ...res[0].meta, vwap, atrTicks },
+          meta: { ...suggestion.meta, vwap, atrTicks, stopTicks, targetTicks },
         });
       }
     }

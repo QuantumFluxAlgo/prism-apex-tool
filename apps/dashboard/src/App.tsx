@@ -39,6 +39,14 @@ function ExecutionRoute({
   return <ExecutionShell activeTab={tab}>{children}</ExecutionShell>;
 }
 
+function WorklistRoute() {
+  return (
+    <ExecutionRoute tab="worklist">
+      <WorklistV2Page />
+    </ExecutionRoute>
+  );
+}
+
 export default function App() {
   return (
     <ThemeProvider>
@@ -49,11 +57,11 @@ export default function App() {
               {/* Primary V2 tabs (A3 shell) */}
               <Route
                 path="/worklist-v2"
-                element={
-                  <ExecutionRoute tab="worklist">
-                    <WorklistV2Page />
-                  </ExecutionRoute>
-                }
+                element={<WorklistRoute />}
+              />
+              <Route
+                path="/"
+                element={<WorklistRoute />}
               />
               <Route
                 path="/tickets"
@@ -105,7 +113,6 @@ export default function App() {
               />
 
               {/* Legacy / convenience redirects into the V2 shell */}
-              <Route path="/" element={<Navigate to="/worklist-v2" replace />} />
               <Route path="/worklist" element={<Navigate to="/worklist-v2" replace />} />
               <Route path="/reports" element={<Navigate to="/analytics" replace />} />
               <Route path="/positions" element={<Navigate to="/tickets" replace />} />
@@ -121,4 +128,3 @@ export default function App() {
     </ThemeProvider>
   );
 }
-

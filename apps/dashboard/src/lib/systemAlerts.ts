@@ -31,7 +31,7 @@ function parseJsonSafely<T>(res: Response): Promise<T> {
  * GET /api/system/alerts
  */
 export async function fetchSystemAlerts(): Promise<SystemAlert[]> {
-  const res = await fetch('/api/system/alerts', {
+  const res = await fetch(`${import.meta.env.VITE_API_BASE}/api/system/alerts', {
     method: 'GET',
     headers: {
       'Content-Type': 'application/json',
