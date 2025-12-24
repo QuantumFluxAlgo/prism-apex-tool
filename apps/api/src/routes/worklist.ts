@@ -283,17 +283,47 @@ export default async function worklistRoute(app: FastifyInstance) {
           );
 
           const meta = (row.meta ?? {}) as Record<string, unknown>;
+          const entryPrice =
+            typeof row.entry_price === 'number' ? (row.entry_price as number) : null;
+          const stopPrice =
+            typeof row.stop_price === 'number' ? (row.stop_price as number) : null;
 
-          const contracts = (meta.contracts as number | undefined) ?? null;
-          const riskDollars =
+          const metaContracts =
+            (meta.contracts as number | undefined) ?? (meta.qty as number | undefined);
+          const canonicalContracts =
+            typeof canonical?.quantity === 'number' && Number.isFinite(canonical.quantity)
+              ? (canonical.quantity as number)
+              : null;
+          let normalizedContracts =
+            typeof metaContracts === 'number' && Number.isFinite(metaContracts)
+              ? metaContracts
+              : canonicalContracts;
+
+          let riskDollars =
             (meta.riskDollars as number | undefined) ??
             (meta.risk_dollars as number | undefined) ??
-            null;
+            (canonical?.totalRisk ?? null);
+
+          if (
+            riskDollars == null &&
+            entryPrice !== null &&
+            stopPrice !== null &&
+            Number.isFinite(entryPrice) &&
+            Number.isFinite(stopPrice)
+          ) {
+            const fallbackContracts =
+              typeof normalizedContracts === 'number' && Number.isFinite(normalizedContracts)
+                ? normalizedContracts
+                : 1;
+            riskDollars = Math.abs(entryPrice - stopPrice) * fallbackContracts;
+            normalizedContracts = fallbackContracts;
+          }
+
           const rrMultiple =
             (meta.rrMultiple as number | undefined) ??
             (meta.rr as number | undefined) ??
             (row.rr as number | undefined) ??
-            null;
+            (canonical?.rrMultiple ?? null);
 
           const openedAt = row.opened_at_utc;
           const createdAt =
@@ -309,7 +339,7 @@ export default async function worklistRoute(app: FastifyInstance) {
             strategy: row.strategy,
             side: ((row.direction ?? 'LONG') as 'LONG' | 'SHORT') ?? 'LONG',
 
-            contracts,
+            contracts: normalizedContracts ?? null,
             riskDollars,
             rrMultiple,
 

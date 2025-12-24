@@ -32,18 +32,19 @@ const renderScoreCell = (row: WorklistTicket) => {
   );
 };
 
+const formatTime = (iso?: string | null) => {
+  if (!iso) return "—";
+  const date = new Date(iso);
+  if (Number.isNaN(date.getTime())) return "—";
+  return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+};
+
 export const worklistV2Columns: WorklistV2Column[] = [
   {
     key: "symbol",
     header: "SYMBOL",
     headerClassName: "text-left",
     cellClassName: "tickets-cell-mono",
-  },
-  {
-    key: "strategy",
-    header: "STRATEGY",
-    headerClassName: "text-left",
-    cellClassName: "text-slate-300",
   },
   {
     key: "side",
@@ -161,16 +162,14 @@ export const worklistV2Columns: WorklistV2Column[] = [
     render: (row) => (
       <div className="flex flex-col leading-tight">
         <span className="font-mono text-slate-200">{row.sessionDate}</span>
+        <span className="text-[0.65rem] text-slate-400">
+          {formatTime(row.createdAt)}
+        </span>
         <span className="text-[0.6rem] uppercase status-muted">
           {row.sessionMetrics?.sessionQualityFlag ?? "—"}
         </span>
       </div>
     ),
-  },
-  {
-    key: "source",
-    header: "SOURCE",
-    render: (row) => row.canonical?.source ?? "ENGINE",
   },
 ];
 
