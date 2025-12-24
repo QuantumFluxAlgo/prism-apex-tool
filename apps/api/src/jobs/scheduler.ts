@@ -204,14 +204,15 @@ function resolveSymbols(): string[] {
 }
 
 async function spawnIngestCli(mode: 'backfill' | 'gapfill', env: NodeJS.ProcessEnv): Promise<void> {
-  const args = ['--filter', '@prism-apex/ingest', mode];
+  const scriptPath = `/app/apps/ingest/dist/${mode}.js`;
+  const args = [scriptPath];
   const options: SpawnOptionsWithoutStdio = {
     env,
     stdio: 'inherit',
   };
   await new Promise<void>((resolve, reject) => {
-    const child = spawn('pnpm', args, options);
-    child.on('exit', (code) => (code === 0 ? resolve() : reject(new Error(`pnpm ${mode} exited with code ${code}`))));
+    const child = spawn('node', args, options);
+    child.on('exit', (code) => (code === 0 ? resolve() : reject(new Error(`node ${scriptPath} exited with code ${code}`))));
     child.on('error', reject);
   });
 }
