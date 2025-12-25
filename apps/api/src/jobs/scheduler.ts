@@ -158,7 +158,21 @@ const DEFAULT_MANUAL_SYMBOLS = [
   'EURUSD=X',
   'BTC-USD',
 ];
-const DEFAULT_MANUAL_STRATEGIES: EnginePreviewRequest['strategy'][] = ['APX-DDB-01'];
+const DEFAULT_MANUAL_STRATEGIES: EnginePreviewRequest['strategy'][] = ['orr'];
+
+const STRATEGY_ALIAS_MAP: Record<string, EnginePreviewRequest['strategy']> = {
+  orr: 'orr',
+  'apx-ddb-01': 'orr',
+  'apx_ddb_01': 'orr',
+  'apxddb01': 'orr',
+  osb: 'osb',
+  'apx-osb-01': 'osb',
+  'apx_osb_01': 'osb',
+  'apxosb01': 'osb',
+  vwapft: 'vwapft',
+  'vwap-ft': 'vwapft',
+  'vwap_ft': 'vwapft',
+};
 
 function resolveManualSymbolsFromEnv(value?: string): string[] {
   const parsed = parseCsv(value);
@@ -166,6 +180,21 @@ function resolveManualSymbolsFromEnv(value?: string): string[] {
   const ingestSymbols = resolveSymbols();
   if (ingestSymbols.length) return ingestSymbols;
   return DEFAULT_MANUAL_SYMBOLS;
+}
+
+function normalizeStrategyAlias(value?: string): EnginePreviewRequest['strategy'] | null {
+  if (!value) return null;
+  const key = value.trim().toLowerCase();
+  return STRATEGY_ALIAS_MAP[key] ?? null;
+}
+
+function resolveManualStrategiesFromEnv(value?: string): EnginePreviewRequest['strategy'][] {
+  const parsed = parseCsv(value);
+  const normalized = parsed
+    .map((strategy) => normalizeStrategyAlias(strategy))
+    .filter((s): s is EnginePreviewRequest['strategy'] => Boolean(s));
+  if (normalized.length) return normalized;
+  return [...DEFAULT_MANUAL_STRATEGIES];
 }
 
 function resolveSessionDateFromEnv(value?: string): string {
@@ -285,8 +314,7 @@ const STRATEGIES_JOB_NAME = 'strategies-manual';
 const STRATEGIES_JOB_INTERVAL_MS = Number(process.env.STRATEGIES_JOB_INTERVAL_MS ?? '600000');
 
 async function runStrategiesJob(): Promise<void> {
-  let strategies = parseCsv(process.env.STRATEGIES_JOB_STRATEGIES ?? '');
-  if (!strategies.length) strategies = [...DEFAULT_MANUAL_STRATEGIES];
+  const strategies = resolveManualStrategiesFromEnv(process.env.STRATEGIES_JOB_STRATEGIES);
   const symbols = resolveManualSymbolsFromEnv(process.env.STRATEGIES_JOB_SYMBOLS);
   const sessionDate = resolveSessionDateFromEnv(process.env.STRATEGIES_JOB_SESSION_DATE);
   const started = Date.now();
@@ -321,10 +349,9 @@ const TICKETIZER_JOB_NAME = 'ticketizer-manual';
 const TICKETIZER_JOB_INTERVAL_MS = Number(process.env.TICKETIZER_JOB_INTERVAL_MS ?? '600000');
 
 async function runTicketizerJob(): Promise<void> {
-  let strategies = parseCsv(
-    process.env.TICKETIZER_JOB_STRATEGIES ?? process.env.STRATEGIES_JOB_STRATEGIES ?? '',
+  const strategies = resolveManualStrategiesFromEnv(
+    process.env.TICKETIZER_JOB_STRATEGIES ?? process.env.STRATEGIES_JOB_STRATEGIES ?? undefined,
   );
-  if (!strategies.length) strategies = [...DEFAULT_MANUAL_STRATEGIES];
   const symbols = resolveManualSymbolsFromEnv(
     process.env.TICKETIZER_JOB_SYMBOLS ?? process.env.STRATEGIES_JOB_SYMBOLS ?? undefined,
   );

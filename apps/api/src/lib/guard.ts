@@ -45,11 +45,24 @@ function normalizeSide(direction: GuardCandidate['direction']): 'BUY' | 'SELL' {
 }
 
 function normalizeStrategy(strategy?: string): StrategyId {
-  if (!strategy) return 'APX-DDB-01';
-  const key = strategy.toUpperCase();
-  if (key.includes('VWAP')) return 'VWAP_FT';
-  if (key.includes('OSB')) return 'OSB';
-  return 'APX-DDB-01';
+  // Canonical persisted strategy namespace:
+  // - APX-DDB-01
+  // - APX-OSB-01
+  // - APX-VWAP-FT
+  //
+  // Accept legacy variants, but always normalize to the canonical IDs.
+  if (!strategy) return 'APX-DDB-01' as StrategyId;
+
+  const key = String(strategy).trim().toUpperCase();
+
+  // VWAP variants
+  if (key.includes('VWAP')) return 'APX-VWAP-FT' as StrategyId;
+
+  // OSB variants
+  if (key.includes('OSB')) return 'APX-OSB-01' as StrategyId;
+
+  // ORR/DDB variants (default bucket)
+  return 'APX-DDB-01' as StrategyId;
 }
 
 function withinSuppressionWindow(now: Date, flatByUtc: string, minutes: number): boolean {

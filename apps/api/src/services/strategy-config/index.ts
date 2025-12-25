@@ -18,6 +18,8 @@ const DEFAULT_DATABASE_URL = 'postgres://apex:apex@db:5432/prismapex';
 const pool = new Pool({ connectionString: process.env.DATABASE_URL ?? DEFAULT_DATABASE_URL });
 
 const TABLE_MAP: Record<StrategyKey, string> = {
+  'APX-DDB-01': 'orr_config',
+  'APX-OSB-01': 'osb_config',
   orr: 'orr_config',
   osb: 'osb_config',
   vwap_ft: 'vwap_ft_config',

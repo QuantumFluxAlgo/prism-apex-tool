@@ -21,6 +21,7 @@ import { exportRoutes } from './routes/export.js';
 import ticketsRoute from './routes/tickets.js';
 import ticketsDebugRoute from './routes/tickets.debug.js';
 import ticketCompleteRoute from './routes/ticket.complete.js';
+import ticketEnteredRoute from './routes/ticket.entered.js';
 import worklistRoute from './routes/worklist.js';
 import operatorActionsRoute from './routes/operator-actions.js';
 import { tradingviewWebhookRoutes } from './routes/webhooks.tradingview.js';
@@ -58,6 +59,7 @@ import operatorConfigRoutes from './routes/operator-config.js';
 import operatorRiskRoutes from './routes/operator-risk.js';
 import operatorRiskAuditRoutes from './routes/operatorRisk.audit.js';
 import { registerOperatorSizingRoutes } from './routes/operatorSizing.js';
+import operatorSessionRiskRoutes from './routes/operator-session-risk.js';
 
 const cfg = getConfig();
 const DISABLE = process.env.DISABLE_JOBS === '1' || process.env.NODE_ENV === 'test';
@@ -132,6 +134,7 @@ export function buildServer() {
   app.register(worklistRoute);
   app.register(operatorActionsRoute);
   app.register(ticketCompleteRoute);
+  app.register(ticketEnteredRoute);
   app.register(metricsRoute);
   app.register(analyticsRoutes);
   app.register(auditRoutes);
@@ -139,6 +142,7 @@ export function buildServer() {
   app.register(operatorConfigRoutes);
   app.register(operatorRiskRoutes);
   app.register(operatorRiskAuditRoutes);
+  app.register(operatorSessionRiskRoutes);
   registerOperatorSizingRoutes(app);
   app.register(yahooHealthRoutes);
   app.register(exportRoutes);

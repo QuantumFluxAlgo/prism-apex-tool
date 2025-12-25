@@ -48,8 +48,13 @@ export interface WorklistTicket {
   contracts: number | null;
   rrMultiple: number | null;
   riskDollars: number | null;
+  riskPoints: number | null;
+  rewardPoints: number | null;
+  rewardDollars: number | null;
   riskBucket: WorklistRiskBucket;
   riskDecision: TicketRiskDecision | null;
+  tickSize: number | null;
+  tickValueUSD: number | null;
 
   // Time / PnL
   ageMinutes: number;
@@ -350,6 +355,29 @@ export function useWorklistTickets(): UseWorklistTicketsResult {
               ? canonical.totalRisk
               : null;
 
+          const riskPoints =
+            typeof row.riskPoints === "number"
+              ? row.riskPoints
+              : entryPrice != null && stopPrice != null
+              ? Math.abs(entryPrice - stopPrice)
+              : null;
+
+          const rewardPoints =
+            typeof row.rewardPoints === "number"
+              ? row.rewardPoints
+              : entryPrice != null && targetPrice != null
+              ? Math.abs(targetPrice - entryPrice)
+              : null;
+
+          const rewardDollars =
+            typeof row.rewardDollars === "number" ? row.rewardDollars : null;
+
+          const tickSize =
+            typeof row.tickSize === "number" ? row.tickSize : null;
+
+          const tickValueUSD =
+            typeof row.tickValueUSD === "number" ? row.tickValueUSD : null;
+
           const sessionDate: string =
             (row.sessionDate as string | undefined) ??
             (row.session_date_utc as string | undefined) ??
@@ -388,8 +416,13 @@ export function useWorklistTickets(): UseWorklistTicketsResult {
             contracts,
             rrMultiple,
             riskDollars,
+            riskPoints,
+            rewardPoints,
+            rewardDollars,
             riskBucket,
             riskDecision,
+            tickSize,
+            tickValueUSD,
             ageMinutes,
             pnlTicks,
             sessionDate,

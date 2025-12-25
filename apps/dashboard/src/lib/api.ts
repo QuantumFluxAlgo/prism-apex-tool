@@ -290,6 +290,28 @@ export interface WorklistApiResponse {
   rows?: any[];
 }
 
+export type OperatorRiskSession = {
+  sessionDateUtc: string;
+  dailyRiskLimitUsd: number | null;
+  riskUsedUsd: number;
+  riskRemainingUsd: number;
+  locked: boolean;
+};
+
+export async function fetchOperatorRiskSession(): Promise<OperatorRiskSession> {
+  return fetchJson<OperatorRiskSession>('/api/operator-risk/session');
+}
+
+export async function updateOperatorRiskSession(
+  dailyRiskLimitUsd: number,
+): Promise<OperatorRiskSession> {
+  return fetchJson<OperatorRiskSession>('/api/operator-risk/session', {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ dailyRiskLimitUsd }),
+  });
+}
+
 export async function fetchWorklistFeed(): Promise<WorklistApiResponse | null> {
   try {
     const payload = await fetchJson<WorklistApiResponse>('/api/worklist');

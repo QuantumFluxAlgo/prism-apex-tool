@@ -1,8 +1,8 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import crypto from 'node:crypto';
-import type { Ticket } from '../schemas/ticket.js';
-export type { Ticket } from '../schemas/ticket.js';
+import type { Ticket, TicketStrategy } from '../schemas/ticket.js';
+export type { Ticket, TicketStrategy } from '../schemas/ticket.js';
 import { resolveDataDir } from '../utils/dirs.js';
 
 const DATA_DIR = resolveDataDir();
@@ -19,6 +19,28 @@ function ensureDir() {
   try {
     fs.mkdirSync(DATA_DIR, { recursive: true });
   } catch {}
+}
+
+/**
+ * Normalize any inbound/legacy strategy identifier to the canonical persisted IDs.
+ *
+ * Canonical (persisted):
+ * - APX-DDB-01
+ * - APX-OSB-01
+ * - APX-VWAP-FT
+ *
+ * Accepted aliases (normalized):
+ * - ORR / orr / DDB / etc -> APX-DDB-01
+ * - OSB / APX-OSB-01 -> APX-OSB-01
+ * - VWAP_FT / VWAP-FT / vwapft / vwap_ft / APX-VWAP-FT -> APX-VWAP-FT
+ */
+function normalizeTicketStrategy(raw: unknown): TicketStrategy {
+  if (typeof raw !== 'string' || !raw.trim().length) return 'APX-DDB-01';
+  const v = raw.trim().toUpperCase();
+
+  if (v.includes('VWAP')) return 'APX-VWAP-FT';
+  if (v.includes('OSB')) return 'APX-OSB-01';
+  return 'APX-DDB-01';
 }
 
 function indexRecord(rec: Stored) {
@@ -38,6 +60,14 @@ function load() {
     if (!line.trim()) continue;
     try {
       const rec = JSON.parse(line) as Stored;
+
+      // Defensive: normalize historical/legacy stored strategy values.
+      if (rec && typeof rec === 'object' && rec.meta && typeof rec.meta === 'object') {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const meta: any = rec.meta as any;
+        meta.strategy = normalizeTicketStrategy(meta.strategy);
+      }
+
       indexRecord(rec);
     } catch {}
   }
@@ -54,9 +84,22 @@ function makeHash(t: Ticket): string {
 
 export async function saveTicket(t: Ticket): Promise<void> {
   ensureDir();
-  const hash = makeHash(t);
+
+  // Normalize strategy on write to prevent namespace drift in the JSONL store.
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const meta: any = (t as any).meta ?? {};
+  const normalized: Ticket = {
+    ...t,
+    meta: {
+      ...meta,
+      strategy: normalizeTicketStrategy(meta.strategy),
+    },
+  } as Ticket;
+
+  const hash = makeHash(normalized);
   if (hashes.has(hash)) return;
-  const rec: Stored = { ...t, hash };
+
+  const rec: Stored = { ...normalized, hash };
   fs.appendFileSync(FILE, JSON.stringify(rec) + '\n');
   indexRecord(rec);
 }
@@ -71,10 +114,11 @@ export function listTickets(
   nextCursor?: number;
 } {
   const day = days.get(date) ?? [];
-  const strategyFilter = strategy?.trim();
-  const filtered = strategyFilter
-    ? day.filter((ticket) => ticket.meta.strategy === strategyFilter)
-    : day;
+  const strategyFilterRaw = strategy?.trim();
+  const strategyFilter = strategyFilterRaw ? normalizeTicketStrategy(strategyFilterRaw) : undefined;
+
+  const filtered = strategyFilter ? day.filter((ticket) => ticket.meta.strategy === strategyFilter) : day;
+
   const slice = filtered.slice(cursor, cursor + limit).map(({ hash: _hash, ...t }) => t);
   const nextCursor = cursor + limit < filtered.length ? cursor + limit : undefined;
   return { items: slice, nextCursor };

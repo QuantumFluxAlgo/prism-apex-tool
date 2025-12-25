@@ -1,6 +1,28 @@
 import { z } from 'zod';
 
-export const TICKET_STRATEGIES = ['VWAP_FT', 'OSB', 'APX-DDB-01'] as const;
+/**
+ * Ticket strategy IDs.
+ *
+ * Canonical persisted strategy IDs (preferred):
+ * - APX-DDB-01
+ * - APX-OSB-01
+ * - APX-VWAP-FT
+ *
+ * Legacy aliases remain accepted for backwards compatibility / inbound payloads,
+ * but write paths should normalize to canonical IDs.
+ */
+export const TICKET_STRATEGIES = [
+  // Canonical (preferred)
+  'APX-DDB-01',
+  'APX-OSB-01',
+  'APX-VWAP-FT',
+
+  // Legacy aliases (accepted)
+  'ORR',
+  'OSB',
+  'VWAP_FT',
+  'VWAP-FT',
+] as const;
 
 export const TicketSchema = z.object({
   symbol: z.string(),

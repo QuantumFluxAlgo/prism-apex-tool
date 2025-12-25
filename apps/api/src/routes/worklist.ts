@@ -28,6 +28,7 @@ import { createSessionFlagsService } from '../jobs/session-metrics/session-flags
 import type { TicketRiskDecisionDto } from './dto/riskDecisionDto.js';
 
 import { computePnL } from '@prism-apex/shared';
+import { getInstrumentSpec } from '../risk/contractMath.js';
 
 const DEFAULT_DATABASE_URL =
   process.env.DATABASE_URL ?? 'postgres://apex:apex@db:5432/prismapex';
@@ -43,6 +44,11 @@ export interface WorklistTicketDto {
   contracts: number | null;
   riskDollars: number | null;
   rrMultiple: number | null;
+  riskPoints: number | null;
+  rewardPoints: number | null;
+  rewardDollars: number | null;
+  tickSize: number | null;
+  tickValueUSD: number | null;
 
   entryPrice: number;
   stopPrice: number;
@@ -141,6 +147,7 @@ function computePnlTicksFromCanonical(canonical: any, pnl: number | null): numbe
 async function fetchRawTickets(client: Client, q: WorklistQuery) {
   const filters: string[] = ["actionable IS TRUE", "status = 'OPEN'"];
   const params: any[] = [];
+  filters.push("created_at_utc >= (now() - INTERVAL '30 minutes')");
 
   const addFilter = (sql: string, value?: any) => {
     if (value === undefined || value === null || value === '') return;
@@ -167,6 +174,7 @@ async function fetchRawTickets(client: Client, q: WorklistQuery) {
       status,
       actionable,
       opened_at_utc,
+      created_at_utc,
       completed_at_utc,
       session_date_utc,
       entry_price,
@@ -198,6 +206,20 @@ async function fetchRawTickets(client: Client, q: WorklistQuery) {
   return res.rows;
 }
 
+async function expireStaleTickets(client: Client): Promise<void> {
+  await client.query(
+    `
+      UPDATE tickets
+         SET status = 'EXPIRED',
+             actionable = FALSE,
+             non_actionable_reason = 'expired'
+       WHERE status = 'OPEN'
+         AND actionable IS TRUE
+         AND created_at_utc < (now() - INTERVAL '30 minutes')
+    `,
+  );
+}
+
 function getSessionKey(row: any): SessionMetricsKey | null {
   if (!row.symbol) return null;
 
@@ -223,6 +245,7 @@ export default async function worklistRoute(app: FastifyInstance) {
 
       await client.connect();
       try {
+        await expireStaleTickets(client);
         const rows = await fetchRawTickets(client, req.query ?? {});
 
         // Build unique session keys for batch session metrics lookup
@@ -287,6 +310,8 @@ export default async function worklistRoute(app: FastifyInstance) {
             typeof row.entry_price === 'number' ? (row.entry_price as number) : null;
           const stopPrice =
             typeof row.stop_price === 'number' ? (row.stop_price as number) : null;
+          const targetPrice =
+            typeof row.target_price === 'number' ? (row.target_price as number) : null;
 
           const metaContracts =
             (meta.contracts as number | undefined) ?? (meta.qty as number | undefined);
@@ -299,24 +324,85 @@ export default async function worklistRoute(app: FastifyInstance) {
               ? metaContracts
               : canonicalContracts;
 
+          let instrumentSpec: ReturnType<typeof getInstrumentSpec> | null = null;
+          try {
+            instrumentSpec = getInstrumentSpec(row.symbol);
+          } catch {
+            instrumentSpec = null;
+          }
+
+          const tickSize = instrumentSpec?.tickSize ?? null;
+          const tickValueUSD = instrumentSpec?.dollarsPerTick ?? null;
+
+          let recommendedQty =
+            typeof normalizedContracts === 'number' && Number.isFinite(normalizedContracts)
+              ? normalizedContracts
+              : null;
+
+          if (
+            normalizedContracts === null ||
+            !Number.isFinite(normalizedContracts as number)
+          ) {
+            recommendedQty = recommendedQty ?? 1;
+            normalizedContracts = recommendedQty;
+          }
+          if (recommendedQty === null || !Number.isFinite(recommendedQty)) {
+            recommendedQty = 1;
+          }
+          const qtyForRisk = Number.isFinite(recommendedQty)
+            ? (recommendedQty as number)
+            : 1;
+
           let riskDollars =
             (meta.riskDollars as number | undefined) ??
             (meta.risk_dollars as number | undefined) ??
             (canonical?.totalRisk ?? null);
 
+          let derivedRiskPoints: number | null = null;
+          let derivedRiskDollars: number | null = null;
+          let derivedRewardPoints: number | null = null;
+          let derivedRewardDollars: number | null = null;
+
           if (
-            riskDollars == null &&
+            instrumentSpec &&
             entryPrice !== null &&
             stopPrice !== null &&
             Number.isFinite(entryPrice) &&
-            Number.isFinite(stopPrice)
+            Number.isFinite(stopPrice) &&
+            instrumentSpec.tickSize > 0 &&
+            instrumentSpec.dollarsPerTick > 0
           ) {
-            const fallbackContracts =
-              typeof normalizedContracts === 'number' && Number.isFinite(normalizedContracts)
-                ? normalizedContracts
-                : 1;
-            riskDollars = Math.abs(entryPrice - stopPrice) * fallbackContracts;
-            normalizedContracts = fallbackContracts;
+            const riskPts = Math.abs(entryPrice - stopPrice);
+            const riskTicks = riskPts / instrumentSpec.tickSize;
+            if (Number.isFinite(riskTicks)) {
+              derivedRiskPoints = riskPts;
+              derivedRiskDollars = Math.round(
+                riskTicks * instrumentSpec.dollarsPerTick * qtyForRisk,
+              );
+            }
+          }
+
+          if (
+            instrumentSpec &&
+            entryPrice !== null &&
+            targetPrice !== null &&
+            Number.isFinite(entryPrice) &&
+            Number.isFinite(targetPrice) &&
+            instrumentSpec.tickSize > 0 &&
+            instrumentSpec.dollarsPerTick > 0
+          ) {
+            const rewardPts = Math.abs(targetPrice - entryPrice);
+            const rewardTicks = rewardPts / instrumentSpec.tickSize;
+            if (Number.isFinite(rewardTicks)) {
+              derivedRewardPoints = rewardPts;
+              derivedRewardDollars = Math.round(
+                rewardTicks * instrumentSpec.dollarsPerTick * qtyForRisk,
+              );
+            }
+          }
+
+          if (riskDollars == null && derivedRiskDollars !== null) {
+            riskDollars = derivedRiskDollars;
           }
 
           const rrMultiple =
@@ -325,13 +411,13 @@ export default async function worklistRoute(app: FastifyInstance) {
             (row.rr as number | undefined) ??
             (canonical?.rrMultiple ?? null);
 
-          const openedAt = row.opened_at_utc;
+          const createdRaw = row.created_at_utc ?? row.opened_at_utc;
           const createdAt =
-            typeof openedAt === 'string'
-              ? openedAt
-              : openedAt instanceof Date
-              ? openedAt.toISOString()
-              : new Date(openedAt ?? Date.now()).toISOString();
+            typeof createdRaw === 'string'
+              ? createdRaw
+              : createdRaw instanceof Date
+              ? createdRaw.toISOString()
+              : new Date(createdRaw ?? Date.now()).toISOString();
 
           return {
             ticketId: String(row.id),
@@ -342,6 +428,11 @@ export default async function worklistRoute(app: FastifyInstance) {
             contracts: normalizedContracts ?? null,
             riskDollars,
             rrMultiple,
+            riskPoints: derivedRiskPoints,
+            rewardPoints: derivedRewardPoints,
+            rewardDollars: derivedRewardDollars,
+            tickSize,
+            tickValueUSD,
 
             entryPrice: row.entry_price,
             stopPrice: row.stop_price,

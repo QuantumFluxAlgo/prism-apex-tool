@@ -1,5 +1,4 @@
 import React from "react";
-import { pnlTicksCell } from "@prism-apex/ui-table";
 import { fmtPrice } from "../utils/number";
 import Badge from "../ui/Badge";
 import type { WorklistTicket } from "./WorklistV2";
@@ -39,16 +38,44 @@ const formatTime = (iso?: string | null) => {
   return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
 };
 
+const formatRiskDollars = (value?: number | null) => {
+  if (typeof value !== "number" || !Number.isFinite(value)) return "—";
+  return `$${value.toFixed(0)}`;
+};
+
+const renderRiskCell = (row: WorklistTicket) => {
+  const badgeTone = row.riskDecision
+    ? row.riskDecision.allowed
+      ? "emerald"
+      : "rose"
+    : "amber";
+  const badgeLabel = row.riskDecision
+    ? row.riskDecision.allowed
+      ? "ALLOW"
+      : "BLOCK"
+    : "CHECK";
+  return (
+    <div className="flex flex-col items-center gap-1 leading-tight">
+      <Badge tone={badgeTone} size="xs">
+        {badgeLabel}
+      </Badge>
+      <span className="tickets-cell-mono text-[0.75rem] text-slate-200">
+        {formatRiskDollars(row.riskDollars)}
+      </span>
+    </div>
+  );
+};
+
 export const worklistV2Columns: WorklistV2Column[] = [
   {
     key: "symbol",
-    header: "SYMBOL",
+    header: "Symbol",
     headerClassName: "text-left",
     cellClassName: "tickets-cell-mono",
   },
   {
     key: "side",
-    header: "SIDE",
+    header: "Side",
     headerClassName: "text-center",
     cellClassName: "text-center",
     render: (row) => (
@@ -62,67 +89,35 @@ export const worklistV2Columns: WorklistV2Column[] = [
   },
   {
     key: "score",
-    header: "SCORE",
+    header: "Score",
     headerClassName: "text-right",
     cellClassName: "text-right",
     render: (row) => renderScoreCell(row),
   },
   {
     key: "riskDecision",
-    header: "RISK",
-    headerClassName: "text-center text-slate-500 w-[76px]",
-    cellClassName: "text-center w-[76px]",
-    render: (row) =>
-      row.riskDecision ? (
-        <Badge tone={row.riskDecision.allowed ? "emerald" : "rose"}>
-          {row.riskDecision.allowed ? "ALLOW" : "BLOCK"}
-        </Badge>
-      ) : (
-        "—"
-      ),
-  },
-  {
-    key: "rrMultiple",
-    header: "RR",
-    headerClassName: "text-right",
-    cellClassName: "text-right",
-    render: (row) => {
-      const value =
-        typeof row.rrMultiple === "number" && Number.isFinite(row.rrMultiple)
-          ? row.rrMultiple
-          : null;
-      const bucket =
-        value == null
-          ? "status-muted"
-          : value >= 2
-          ? "rr-good"
-          : value >= 1
-          ? "rr-mid"
-          : "rr-bad";
-      return (
-        <span className={`${bucket} rr-plain`}>
-          {value == null ? "—" : value.toFixed(2)}
-        </span>
-      );
-    },
+    header: "Risk",
+    headerClassName: "text-center text-slate-500 w-[98px]",
+    cellClassName: "text-center w-[98px]",
+    render: (row) => renderRiskCell(row),
   },
   {
     key: "entryPrice",
-    header: "ENTRY",
+    header: "Entry",
     headerClassName: "text-right",
     cellClassName: "text-right",
     render: (row) => formatPrice(row.entryPrice),
   },
   {
     key: "stopPrice",
-    header: "STOP",
+    header: "Stop",
     headerClassName: "text-right",
     cellClassName: "text-right",
     render: (row) => formatPrice(row.stopPrice),
   },
   {
     key: "targetPrice",
-    header: "TARGET",
+    header: "Target",
     headerClassName: "text-right",
     cellClassName: "text-right",
     render: (row) => formatPrice(row.targetPrice),
@@ -134,29 +129,20 @@ export const worklistV2Columns: WorklistV2Column[] = [
     cellClassName: "text-right tickets-cell-mono w-[68px]",
   },
   {
-    key: "riskDollars",
-    header: "RISK ($)",
-    headerClassName: "text-right text-slate-500 w-[88px]",
-    cellClassName: "text-right tickets-cell-mono w-[88px]",
-    render: (row) =>
-      typeof row.riskDollars === "number" ? `$${row.riskDollars.toFixed(0)}` : "—",
-  },
-  {
-    key: "pnlTicks",
-    header: "PNL (TICKS)",
-    headerClassName: "text-right text-slate-500 w-[90px]",
-    cellClassName: "text-right tickets-cell-mono w-[90px]",
-    render: (row) => pnlTicksCell(row.pnlTicks),
-  },
-  {
     key: "ageMinutes",
-    header: "AGE (MIN)",
-    headerClassName: "text-right",
-    cellClassName: "text-right",
+    header: "Age",
+    headerClassName: "text-right text-slate-500",
+    cellClassName: "text-right tickets-cell-mono",
+    render: (row) => {
+      if (typeof row.ageMinutes !== "number" || Number.isNaN(row.ageMinutes)) {
+        return "—";
+      }
+      return `${row.ageMinutes}m`;
+    },
   },
   {
     key: "sessionDate",
-    header: "SESSION",
+    header: "Session",
     headerClassName: "text-left",
     cellClassName: "text-left text-slate-300",
     render: (row) => (

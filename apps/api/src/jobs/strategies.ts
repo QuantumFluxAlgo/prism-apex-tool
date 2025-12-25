@@ -19,6 +19,8 @@ import path from 'path';
 import { TICKET_STRATEGIES } from '../schemas/ticket.js';
 import type { TicketStrategy } from '../schemas/ticket.js';
 
+const RUN_CONTINUOUS = (process.env.RUN_CONTINUOUS ?? '1') === '1';
+
 export interface BarMessage {
   symbol: string; // root e.g., ES
   contract: string; // full contract e.g., ESZ4
@@ -167,7 +169,7 @@ async function stop(): Promise<void> {
 function onBar(bar: BarMessage): void {
   jobManager.beat('STRATEGIES');
   strategies.lastBarTs = bar.ts;
-  if (bar.session !== 'RTH') return;
+  if (!RUN_CONTINUOUS && bar.session !== 'RTH') return;
   const tick = TICK_SPECS[bar.symbol];
   if (!tick) return;
 

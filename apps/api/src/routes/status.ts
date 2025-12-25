@@ -27,7 +27,7 @@ type SymbolStatus = {
   health: Health;
 };
 
-type SessionInfo = {
+export type SessionInfo = {
   is_open: boolean;
   next_change_ms: number;
   open_utc: string;
@@ -130,6 +130,23 @@ function buildSession(now: Date): SessionInfo {
   };
 }
 
+export function getSessionInfo(now: Date = new Date()): {
+  sessionDateUtc: string;
+  isOpen: boolean;
+  session: SessionInfo;
+} {
+  const session = buildSession(now);
+  const openDate = new Date(session.open_utc);
+  const sessionDateUtc = Number.isNaN(openDate.getTime())
+    ? now.toISOString().slice(0, 10)
+    : openDate.toISOString().slice(0, 10);
+  return {
+    sessionDateUtc,
+    isOpen: session.is_open,
+    session,
+  };
+}
+
 function healthFromAge(ageMs: number, relaxed: boolean): Health {
   if (relaxed) {
     if (ageMs <= 5 * 60_000) return 'green';
@@ -147,8 +164,9 @@ export default async function statusRoute(app: FastifyInstance) {
 
   async function handler(): Promise<StatusResponse> {
     const now = new Date();
-    const session = buildSession(now);
-    const relaxed = !session.is_open;
+    const sessionMeta = getSessionInfo(now);
+    const session = sessionMeta.session;
+    const relaxed = !sessionMeta.isOpen;
 
     const symbols: SymbolStatus[] = symbolsList.map((symbol) => ({
       symbol,

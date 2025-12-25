@@ -41,6 +41,11 @@ import {
   type IngestState,
 } from "../lib/ingestState";
 import { logContractError, logPageLoad } from "../lib/contractTelemetry";
+import {
+  fetchOperatorRiskSession,
+  updateOperatorRiskSession,
+  type OperatorRiskSession,
+} from "../lib/api";
 
 function trendTone(trend: WorklistTrend): string {
   switch (trend) {
@@ -76,6 +81,11 @@ function riskBucketTone(bucket: WorklistRiskBucket): "emerald" | "amber" | "rose
   }
 }
 
+const formatCurrency = (value?: number | null) => {
+  if (typeof value !== "number" || !Number.isFinite(value)) return "—";
+  return `$${value.toFixed(0)}`;
+};
+
 export default function WorklistV2() {
   const { tickets, loading, error, selected, setSelected, refresh } =
     useWorklistTickets();
@@ -83,6 +93,12 @@ export default function WorklistV2() {
   const [ingestState, setIngestState] = useState<IngestState>("UNKNOWN");
   const [ingestCounts, setIngestCounts] = useState({ GREEN: 0, AMBER: 0, RED: 0 });
   const [worstLag, setWorstLag] = useState<number | null>(null);
+  const [operatorRisk, setOperatorRisk] = useState<OperatorRiskSession | null>(null);
+  const [riskInput, setRiskInput] = useState("");
+  const [riskSaving, setRiskSaving] = useState(false);
+  const [riskError, setRiskError] = useState<string | null>(null);
+  const [enterLoading, setEnterLoading] = useState(false);
+  const [enterError, setEnterError] = useState<string | null>(null);
 
   useEffect(() => {
     logPageLoad("WorklistV2");
@@ -116,6 +132,83 @@ export default function WorklistV2() {
       cancelled = true;
     };
   }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+    async function loadRisk() {
+      try {
+        const data = await fetchOperatorRiskSession();
+        if (cancelled) return;
+        setOperatorRisk(data);
+        if (typeof data?.dailyRiskLimitUsd === "number") {
+          setRiskInput(String(data.dailyRiskLimitUsd));
+        }
+        setRiskError(null);
+      } catch (err: any) {
+        if (!cancelled) {
+          setRiskError(err?.message ?? "Failed to load daily risk");
+        }
+      }
+    }
+    loadRisk();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const handleRiskSubmit = async () => {
+    if (!riskInput.trim()) {
+      setRiskError("Enter a daily risk limit");
+      return;
+    }
+    const parsed = Number(riskInput);
+    if (!Number.isFinite(parsed) || parsed <= 0) {
+      setRiskError("Daily risk must be a positive number");
+      return;
+    }
+    setRiskSaving(true);
+    setRiskError(null);
+    try {
+      const data = await updateOperatorRiskSession(parsed);
+      setOperatorRisk(data);
+    } catch (err: any) {
+      setRiskError(err?.message ?? "Failed to update daily risk");
+    } finally {
+      setRiskSaving(false);
+    }
+  };
+
+  const riskRemainingDisplay =
+    typeof operatorRisk?.riskRemainingUsd === "number"
+      ? operatorRisk.riskRemainingUsd
+      : null;
+
+  const handleEnterTicket = async () => {
+    if (!selected) return;
+    setEnterLoading(true);
+    setEnterError(null);
+    try {
+      const resp = await fetch(
+        `/api/tickets/${encodeURIComponent(selected.ticketId)}/entered`,
+        {
+          method: "PATCH",
+          headers: { "content-type": "application/json" },
+        },
+      );
+      if (!resp.ok) {
+        const text = await resp.text();
+        throw new Error(text || "Failed to mark ticket as entered");
+      }
+      const latestRisk = await fetchOperatorRiskSession();
+      setOperatorRisk(latestRisk);
+      setSelected(null);
+      refresh();
+    } catch (err: any) {
+      setEnterError(err?.message ?? "Failed to mark ticket as entered");
+    } finally {
+      setEnterLoading(false);
+    }
+  };
 
   const kpis = useMemo(() => {
     const total = tickets.length;
@@ -161,12 +254,57 @@ export default function WorklistV2() {
               Refresh
             </Button>
           </div>
+          <div className="worklist-risk-control mt-2 w-full max-w-xs text-right text-[0.75rem]">
+            <label className="uppercase tracking-wide text-slate-400 text-[0.65rem]">
+              Daily Risk ($)
+            </label>
+            <div className="flex items-center gap-2">
+              <input
+                type="number"
+                className="a3-input flex-1 text-right"
+                value={riskInput}
+                disabled={operatorRisk?.locked}
+                onChange={(e) => setRiskInput(e.target.value)}
+              />
+              <Button
+                size="xs"
+                tone="primary"
+                onClick={handleRiskSubmit}
+                disabled={riskSaving || operatorRisk?.locked}
+              >
+                Set
+              </Button>
+            </div>
+            <div className="mt-1 flex flex-col gap-0.5 text-[0.7rem] text-slate-300">
+              <span>
+                Used: {formatCurrency(operatorRisk?.riskUsedUsd)} · Remaining:{" "}
+                {formatCurrency(riskRemainingDisplay)}
+              </span>
+              <span>
+                Status:{" "}
+                {operatorRisk?.locked ? (
+                  <span className="text-amber-300">Locked (session open)</span>
+                ) : (
+                  <span className="text-emerald-300">Editable</span>
+                )}
+              </span>
+            </div>
+            {riskError && (
+              <div className="text-rose-300 text-[0.65rem] mt-1">{riskError}</div>
+            )}
+          </div>
         </div>
       </header>
 
       {ingestUnsafe && (
         <div className="mt-3 rounded-xl border border-rose-500/30 bg-rose-500/10 px-4 py-2 text-[0.8rem] text-rose-100">
           TRADING UNSAFE — ingest not live or lagged. Check Status.
+        </div>
+      )}
+      {(!operatorRisk || operatorRisk.dailyRiskLimitUsd == null) && (
+        <div className="mt-3 rounded-xl border border-amber-400/40 bg-amber-500/10 px-4 py-2 text-[0.8rem] text-amber-100">
+          Daily risk limit not set — ticketizer is blocking all tickets until an operator
+          sets the budget.
         </div>
       )}
 
@@ -397,7 +535,71 @@ export default function WorklistV2() {
                   </section>
 
                   <section className="worklist-details-section">
-                    <div className="worklist-details-section-title">Risk & RR</div>
+                    <div className="worklist-details-section-title">Risk &amp; Reward</div>
+                    <div className="worklist-details-pairs">
+                      <div>
+                        <div className="worklist-details-label">Risk (PTS)</div>
+                        <div className="worklist-details-value font-mono">
+                          {typeof selected.riskPoints === "number"
+                            ? selected.riskPoints.toFixed(2)
+                            : "—"}
+                        </div>
+                      </div>
+                      <div>
+                        <div className="worklist-details-label">
+                          Risk ($ TOTAL @ recommended QTY)
+                        </div>
+                        <div className="worklist-details-value font-mono">
+                          {selected.riskDollars != null
+                            ? `$${selected.riskDollars.toFixed(0)}`
+                            : "—"}
+                          <div className="worklist-details-meta">
+                            @{selected.contracts ?? "—"} QTY
+                          </div>
+                        </div>
+                      </div>
+                      <div>
+                        <div className="worklist-details-label">Reward (PTS)</div>
+                        <div className="worklist-details-value font-mono">
+                          {typeof selected.rewardPoints === "number"
+                            ? selected.rewardPoints.toFixed(2)
+                            : "—"}
+                        </div>
+                      </div>
+                      <div>
+                        <div className="worklist-details-label">
+                          Reward ($ TOTAL @ recommended QTY)
+                        </div>
+                        <div className="worklist-details-value font-mono">
+                          {typeof selected.rewardDollars === "number"
+                            ? `$${selected.rewardDollars.toFixed(0)}`
+                            : "—"}
+                          <div className="worklist-details-meta">
+                            @{selected.contracts ?? "—"} QTY
+                          </div>
+                        </div>
+                      </div>
+                      <div>
+                        <div className="worklist-details-label">RR</div>
+                        <div className="worklist-details-value font-mono">
+                          {selected.rrMultiple != null
+                            ? selected.rrMultiple.toFixed(2)
+                            : "—"}
+                        </div>
+                      </div>
+                    </div>
+                    <div className="worklist-details-meta text-[0.7rem] text-slate-400">
+                      Tick size {selected.tickSize ?? "—"} · Tick value{" "}
+                      {typeof selected.tickValueUSD === "number"
+                        ? `$${selected.tickValueUSD.toFixed(2)}`
+                        : "—"}
+                      <br />
+                      Gross, excludes fees/slippage.
+                    </div>
+                  </section>
+
+                  <section className="worklist-details-section">
+                    <div className="worklist-details-section-title">Score &amp; Guardrails</div>
                     <div className="worklist-details-pairs">
                       <div>
                         <div className="worklist-details-label">Score</div>
@@ -407,18 +609,6 @@ export default function WorklistV2() {
                             {renderTrendArrow(selected.trend)}
                           </span>{" "}
                           <span className="worklist-details-meta">Δ {selected.delta}</span>
-                        </div>
-                      </div>
-                      <div>
-                        <div className="worklist-details-label">RR / Qty / Risk</div>
-                        <div className="worklist-details-value font-mono">
-                          {selected.rrMultiple != null
-                            ? selected.rrMultiple.toFixed(2)
-                            : "—"}{" "}
-                          RR · {selected.contracts ?? "—"} x ·{" "}
-                          {selected.riskDollars != null
-                            ? `$${selected.riskDollars.toFixed(0)}`
-                            : "—"}
                         </div>
                       </div>
                       <div>
@@ -461,6 +651,19 @@ export default function WorklistV2() {
                         </dl>
                       </div>
                     )}
+                    <div className="mt-4 flex items-center gap-3">
+                      <Button
+                        tone="primary"
+                        size="sm"
+                        disabled={enterLoading || !selected}
+                        onClick={handleEnterTicket}
+                      >
+                        {enterLoading ? "Entering..." : "Mark ENTERED"}
+                      </Button>
+                      {enterError && (
+                        <span className="text-xs text-rose-300">{enterError}</span>
+                      )}
+                    </div>
                   </section>
 
                   <section className="worklist-details-section">
