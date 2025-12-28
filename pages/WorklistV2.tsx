@@ -34,9 +34,10 @@ type FiltersState = {
   search: string;
 };
 
-const SCORE_OPTIONS = ['ANY', '60', '70', '80', '90'];
+const SCORE_PRESETS = ['60', '70', '80', '90'];
 const RISK_BUCKET_OPTIONS: RiskBucket[] = ['GREEN', 'AMBER', 'RED'];
 const MAX_AGE_OPTIONS = ['30', '20', '15', 'ANY'];
+const MIN_SCORE_DATALIST_ID = 'worklist-min-score-presets';
 
 const numberFormatter = new Intl.NumberFormat('en-US', { maximumFractionDigits: 0 });
 const currencyFormatter = new Intl.NumberFormat('en-US', {
@@ -857,16 +858,6 @@ export default function WorklistV2Page() {
                 })),
             },
             {
-              label: 'Min Score',
-              value: filters.minScore,
-              options: SCORE_OPTIONS,
-              onChange: (value) =>
-                setFilters((prev) => ({
-                  ...prev,
-                  minScore: value,
-                })),
-            },
-            {
               label: 'Risk Bucket',
               value: filters.riskBucket,
               options: ['ANY', ...RISK_BUCKET_OPTIONS],
@@ -889,18 +880,47 @@ export default function WorklistV2Page() {
           ]}
           toggles={strategyMuteToggles}
           extra={
-            <input
-              type="search"
-              value={filters.search}
-              onChange={(event) =>
-                setFilters((prev) => ({
-                  ...prev,
-                  search: event.target.value,
-                }))
-              }
-              placeholder="Search symbol / strategy / notes"
-              className="rounded-full border border-slate-800 bg-slate-950/80 px-3 py-1 text-sm text-slate-100 placeholder:text-slate-500 shadow-[0_0_0_1px_rgba(15,23,42,0.9)] focus:border-cyan-400 focus:outline-none focus:ring-0 focus:shadow-[0_0_0_1px_rgba(34,211,238,0.85),0_0_20px_rgba(34,211,238,0.45)]"
-            />
+            <>
+              <div className="flex flex-wrap items-center gap-3">
+                <label className="flex items-center gap-2 text-[0.65rem] uppercase tracking-[0.18em] text-slate-400">
+                  Min Score ≥
+                  <input
+                    type="number"
+                    min={0}
+                    max={100}
+                    step={1}
+                    list={MIN_SCORE_DATALIST_ID}
+                    value={filters.minScore === 'ANY' ? '' : filters.minScore}
+                    onChange={(event) =>
+                      setFilters((prev) => ({
+                        ...prev,
+                        minScore:
+                          event.target.value.trim() === '' ? 'ANY' : event.target.value,
+                      }))
+                    }
+                    placeholder="ANY"
+                    className="w-20 rounded-full border border-slate-800 bg-slate-950/80 px-2 py-1 text-sm text-slate-100 placeholder:text-slate-500 shadow-[0_0_0_1px_rgba(15,23,42,0.9)] focus:border-cyan-400 focus:outline-none focus:ring-0 focus:shadow-[0_0_0_1px_rgba(34,211,238,0.85),0_0_20px_rgba(34,211,238,0.45)]"
+                  />
+                </label>
+                <input
+                  type="search"
+                  value={filters.search}
+                  onChange={(event) =>
+                    setFilters((prev) => ({
+                      ...prev,
+                      search: event.target.value,
+                    }))
+                  }
+                  placeholder="Search symbol / strategy / notes"
+                  className="flex-1 rounded-full border border-slate-800 bg-slate-950/80 px-3 py-1 text-sm text-slate-100 placeholder:text-slate-500 shadow-[0_0_0_1px_rgba(15,23,42,0.9)] focus:border-cyan-400 focus:outline-none focus:ring-0 focus:shadow-[0_0_0_1px_rgba(34,211,238,0.85),0_0_20px_rgba(34,211,238,0.45)]"
+                />
+              </div>
+              <datalist id={MIN_SCORE_DATALIST_ID}>
+                {SCORE_PRESETS.map((value) => (
+                  <option key={value} value={value} />
+                ))}
+              </datalist>
+            </>
           }
         />
       </div>
@@ -1132,4 +1152,3 @@ export default function WorklistV2Page() {
     </section>
   );
 }
-
