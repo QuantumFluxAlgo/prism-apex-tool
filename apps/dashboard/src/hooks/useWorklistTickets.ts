@@ -5,15 +5,13 @@
  * Operator-facing Worklist data hook.
  *
  * Priorities:
- * - Prefer canonical Worklist feed from /api/worklist.
- * - Fall back to /api/tickets (status=OPEN, scope=actionable) if needed.
+ * - Consume canonical Worklist feed from /api/worklist only.
  * - Don’t recompute what the backend already knows unless fields are missing.
  */
 
 import { useEffect, useMemo, useState } from "react";
 
 import {
-  fetchTickets,
   fetchWorklistFeed,
   buildCanonicalTicketFromRow,
   type SessionMetricsDto,
@@ -221,9 +219,6 @@ export function useWorklistTickets(): UseWorklistTicketsResult {
       setError(null);
 
       try {
-        let sourceRows: any[] = [];
-
-        // 1) Prefer canonical Worklist feed
         const worklistJson = await fetchWorklistFeed();
         const feedTickets = Array.isArray(worklistJson?.tickets)
           ? worklistJson.tickets
@@ -231,23 +226,9 @@ export function useWorklistTickets(): UseWorklistTicketsResult {
           ? worklistJson?.rows
           : [];
 
-        if (feedTickets.length > 0) {
-          sourceRows = feedTickets;
-        } else {
-          // 2) Fallback to canonical tickets endpoint
-          const { rows = [] } = await fetchTickets({
-            status: "OPEN",
-            scope: "actionable",
-            direction: "ALL",
-            limit: 100,
-            offset: 0,
-          });
-          sourceRows = rows;
-        }
-
         const mapped: Array<WorklistTicket & { rawIndex: number }> = [];
 
-        sourceRows.forEach((row, rawIndex) => {
+        feedTickets.forEach((row, rawIndex) => {
           // Prefer backend-provided canonical, fall back to builder from /api/tickets row
           const canonical =
             (row.canonical as any | undefined) ?? buildCanonicalTicketFromRow(row);

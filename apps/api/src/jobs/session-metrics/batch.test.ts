@@ -60,6 +60,6 @@ describe('session-metrics batch helper', () => {
     });
 
     expect(result[0].sessionMetrics).toMatchObject({ status: 'OK' });
-    expect(result[1].sessionMetrics).toBeUndefined();
+    expect(result[1].sessionMetrics).toBeNull();
   });
 });

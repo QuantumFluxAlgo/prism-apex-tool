@@ -5,6 +5,7 @@ Run the local pipeline end-to-end without placing real orders: Yahoo → Postgre
 ## Prerequisites
 - Docker Desktop (or compatible) with Compose
 - Files in repo root: `docker-compose.yml`, `.env.example.local`
+- Node.js 20.x (`nvm use` will pick up `.nvmrc`)
 
 ## 1. Start the stack (Postgres on host **55433**)
 ```bash

@@ -21,7 +21,7 @@ To ensure deterministic, repeatable deployments, **always use the provided Codex
 
 **Compose file used**
 
-* `docker-compose.v2.local.yml`
+* `docker-compose.yml` (all services) – script rebuilds containers, applies the core schema (`apps/api/db/schema_v2.sql`), applies all SQL migrations under `deploy/sql`, and runs the ingest/tickets backfills (`YAHOO_RANGE=1d`) so the DB has fresh bars before you start testing.
 
 ---
 
@@ -44,7 +44,7 @@ To ensure deterministic, repeatable deployments, **always use the provided Codex
 
 **Compose file used**
 
-* `docker-compose.v2.server.yml`
+* `docker-compose.yml` with `codex/.env.server` (all services + secrets) – script rebuilds containers, applies the core schema plus all SQL migrations, and runs ingest/gapfill/tickets backfills with `YAHOO_RANGE=7d` on boot for deeper history.
 
 ---
 
@@ -64,9 +64,17 @@ To ensure deterministic, repeatable deployments, **always use the provided Codex
 
 ### Expected Ports
 
-* Dashboard: `8080`
-* Ingress (if enabled): `8180`
+* Dashboard: `5180` (served by `dashboard-full`, proxying API requests)
+* Ingress (if enabled): `8080`
 * API: as defined in V2 compose files
+
+---
+
+### Database Setup
+
+Run `./codex/db-init.sh` after the stack is healthy (local or server) to ensure the risk/session tables exist. The script pipes `apps/api/db/schema_v2.sql` into the Postgres container (`prismapex-postgres` by default) and respects `POSTGRES_USER` / `POSTGRES_DB` if set.
+
+Both scripts automatically remove orphaned containers and start every service (API, dashboard, ingress, cron jobs, ticketizer, etc.), mirroring the production topology by default.
 
 ---
 

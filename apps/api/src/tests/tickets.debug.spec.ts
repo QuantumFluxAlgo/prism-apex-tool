@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { buildServer } from '../test-utils/buildServer.js';
+import { buildTestServerTicketsDebug } from './testServerTicketsDebug.js';
 import { appendTickets } from '../utils/mockStore.js';
 import * as telemetry from '../services/tickets/ticketsTelemetry.js';
 
@@ -11,7 +11,7 @@ describe('GET /tickets/debug', () => {
   });
 
   it('filters by minEntryRR and emits telemetry', async () => {
-    const app = await buildServer();
+    const app = await buildTestServerTicketsDebug();
 
     appendTickets([
       {
