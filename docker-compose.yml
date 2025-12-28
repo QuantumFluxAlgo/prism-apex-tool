@@ -50,6 +50,7 @@ services:
       - .env
     environment:
       DATABASE_URL: ${DATABASE_URL:-postgresql://apex:apex@db:5432/prismapex?schema=public}
+      SESSION_WINDOWS_UTC: ${SESSION_WINDOWS_UTC:-07:00-11:30,13:30-17:00}
       TICKETS_ONLY: ${TICKETS_ONLY:-true}
       ORDERS_DISABLED: ${ORDERS_DISABLED:-true}
       NODE_ENV: ${NODE_ENV:-development}

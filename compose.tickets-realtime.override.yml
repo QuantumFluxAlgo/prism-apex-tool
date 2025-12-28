@@ -8,6 +8,7 @@ services:
       - TZ=UTC
       - DATABASE_URL=${DATABASE_URL:-postgresql://apex:apex@db:5432/prismapex?schema=public}
       - HEARTBEAT_DIR=/data/ops
+      - SESSION_WINDOWS_UTC=${SESSION_WINDOWS_UTC:-07:00-11:30,13:30-17:00}
       # keep in sync with API/session settings so strategies align with the active session
       - SESSION_OPEN_UTC=${SESSION_OPEN_UTC:-23:05}
       - SESSION_CLOSE_UTC=${SESSION_CLOSE_UTC:-21:55}
