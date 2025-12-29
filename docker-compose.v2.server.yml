@@ -39,8 +39,10 @@ services:
       context: .
       dockerfile: apps/dashboard/Dockerfile
     container_name: prismapex-dashboard
+    env_file:
+      - .env
     environment:
-      NODE_ENV: production
+      NODE_ENV: ${NODE_ENV:-production}
       VITE_API_BASE: "${PUBLIC_API_BASE}"
     ports:
       - "8080:8080"
