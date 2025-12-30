@@ -57,17 +57,60 @@ const INITIAL_FILTERS: TicketsFilters = {
  * Ensures we can read the Vitest stub payload shape and preserve timestamps.
  */
 function mapRowForDisplay(r: any) {
+  const meta = (r.meta as Record<string, unknown>) ?? {};
+  const canonical =
+    (r.canonicalApproved as Record<string, unknown> | null | undefined) ??
+    (meta.canonicalCandidate as Record<string, unknown> | null | undefined) ??
+    null;
+
+  const normalizeSide = (value: unknown): string => {
+    if (typeof value !== "string") return "";
+    const upper = value.toUpperCase();
+    if (upper === "BUY") return "LONG";
+    if (upper === "SELL") return "SHORT";
+    return upper;
+  };
+
+  const strategyId =
+    (typeof canonical?.strategyId === "string" && canonical.strategyId.length
+      ? canonical.strategyId
+      : null) ??
+    (typeof r.strategy === "string" && r.strategy.length ? r.strategy : null) ??
+    (typeof meta.strategy === "string" && (meta.strategy as string).length
+      ? (meta.strategy as string)
+      : null) ??
+    (typeof r.strategyId === "string" && r.strategyId.length ? r.strategyId : null) ??
+    "";
+
+  const side =
+    normalizeSide(
+      canonical?.side ??
+        r.side ??
+        r.direction ??
+        (meta.side as string | undefined) ??
+        null,
+    ) ||
+    (typeof (meta as any).canonicalCandidate === "object"
+      ? normalizeSide((meta as any).canonicalCandidate?.side)
+      : "");
+
   return {
     id: r.id ?? "",
     symbol: r.symbol ?? "",
-    strategyId: r.strategy ?? r.strategyId ?? "",
-    side: r.side ?? "",
+    strategyId,
+    side,
     status: r.status ?? "",
     entryPrice: r.entryPrice ?? r.entry_price ?? null,
     stopPrice: r.stopPrice ?? r.stop_price ?? null,
     targetPrice: r.targetPrice ?? r.target_price ?? null,
     rrMultiple: r.rrMultiple ?? r.rr ?? null,
-    createdAtUtc: r.createdAtUtc ?? r.opened_at_utc ?? "",
+    openedAtUtc:
+      r.openedAtUtc ??
+      r.opened_at_utc ??
+      r.createdAtUtc ??
+      r.created_at_utc ??
+      "",
+    createdAtUtc: r.createdAtUtc ?? r.created_at_utc ?? "",
     pnl: r.pnlAmount ?? r.pnl ?? null,
   };
 }
@@ -86,7 +129,14 @@ async function loadTickets(filters: TicketsFilters) {
     limit: 200,
   });
 
-  return Array.isArray(rows) ? rows.map(mapRowForDisplay) : [];
+  if (!Array.isArray(rows)) return [];
+  return rows
+    .map(mapRowForDisplay)
+    .sort((a, b) => {
+      const aTs = Date.parse(a.openedAtUtc ?? a.createdAtUtc ?? '');
+      const bTs = Date.parse(b.openedAtUtc ?? b.createdAtUtc ?? '');
+      return bTs - aTs;
+    });
 }
 
 export default function TicketsPage() {
@@ -378,7 +428,7 @@ export default function TicketsPage() {
                       <th className="px-3 py-2">Stop</th>
                       <th className="px-3 py-2">Target</th>
                       <th className="px-3 py-2">R multiple</th>
-                      <th className="px-3 py-2">Created at</th>
+                      <th className="px-3 py-2">Opened at</th>
                     </tr>
                   </thead>
 
@@ -455,7 +505,7 @@ export default function TicketsPage() {
                               : "—"}
                           </td>
                           <td className="px-3 py-2 text-right text-slate-400">
-                            {t.createdAtUtc}
+                            {t.openedAtUtc}
                           </td>
                         </tr>
                       ))}
@@ -527,6 +577,21 @@ export default function TicketsPage() {
                       {selected.rrMultiple != null
                         ? selected.rrMultiple.toFixed(2)
                         : "—"}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-2 text-[0.7rem] text-slate-300">
+                  <div>
+                    <div className="text-slate-500">Opened at (UTC)</div>
+                    <div className="font-mono">
+                      {selected.openedAtUtc || "—"}
+                    </div>
+                  </div>
+                  <div>
+                    <div className="text-slate-500">Created at (UTC)</div>
+                    <div className="font-mono">
+                      {selected.createdAtUtc || "—"}
                     </div>
                   </div>
                 </div>

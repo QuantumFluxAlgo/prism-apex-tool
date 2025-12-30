@@ -52,4 +52,5 @@ export default function sessionMetricsRoute(app: FastifyInstance): void {
   const handler = makeSessionMetricsHandler(service);
 
   app.get('/session-metrics', handler);
+  app.get('/api/session-metrics', handler);
 }

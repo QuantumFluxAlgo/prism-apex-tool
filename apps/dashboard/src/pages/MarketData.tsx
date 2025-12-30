@@ -133,11 +133,14 @@ const MOCK_MARKETS_ROWS: MarketRow[] = [
 ];
 
 function mapApiRowToMarket(row: any): MarketRow {
+  const rawSymbol = row.symbolDisplay ?? row.symbol ?? "ES";
+  const normalizedSymbol = String(rawSymbol).toUpperCase();
+  const status = (row.status ?? row.sessionStatus ?? "OPEN") as MarketRow["status"];
   return {
     id: String(row.id ?? `${row.symbol}-${row.sessionDate ?? ""}`),
-    symbol: String(row.symbol ?? "ES"),
+    symbol: normalizedSymbol,
     sessionDate: String(row.sessionDate ?? row.session_date ?? "").slice(0, 10),
-    status: (row.status ?? row.sessionStatus ?? "OPEN") as MarketRow["status"],
+    status,
     regime: String(row.regime ?? row.contextRegime ?? "UNKNOWN").toUpperCase(),
     atrBucket: String(row.atrBucket ?? row.contextAtrBucket ?? "MED").toUpperCase(),
     orRangeTicks: Number(row.orRangeTicks ?? row.or_range_ticks ?? 0),

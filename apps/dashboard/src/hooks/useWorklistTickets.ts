@@ -9,7 +9,7 @@
  * - Don’t recompute what the backend already knows unless fields are missing.
  */
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 
 import {
   fetchWorklistFeed,
@@ -463,7 +463,7 @@ export function useWorklistTickets(): UseWorklistTicketsResult {
     //eslint-disable-next-line react-hooks/exhaustive-deps
   }, [refreshToken]);
 
-  const refresh = () => setRefreshToken((x) => x + 1);
+  const refresh = useCallback(() => setRefreshToken((x) => x + 1), []);
 
   const value: UseWorklistTicketsResult = useMemo(
     () => ({
@@ -474,7 +474,7 @@ export function useWorklistTickets(): UseWorklistTicketsResult {
       setSelected,
       refresh,
     }),
-    [tickets, loading, error, selected],
+    [tickets, loading, error, selected, refresh],
   );
 
   return value;

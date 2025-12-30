@@ -84,10 +84,7 @@ function parseSessionTime(value: string | undefined, fallback: string): [number,
 }
 
 type WindowConfig = { start: [number, number]; end: [number, number] };
-const DEFAULT_WINDOWS: WindowConfig[] = [
-  { start: [7, 0], end: [11, 30] },
-  { start: [13, 30], end: [17, 0] },
-];
+const DEFAULT_WINDOWS: WindowConfig[] = [{ start: [14, 30], end: [21, 0] }];
 
 function parseSessionWindows(): WindowConfig[] {
   const raw = (process.env.SESSION_WINDOWS_UTC ?? '').trim();
@@ -102,8 +99,8 @@ function parseSessionWindows(): WindowConfig[] {
     }
     if (configs.length) return configs;
   }
-  const open = parseSessionTime(process.env.SESSION_OPEN_UTC, '23:05');
-  const close = parseSessionTime(process.env.SESSION_CLOSE_UTC, '21:55');
+  const open = parseSessionTime(process.env.SESSION_OPEN_UTC, '14:30');
+  const close = parseSessionTime(process.env.SESSION_CLOSE_UTC, '21:00');
   if (open[0] !== close[0] || open[1] !== close[1]) {
     return [{ start: open, end: close }];
   }

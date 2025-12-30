@@ -99,10 +99,30 @@ export default function WorklistV2() {
   const [riskError, setRiskError] = useState<string | null>(null);
   const [enterLoading, setEnterLoading] = useState(false);
   const [enterError, setEnterError] = useState<string | null>(null);
+  const [autoRefreshEnabled, setAutoRefreshEnabled] = useState(true);
+  const [autoRefreshMs, setAutoRefreshMs] = useState(5000);
+  const [lastRefreshAt, setLastRefreshAt] = useState<Date | null>(null);
 
   useEffect(() => {
     logPageLoad("WorklistV2");
   }, []);
+
+  useEffect(() => {
+    setLastRefreshAt(new Date());
+  }, []);
+
+  useEffect(() => {
+    if (!autoRefreshEnabled || !Number.isFinite(autoRefreshMs) || autoRefreshMs <= 0) {
+      return undefined;
+    }
+    const timer = window.setInterval(() => {
+      refresh();
+      setLastRefreshAt(new Date());
+    }, autoRefreshMs);
+    return () => {
+      window.clearInterval(timer);
+    };
+  }, [autoRefreshEnabled, autoRefreshMs, refresh]);
 
   useEffect(() => {
     let cancelled = false;
@@ -203,12 +223,22 @@ export default function WorklistV2() {
       setOperatorRisk(latestRisk);
       setSelected(null);
       refresh();
+      setLastRefreshAt(new Date());
     } catch (err: any) {
       setEnterError(err?.message ?? "Failed to mark ticket as entered");
     } finally {
       setEnterLoading(false);
     }
   };
+
+  const handleManualRefresh = () => {
+    refresh();
+    setLastRefreshAt(new Date());
+  };
+
+  const lastRefreshLabel = lastRefreshAt
+    ? lastRefreshAt.toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit", second: "2-digit" })
+    : "—";
 
   const kpis = useMemo(() => {
     const total = tickets.length;
@@ -249,10 +279,34 @@ export default function WorklistV2() {
               G:{ingestCounts.GREEN} A:{ingestCounts.AMBER} R:{ingestCounts.RED}
             </span>
           </div>
-          <div className="flex items-center gap-2">
-            <Button size="xs" tone="ghost" onClick={refresh}>
+          <div className="flex flex-col items-end gap-2 text-[0.75rem] text-slate-300">
+            <div className="flex items-center gap-2">
+              <Button size="xs" tone="ghost" onClick={handleManualRefresh}>
               Refresh
             </Button>
+              <label className="flex items-center gap-1">
+                <input
+                  type="checkbox"
+                  checked={autoRefreshEnabled}
+                  onChange={(e) => setAutoRefreshEnabled(e.target.checked)}
+                />
+                Auto
+              </label>
+              <select
+                className="a3-input px-1 py-0.5 text-[0.7rem]"
+                value={String(autoRefreshMs)}
+                onChange={(e) => setAutoRefreshMs(Number(e.target.value))}
+                disabled={!autoRefreshEnabled}
+              >
+                <option value="3000">3s</option>
+                <option value="5000">5s</option>
+                <option value="10000">10s</option>
+                <option value="15000">15s</option>
+              </select>
+            </div>
+            <div className="text-[0.65rem] text-slate-400">
+              Last refresh: {lastRefreshLabel}
+            </div>
           </div>
           <div className="worklist-risk-control mt-2 w-full max-w-xs text-right text-[0.75rem]">
             <label className="uppercase tracking-wide text-slate-400 text-[0.65rem]">

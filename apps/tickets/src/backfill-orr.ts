@@ -30,8 +30,8 @@ const cfg: EnvConfig = {
   days: Math.min(Math.max(Number(process.env.TICKETS_DAYS ?? '30'), 1), 30),
   openingRangeMinutes: Math.max(Number(process.env.ORR_OR_MIN ?? '5'), 1),
   reversalWindowMinutes: Math.max(Number(process.env.ORR_WINDOW_MIN ?? '60'), 1),
-  sessionOpenUtc: process.env.SESSION_OPEN_UTC ?? '23:05',
-  sessionCloseUtc: process.env.SESSION_CLOSE_UTC ?? '21:55',
+  sessionOpenUtc: process.env.SESSION_OPEN_UTC ?? '14:30',
+  sessionCloseUtc: process.env.SESSION_CLOSE_UTC ?? '21:00',
 };
 
 function parseHm(hm: string) {

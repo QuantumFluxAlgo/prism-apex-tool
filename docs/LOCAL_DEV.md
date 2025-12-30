@@ -93,6 +93,31 @@ Use `make proxy-down` to stop/remove the proxy + tunnel combo when you’re done
   ```
 - Dashboard env defaults: hot reload uses `http://localhost:3000` unless you export `VITE_API_BASE`; Docker builds default to a relative base (`''`) so proxy/tunnel calls stay on the same origin. Pass `--build-arg VITE_API_BASE=...` when you need an absolute host.
 
+### Real-time ticketizer feed
+
+`apps/api` now registers a `BARS_FEED` job that replays 1m bars from Postgres into the in-process event bus (`publish('bars.1m', …)`). That means the existing `registerStrategiesJob()` and `registerTicketizerJob()` see the same stream they expected from a live feed—no more ad-hoc `bars-to-bus` helper. Key env toggles:
+
+- `BARS_FEED_SYMBOLS`: CSV of Yahoo symbols (e.g. `ES=F,MES=F`). Falls back to `STRATEGIES_JOB_SYMBOLS`, `INGEST_YAHOO_SYMBOLS`, then `ES=F,NQ=F,MES=F,MNQ=F`.
+- `BARS_FEED_LOOKBACK_MINUTES`: How far back to replay at boot. Defaults to `720` so strategies get several hours of context before new bars arrive.
+- `BARS_FEED_INTERVAL_MS`: Poll cadence for new rows (default `5000`). `BARS_FEED_MAX_BATCH` caps each fetch (default `500` rows).
+- `BARS_FEED_PRIME_HISTORY`: Set to `false` if you only want bars created after the process starts.
+- `BARS_FEED_ENABLED`: Force-disable/enable regardless of symbol detection; defaults to `true` when symbols resolve.
+
+New Codex terminal prompt for realtime testing (assumes Docker stack is already up via `tools/codex/enable-realtime.sh`):
+
+```bash
+#!/usr/bin/env bash
+set -euo pipefail
+cd /Users/seankeane/Projects/prism-apex-tool
+export BARS_FEED_SYMBOLS="ES=F,MES=F,NQ=F,MNQ=F"
+export BARS_FEED_LOOKBACK_MINUTES=1440   # warm up with the last day
+export RUN_CONTINUOUS=1                 # let strategies consume ETH + RTH
+echo "[realtime] starting API with bars-feed publisher"
+pnpm --filter @prism-apex/api dev
+```
+
+That single process now: (1) tails `bars_1m`, (2) emits `bars.1m` events, (3) lets strategies publish `suggestion`, and (4) lets ticketizer enforce guardrails before inserting tickets. You can still run `tools/codex/tickets-realtime.sh` alongside it for redundancy, but it’s no longer required for live guardrail-aware tickets.
+
 ## Cleanup (SAFE / dry-run)
 Preview what would be removed (no deletions):
 ```bash
