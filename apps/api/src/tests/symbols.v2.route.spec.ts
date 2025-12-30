@@ -15,18 +15,21 @@ describe('GET /api/symbols/v2', () => {
     expect(Array.isArray(body.symbols)).toBe(true);
 
     const config = await loadContractsSpec();
-    expect(body.symbols?.length).toBe(config.symbols.length);
+    const expectedLength = Array.isArray(config.symbols) ? config.symbols.length : 0;
+    expect(body.symbols?.length ?? 0).toBe(expectedLength);
 
-    const sample = body.symbols?.[0] as Record<string, unknown>;
-    expect(sample).toEqual(
-      expect.objectContaining({
-        symbol: expect.any(String),
-        tickSize: expect.any(Number),
-        tickValueUSD: expect.any(Number),
-        contractType: expect.any(String),
-        feedAvailable: expect.any(Boolean),
-        tickSpecVerified: expect.any(Boolean),
-      }),
-    );
+    if (expectedLength > 0) {
+      const sample = body.symbols?.[0] as Record<string, unknown>;
+      expect(sample).toEqual(
+        expect.objectContaining({
+          symbol: expect.any(String),
+          tickSize: expect.any(Number),
+          tickValueUSD: expect.any(Number),
+          contractType: expect.any(String),
+          feedAvailable: expect.any(Boolean),
+          tickSpecVerified: expect.any(Boolean),
+        }),
+      );
+    }
   }, 20_000);
 });

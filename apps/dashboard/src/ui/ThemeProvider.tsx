@@ -19,7 +19,7 @@ function readStoredMode(): Mode | null {
 }
 
 function getSystemMode(): Mode {
-  if (typeof window === 'undefined') return 'dark';
+  if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') return 'dark';
   return window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
 }
 
@@ -49,7 +49,7 @@ export default function ThemeProvider({ children }: { children: React.ReactNode 
   }, [mode]);
 
   useEffect(() => {
-    if (typeof window === 'undefined') return;
+    if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') return;
     const media = window.matchMedia('(prefers-color-scheme: light)');
     const handler = (event: MediaQueryListEvent) => {
       if (typeof window === 'undefined') return;

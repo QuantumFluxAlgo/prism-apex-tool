@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import Fastify from 'fastify';
-import versionRoute from '../routes/version';
+import versionRoute from '../routes/version.js';
 
 describe('GET /version', () => {
   it('returns metadata without throwing', async () => {

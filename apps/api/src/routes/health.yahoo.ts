@@ -1,6 +1,6 @@
 import type { FastifyInstance, FastifyReply } from 'fastify';
 import { Client } from 'pg';
-import { classifyYahooStatus } from '../lib/yahooHealth';
+import { classifyYahooStatus } from '../lib/yahooHealth.js';
 
 export async function yahooHealthRoutes(app: FastifyInstance) {
   const databaseUrl = process.env.DATABASE_URL;
@@ -15,7 +15,9 @@ export async function yahooHealthRoutes(app: FastifyInstance) {
   }
 
   // We do a short-lived client per request; fast enough for health.
-  async function queryRows(): Promise<{ symbol: string; last_bar_utc: string; minutes_behind: number }[]> {
+  async function queryRows(): Promise<
+    { symbol: string; last_bar_timestamp: string; lag_seconds: number }[]
+  > {
     const client = new Client({ connectionString: databaseUrl });
     await client.connect();
     try {
@@ -27,15 +29,15 @@ export async function yahooHealthRoutes(app: FastifyInstance) {
         )
         SELECT
           symbol,
-          last_bar AS last_bar_utc,
-          EXTRACT(EPOCH FROM (NOW() AT TIME ZONE 'UTC' - last_bar)) / 60.0 AS minutes_behind
+          last_bar AS last_bar_timestamp,
+          EXTRACT(EPOCH FROM (NOW() AT TIME ZONE 'UTC' - last_bar)) AS lag_seconds
         FROM last
         ORDER BY symbol ASC;
       `);
       return res.rows.map((r) => ({
         symbol: r.symbol,
-        last_bar_utc: new Date(r.last_bar_utc).toISOString(),
-        minutes_behind: Number(r.minutes_behind),
+        last_bar_timestamp: new Date(r.last_bar_timestamp).toISOString(),
+        lag_seconds: Number(r.lag_seconds),
       }));
     } finally {
       await client.end().catch(() => {});

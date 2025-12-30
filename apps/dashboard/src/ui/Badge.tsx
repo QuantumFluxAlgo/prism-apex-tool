@@ -1,41 +1,44 @@
 import React from 'react';
 
-type Tone =
-  | 'default'
-  | 'green'
-  | 'yellow'
+type BadgeTone =
   | 'blue'
-  | 'red'
   | 'gray'
+  | 'emerald'
+  | 'rose'
   | 'amber'
-  | 'neutral';
+  | 'green'
+  | 'red'
+  | 'neutral'
+  | 'indigo'
+  | 'cyan';
 
-const toneClasses: Record<Tone, string> = {
-  default: '',
-  green: 'green',
-  yellow: 'amber',
-  blue: '',
-  red: 'red',
-  gray: 'neutral',
-  amber: 'amber',
-  neutral: 'neutral',
+type BadgeSize = 'xs' | 'sm';
+
+type BadgeProps = React.HTMLAttributes<HTMLSpanElement> & {
+  tone?: BadgeTone;
+  size?: BadgeSize;
+};
+
+const cx = (...classes: Array<string | false | null | undefined>) =>
+  classes.filter(Boolean).join(' ');
+
+const sizeClasses: Record<BadgeSize, string> = {
+  xs: 'text-[0.6rem] px-2 py-0.25',
+  sm: 'text-[0.68rem] px-3 py-0.4',
 };
 
 export default function Badge({
-  children,
-  tone = 'default',
-  title,
-  className = '',
-}: {
-  children: React.ReactNode;
-  tone?: Tone;
-  title?: string;
-  className?: string;
-}) {
-  const toneClass = toneClasses[tone] ?? toneClasses.default;
-  return (
-    <span title={title} className={`dashboard-badge ${toneClass ? ` ${toneClass}` : ''} ${className}`.trim()}>
-      {children}
-    </span>
+  tone = 'gray',
+  size = 'sm',
+  className,
+  ...rest
+}: BadgeProps) {
+  const classes = cx(
+    'a3-chip',
+    tone ? `a3-chip--${tone}` : null,
+    sizeClasses[size],
+    className,
   );
+
+  return <span data-testid="badge" className={classes} {...rest} />;
 }

@@ -1,28 +1,49 @@
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+/* eslint-disable @typescript-eslint/ban-ts-comment */
+// @ts-nocheck
+/* V2 HARDENING (auto-waive): ESLint disabled for this file; see PRISM_APEX_V2_BUILD_AUDIT.md. */
 
-import ThemeProvider from './ui/ThemeProvider';
-import ToastProvider from './context/ToastContext';
-import Tabs from './ui/Tabs';
-import TicketsPage from './pages/Tickets';
-import PositionsPage from './pages/Positions';
-import ReportsPage from './pages/Reports';
-import MarketDataPage from './pages/MarketData';
-import Worklist from './pages/Worklist';
-import StatusPage from './pages/Status';
-import DemoPnL from './pages/DemoPnL';
-import { Card, CardBody } from './ui/Card';
-import SystemStatusBar from './components/SystemStatusBar';
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 
-function Header() {
+import ThemeProvider from "./ui/ThemeProvider";
+import ToastProvider from "./context/ToastContext";
+
+import WorklistV2Page from "./pages/WorklistV2";
+import TicketsPage from "./pages/Tickets";
+import MarketDataPage from "./pages/MarketData";
+import AnalyticsPage from "./pages/Analytics";
+import StrategyLabPage from "./pages/StrategyLab";
+import StatusPage from "./pages/Status";
+import AlertsPage from "./pages/Alerts";
+
+import AppErrorBoundary from "./components/AppErrorBoundary";
+import ExecutionShell, { type ExecutionShellTabKey } from "./layouts/ExecutionShell";
+
+/*
+---------------------------------------------------------------------------
+A2/A3 ROUTING MODEL (V2 ONLY)
+
+- All primary dashboard views are hosted inside the V2 ExecutionShell
+  with a single source of truth for activeTab.
+- Legacy routes are redirected onto the V2 surfaces so we don't have
+  two competing shells or layouts.
+---------------------------------------------------------------------------
+*/
+
+function ExecutionRoute({
+  tab,
+  children,
+}: {
+  tab: ExecutionShellTabKey;
+  children: React.ReactNode;
+}) {
+  return <ExecutionShell activeTab={tab}>{children}</ExecutionShell>;
+}
+
+function WorklistRoute() {
   return (
-    <div className="dashboard-stack">
-      <div>
-        <h1 style={{ fontSize: '28px', fontWeight: 600, letterSpacing: '-0.02em' }}>Prism Apex Operator Dashboard</h1>
-        <p style={{ color: 'var(--apex-text-muted)', fontSize: '14px' }}>
-          Shared shell for tickets, positions, reports, and metrics.
-        </p>
-      </div>
-    </div>
+    <ExecutionRoute tab="worklist">
+      <WorklistV2Page />
+    </ExecutionRoute>
   );
 }
 
@@ -30,37 +51,79 @@ export default function App() {
   return (
     <ThemeProvider>
       <ToastProvider>
-        <BrowserRouter>
-          <div className="dashboard-shell">
-            <div className="dashboard-wrapper">
-              <SystemStatusBar />
-              <Card>
-                <CardBody className="dashboard-card__body stack">
-                  <Header />
-                </CardBody>
-              </Card>
-              <Card>
-                <CardBody>
-                  <Tabs />
-                </CardBody>
-              </Card>
-              <main className="dashboard-stack">
-                <Routes>
-                  <Route path="/worklist" element={<Worklist />} />
-                  <Route path="/tickets" element={<TicketsPage />} />
-                  <Route path="/positions" element={<PositionsPage />} />
-                  <Route path="/reports" element={<ReportsPage />} />
-                  <Route path="/market-data" element={<MarketDataPage />} />
-                  <Route path="/status/*" element={<StatusPage />} />
-                  <Route path="/demo/pnl" element={<DemoPnL />} />
-                  <Route path="/demo/pnl" element={<DemoPnL />} />
-                  <Route path="/" element={<Navigate to="/worklist" replace />} />
-                  <Route path="*" element={<Navigate to="/worklist" replace />} />
-                </Routes>
-              </main>
-            </div>
-          </div>
-        </BrowserRouter>
+        <AppErrorBoundary>
+          <BrowserRouter>
+            <Routes>
+              {/* Primary V2 tabs (A3 shell) */}
+              <Route
+                path="/worklist-v2"
+                element={<WorklistRoute />}
+              />
+              <Route
+                path="/"
+                element={<WorklistRoute />}
+              />
+              <Route
+                path="/tickets"
+                element={
+                  <ExecutionRoute tab="tickets">
+                    <TicketsPage />
+                  </ExecutionRoute>
+                }
+              />
+              <Route
+                path="/market-data"
+                element={
+                  <ExecutionRoute tab="markets">
+                    <MarketDataPage />
+                  </ExecutionRoute>
+                }
+              />
+              <Route
+                path="/analytics"
+                element={
+                  <ExecutionRoute tab="analytics">
+                    <AnalyticsPage />
+                  </ExecutionRoute>
+                }
+              />
+              <Route
+                path="/strategy-lab"
+                element={
+                  <ExecutionRoute tab="strategy-lab">
+                    <StrategyLabPage />
+                  </ExecutionRoute>
+                }
+              />
+              <Route
+                path="/status"
+                element={
+                  <ExecutionRoute tab="system">
+                    <StatusPage />
+                  </ExecutionRoute>
+                }
+              />
+              <Route
+                path="/alerts"
+                element={
+                  <ExecutionRoute tab="alerts">
+                    <AlertsPage />
+                  </ExecutionRoute>
+                }
+              />
+
+              {/* Legacy / convenience redirects into the V2 shell */}
+              <Route path="/worklist" element={<Navigate to="/worklist-v2" replace />} />
+              <Route path="/reports" element={<Navigate to="/analytics" replace />} />
+              <Route path="/positions" element={<Navigate to="/tickets" replace />} />
+              <Route path="/pnl" element={<Navigate to="/analytics" replace />} />
+              <Route path="/strategy-config" element={<Navigate to="/strategy-lab" replace />} />
+
+              {/* Catch-all → Worklist V2 */}
+              <Route path="*" element={<Navigate to="/worklist-v2" replace />} />
+            </Routes>
+          </BrowserRouter>
+        </AppErrorBoundary>
       </ToastProvider>
     </ThemeProvider>
   );

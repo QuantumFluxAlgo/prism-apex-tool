@@ -1,11 +1,10 @@
-import '@testing-library/jest-dom';
 import { describe, expect, it } from 'vitest';
 
 import { buildPnLDisplay } from '../utils/pnlDisplay';
 
 describe('buildPnLDisplay', () => {
   it('returns fallback when spec is not yet verified', async () => {
-    const result = await buildPnLDisplay('ES=F', 100, 110, 90, 'LONG');
+    const result = await buildPnLDisplay('EURUSD=X', 100, 110, 90, 'LONG');
 
     expect(result.showNumbers).toBe(false);
     expect(result.reason).toMatch(/verified tick size\/value/i);

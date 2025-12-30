@@ -1,0 +1,54 @@
+services:
+  postgres:
+    image: postgres:16
+    container_name: prismapex-postgres
+    environment:
+      POSTGRES_DB: prismapex
+      POSTGRES_USER: prismapex
+      POSTGRES_PASSWORD: prismapex
+    ports:
+      - "5432:5432"
+    volumes:
+      - prismapex_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U prismapex -d prismapex"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  api:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+    container_name: prismapex-api
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      NODE_ENV: production
+      PORT: "3000"
+      DATABASE_URL: "postgres://prismapex:prismapex@postgres:5432/prismapex"
+      SESSION_WINDOWS_UTC: "${SESSION_WINDOWS_UTC:-14:30-21:00}"
+      INGEST_YAHOO_SYMBOLS: "${INGEST_YAHOO_SYMBOLS:-ES=F,NQ=F,MES=F,MNQ=F,YM=F,RTY=F,GC=F,CL=F,6E=F,EURUSD=X,BTC-USD}"
+      YAHOO_POLL_INTERVAL_MS: "${YAHOO_POLL_INTERVAL_MS:-45000}"
+      YAHOO_POLL_LOOKBACK_MINUTES: "${YAHOO_POLL_LOOKBACK_MINUTES:-20}"
+    ports:
+      - "3000:3000"
+    restart: unless-stopped
+
+  dashboard:
+    build:
+      context: .
+      dockerfile: apps/dashboard/Dockerfile
+    container_name: prismapex-dashboard
+    environment:
+      NODE_ENV: production
+      VITE_API_BASE: "http://localhost:3000"
+    ports:
+      - "8080:8080"
+    depends_on:
+      - api
+    restart: unless-stopped
+
+volumes:
+  prismapex_pgdata:

@@ -1,0 +1,24 @@
+name: dashboard-api-guard
+on:
+  push:
+  pull_request:
+jobs:
+  guard:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+      - name: Install ripgrep
+        run: sudo apt-get update && sudo apt-get install -y ripgrep
+      - name: Block relative /api fetches
+        run: |
+          cd apps/dashboard
+          if rg 'fetch\(\s*["'\'']/api/' src; then
+            echo "Relative /api fetch detected"
+            exit 1
+          fi

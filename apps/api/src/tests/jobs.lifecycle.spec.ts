@@ -1,18 +1,17 @@
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect } from 'vitest';
 import { buildServer } from '@prism-apex/app-api/server.js';
 import { setJobBeat } from '@prism-apex/runtime';
 
 describe('job lifecycle', () => {
   it('reflects job running state in /ready', async () => {
-    vi.useFakeTimers();
     const app = buildServer();
-    setJobBeat('marketFeed');
+    const now = Date.now();
+    setJobBeat('marketFeed', now);
     let res = await app.inject({ method: 'GET', url: '/ready' });
     expect(res.json().jobs.marketFeed.healthy).toBe(true);
-    await vi.advanceTimersByTimeAsync(11_000);
+    setJobBeat('marketFeed', now - 700_000);
     res = await app.inject({ method: 'GET', url: '/ready' });
     expect(res.json().jobs.marketFeed.healthy).toBe(false);
-    vi.useRealTimers();
     await app.close();
   });
 });

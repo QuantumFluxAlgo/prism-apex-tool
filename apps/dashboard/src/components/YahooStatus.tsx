@@ -1,4 +1,6 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import React, { useEffect, useState } from 'react';
+import { fetchYahooHealth } from '../lib/api';
 
 type Row = { symbol: string; minutes_behind: number; last_bar_utc?: string };
 type Health = { status: string; rows: Row[]; now_utc?: string; ok_lag_min?: number; degraded_lag_min?: number };
@@ -16,11 +18,9 @@ export default function YahooStatus() {
   useEffect(() => {
     async function fetchHealth() {
       try {
-        const res = await fetch('/api/health/yahoo');
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        const json = await res.json();
+        const json = await fetchYahooHealth();
         setHealth(json);
-      } catch (err) {
+      } catch (_err) {
         setHealth({ status: 'down', rows: [] });
       }
     }

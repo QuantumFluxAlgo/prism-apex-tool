@@ -7,7 +7,9 @@
     "dev": "vite",
     "build": "vite build",
     "test": "vitest run",
-    "typecheck": "tsc -p tsconfig.build.json --noEmit"
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "lint": "ESLINT_USE_FLAT_CONFIG=false eslint src --ext .ts,.tsx",
+    "prebuild": "sh scripts/verify-api-base.sh"
   },
   "dependencies": {
     "@prism-apex/shared": "workspace:*",
@@ -24,8 +26,8 @@
     "@testing-library/react": "16.3.0",
     "@types/react": "^18.3.23",
     "@types/react-dom": "^18.3.7",
-    "@typescript-eslint/eslint-plugin": "^8.3.0",
-    "@typescript-eslint/parser": "^8.3.0",
+    "@typescript-eslint/eslint-plugin": "^8.45.0",
+    "@typescript-eslint/parser": "^8.45.0",
     "@vitejs/plugin-react": "5.0.0",
     "autoprefixer": "10.4.21",
     "tailwindcss": "4.1.12",

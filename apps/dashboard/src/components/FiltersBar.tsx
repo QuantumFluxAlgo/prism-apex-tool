@@ -1,4 +1,5 @@
 import { SYMBOLS, STRATEGIES } from '../constants.js';
+import Button from '../ui/Button';
 
 interface Props {
   date: string;
@@ -31,48 +32,74 @@ export function FiltersBar({
   setRefreshMs,
   onExport,
 }: Props) {
+  const safeSymbols = Array.isArray(symbols) ? symbols : [];
+  const safeStrategies = Array.isArray(strategies) ? strategies : [];
+  const safeDate = typeof date === 'string' ? date : '';
+  const safeRefreshMs = Number.isFinite(refreshMs) ? refreshMs : 0;
+
+  const toSafeString = (value: unknown): string => {
+    if (value === null || value === undefined) return '';
+    return typeof value === 'string' ? value : String(value);
+  };
+
   const toggleSymbol = (sym: string) => {
-    setSymbols(symbols.includes(sym) ? symbols.filter((s) => s !== sym) : [...symbols, sym]);
+    const next = safeSymbols.includes(sym)
+      ? safeSymbols.filter((s) => s !== sym)
+      : [...safeSymbols, sym];
+    setSymbols(next);
   };
 
   const toggleStrategy = (str: string) => {
-    setStrategies(
-      strategies.includes(str) ? strategies.filter((s) => s !== str) : [...strategies, str],
-    );
+    const next = safeStrategies.includes(str)
+      ? safeStrategies.filter((s) => s !== str)
+      : [...safeStrategies, str];
+    setStrategies(next);
   };
 
   return (
-    <div className="flex flex-wrap items-center gap-4 mb-4">
-      <input
-        type="date"
-        value={date}
-        onChange={(e) => setDate(e.target.value)}
-        className="border px-2 py-1 rounded"
-      />
+    <div className="a3-filter-bar flex-wrap a3-scroll-soft">
+      <label className="a3-filter-field">
+        <span>Date</span>
+        <input
+          type="date"
+          value={safeDate}
+          onChange={(e) => setDate(e.target.value)}
+        />
+      </label>
 
-      <div className="flex items-center gap-2">
-        {SYMBOLS.map((s) => (
-          <label key={s} className="flex items-center gap-1">
-            <input type="checkbox" checked={symbols.includes(s)} onChange={() => toggleSymbol(s)} />
-            {s}
-          </label>
-        ))}
+      <div className="a3-filter-field flex-wrap">
+        <span>Symbols</span>
+        <div className="flex items-center gap-2 flex-wrap">
+          {SYMBOLS.map((s) => (
+            <label key={s} className="a3-filter-field">
+              <input
+                type="checkbox"
+                checked={safeSymbols.includes(s)}
+                onChange={() => toggleSymbol(s)}
+              />
+              {s}
+            </label>
+          ))}
+        </div>
       </div>
 
-      <div className="flex items-center gap-2">
-        {STRATEGIES.map((s) => (
-          <label key={s} className="flex items-center gap-1">
-            <input
-              type="checkbox"
-              checked={strategies.includes(s)}
-              onChange={() => toggleStrategy(s)}
-            />
-            {s}
-          </label>
-        ))}
+      <div className="a3-filter-field flex-wrap">
+        <span>Strategies</span>
+        <div className="flex items-center gap-2 flex-wrap">
+          {STRATEGIES.map((s) => (
+            <label key={s} className="a3-filter-field">
+              <input
+                type="checkbox"
+                checked={safeStrategies.includes(s)}
+                onChange={() => toggleStrategy(s)}
+              />
+              {s}
+            </label>
+          ))}
+        </div>
       </div>
 
-      <label className="flex items-center gap-1">
+      <label className="a3-filter-field">
         <input
           type="checkbox"
           checked={showAccepted}
@@ -81,7 +108,7 @@ export function FiltersBar({
         Accepted
       </label>
 
-      <label className="flex items-center gap-1">
+      <label className="a3-filter-field">
         <input
           type="checkbox"
           checked={showRejected}
@@ -90,20 +117,24 @@ export function FiltersBar({
         Rejected
       </label>
 
-      <select
-        value={refreshMs.toString()}
-        onChange={(e) => setRefreshMs(Number(e.target.value))}
-        className="border px-2 py-1 rounded"
-      >
-        <option value="3000">3s</option>
-        <option value="5000">5s</option>
-        <option value="10000">10s</option>
-        <option value="0">Off</option>
-      </select>
+      <label className="a3-filter-field">
+        <span>Refresh</span>
+        <select
+          value={toSafeString(safeRefreshMs)}
+          onChange={(e) => setRefreshMs(Number(e.target.value))}
+        >
+          <option value="3000">3s</option>
+          <option value="5000">5s</option>
+          <option value="10000">10s</option>
+          <option value="0">Off</option>
+        </select>
+      </label>
 
-      <button type="button" onClick={onExport} className="px-2 py-1 bg-gray-200 rounded">
+      <Button tone="secondary" size="xs" onClick={onExport}>
         Export CSV
-      </button>
+      </Button>
     </div>
   );
 }
+
+export default FiltersBar;

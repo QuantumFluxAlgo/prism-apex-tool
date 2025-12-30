@@ -1,19 +1,8 @@
 import React from 'react';
 
-type TooltipProps = {
-  text: string;
-  children: React.ReactNode;
-  className?: string;
-};
-
-/**
- * Lightweight tooltip wrapper using the native `title` attribute until we adopt a richer UI kit.
- */
-export function Tooltip({ text, children, className = '' }: TooltipProps) {
-  return (
-    <span title={text} className={['inline-flex items-center', className].filter(Boolean).join(' ')}>
-      {children}
-    </span>
-  );
+export function Tooltip(props: React.HTMLAttributes<HTMLDivElement>) {
+  return <span data-testid="tooltip" {...props} />;
 }
+
+export default Tooltip;
 

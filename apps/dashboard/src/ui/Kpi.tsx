@@ -1,16 +1,38 @@
 import React from 'react';
-import { Card, CardBody } from './Card';
 
-export default function Kpi({ label, value, hint }: { label: string; value: string | number; hint?: string }) {
+type KpiTone = 'emerald' | 'rose' | 'amber' | 'indigo' | 'cyan' | 'neutral';
+
+type KpiProps = React.HTMLAttributes<HTMLDivElement> & {
+  label?: string;
+  value?: string | number | null;
+  sublabel?: string;
+  tone?: KpiTone;
+};
+
+const cx = (...classes: Array<string | false | null | undefined>) =>
+  classes.filter(Boolean).join(' ');
+
+export default function Kpi({
+  label,
+  value,
+  sublabel,
+  tone = 'neutral',
+  className,
+  ...rest
+}: KpiProps) {
+  const toneClass = tone ? `a3-kpi--${tone}` : null;
+
   return (
-    <Card>
-      <CardBody className="dashboard-card__body stack">
-        <div className="dashboard-kpi">
-          <span className="dashboard-kpi__label">{label}</span>
-          <span className="dashboard-kpi__value">{value}</span>
-          {hint && <span className="dashboard-kpi__hint">{hint}</span>}
-        </div>
-      </CardBody>
-    </Card>
+    <div
+      data-testid="kpi"
+      className={cx('a3-kpi', toneClass, className)}
+      {...rest}
+    >
+      {label && <div className="a3-kpi-label">{label}</div>}
+      {value !== undefined && value !== null && (
+        <div className="a3-kpi-value">{value}</div>
+      )}
+      {sublabel && <div className="a3-kpi-sublabel">{sublabel}</div>}
+    </div>
   );
 }

@@ -19,6 +19,8 @@ import path from 'path';
 import { TICKET_STRATEGIES } from '../schemas/ticket.js';
 import type { TicketStrategy } from '../schemas/ticket.js';
 
+const RUN_CONTINUOUS = (process.env.RUN_CONTINUOUS ?? '1') === '1';
+
 export interface BarMessage {
   symbol: string; // root e.g., ES
   contract: string; // full contract e.g., ESZ4
@@ -167,7 +169,7 @@ async function stop(): Promise<void> {
 function onBar(bar: BarMessage): void {
   jobManager.beat('STRATEGIES');
   strategies.lastBarTs = bar.ts;
-  if (bar.session !== 'RTH') return;
+  if (!RUN_CONTINUOUS && bar.session !== 'RTH') return;
   const tick = TICK_SPECS[bar.symbol];
   if (!tick) return;
 
@@ -246,10 +248,18 @@ function onBar(bar: BarMessage): void {
       );
       if (res.length > 0) {
         cs.debounce.vwapActive = true;
+        const suggestion = res[0];
+        const entryPrice = suggestion.entry;
+        const stopPrice = suggestion.stop ?? entryPrice;
+        const targetPrice = suggestion.target ?? entryPrice;
+        const toTicks = (from: number, to: number) =>
+          tick.tickSize > 0 ? Math.round(Math.abs((to - from) / tick.tickSize)) : 0;
+        const stopTicks = Math.max(1, toTicks(entryPrice, stopPrice));
+        const targetTicks = Math.max(1, toTicks(entryPrice, targetPrice));
         emitSuggestion({
-          ...res[0],
+          ...suggestion,
           contract: bar.contract,
-          meta: { ...res[0].meta, vwap, atrTicks },
+          meta: { ...suggestion.meta, vwap, atrTicks, stopTicks, targetTicks },
         });
       }
     }

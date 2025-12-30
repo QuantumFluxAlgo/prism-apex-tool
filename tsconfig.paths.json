@@ -42,6 +42,8 @@
       "@prism-apex/strategy-apx-ddb01/*": ["packages/strategy-apx-ddb01/src/*"],
       "@prism-apex/ticketizer": ["packages/ticketizer/src"],
       "@prism-apex/ticketizer/*": ["packages/ticketizer/src/*"],
+      "@prism-apex/ui-table": ["packages/ui-table/src"],
+      "@prism-apex/ui-table/*": ["packages/ui-table/src/*"],
 
       "@prism-apex/app-api": ["apps/api/src"],
       "@prism-apex/app-api/*": ["apps/api/src/*"],

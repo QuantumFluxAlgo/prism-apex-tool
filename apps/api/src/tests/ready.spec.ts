@@ -1,23 +1,17 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect } from 'vitest';
 import { setJobBeat, __resetHealth } from '@prism-apex/runtime';
 import { buildServer } from '@prism-apex/app-api/server.js';
 
 describe('/ready', () => {
-  beforeEach(() => {
-    vi.useFakeTimers();
-    vi.setSystemTime(new Date('2024-01-01T00:00:00Z'));
-    __resetHealth();
-  });
-  afterEach(() => {
-    vi.useRealTimers();
-  });
-
   it('reports job health deterministically', async () => {
+    __resetHealth();
     const app = buildServer();
     __resetHealth();
+    const now = Date.now();
 
-    setJobBeat('alpha');
-    setJobBeat('beta');
+    setJobBeat('alpha', now);
+    setJobBeat('beta', now);
+    setJobBeat('marketFeed', now);
 
     let res = await app.inject({ method: 'GET', url: '/ready' });
     let body = res.json();
@@ -25,7 +19,9 @@ describe('/ready', () => {
     expect(body.jobs.beta.healthy).toBe(true);
     expect(body.overall).toBe('healthy');
 
-    await vi.advanceTimersByTimeAsync(11_000);
+    const staleTs = now - 700_000;
+    setJobBeat('alpha', staleTs);
+    setJobBeat('beta', staleTs);
 
     res = await app.inject({ method: 'GET', url: '/ready' });
     body = res.json();

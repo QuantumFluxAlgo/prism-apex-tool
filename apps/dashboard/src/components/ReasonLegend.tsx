@@ -2,8 +2,8 @@ import React from 'react';
 import Badge from '../ui/Badge';
 
 const ITEMS: Array<[string, string]> = [
-  ['RR below 2.0', 'Reward-to-risk ratio under 2.0 (won’t dispatch)'],
-  ['RR above 4.5 cap', 'Exceeds program cap for R:R'],
+  ['RR below 1.1', 'Reward-to-risk ratio under 1.1 (won’t dispatch)'],
+  ['RR above 1.9 cap', 'Exceeds program cap for R:R'],
   ['SHORT is view-only', 'Shorts are monitored but not actionable'],
   ['Missing R:R', 'Not enough data yet to compute R:R'],
   ['Not OPEN', 'Ticket already closed/complete'],
