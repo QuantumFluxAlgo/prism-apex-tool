@@ -7,8 +7,6 @@ import {
 type ListQuery = {
   symbol?: string;
   sessionDate?: string;
-  sinceUtc?: string;
-  untilUtc?: string;
   limit?: string;
   offset?: string;
 };
@@ -34,20 +32,14 @@ export default async function systemRecordsOrrRoutes(app: FastifyInstance) {
       const limit = toInt(q.limit, 100);
       const offset = toInt(q.offset, 0);
 
-      const rows = await listOrrGateResults({
+      const result = await listOrrGateResults({
         symbol: q.symbol,
         sessionDate: q.sessionDate,
-        sinceUtc: q.sinceUtc,
-        untilUtc: q.untilUtc,
         limit,
         offset,
       });
 
-      return {
-        items: rows,
-        nextOffset:
-          rows.length === Math.max(1, Math.min(500, limit)) ? offset + rows.length : null,
-      };
+      return result;
     },
   );
 

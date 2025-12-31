@@ -193,13 +193,22 @@ Each app under `apps/` is documented with:
 
 ### P1 System Records (engineering-only)
 
-- `deploy/sql/031_orr_gate_results.sql` – append-only `orr_gate_results` table (one row per engine run × session × symbol, stored forever for now).
-- `apps/api/src/store/orrGateResults.ts` – single Postgres store (insert/list/latest helpers, capped pagination).
-- `apps/api/src/jobs/engineRunJob.ts` – emits one ORR gate record for each ORR run (session flags + metrics + gate signal + provenance stamps).
-- `apps/api/src/routes/system-records.orr.ts` – read-only endpoints (`GET /api/system-records/orr-gate` and `/latest`), registered in `apps/api/src/server.ts`.
-- `apps/api/src/lib/systemRecordStamps.ts` – shared stamping helper (engine version, config fingerprint, schema version, computed timestamp).
+Purpose: provide append-only, read-only audit breadcrumbs describing “what the engine saw and why it acted (or didn’t)” without touching ticket generation paths. These records are intended for engineering + future operator tooling.
 
-No other services may write to `orr_gate_results`; writes happen exclusively from the ORR engine run job so provenance remains auditable.
+- **DB**
+  - `deploy/sql/031_orr_gate_results.sql` creates `orr_gate_results` (one row per `(run_id, session_date, symbol)` with provenance stamps).
+  - `deploy/sql/032_orr_gate_results_cleanup.sql` removes the earlier planner-labelled rows so only gate semantics remain (`canonical_strategy_key='orr_gate'`).
+- **Store**
+  - `apps/api/src/store/orrGateResults.ts` exposes a single Pool, helper to run a callback with a client, an `insertOrrGateResultWithClient` helper, and read APIs that automatically scope to `canonical_strategy_key='orr_gate'`.
+- **Writer**
+  - `apps/api/src/jobs/engineRunJob.ts` writes one ORR gate record for every engine run invocation (regardless of requested planner). It computes the shared gate via `apps/api/src/lib/orrGate.ts`, captures session flags + session metrics summaries, and stores a compact per-planner preview rollup in `details`.
+  - Gate identity is explicit: `canonical_strategy_key='orr_gate'`, `engine_strategy_id='ORR_GATE'`, and `ticket_strategy_id` reflects whichever planner was asked to run (e.g., `APX-DDB-01`, `OSB`, `VWAP_FT`).
+- **Read-only API**
+  - `apps/api/src/routes/system-records.orr.ts` exposes `GET /api/system-records/orr-gate` (paginated list) and `GET /api/system-records/orr-gate/latest` (latest per symbol for a session). Registered in `apps/api/src/server.ts` so auth/rate-limit middleware apply automatically.
+- **Provenance helper**
+  - `apps/api/src/lib/systemRecordStamps.ts` fingerprints the gate config + context (engine version, deterministic config hash, schema version, computed timestamp).
+
+Writes are restricted to the engine job pathway; no other service may touch `orr_gate_results`.
 
 ### Runtime Contract
 

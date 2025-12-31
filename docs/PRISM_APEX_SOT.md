@@ -4797,27 +4797,27 @@ Operator labels still appear in tickets/worklists, but persistence must always m
 
 ### Append-only storage
 
-Migration `deploy/sql/031_orr_gate_results.sql` introduces `orr_gate_results`:
-- Append-only, stored forever (retention TBD)
-- One row per `(run_id, session_date, symbol)` where `run_id` is generated for every engine invocation
-- Gate outcome (`actionable`, `reason`)
-- Context snapshots (`metrics` = full session metrics DTO, `details` = flags, gate input/output, preview meta)
-- Provenance stamps from `lib/systemRecordStamps.ts` (`engine_version`, deterministic `config_fingerprint`, schema version, computed timestamp)
+- Migration `deploy/sql/031_orr_gate_results.sql` introduces `orr_gate_results` (append-only; stored forever for now) with one row per `(run_id, session_date, symbol)`.
+- Fields include the gate outcome (`actionable`, `reason`), `metrics` (gate ATR/OR width snapshot), `details` (session flags summary, session-metrics summary, gate config/result, planner rollup, preview error details), and provenance stamps from `lib/systemRecordStamps.ts`.
+- Migration `deploy/sql/032_orr_gate_results_cleanup.sql` purges the initial planner-labelled rows so only gate-specific semantics remain (`canonical_strategy_key='orr_gate'`, `engine_strategy_id='ORR_GATE'`). Future migrations may add retention windows, but P1-2 intentionally keeps everything for audit purposes.
 
 ### Writer (best-effort)
 
-`apps/api/src/jobs/engineRunJob.ts` now stamps exactly one ORR gate record when `strategy === 'orr'`:
-- Fetches session flags via `createSessionFlagsService()` (news/FOMC gating)
-- Fetches session metrics via `createSessionMetricsService()` and maps them to the `OrrSessionMetricsSummary`
-- Evaluates the ORR v3 gate (`createOrrV3Engine(DEFAULT_ORR_V3_CONFIG)`)
-- Stamps provenance via `makeSystemRecordStamps({ strategy: 'orr', strategyConfigVersion })`
-- Persists through `apps/api/src/store/orrGateResults.ts`
-- Persistence failures log a truncated (32KB) stack but never block the engine run
+`apps/api/src/jobs/engineRunJob.ts` now stamps **one ORR gate record per engine run invocation** (per `(run_id, session_date, symbol)`), regardless of which planner (`orr`/DDB, `osb`, `vwapft`) was asked to run:
+
+- Gate computation uses `apps/api/src/lib/orrGate.ts` (ATR ticks + OR width ticks) via a shared PG client (`withOrrGateResultsClient`), so all strategies reference the same gate truth.
+- Session context snapshots:
+  - Flags via `createSessionFlagsService()` (news/FOMC gating).
+  - Session metrics summary via `fetchSessionMetricsBatch(..., { service: createSessionMetricsService() })`.
+- Planner rollup: the job runs each planner in isolation (best-effort) and stores a compact summary in `details.planner_rollup` so future tooling can compare planner outputs for the same session.
+- Provenance stamps via `makeSystemRecordStamps(...)` capture engine version + deterministic fingerprint of the gate config + invocation metadata.
+- Gate identity is explicit: `canonical_strategy_key='orr_gate'`, `engine_strategy_id='ORR_GATE'`, `ticket_strategy_id` reflects the requested planner (e.g., `APX-DDB-01`, `OSB`, `VWAP_FT`).
+- Persistence is best-effort: failures are logged (stack truncated to 32 KB) but never block the engine run.
 
 ### Reader (GET-only)
 
 `apps/api/src/routes/system-records.orr.ts` exposes read-only endpoints registered in `apps/api/src/server.ts`:
-- `GET /api/system-records/orr-gate` – filterable list (symbol, sessionDate, time bounds, pagination)
+- `GET /api/system-records/orr-gate` – filterable list (symbol, sessionDate, pagination)
 - `GET /api/system-records/orr-gate/latest` – latest per symbol for a given session date
 
 These routes inherit the existing auth/rate-limit plugins. No POST/PUT/DELETE surface exists; writes are engine-only.

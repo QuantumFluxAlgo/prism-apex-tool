@@ -14,6 +14,56 @@ vi.mock('../services/governance/alert.js', () => ({
   logGovernanceAlert: vi.fn(),
 }));
 
+vi.mock('../lib/orrGate.js', () => ({
+  getOrrGateResult: vi.fn(async () => ({
+    actionable: true,
+    reason: 'ok',
+    metrics: { atrTicks: 10, orWidthTicks: 6, dynamicMinutes: 15 },
+  })),
+  getOrrConfig: vi.fn(() => ({
+    atrLookback: 14,
+    atrMinTicks: 8,
+    orMinMinutes: 10,
+    orMaxMinutes: 30,
+    minOrWidthTicks: 6,
+    continuationEnabled: true,
+    continuationMax: 1,
+    sessionStartUtc: '14:30',
+    sessionEndUtc: '16:00',
+    volCacheSeconds: 60,
+  })),
+}));
+
+vi.mock('../store/orrGateResults.js', () => {
+  const insertOrrGateResultWithClient = vi.fn().mockResolvedValue(undefined);
+  const withOrrGateResultsClient = vi
+    .fn()
+    .mockImplementation(async (fn: (client: Record<string, unknown>) => Promise<unknown>) => {
+      return fn({});
+    });
+  return {
+    insertOrrGateResultWithClient,
+    withOrrGateResultsClient,
+  };
+});
+
+vi.mock('./session-metrics/session-flags-service.js', () => ({
+  createSessionFlagsService: vi.fn(() => ({
+    getFlagsForSession: () => ({ flags: [], hasNewsFlag: false }),
+  })),
+}));
+
+vi.mock('./session-metrics/service.js', () => ({
+  createSessionMetricsService: vi.fn(() => ({
+    getForSymbolSession: vi.fn(async () => ({
+      status: 'OK',
+      orWidth: 5,
+      orToAtrRatio: 1,
+      vwapSlopeClassification: null,
+    })),
+  })),
+}));
+
 import { runEnginePreview } from '../services/strategy-engine/index.js';
 import { runEngineTicketsPipeline } from '../services/tickets/engineTicketsOrchestrator.js';
 import { logGovernanceAlert } from '../services/governance/alert.js';
@@ -43,7 +93,7 @@ beforeEach(() => {
 
 describe('runEngineSessionJob', () => {
   test('skips tickets pipeline when preview returns no signals', async () => {
-    mockedRunEnginePreview.mockResolvedValueOnce({
+    mockedRunEnginePreview.mockResolvedValue({
       signals: [],
       meta: {
         engineVersion: '1.0.0-test',
@@ -72,7 +122,7 @@ describe('runEngineSessionJob', () => {
 
   test('uses override risk cap and calls tickets pipeline for non-empty signals', async () => {
     const signals = [makeSignal()];
-    mockedRunEnginePreview.mockResolvedValueOnce({
+    mockedRunEnginePreview.mockResolvedValue({
       signals,
       meta: {
         engineVersion: '1.2.3-override',
@@ -116,7 +166,7 @@ describe('runEngineSessionJob', () => {
   test('falls back to env risk cap when override absent', async () => {
     process.env.ENGINE_MAX_RISK_DOLLARS_PER_TRADE = '250';
     const signals = [makeSignal()];
-    mockedRunEnginePreview.mockResolvedValueOnce({
+    mockedRunEnginePreview.mockResolvedValue({
       signals,
       meta: {
         engineVersion: 'env-2.0.0',
@@ -144,7 +194,7 @@ describe('runEngineSessionJob', () => {
 
   test('logs safety envelope drop counts when preview rejects signals', async () => {
     const logSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
-    mockedRunEnginePreview.mockResolvedValueOnce({
+    mockedRunEnginePreview.mockResolvedValue({
       signals: [],
       meta: {
         engineVersion: '1.0.0-test',
@@ -167,7 +217,7 @@ describe('runEngineSessionJob', () => {
   });
 
   test('emits hard stop governance alert when tickets are rejected', async () => {
-    mockedRunEnginePreview.mockResolvedValueOnce({
+    mockedRunEnginePreview.mockResolvedValue({
       signals: [makeSignal()],
       meta: {
         engineVersion: '1.0.0-test',

@@ -1,4 +1,4 @@
-import { Pool } from 'pg';
+import { Pool, type PoolClient } from 'pg';
 
 export const DEFAULT_DATABASE_URL = 'postgres://apex:apex@db:5432/prismapex';
 
@@ -6,10 +6,26 @@ const pool = new Pool({
   connectionString: process.env.DATABASE_URL ?? DEFAULT_DATABASE_URL,
 });
 
-export type OrrGateResultRow = {
-  id: number;
+export function getOrrGateResultsPool(): Pool {
+  return pool;
+}
+
+export async function withOrrGateResultsClient<T>(fn: (client: PoolClient) => Promise<T>): Promise<T> {
+  const client = await pool.connect();
+  try {
+    return await fn(client);
+  } finally {
+    client.release();
+  }
+}
+
+type PgQueryable = {
+  query: (text: string, values?: unknown[]) => Promise<unknown>;
+};
+
+export interface OrrGateResultRow {
   run_id: string;
-  session_date: string; // YYYY-MM-DD
+  session_date: string;
   symbol: string;
 
   engine_strategy_id: string;
@@ -19,19 +35,40 @@ export type OrrGateResultRow = {
   actionable: boolean;
   reason: string;
 
-  metrics: Record<string, unknown>;
-  details: Record<string, unknown>;
+  metrics: unknown;
+  details: unknown;
 
   engine_version: string;
   config_fingerprint: string;
   schema_version: number;
   computed_at_utc: string;
-  created_at_utc: string;
-};
+}
 
-export type InsertOrrGateResultInput = Omit<OrrGateResultRow, 'id' | 'created_at_utc'>;
+export interface InsertOrrGateResultInput {
+  run_id: string;
+  session_date: string;
+  symbol: string;
 
-export async function insertOrrGateResult(input: InsertOrrGateResultInput): Promise<void> {
+  engine_strategy_id: string;
+  ticket_strategy_id: string;
+  canonical_strategy_key: string;
+
+  actionable: boolean;
+  reason: string;
+
+  metrics: unknown;
+  details: unknown;
+
+  engine_version: string;
+  config_fingerprint: string;
+  schema_version: number;
+  computed_at_utc: string;
+}
+
+export async function insertOrrGateResultWithClient(
+  db: PgQueryable,
+  input: InsertOrrGateResultInput,
+): Promise<void> {
   const sql = `
     INSERT INTO orr_gate_results (
       run_id,
@@ -85,55 +122,48 @@ export async function insertOrrGateResult(input: InsertOrrGateResultInput): Prom
     input.computed_at_utc,
   ];
 
-  await pool.query(sql, values);
+  await db.query(sql, values);
+}
+
+export async function insertOrrGateResult(input: InsertOrrGateResultInput): Promise<void> {
+  await insertOrrGateResultWithClient(pool, input);
 }
 
 export interface ListOrrGateResultsQuery {
-  symbol?: string;
   sessionDate?: string;
-  sinceUtc?: string;
-  untilUtc?: string;
+  symbol?: string;
   limit?: number;
   offset?: number;
 }
 
-export async function listOrrGateResults(
-  query: ListOrrGateResultsQuery = {},
-): Promise<OrrGateResultRow[]> {
+export interface ListOrrGateResultsResult {
+  items: OrrGateResultRow[];
+  nextOffset: number | null;
+}
+
+export async function listOrrGateResults(query: ListOrrGateResultsQuery): Promise<ListOrrGateResultsResult> {
   const limit = Math.max(1, Math.min(500, query.limit ?? 100));
   const offset = Math.max(0, query.offset ?? 0);
 
-  const where: string[] = [];
+  const where: string[] = ["canonical_strategy_key = 'orr_gate'"];
   const values: unknown[] = [];
-  let i = 1;
-
-  if (query.symbol) {
-    where.push(`symbol = $${i++}::text`);
-    values.push(query.symbol);
-  }
 
   if (query.sessionDate) {
-    where.push(`session_date = $${i++}::date`);
     values.push(query.sessionDate);
+    where.push(`session_date = $${values.length}::date`);
   }
 
-  if (query.sinceUtc) {
-    where.push(`created_at_utc >= $${i++}::timestamptz`);
-    values.push(query.sinceUtc);
+  if (query.symbol) {
+    values.push(query.symbol);
+    where.push(`symbol = $${values.length}::text`);
   }
 
-  if (query.untilUtc) {
-    where.push(`created_at_utc <= $${i++}::timestamptz`);
-    values.push(query.untilUtc);
-  }
-
-  const whereSql = where.length ? `WHERE ${where.join(' AND ')}` : '';
+  const whereSql = `WHERE ${where.join(' AND ')}`;
 
   const sql = `
     SELECT
-      id,
-      run_id::text AS run_id,
-      session_date::text AS session_date,
+      run_id,
+      session_date,
       symbol,
       engine_strategy_id,
       ticket_strategy_id,
@@ -145,35 +175,31 @@ export async function listOrrGateResults(
       engine_version,
       config_fingerprint,
       schema_version,
-      computed_at_utc::text AS computed_at_utc,
-      created_at_utc::text AS created_at_utc
+      computed_at_utc
     FROM orr_gate_results
     ${whereSql}
-    ORDER BY created_at_utc DESC
+    ORDER BY computed_at_utc DESC
     LIMIT ${limit}
     OFFSET ${offset};
   `;
 
-  const res = await pool.query(sql, values);
-  return res.rows as OrrGateResultRow[];
+  const res = await pool.query(sql, values as any);
+  const items = (res.rows ?? []) as OrrGateResultRow[];
+  const nextOffset = items.length === limit ? offset + limit : null;
+
+  return { items, nextOffset };
 }
 
-export interface LatestOrrGateResultsQuery {
+export async function listLatestOrrGateResults(args: {
   sessionDate: string;
   symbols: string[];
-}
-
-export async function listLatestOrrGateResults(
-  query: LatestOrrGateResultsQuery,
-): Promise<OrrGateResultRow[]> {
-  const symbols = Array.from(new Set(query.symbols.map((s) => s.trim()).filter(Boolean)));
-  if (!symbols.length) return [];
+}): Promise<OrrGateResultRow[]> {
+  if (!args.symbols.length) return [];
 
   const sql = `
-    SELECT DISTINCT ON (session_date, symbol)
-      id,
-      run_id::text AS run_id,
-      session_date::text AS session_date,
+    SELECT DISTINCT ON (symbol)
+      run_id,
+      session_date,
       symbol,
       engine_strategy_id,
       ticket_strategy_id,
@@ -185,14 +211,14 @@ export async function listLatestOrrGateResults(
       engine_version,
       config_fingerprint,
       schema_version,
-      computed_at_utc::text AS computed_at_utc,
-      created_at_utc::text AS created_at_utc
+      computed_at_utc
     FROM orr_gate_results
-    WHERE session_date = $1::date
+    WHERE canonical_strategy_key = 'orr_gate'
+      AND session_date = $1::date
       AND symbol = ANY($2::text[])
-    ORDER BY session_date, symbol, created_at_utc DESC;
+    ORDER BY symbol, computed_at_utc DESC;
   `;
 
-  const res = await pool.query(sql, [query.sessionDate, symbols]);
-  return res.rows as OrrGateResultRow[];
+  const res = await pool.query(sql, [args.sessionDate, args.symbols]);
+  return (res.rows ?? []) as OrrGateResultRow[];
 }
