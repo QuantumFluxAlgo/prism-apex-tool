@@ -63,6 +63,7 @@ import operatorRiskRoutes from './routes/operator-risk.js';
 import operatorRiskAuditRoutes from './routes/operatorRisk.audit.js';
 import { registerOperatorSizingRoutes } from './routes/operatorSizing.js';
 import operatorSessionRiskRoutes from './routes/operator-session-risk.js';
+import systemRecordsOrrRoutes from './routes/system-records.orr.js';
 
 const cfg = getConfig();
 const DISABLE = process.env.DISABLE_JOBS === '1' || process.env.NODE_ENV === 'test';
@@ -153,6 +154,7 @@ export function buildServer() {
   app.register(systemJobsRoutes);
   app.register(systemTelemetryRoutes);
   app.register(systemAlertsRoutes);
+  app.register(systemRecordsOrrRoutes);
   app.register(strategiesConfigRoutes);
   app.register(marketRoutes);
   app.register(marketsSnapshotRoute);

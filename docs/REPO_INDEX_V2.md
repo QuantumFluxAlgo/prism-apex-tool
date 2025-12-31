@@ -191,6 +191,16 @@ Each app under `apps/` is documented with:
 - `util/` – Shared helpers for jobs and routes
 - `lib/` – Cross-cutting helpers (guardrails, telemetry, stamping). P1-0 adds `lib/systemRecordStamps.ts`, which stamps payloads with `engine_version`, a deterministic `config_fingerprint`, schema version, and a UTC timestamp so upcoming `/api/system-records/*` endpoints can prove provenance.
 
+### P1 System Records (engineering-only)
+
+- `deploy/sql/031_orr_gate_results.sql` – append-only `orr_gate_results` table (one row per engine run × session × symbol, stored forever for now).
+- `apps/api/src/store/orrGateResults.ts` – single Postgres store (insert/list/latest helpers, capped pagination).
+- `apps/api/src/jobs/engineRunJob.ts` – emits one ORR gate record for each ORR run (session flags + metrics + gate signal + provenance stamps).
+- `apps/api/src/routes/system-records.orr.ts` – read-only endpoints (`GET /api/system-records/orr-gate` and `/latest`), registered in `apps/api/src/server.ts`.
+- `apps/api/src/lib/systemRecordStamps.ts` – shared stamping helper (engine version, config fingerprint, schema version, computed timestamp).
+
+No other services may write to `orr_gate_results`; writes happen exclusively from the ORR engine run job so provenance remains auditable.
+
 ### Runtime Contract
 
 Dashboard APIs **must only** call canonical routes.  

@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { buildTestServerTicketsDebug } from './testServerTicketsDebug.js';
-import { appendTickets } from '../utils/mockStore.js';
+import { appendTickets, clearTickets } from '../utils/mockStore.js';
 import * as telemetry from '../services/tickets/ticketsTelemetry.js';
 
 vi.spyOn(telemetry, 'emitTicketQualityTelemetry').mockResolvedValue();
@@ -8,6 +8,7 @@ vi.spyOn(telemetry, 'emitTicketQualityTelemetry').mockResolvedValue();
 describe('GET /tickets/debug', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    clearTickets();
   });
 
   it('filters by minEntryRR and emits telemetry', async () => {

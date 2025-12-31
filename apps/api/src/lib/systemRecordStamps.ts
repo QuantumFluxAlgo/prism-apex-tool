@@ -1,5 +1,5 @@
 import crypto from 'node:crypto';
-import { ENGINE_VERSION as STRATEGY_ENGINE_VERSION } from '../services/strategy-engine/index.js';
+import * as StrategyEngine from '../services/strategy-engine/index.js';
 
 export const SYSTEM_RECORDS_SCHEMA_VERSION = 1;
 
@@ -29,7 +29,8 @@ function canonicalize(value: unknown, seen: WeakSet<object>): unknown {
   }
 
   if (value instanceof Map) {
-    const entries = Array.from(value.entries()).map(([k, v]) => [
+    const m = value as Map<unknown, unknown>;
+    const entries: [string, unknown][] = Array.from(m.entries()).map(([k, v]) => [
       String(k),
       canonicalize(v, seen),
     ]);
@@ -38,7 +39,8 @@ function canonicalize(value: unknown, seen: WeakSet<object>): unknown {
   }
 
   if (value instanceof Set) {
-    const items = Array.from(value.values()).map((v) => canonicalize(v, seen));
+    const s = value as Set<unknown>;
+    const items = Array.from(s.values()).map((v) => canonicalize(v, seen));
     return items
       .map((v) => ({ v, k: JSON.stringify(v) }))
       .sort((a, b) => (a.k < b.k ? -1 : a.k > b.k ? 1 : 0))
@@ -70,10 +72,21 @@ export function getEngineVersion(): string {
   const env = (process.env.ENGINE_VERSION || '').trim();
   if (env) return env;
 
-  const fallback = (STRATEGY_ENGINE_VERSION || '').trim();
+  const fallback = getStrategyEngineVersion().trim();
   if (fallback) return fallback;
 
   return 'unknown';
+}
+
+function getStrategyEngineVersion(): string {
+  try {
+    const candidate = (StrategyEngine as { ENGINE_VERSION?: string }).ENGINE_VERSION;
+    if (typeof candidate === 'string') return candidate;
+  } catch {
+    // The module is often vi.mock'd in tests without ENGINE_VERSION; treat as missing.
+    return '';
+  }
+  return '';
 }
 
 export function fingerprintConfig(config: unknown): string {

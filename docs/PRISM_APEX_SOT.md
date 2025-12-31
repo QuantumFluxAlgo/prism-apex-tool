@@ -4781,3 +4781,43 @@ worklist-mock/**
 generate_worklist_mock.sh (if you no longer regenerate the mock)
 
 Everything else in the engine/risk/session-metrics/ticket pipelines and in the V2 dashboard surfaces must be preserved as canonical runtime.
+
+## P1 System Records: ORR Gate Results (engineering-only)
+
+**Status:** Engineering-only and externally read-only (GET endpoints only). This enables operator tooling later without schema churn.
+
+### Strategy identity guardrails
+
+Canonical engine keys:
+- `orr` (engine id `ORR_V3`, operator strategy id `APX-DDB-01`, operator label “DDB”)
+- `vwapft` (operator label “VWAP-FT”, DB key `vwap_ft`)
+- `osb`
+
+Operator labels still appear in tickets/worklists, but persistence must always map back to canonical keys before writing system records.
+
+### Append-only storage
+
+Migration `deploy/sql/031_orr_gate_results.sql` introduces `orr_gate_results`:
+- Append-only, stored forever (retention TBD)
+- One row per `(run_id, session_date, symbol)` where `run_id` is generated for every engine invocation
+- Gate outcome (`actionable`, `reason`)
+- Context snapshots (`metrics` = full session metrics DTO, `details` = flags, gate input/output, preview meta)
+- Provenance stamps from `lib/systemRecordStamps.ts` (`engine_version`, deterministic `config_fingerprint`, schema version, computed timestamp)
+
+### Writer (best-effort)
+
+`apps/api/src/jobs/engineRunJob.ts` now stamps exactly one ORR gate record when `strategy === 'orr'`:
+- Fetches session flags via `createSessionFlagsService()` (news/FOMC gating)
+- Fetches session metrics via `createSessionMetricsService()` and maps them to the `OrrSessionMetricsSummary`
+- Evaluates the ORR v3 gate (`createOrrV3Engine(DEFAULT_ORR_V3_CONFIG)`)
+- Stamps provenance via `makeSystemRecordStamps({ strategy: 'orr', strategyConfigVersion })`
+- Persists through `apps/api/src/store/orrGateResults.ts`
+- Persistence failures log a truncated (32KB) stack but never block the engine run
+
+### Reader (GET-only)
+
+`apps/api/src/routes/system-records.orr.ts` exposes read-only endpoints registered in `apps/api/src/server.ts`:
+- `GET /api/system-records/orr-gate` – filterable list (symbol, sessionDate, time bounds, pagination)
+- `GET /api/system-records/orr-gate/latest` – latest per symbol for a given session date
+
+These routes inherit the existing auth/rate-limit plugins. No POST/PUT/DELETE surface exists; writes are engine-only.
