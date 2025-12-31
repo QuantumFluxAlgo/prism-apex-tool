@@ -6,6 +6,7 @@ The format is based on Keep a Changelog, and this project adheres to Semantic Ve
 [Unreleased]
 DB: add tickets.source (and ticket_events.source) for CSV export compatibility.
 Docs: establish A2 UI design system and align V2 dashboard governance references under REPO_INDEX_V2.md (retire the standalone plan doc).
+P1-0: add system-record stamp helper (engine_version + config_fingerprint).
 
 [1.1.0] - 2025-11-08
 Added

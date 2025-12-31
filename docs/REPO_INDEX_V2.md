@@ -189,6 +189,7 @@ Each app under `apps/` is documented with:
   - `riskAuditLog.ts`
 - `dto/` – Data transfer objects for engine/strategy/config
 - `util/` – Shared helpers for jobs and routes
+- `lib/` – Cross-cutting helpers (guardrails, telemetry, stamping). P1-0 adds `lib/systemRecordStamps.ts`, which stamps payloads with `engine_version`, a deterministic `config_fingerprint`, schema version, and a UTC timestamp so upcoming `/api/system-records/*` endpoints can prove provenance.
 
 ### Runtime Contract
 
