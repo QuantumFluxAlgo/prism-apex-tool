@@ -16,38 +16,8 @@ fi
 REPO_ROOT="$(git rev-parse --show-toplevel)"
 cd "${REPO_ROOT}"
 echo "Repo root: ${REPO_ROOT}"
-
-PLAN_FILE="docs/PRISM_APEX_V2_DASHBOARD_PLAN.md"
-
-if [ ! -f "${PLAN_FILE}" ]; then
-  echo "❌ Plan file does not exist: ${PLAN_FILE}"
-  exit 1
-fi
-
 echo
-echo "Staging plan file…"
-git add "${PLAN_FILE}"
-
-echo
-echo "=== STAGED CHANGES ==="
-git status --short
-
-echo
-printf "Commit these staged changes? (y/N) "
-read CONFIRM
-
-if [ "${CONFIRM}" != "y" ] && [ "${CONFIRM}" != "Y" ]; then
-  echo "❌ Commit cancelled."
-  exit 0
-fi
-
-MSG="Add V2 Dashboard Productionisation Plan (PRISM_APEX_V2_DASHBOARD_PLAN.md)"
-git commit -m "${MSG}"
-
-echo
-echo "=== COMMIT COMPLETE ==="
-git log -1 --oneline --decorate
-
-echo
-echo "You may now 'git push' to update the branch on GitHub."
-echo "====================================================="
+echo "⚠️  The dedicated dashboard plan document has been retired."
+echo "    Update 'docs/REPO_INDEX_V2.md' and 'docs/UPGRADE_DASHBOARD.md' directly."
+echo "    This helper no longer stages or commits anything."
+exit 0

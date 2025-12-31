@@ -27,7 +27,6 @@ _Source of truth for what each doc is, how “live” it is, and whether it’s 
 | `PRISM_APEX_STATE.md.prev` | Archive / Snapshot | Obsolete snapshot | Safe to delete |
 | `PRISM_APEX_TECH-SPEC.md` | Architecture / wiring | Supporting | Keep |
 | `PRISM_APEX_UI_DESIGN_SYSTEM.md` | UI / Dashboards | Canonical V2 | Keep |
-| `PRISM_APEX_V2_DASHBOARD_PLAN.md` | UI / Dashboards | Canonical V2 | Keep |
 | `PRISM_APEX_V2_ENGINE_WIRING_BACKLOG.md` | Architecture / wiring | Canonical V2 | Keep |
 | `PRISM_APEX_V2_MASTER_PLAN.md` | Product / delivery | Canonical V2 | Keep |
 | `UPGRADE_DASHBOARD.md` | UI / Dashboards | Canonical V2 | Keep (per-epic delivery log) |

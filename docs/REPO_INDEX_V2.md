@@ -673,9 +673,7 @@ Copy code
 3. Ticket logic must always import from @prism-apex/ticketizer.
 4. Strategy logic must always import from @prism-apex/strategies or @prism-apex/signals.
 5. Risk logic must always import from @prism-apex/rules-apex.
-6. If a package changes, update:
-   - REPO_INDEX_V2.md (this file)
-   - PRISM_APEX_V2_DASHBOARD_PLAN.md
+6. If a package changes, update this file (`REPO_INDEX_V2.md`) so downstream surfaces stay in sync.
 
 # 6. Global Types (`types/*`)
 
@@ -746,10 +744,9 @@ Any change to domain models, UI, engine, or workflow must be reflected here.
 
 ## 7.1 Key Architecture Docs
 
-- `PRISM_APEX_V2_DASHBOARD_PLAN.md`
-  - Canonical dashboard plan for A3 UI surfaces.
-  - Maintains EPICs, stories, completion criteria.
-  - Defines Worklist V2, Tickets, Markets, Analytics, Strategy Lab, Status, Alerts, Positions.
+- `UPGRADE_DASHBOARD.md`
+  - Epic delivery log for the V2 dashboard rollout.
+  - Replaces the retired dashboard plan; use this alongside `REPO_INDEX_V2.md` for scope tracking.
 
 - `PRISM_APEX_V2_BUILD_AUDIT.md`
   - Full audit of code decisions, waivers, and rationale.
@@ -1230,8 +1227,8 @@ This turns the entire monorepo into an EPIC-indexed map.
 
 **Code Anchors:**
 
-- `docs/PRISM_APEX_V2_DASHBOARD_PLAN.md`
 - `docs/REPO_INDEX_V2.md`
+- `docs/UPGRADE_DASHBOARD.md`
 - Legacy / backup pruning
 - Removal of mock servers after V2 stabilisation
 13. Maintenance Rules
@@ -1255,7 +1252,7 @@ Any change to:
 **must** be reflected in:
 
 - This file (`REPO_INDEX_V2.md`)
-- `PRISM_APEX_V2_DASHBOARD_PLAN.md`
+- `UPGRADE_DASHBOARD.md` (for epic delivery log)
 - Relevant UI/engine specs
 
 ---
@@ -1308,12 +1305,7 @@ All using `ui/` primitives.
 
 ## 13.6 Documentation Sync Rule
 
-Any commit that changes architecture or behaviour must update both:
-
-- `PRISM_APEX_V2_DASHBOARD_PLAN.md`
-- `REPO_INDEX_V2.md`
-
-Both must be in the same PR.
+Any commit that changes architecture or behaviour must update both this file and `docs/UPGRADE_DASHBOARD.md`. Keep them in the same PR.
 14. Final Notes for Future Engineers
 md
 Copy code
@@ -1330,11 +1322,10 @@ Copy code
 
 This file is the source of truth.
 
-# 15. Canonicality Audit (Cross-Check Against Dashboard Plan)
+# 15. Canonicality Audit (Cross-Check Against Canonical Surfaces)
 
 This section confirms the rewritten REPO_INDEX_V2.md is internally consistent and aligned with:
 
-- `PRISM_APEX_V2_DASHBOARD_PLAN.md`
 - Current canonical code under `apps/api` and `apps/dashboard`
 - Canonical shared types in `@prism-apex/shared`
 
@@ -1358,7 +1349,7 @@ This audit is maintained by the expert panel.
 | Positions | `pages/Positions.tsx` | ⚠ Placeholder | Currently synthetic. Canonical FE surface, non-canonical data. |
 
 **Conclusion:**  
-All pages listed in the dashboard plan as canonical are correctly represented in the repo index.
+All canonical dashboard pages enumerated above are correctly represented in the repo index.
 
 ---
 
@@ -1519,11 +1510,11 @@ Copy code
 2. **Always request file content via Codex Terminal search before generating replacements.**
 3. **Always align with:**
    - `REPO_INDEX_V2.md`
-   - `PRISM_APEX_V2_DASHBOARD_PLAN.md`
+   - `UPGRADE_DASHBOARD.md`
 4. **When adding new behaviour:**
    - Confirm canonical API surfaces.
    - Update tests or write new ones.
-   - Update both canonical documents.
+   - Update `REPO_INDEX_V2.md` and `UPGRADE_DASHBOARD.md`.
 5. **Mocks must not be used for runtime logic.**
 6. **Always show the path to a file you reference.**
 7. **Never invent new DTO fields — confirm in `@prism-apex/shared`.**

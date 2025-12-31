@@ -81,7 +81,6 @@ echo
 
 echo "--- Canonical V2 docs metadata ---"
 for DOC in \
-  "docs/PRISM_APEX_V2_DASHBOARD_PLAN.md" \
   "docs/REPO_INDEX_V2.md" \
   "docs/DOCS_CLASSIFICATION_V2.md"
 do

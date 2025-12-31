@@ -396,7 +396,7 @@ Otherwise, pages must conform.
 
 ### 6.3 Future Work (EPIC V2.6)
 
-EPIC V2.6 in `docs/PRISM_APEX_V2_DASHBOARD_PLAN.md` governs:
+EPIC V2.6 (tracked in `docs/UPGRADE_DASHBOARD.md`) governs:
 
 - Completing this design system.
 - Refactoring existing V2 pages to use these tokens and components.

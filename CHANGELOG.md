@@ -5,7 +5,7 @@ The format is based on Keep a Changelog, and this project adheres to Semantic Ve
 
 [Unreleased]
 DB: add tickets.source (and ticket_events.source) for CSV export compatibility.
-Docs: establish A2 UI design system and align V2 dashboard plan/index/classification for EPIC V2.6 (A2 UI Polish & Consistency).
+Docs: establish A2 UI design system and align V2 dashboard governance references under REPO_INDEX_V2.md (retire the standalone plan doc).
 
 [1.1.0] - 2025-11-08
 Added

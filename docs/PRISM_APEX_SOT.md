@@ -4732,8 +4732,6 @@ For anything referenced in:
 
 docs/REPO_INDEX_V2.md
 
-docs/PRISM_APEX_V2_DASHBOARD_PLAN.md
-
 PRISM_APEX_SOT.md (this document)
 
 Update or remove references to deleted/archived files.

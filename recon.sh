@@ -45,7 +45,6 @@ ls -R apps/api/src/routes || true
 echo
 
 echo "--- Canonical V2 docs ---"
-ls -l docs/PRISM_APEX_V2_DASHBOARD_PLAN.md \
-      docs/REPO_INDEX_V2.md \
+ls -l docs/REPO_INDEX_V2.md \
       docs/DOCS_CLASSIFICATION_V2.md 2>/dev/null || true
 echo
