@@ -1,44 +1,20 @@
 #!/usr/bin/env bash
 set -euo pipefail
-
-ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
-cd "$ROOT"
-
-fail() { echo "❌ guard_ports_local: $*" >&2; exit 1; }
-ok() { echo "✅ $*"; }
-
-ACTIVE_FILES=(
-  "docker-compose.v2.local.yml"
-  "LOCAL_DEV.md"
-  "PORTS.md"
-)
-
-for f in "${ACTIVE_FILES[@]}"; do
-  [[ -f "$f" ]] || fail "missing required file: $f"
-done
-
-RG_GLOBS=(
-  --glob '!ops/legacy-compose/**'
-  --glob '!node_modules/**'
-  --glob '!.git/**'
-  --glob '!exports/**'
-  --glob '!tmp/**'
-)
-
-DISALLOWED_HOST_PORTS_REGEX='(^|[^0-9])"(3000|5173|8080|8180|5432|55433):|(^|[^0-9])(3000|5173|8080|8180|5432|55433):'
-DISALLOWED_VITE_BASE_REGEX='VITE_API_BASE:\s*"?http://(localhost|127\\.0\\.0\\.1):3000'
-
-if rg -n --hidden --no-ignore-vcs "${RG_GLOBS[@]}" -S "$DISALLOWED_HOST_PORTS_REGEX" docker-compose.v2.local.yml >/dev/null; then
-  rg -n --hidden --no-ignore-vcs "${RG_GLOBS[@]}" -S "$DISALLOWED_HOST_PORTS_REGEX" docker-compose.v2.local.yml >&2 || true
-  fail "docker-compose.v2.local.yml exposes disallowed host ports. Local must be 5180-only."
+cd "$(git rev-parse --show-toplevel)"
+fail(){ echo "[GUARD][FAIL] $*" >&2; exit 1; }
+ok(){ echo "[GUARD][OK]   $*"; }
+[ -f docker-compose.v2.local.yml ] || fail "missing docker-compose.v2.local.yml"
+[ -f deploy/ingress/local/default.conf ] || fail "missing ingress config"
+if rg -n --no-messages '(3000:|8080:|8180:|5173:|5432:|55433:)' docker-compose.v2.local.yml >/dev/null; then
+  fail "docker-compose.v2.local.yml exposes forbidden host ports"
 fi
-ok "docker-compose.v2.local.yml does not expose forbidden host ports (3000/5173/8080/8180/5432/55433)."
-
-if rg -n --hidden --no-ignore-vcs "${RG_GLOBS[@]}" -S "$DISALLOWED_VITE_BASE_REGEX" docker-compose.v2.local.yml >/dev/null; then
-  rg -n --hidden --no-ignore-vcs "${RG_GLOBS[@]}" -S "$DISALLOWED_VITE_BASE_REGEX" docker-compose.v2.local.yml >&2 || true
-  fail "docker-compose.v2.local.yml bakes VITE_API_BASE to localhost:3000. Must be same-origin (/api)."
+ok "no forbidden host ports"
+if rg -n --no-messages 'localhost:3000|127\.0\.0\.1:3000' docker-compose.v2.local.yml LOCAL_DEV.md PORTS.md DOCKER_COMPOSE.md >/dev/null; then
+  fail "Found localhost:3000 references"
 fi
-ok "docker-compose.v2.local.yml does not bake VITE_API_BASE=localhost:3000."
-
-echo
-ok "guard_ports_local finished."
+ok "no localhost:3000 references"
+if rg -n --no-messages '\$\{api_port\}|\$\{dash_port\}|api_port|dash_port' deploy/ingress/local/default.conf >/dev/null; then
+  fail "nginx config has placeholder upstreams"
+fi
+ok "nginx config is concrete"
+ok "guard_ports_local finished"
