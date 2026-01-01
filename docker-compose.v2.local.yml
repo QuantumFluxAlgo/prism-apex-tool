@@ -6,16 +6,15 @@ services:
       POSTGRES_DB: prismapex
       POSTGRES_USER: prismapex
       POSTGRES_PASSWORD: prismapex
-    ports:
-      - "5432:5432"
     volumes:
       - prismapex_pgdata:/var/lib/postgresql/data
+      - ./deploy/sql/init:/docker-entrypoint-initdb.d:ro
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U prismapex -d prismapex"]
       interval: 5s
       timeout: 3s
-      retries: 20
-
+      retries: 30
+    restart: unless-stopped
   api:
     build:
       context: .
@@ -32,23 +31,30 @@ services:
       INGEST_YAHOO_SYMBOLS: "${INGEST_YAHOO_SYMBOLS:-ES=F,NQ=F,MES=F,MNQ=F,YM=F,RTY=F,GC=F,CL=F,6E=F,EURUSD=X,BTC-USD}"
       YAHOO_POLL_INTERVAL_MS: "${YAHOO_POLL_INTERVAL_MS:-45000}"
       YAHOO_POLL_LOOKBACK_MINUTES: "${YAHOO_POLL_LOOKBACK_MINUTES:-20}"
-    ports:
-      - "3000:3000"
     restart: unless-stopped
-
   dashboard:
     build:
       context: .
       dockerfile: apps/dashboard/Dockerfile
+      args:
+        VITE_API_BASE: "/api"
     container_name: prismapex-dashboard
     environment:
       NODE_ENV: production
-      VITE_API_BASE: "http://localhost:3000"
-    ports:
-      - "8080:8080"
+      VITE_API_BASE: "/api"
     depends_on:
       - api
     restart: unless-stopped
-
+  ingress:
+    image: nginx:1.27.5
+    container_name: prismapex-ingress
+    depends_on:
+      - api
+      - dashboard
+    ports:
+      - "5180:80"
+    volumes:
+      - ./deploy/ingress/local/default.conf:/etc/nginx/conf.d/default.conf:ro
+    restart: unless-stopped
 volumes:
   prismapex_pgdata:
