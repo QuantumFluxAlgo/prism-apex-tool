@@ -198,6 +198,15 @@ Purpose: provide append-only, read-only audit breadcrumbs describing “what the
 - **DB**
   - `deploy/sql/031_orr_gate_results.sql` creates `orr_gate_results` (one row per `(run_id, session_date, symbol)` with provenance stamps).
   - `deploy/sql/032_orr_gate_results_cleanup.sql` removes the earlier planner-labelled rows so only gate semantics remain (`canonical_strategy_key='orr_gate'`).
+  - `deploy/sql/033_planner_reject_counts.sql` adds `planner_reject_counts` for aggregated drop counters keyed by `(session_date, symbol, requested_planner, rejecting_planner, reject_stage, reason_code)`.
+  - `deploy/sql/init/001_roles.sql` seeds both `apex/apex` and `prismapex/prismapex` on fresh Postgres volumes and grants the permissions needed for the API and stores.
+  - `scripts/local/db-normalize-roles.sh` can be run after the stack is up to reapply the same role credentials against an existing volume (no data loss).
+
+### Local Postgres determinism (engine + dev safety)
+
+- The local compose stack (`docker-compose.v2.local.yml`) now mounts `deploy/sql/init/001_roles.sql` into `/docker-entrypoint-initdb.d` so a fresh Postgres volume always creates both roles.
+- Run `scripts/local/db-normalize-roles.sh` when you swap branches or rebuild with existing volumes to ensure `apex` and `prismapex` keep their canonical passwords and privileges; this prevents the `28P01` errors that previously broke `planner-rejects`.
+
 - **Store**
   - `apps/api/src/store/orrGateResults.ts` exposes a single Pool, helper to run a callback with a client, an `insertOrrGateResultWithClient` helper, and read APIs that automatically scope to `canonical_strategy_key='orr_gate'`.
 - **Writer**

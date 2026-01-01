@@ -6,6 +6,7 @@ The format is based on Keep a Changelog, and this project adheres to Semantic Ve
 [Unreleased]
 - DB: add tickets.source (and ticket_events.source) for CSV export compatibility.
 - Docs: establish A2 UI design system and align V2 dashboard governance references under REPO_INDEX_V2.md (retire the standalone plan doc).
+- P1-3: ensure local Postgres volumes create apex/prismapex roles (deploy/sql/init/001_roles.sql) and provide scripts/local/db-normalize-roles.sh so existing volumes keep the canonical passwords and privileges needed by planner-reject_counts and planner-rejects routes.
 - P1-0: system-record provenance helper (deterministic config fingerprint + engine version stamp).
 - P1-1: ORR gate system records (append-only `orr_gate_results`, engine-run writer, read-only `/api/system-records/orr-gate` endpoints).
 - P1-2: Fix ORR gate semantics (compute via `lib/orrGate.ts`, always write `canonical_strategy_key='orr_gate'`, include planner rollup, and clean out prior planner-labelled rows via `deploy/sql/032_orr_gate_results_cleanup.sql`).
