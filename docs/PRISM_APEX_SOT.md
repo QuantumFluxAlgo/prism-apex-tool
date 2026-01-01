@@ -4842,3 +4842,9 @@ Read policy:
 - Engineering-only initially. Can be exposed operator-facing later via dedicated dashboards once stable.
 
 ### P1 System Records: Planner Reject Counts\nEngineering-only aggregated counters keyed by (session_date, symbol, requested_planner, rejecting_planner, reject_stage, reason_code).
+
+
+
+## Canonical local 5180 ingress
+
+Local development uses one entrypoint: http://localhost:5180. UI, API, and metadata all run through that same host port (dashboard-full + ingress) and guard_ports_local.sh enforces it. Avoid any guidance that points people to 3000/8080/8090/55433 or manual reverse proxies.

@@ -38,3 +38,5 @@ Initial stable release candidate with version pinning and release documentation.
 
 <!-- P1-A1 planner reject counts -->
 - P1-A1: added `planner_reject_counts` (aggregated counters by session/symbol/requested_planner/rejecting_planner/stage/reason), plus best-effort runtime hooks to increment counts at PLANNER/SAFETY/TICKETIZER stages. Engineering-only; read-only externally.
+
+- Docs: align local development docs with the canonical 5180-only dashboard-full + guard workflow.

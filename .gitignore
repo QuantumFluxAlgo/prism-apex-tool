@@ -115,3 +115,8 @@ bars_*_1m_w*.jsonl
 promote_to_test.sh
 ops/market-feed/node_modules/
 ops/market-feed/package-lock.json
+
+# Local-only artifacts (Prism Apex)
+exports/backups/
+exports/data_catalog/
+apps/api/.env

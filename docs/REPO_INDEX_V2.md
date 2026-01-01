@@ -1589,3 +1589,9 @@ Any change to runtime behaviour, UI surfaces, or data flows must update this fil
 Notes:
 - Captures both `requested_planner` (what was asked) and `rejecting_planner` (whose candidate was dropped).
 - This table stores aggregates (counters), not append-only per-run forensic rows.
+
+
+
+## Canonical local 5180 ingress
+
+Local development uses one entrypoint: http://localhost:5180. UI, API, and metadata all run through that same host port (dashboard-full + ingress) and guard_ports_local.sh enforces it. Avoid any guidance that points people to 3000/8080/8090/55433 or manual reverse proxies.
