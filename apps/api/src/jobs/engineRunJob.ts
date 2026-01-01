@@ -23,6 +23,7 @@ import {
   insertOrrGateResultWithClient,
   withOrrGateResultsClient,
 } from '../store/orrGateResults.js';
+import { recordPlannerRejectCountBestEffort } from '../system-records/plannerRejectRecorder.js';
 
 export interface EngineRunJobParams {
   strategy: EnginePreviewRequest['strategy'];
@@ -354,6 +355,12 @@ async function writeOrrGateSystemRecord(args: {
   }
 }
 
+function extractSessionDate(date: string | null | undefined): string {
+  if (!date) return '';
+  if (date.length >= 10) return date.slice(0, 10);
+  return date;
+}
+
 export async function runEngineSessionJob(params: EngineRunJobParams): Promise<EngineRunJobResult> {
   const { strategy, symbol, sessionDate, maxRiskDollarsPerTrade, meta } = params;
 
@@ -409,6 +416,34 @@ export async function runEngineSessionJob(params: EngineRunJobParams): Promise<E
     requestedPreview: preview,
     requestedPreviewError: null,
   });
+
+  const requestedPlannerRaw = String(strategy ?? '');
+  const sessionDateIso = extractSessionDate(sessionDate);
+  const symbolId = String(symbol ?? '');
+  const plannerEntries = Object.entries(plannerRollup ?? {});
+  for (const [plannerKey, summary] of plannerEntries) {
+    const ok = Boolean((summary as any)?.ok);
+    const signalsCount = Number((summary as any)?.signalsCount ?? 0);
+    const reason =
+      (summary as any)?.reason ??
+      (summary as any)?.primaryReason ??
+      (summary as any)?.error?.reason ??
+      '';
+    const hasPreviewError = Boolean((summary as any)?.error);
+    const isNoTrade = !ok || signalsCount === 0;
+
+    if (isNoTrade) {
+      await recordPlannerRejectCountBestEffort({
+        sessionDate: sessionDateIso,
+        symbol: symbolId,
+        requestedPlannerRaw,
+        rejectingPlannerRaw: plannerKey,
+        rejectStage: 'PLANNER',
+        rawReason: hasPreviewError ? 'ENGINE_PREVIEW_ERROR' : String(reason ?? ''),
+        delta: 1,
+      });
+    }
+  }
 
   await writeOrrGateSystemRecord({
     runId,

@@ -19,6 +19,7 @@ import { createSystemAlert } from '../store/systemAlerts.js';
 import { recordRiskLockout } from '../store/riskAuditLog.js';
 import { getSessionRisk } from '../store/operatorSessionRisk.js';
 import { getInstrumentSpec } from '../risk/contractMath.js';
+import { recordPlannerRejectCountBestEffort } from '../system-records/plannerRejectRecorder.js';
 
 const RUN_CONTINUOUS = (process.env.RUN_CONTINUOUS ?? '1') === '1';
 const OPERATOR_ID = 'DEFAULT';
@@ -474,6 +475,20 @@ async function handleSuggestion(s: Suggestion): Promise<void> {
         // eslint-disable-next-line no-console
         console.error('[riskAuditLog] Failed recording lockout decision', auditErr);
       }
+      const requestedPlanner =
+        typeof s.meta?.strategy === 'string' && s.meta.strategy.length > 0 ? s.meta.strategy : '';
+      const rejectingPlanner = requestedPlanner;
+      if (riskDate && s.symbol && requestedPlanner && rejectingPlanner) {
+        void recordPlannerRejectCountBestEffort({
+          sessionDate: riskDate,
+          symbol: s.symbol,
+          requestedPlannerRaw: requestedPlanner,
+          rejectingPlannerRaw: rejectingPlanner,
+          rejectStage: 'TICKETIZER',
+          rawReason: 'DAILY_RISK_LOCKOUT',
+          delta: 1,
+        });
+      }
       return;
     }
   } catch (err) {
@@ -538,6 +553,33 @@ async function handleSuggestion(s: Suggestion): Promise<void> {
     ticketizer.accepted[processedTicket.meta.strategy]++;
   } else {
     ticketizer.rejected[processedTicket.meta.strategy]++;
+    const sessionDate = riskDate;
+    const symbol =
+      typeof s.symbol === 'string' && s.symbol.length > 0 ? s.symbol : processedTicket.symbol;
+    const requestedPlanner =
+      typeof s.meta?.strategy === 'string' && s.meta.strategy.length > 0
+        ? s.meta.strategy
+        : processedTicket.meta?.strategy ?? '';
+    const rejectingPlanner =
+      typeof processedTicket.meta?.strategy === 'string' && processedTicket.meta.strategy.length > 0
+        ? processedTicket.meta.strategy
+        : requestedPlanner;
+    const rawReason = Array.isArray(processedTicket.reasons)
+      ? processedTicket.reasons.join(',')
+      : typeof processedTicket.reasons === 'string'
+        ? processedTicket.reasons
+        : '';
+    if (sessionDate && symbol && requestedPlanner && rejectingPlanner) {
+      void recordPlannerRejectCountBestEffort({
+        sessionDate,
+        symbol,
+        requestedPlannerRaw: requestedPlanner,
+        rejectingPlannerRaw: rejectingPlanner,
+        rejectStage: 'TICKETIZER',
+        rawReason: rawReason || 'TICKETIZER_REJECTED',
+        delta: 1,
+      });
+    }
   }
   const canonicalKey = canonicalCandidate?.id ?? null;
   const canonical = canonicalKey ? canonicalCandidateCache.get(canonicalKey) : undefined;

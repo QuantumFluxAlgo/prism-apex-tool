@@ -4821,3 +4821,24 @@ Operator labels still appear in tickets/worklists, but persistence must always m
 - `GET /api/system-records/orr-gate/latest` – latest per symbol for a given session date
 
 These routes inherit the existing auth/rate-limit plugins. No POST/PUT/DELETE surface exists; writes are engine-only.
+
+<!-- P1-A1 planner reject counts -->
+## P1 System Records: Planner Reject Counts (engineering-only)
+
+Purpose: aggregated analytics answering “why did we NOT get an actionable ticket?” by counting drops per
+(session_date, symbol, requested_planner, rejecting_planner, reject_stage, reason_code).
+
+Key concepts:
+- `requested_planner`: what the run invocation requested (VWAP-FT / OSB / DDB normalized).
+- `rejecting_planner`: the planner whose candidate was rejected (same normalized key).
+- `reject_stage`: PLANNER | SAFETY | RISK | PERSISTENCE | TICKETIZER (A1 wires PLANNER/SAFETY/TICKETIZER first).
+- `reason_code`: constrained vocabulary via `plannerRejectVocab.ts` to prevent free-text reason soup.
+
+Write policy:
+- Best-effort only. Counting must never break ticket generation.
+- Runtime uses `plannerRejectRecorder.ts` which swallows errors and logs minimal warnings.
+
+Read policy:
+- Engineering-only initially. Can be exposed operator-facing later via dedicated dashboards once stable.
+
+### P1 System Records: Planner Reject Counts\nEngineering-only aggregated counters keyed by (session_date, symbol, requested_planner, rejecting_planner, reject_stage, reason_code).

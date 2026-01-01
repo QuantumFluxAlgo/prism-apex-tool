@@ -1564,3 +1564,19 @@ Copy code
 
 This index is now canonical and aligned with all V2 surfaces, DTOs, API routes, and EPICs.  
 Any change to runtime behaviour, UI surfaces, or data flows must update this file.
+
+<!-- P1-A1 planner reject counts -->
+### P1 System Records: Planner Reject Counts (engineering-only)
+
+- Migration: `deploy/sql/033_planner_reject_counts.sql`
+- Vocab: `apps/api/src/system-records/plannerRejectVocab.ts` (canonical planner keys + reason buckets)
+- Store: `apps/api/src/store/plannerRejectCounts.ts` (atomic UPSERT increments + list helper)
+- Recorder: `apps/api/src/system-records/plannerRejectRecorder.ts` (best-effort normalization + increment wrapper)
+- Runtime hooks:
+  - `apps/api/src/jobs/engineRunJob.ts` (PLANNER stage rollup counters)
+  - `apps/api/src/services/strategy-engine/safetyEnvelope.ts` (SAFETY stage drops)
+  - `apps/api/src/jobs/ticketizer.ts` (TICKETIZER stage drops)
+
+Notes:
+- Captures both `requested_planner` (what was asked) and `rejecting_planner` (whose candidate was dropped).
+- This table stores aggregates (counters), not append-only per-run forensic rows.

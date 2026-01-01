@@ -1,5 +1,6 @@
 import type { EnginePreviewRequest, EngineSignal } from '../../dto/strategy-engine/index.js';
 import { logGovernanceAlert } from '../governance/alert.js';
+import { recordPlannerRejectCountBestEffort } from '../../system-records/plannerRejectRecorder.js';
 import type { EngineBar } from './bars.js';
 
 export interface EnvelopeRejected {
@@ -211,10 +212,37 @@ export function applySafetyEnvelope(
     }
 
     if (reasons.length > 0) {
+      const reason = reasons.join(',');
       rejected.push({
         signal,
-        reason: reasons.join(','),
+        reason,
       });
+      const sessionDate =
+        typeof meta.sessionDate === 'string' && meta.sessionDate.length > 0
+          ? meta.sessionDate.slice(0, 10)
+          : '';
+      const symbol =
+        typeof meta.symbol === 'string' && meta.symbol.length > 0 ? meta.symbol : '';
+      const requestedPlanner =
+        typeof meta.strategy === 'string' && meta.strategy.length > 0 ? meta.strategy : '';
+      const rejectingPlanner =
+        typeof (signal as any)?.strategy === 'string' && (signal as any).strategy.length > 0
+          ? (signal as any).strategy
+          : typeof (signal as any)?.meta?.strategy === 'string' &&
+              (signal as any).meta.strategy.length > 0
+            ? (signal as any).meta.strategy
+            : requestedPlanner;
+      if (sessionDate && symbol && requestedPlanner && rejectingPlanner) {
+        void recordPlannerRejectCountBestEffort({
+          sessionDate,
+          symbol,
+          requestedPlannerRaw: requestedPlanner,
+          rejectingPlannerRaw: rejectingPlanner,
+          rejectStage: 'SAFETY',
+          rawReason: reason || 'SAFETY_ENVELOPE_REJECTED',
+          delta: 1,
+        });
+      }
     } else {
       approved.push(signal);
     }
