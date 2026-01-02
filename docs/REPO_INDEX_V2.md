@@ -1634,3 +1634,38 @@ Notes:
 gapfill-once is manual-only (run explicitly) unless we decide otherwise, because it can reprocess historical data.
 
 Local development uses one entrypoint: http://localhost:5180. UI, API, and metadata all run through that same host port (dashboard-full + ingress) and guard_ports_local.sh enforces it. Avoid any guidance that points people to 3000/8080/8090/55433 or manual reverse proxies.
+
+## P1-4 — Shadow Outcomes (always-on, async)
+
+**Goal:** For every ticket we generate (OPEN and CLOSED), compute minimal “would it have hit stop/target?” outcomes from stored 1m bars.
+
+**Inputs**
+- Tickets: `public.tickets` (anchor uses `created_at_utc`)
+- Bars: `public.bars_1m` (1-minute OHLC, use high/low for touches)
+
+**Outputs**
+- Table: `public.shadow_outcomes` (PK: `ticket_id + horizon_minutes + variant`)
+- Variants: `RAW`, `BE_1R`
+- Horizons (default): `60m`, `240m`
+
+**Rules (high level)**
+- Window: `[anchor_ts_utc, anchor_ts_utc + horizon]` where `anchor_ts_utc = tickets.created_at_utc`.
+- Touch logic: within the window, STOP is touched if bar low/high crosses stop (direction-aware), TARGET is touched if bar high/low crosses target.
+- Tie-break: if both touch within the same minute, use a deterministic ordering (prefer the first timestamped touch; if still ambiguous, record meta and mark outcome conservatively).
+- `BE_1R`: if price reaches +1R first, move the stop to entry and then evaluate remaining window.
+- Insufficient data: if bars missing for the window, record `INSUFFICIENT_DATA` with meta for gaps.
+
+**Always-on compute**
+- Service: `shadow-outcomes-cron` runs on every deploy (no manual step) and is gated on:
+  - `db` healthy
+  - `migrate` completed successfully
+- It is idempotent (upserts) and bounded per cycle.
+
+**Read APIs**
+- `GET /api/system-records/shadow-outcomes/:ticketId` — all rows for one ticket
+- Optional bounded aggregate:
+  - `GET /api/system-records/shadow-outcomes?sessionDate=YYYY-MM-DD&strategy=ORR` (bounded response)
+
+**Operational note**
+Shadow outcomes are *hypothetical projections* over the bar stream. CLOSED tickets allow later comparison to realized outcomes; OPEN tickets allow historical analysis of “what would have happened next”.
+
