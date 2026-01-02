@@ -1,12 +1,13 @@
- 
-import React from 'react';
-import ReactDOM from 'react-dom/client';
-import './theme/tokens.css';
-import './index.css';
-import App from './App.js';
+import React from "react";
+import ReactDOM from "react-dom/client";
 
-ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
+import "./index.css";
+import App from "./App";
+
+ReactDOM.createRoot(
+  document.getElementById("root") as HTMLElement
+).render(
   <React.StrictMode>
     <App />
-  </React.StrictMode>,
+  </React.StrictMode>
 );

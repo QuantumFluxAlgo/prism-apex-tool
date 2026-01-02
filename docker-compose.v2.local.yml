@@ -1,0 +1,287 @@
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: ${PGUSER:-apex}
+      POSTGRES_PASSWORD: ${PGPASSWORD:-apex}
+      POSTGRES_DB: ${PGDATABASE:-prismapex}
+    ports: []
+    volumes:
+    - db_data:/var/lib/postgresql/data
+    healthcheck:
+      test:
+      - CMD-SHELL
+      - pg_isready -U ${PGUSER:-apex} -d ${PGDATABASE:-prismapex}
+      interval: 5s
+      timeout: 5s
+      retries: 20
+  migrate:
+    image: postgres:16-alpine
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      PGHOST: db
+      PGPORT: '5432'
+      PGUSER: ${POSTGRES_USER:-apex}
+      PGPASSWORD: ${POSTGRES_PASSWORD:-apex}
+      PGDATABASE: ${POSTGRES_DB:-prismapex}
+    volumes:
+    - ./deploy/sql:/migrations:ro
+    - ./deploy/migrate_all.sh:/migrate_all.sh:ro
+    entrypoint:
+    - /bin/sh
+    - /migrate_all.sh
+    restart: 'no'
+  api:
+    build:
+      context: .
+      target: api
+    image: prism-apex/api:latest
+    env_file:
+    - .env
+    environment:
+      DATABASE_URL: ${DATABASE_URL:-postgresql://apex:apex@db:5432/prismapex?schema=public}
+      SESSION_WINDOWS_UTC: ${SESSION_WINDOWS_UTC:-14:30-21:00}
+      SESSION_OPEN_UTC: ${SESSION_OPEN_UTC:-14:30}
+      SESSION_CLOSE_UTC: ${SESSION_CLOSE_UTC:-21:00}
+      TICKETS_ONLY: ${TICKETS_ONLY:-true}
+      ORDERS_DISABLED: ${ORDERS_DISABLED:-true}
+      NODE_ENV: ${NODE_ENV:-development}
+      LOG_LEVEL: ${LOG_LEVEL:-info}
+    depends_on:
+      db:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+    ports: []
+    healthcheck:
+      test:
+      - CMD-SHELL
+      - node -e "const http=require('http');const paths=['/health','/'];const tryNext=()=>{if(!paths.length)return
+        process.exit(1);const path=paths.shift();http.get({host:'127.0.0.1',port:3000,path},res=>{if(res.statusCode===200)process.exit(0);tryNext();}).on('error',tryNext);};tryNext();setTimeout(()=>process.exit(1),5000);"
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    volumes:
+    - api_data:/data:ro
+  dashboard-full:
+    build:
+      context: .
+      dockerfile: apps/dashboard/Dockerfile
+      args:
+        VITE_API_BASE: /api
+    image: prism-apex/dashboard-full:local
+    environment:
+      API_BASE_URL: http://api:3000
+      PORT: '8080'
+      VITE_API_BASE: /api
+    depends_on:
+      api:
+        condition: service_healthy
+      db:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+    ports: []
+    volumes:
+    - api_data:/data:ro
+    restart: unless-stopped
+  ingress:
+    image: nginx:1.27-alpine
+    container_name: prismapex-ingress
+    ports:
+    - 5180:80
+    volumes:
+    - ./deploy/ingress/local/default.conf:/etc/nginx/conf.d/default.conf:ro
+    depends_on:
+      api:
+        condition: service_started
+      dashboard-full:
+        condition: service_started
+      db:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+  tickets-cron:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: api
+    container_name: prismapex-tickets-cron
+    depends_on:
+      api:
+        condition: service_healthy
+      db:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+    environment:
+      DATABASE_URL: ${DATABASE_URL:-postgres://prismapex:${POSTGRES_PASSWORD:-prismapex}@db:5432/prismapex}
+      YAHOO_SYMBOLS: ${INGEST_YAHOO_SYMBOLS:-ES=F,NQ=F,MES=F,MNQ=F,YM=F,RTY=F,GC=F,CL=F,6E=F,EURUSD=X,BTC-USD}
+      ORR_OR_MIN: ${ORR_OR_MIN:-5}
+      ORR_WINDOW_MIN: ${ORR_WINDOW_MIN:-60}
+      SESSION_OPEN_UTC: ${SESSION_OPEN_UTC:-14:30}
+      SESSION_CLOSE_UTC: ${SESSION_CLOSE_UTC:-21:00}
+    working_dir: /app
+    entrypoint:
+    - /bin/sh
+    - -lc
+    - "set -e\nwhile true; do\n  echo \"[tickets-cron] running ORR backfill\"\n  node\
+      \ apps/tickets/dist/backfill-orr.js || true\n  sleep 60\ndone\n"
+    restart: unless-stopped
+  gapfill-cron:
+    image: alpine:3.20
+    container_name: prismapex-gapfill-cron
+    depends_on:
+      db:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+    environment:
+      TZ: ${TZ:-UTC}
+      DATABASE_URL: ${DATABASE_URL:-postgres://prismapex:${POSTGRES_PASSWORD:-prismapex}@db:5432/prismapex}
+      YAHOO_SYMBOLS: ${INGEST_YAHOO_SYMBOLS:-ES=F,NQ=F,MES=F,MNQ=F,YM=F,RTY=F,GC=F,CL=F,6E=F,EURUSD=X,BTC-USD}
+      YAHOO_INTERVAL: ${YAHOO_INTERVAL:-1m}
+    volumes:
+    - ./:/repo:ro
+    entrypoint:
+    - /bin/sh
+    - -lc
+    - 'set -e
+
+      apk add --no-cache nodejs-current npm >/dev/null
+
+      corepack enable >/dev/null 2>&1 || true
+
+      crontab - <<''CRON''
+
+      20 2 * * * node /repo/apps/ingest/dist/gapfill.js >> /var/log/gapfill-cron.log
+      2>&1
+
+      CRON
+
+      touch /var/log/gapfill-cron.log
+
+      echo "[gapfill-cron] scheduled daily gapfill @ 02:20 UTC"
+
+      crond -f -l 8
+
+      '
+    restart: unless-stopped
+  ingress-yahoo:
+    build:
+      context: .
+      dockerfile: apps/ingress-yahoo-dev/Dockerfile
+    container_name: prismapex-ingress-yahoo
+    depends_on:
+      api:
+        condition: service_healthy
+      db:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+    env_file:
+    - .env.ingress
+    environment:
+      NODE_ENV: ${INGRESS_NODE_ENV:-production}
+    volumes:
+    - ./tickets:/app/tickets
+    - ./.cache:/app/.cache
+    - ./config:/app/config:ro
+    ports: []
+    command:
+    - pnpm
+    - -C
+    - apps/ingress-yahoo-dev
+    - start
+    healthcheck:
+      test:
+      - CMD-SHELL
+      - wget -qO- http://127.0.0.1:8080/health || exit 1
+      interval: 30s
+      timeout: 5s
+      retries: 3
+    restart: unless-stopped
+  jobs-seed:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: api
+    container_name: prismapex-jobs-seed
+    depends_on:
+      db:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: ${DATABASE_URL:-postgres://prismapex:${POSTGRES_PASSWORD:-prismapex}@db:5432/prismapex}
+      YAHOO_SYMBOLS: ${INGEST_YAHOO_SYMBOLS:-ES=F,NQ=F,MES=F,MNQ=F,YM=F,RTY=F,GC=F,CL=F,6E=F,EURUSD=X,BTC-USD}
+      YAHOO_RANGE: ${YAHOO_RANGE:-30d}
+      YAHOO_INTERVAL: ${YAHOO_INTERVAL:-1m}
+      TICKETS_DAYS: ${TICKETS_DAYS:-30}
+    entrypoint:
+    - bash
+    - -lc
+    - 'set -euo pipefail
+
+      echo "[jobs-seed] Backfill Yahoo bars..."
+
+      node apps/ingest/dist/backfill.js
+
+      echo "[jobs-seed] Gapfill Yahoo bars..."
+
+      node apps/ingest/dist/gapfill.js
+
+      echo "[jobs-seed] Backfill tickets..."
+
+      node apps/tickets/dist/backfill-orr.js
+
+      echo "[jobs-seed] Completed."
+
+      '
+    restart: 'no'
+  gapfill-once:
+    build:
+      context: .
+      target: api
+    image: prism-apex/ingest:latest
+    profiles:
+    - manual
+    environment:
+      DATABASE_URL: ${DATABASE_URL:-postgresql://apex:apex@db:5432/prismapex?schema=public}
+      YAHOO_SYMBOLS: ${YAHOO_SYMBOLS:-ES=F,NQ=F,MES=F,MNQ=F,YM=F,RTY=F,GC=F,CL=F,6E=F,EURUSD=X,BTC-USD}
+      YAHOO_INTERVAL: ${YAHOO_INTERVAL:-1m}
+    command:
+    - node
+    - apps/ingest/dist/gapfill.js
+    depends_on:
+      db:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+    restart: 'no'
+  shadow-outcomes-cron:
+    image: prism-apex/api:latest
+    working_dir: /app
+    depends_on:
+      db:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+    environment:
+      DATABASE_URL: ${DATABASE_URL:-postgresql://apex:apex@db:5432/prismapex?schema=public}
+      SHADOW_BATCH_LIMIT: ${SHADOW_BATCH_LIMIT:-200}
+      SHADOW_RUN_EVERY_SECONDS: ${SHADOW_RUN_EVERY_SECONDS:-60}
+      SHADOW_FORCE_RECOMPUTE: ${SHADOW_FORCE_RECOMPUTE:-false}
+      SHADOW_HORIZONS_MINUTES: ${SHADOW_HORIZONS_MINUTES:-60,240}
+    command:
+    - node
+    - apps/api/dist/shadowOutcomesRunner.cjs
+    restart: unless-stopped
+    ports: []
+volumes:
+  db_data: null
+  api_data: null
+  prismapex_pgdata: null

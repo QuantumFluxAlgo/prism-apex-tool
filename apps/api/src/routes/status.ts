@@ -1,6 +1,6 @@
 import type { FastifyInstance } from 'fastify';
 import { Client } from 'pg';
-import { classifyYahooStatus, yahooStatusToService } from '../lib/yahooHealth';
+import { classifyYahooStatus, yahooStatusToService } from '../lib/yahooHealth.js';
 
 type Health = 'green' | 'amber' | 'red' | 'grey';
 
@@ -27,7 +27,7 @@ type SymbolStatus = {
   health: Health;
 };
 
-type SessionInfo = {
+export type SessionInfo = {
   is_open: boolean;
   next_change_ms: number;
   open_utc: string;
@@ -83,50 +83,97 @@ function parseSessionTime(value: string | undefined, fallback: string): [number,
   return [Number.isFinite(h) ? h : 0, Number.isFinite(m) ? m : 0];
 }
 
-function buildSession(now: Date): SessionInfo {
-  const [openH, openM] = parseSessionTime(process.env.SESSION_OPEN_UTC, '23:05');
-  const [closeH, closeM] = parseSessionTime(process.env.SESSION_CLOSE_UTC, '21:55');
+type WindowConfig = { start: [number, number]; end: [number, number] };
+const DEFAULT_WINDOWS: WindowConfig[] = [{ start: [14, 30], end: [21, 0] }];
 
-  const open = Date.UTC(
-    now.getUTCFullYear(),
-    now.getUTCMonth(),
-    now.getUTCDate(),
-    openH,
-    openM,
-    0,
-    0,
-  );
-  let close = Date.UTC(
-    now.getUTCFullYear(),
-    now.getUTCMonth(),
-    now.getUTCDate(),
-    closeH,
-    closeM,
-    0,
-    0,
-  );
-  if (close <= open) {
-    close += DAY_MS;
+function parseSessionWindows(): WindowConfig[] {
+  const raw = (process.env.SESSION_WINDOWS_UTC ?? '').trim();
+  if (raw.length) {
+    const configs: WindowConfig[] = [];
+    for (const token of raw.split(',').map((part) => part.trim())) {
+      const match = token.match(/^(\d{1,2}:\d{2})-(\d{1,2}:\d{2})$/);
+      if (!match) continue;
+      const start = parseSessionTime(match[1], match[1]);
+      const end = parseSessionTime(match[2], match[2]);
+      configs.push({ start, end });
+    }
+    if (configs.length) return configs;
   }
+  const open = parseSessionTime(process.env.SESSION_OPEN_UTC, '14:30');
+  const close = parseSessionTime(process.env.SESSION_CLOSE_UTC, '21:00');
+  if (open[0] !== close[0] || open[1] !== close[1]) {
+    return [{ start: open, end: close }];
+  }
+  return DEFAULT_WINDOWS;
+}
 
+type ConcreteWindow = { startMs: number; endMs: number };
+
+function instantiateWindows(now: Date, configs: WindowConfig[]): ConcreteWindow[] {
+  const year = now.getUTCFullYear();
+  const month = now.getUTCMonth();
+  const date = now.getUTCDate();
+  return configs.map(({ start, end }) => {
+    const startMs = Date.UTC(year, month, date, start[0], start[1], 0, 0);
+    let endMs = Date.UTC(year, month, date, end[0], end[1], 0, 0);
+    if (endMs <= startMs) {
+      endMs += DAY_MS;
+    }
+    return { startMs, endMs };
+  });
+}
+
+function computeSession(now: Date): { session: SessionInfo; sessionDateUtc: string } {
+  const configs = parseSessionWindows();
+  const windows = instantiateWindows(now, configs);
   const nowMs = now.getTime();
-  let sessionOpen = open;
-  let sessionClose = close;
-  let isOpen = nowMs >= sessionOpen && nowMs < sessionClose;
 
-  if (!isOpen && nowMs >= sessionClose) {
-    sessionOpen += DAY_MS;
-    sessionClose += DAY_MS;
+  let active =
+    windows.find((window) => nowMs >= window.startMs && nowMs < window.endMs) ?? null;
+
+  let upcoming: ConcreteWindow;
+  if (active) {
+    upcoming = active;
+  } else {
+    const futureToday = windows.find((window) => nowMs < window.startMs);
+    if (futureToday) {
+      upcoming = futureToday;
+    } else {
+      const tomorrow = windows.map((window) => ({
+        startMs: window.startMs + DAY_MS,
+        endMs: window.endMs + DAY_MS,
+      }));
+      upcoming = tomorrow[0];
+    }
   }
 
-  const nextChangeTarget = isOpen ? sessionClose : sessionOpen;
+  const isOpen = Boolean(active);
+  const openMs = active ? active.startMs : upcoming.startMs;
+  const closeMs = active ? active.endMs : upcoming.endMs;
+  const nextChangeTarget = active ? active.endMs : upcoming.startMs;
   const nextChange = Math.max(0, nextChangeTarget - nowMs);
 
   return {
-    is_open: isOpen,
-    next_change_ms: nextChange,
-    open_utc: new Date(sessionOpen).toISOString(),
-    close_utc: new Date(sessionClose).toISOString(),
+    sessionDateUtc: new Date(openMs).toISOString().slice(0, 10),
+    session: {
+      is_open: isOpen,
+      next_change_ms: nextChange,
+      open_utc: new Date(openMs).toISOString(),
+      close_utc: new Date(closeMs).toISOString(),
+    },
+  };
+}
+
+export function getSessionInfo(now: Date = new Date()): {
+  sessionDateUtc: string;
+  isOpen: boolean;
+  session: SessionInfo;
+} {
+  const { session, sessionDateUtc } = computeSession(now);
+  return {
+    sessionDateUtc,
+    isOpen: session.is_open,
+    session,
   };
 }
 
@@ -147,8 +194,9 @@ export default async function statusRoute(app: FastifyInstance) {
 
   async function handler(): Promise<StatusResponse> {
     const now = new Date();
-    const session = buildSession(now);
-    const relaxed = !session.is_open;
+    const sessionMeta = getSessionInfo(now);
+    const session = sessionMeta.session;
+    const relaxed = !sessionMeta.isOpen;
 
     const symbols: SymbolStatus[] = symbolsList.map((symbol) => ({
       symbol,
@@ -161,7 +209,11 @@ export default async function statusRoute(app: FastifyInstance) {
     let dbHealth: Health = 'grey';
     let ticketsHealth: Health = relaxed ? 'grey' : 'red';
     let gapfillHealth: Health = 'grey';
-    const yahooRows: { symbol: string; last_bar_utc: string; minutes_behind: number }[] = [];
+    const yahooRows: {
+      symbol: string;
+      last_bar_timestamp: string;
+      lag_seconds: number;
+    }[] = [];
 
     const client = new Client({ connectionString: databaseUrl });
     try {
@@ -200,11 +252,11 @@ export default async function statusRoute(app: FastifyInstance) {
           }
           entry.last_utc = last ? last.toISOString() : null;
           entry.age_ms = age;
-          if (last) {
+          if (last && age !== null) {
             yahooRows.push({
               symbol: row.symbol,
-              last_bar_utc: last.toISOString(),
-              minutes_behind: age / 60_000,
+              last_bar_timestamp: last.toISOString(),
+              lag_seconds: age / 1000,
             });
           }
           entry.health = age === null ? (relaxed ? 'grey' : 'red') : healthFromAge(age, relaxed);

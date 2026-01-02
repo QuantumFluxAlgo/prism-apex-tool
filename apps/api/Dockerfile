@@ -13,7 +13,6 @@ COPY tsconfig.paths.json tsconfig.paths.json
 # Source
 COPY packages packages
 COPY apps apps
-COPY sdks sdks
 COPY tests tests
 COPY apex apex
 COPY types types
@@ -54,14 +53,16 @@ RUN node -e "\
   console.info('Wrote', out);\
 "
 
-# Produce a clean runtime (only prod deps for the API)
+# Produce a clean runtime (only prod deps for the API; ingest reuses them)
 # pnpm deploy syntax: pnpm --filter "<pkg>" deploy <target_dir> --prod
 RUN mkdir -p /app/runtime && \
     pnpm --filter "@prism-apex/api" deploy /app/runtime --prod
 
-# Bring compiled API output & runtime data into the runtime tree
-RUN mkdir -p /app/runtime/apps/api/dist /app/runtime/apex && \
+# Bring compiled API + ingest + tickets output & runtime data into the runtime tree
+RUN mkdir -p /app/runtime/apps/api/dist /app/runtime/apps/ingest/dist /app/runtime/apps/tickets/dist /app/runtime/apex && \
     cp -r /app/apps/api/dist/. /app/runtime/apps/api/dist/ && \
+    cp -r /app/apps/ingest/dist/. /app/runtime/apps/ingest/dist/ && \
+    cp -r /app/apps/tickets/dist/. /app/runtime/apps/tickets/dist/ && \
     cp -r /app/apex/.        /app/runtime/apex/
 
 # ------------ Runtime stage ------------
@@ -73,7 +74,6 @@ RUN apk add --no-cache wget
 # Copy the prepared runtime (node_modules + API dist + apex) as a unit
 COPY --from=build /app/runtime/ /app/
 COPY configs /configs
-COPY README.md /app/README.md
 
 EXPOSE 3000
 CMD ["node", "/app/apps/api/dist/index.cjs"]

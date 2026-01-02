@@ -1,96 +1,174 @@
 import { getConfig } from '../config/env.js';
 import {
-  evaluateTicket,
-  withinSuppressionWindow,
-  TicketInput,
-  suggestPercent,
+  applyGuardWithSizing,
+  type Suggestion,
+  type GuardContext,
+  type StrategyId,
+  type AccountPhase,
 } from '@prism-apex/rules-apex';
 import { Accounts } from './accounts.js';
+import { getRecentTicketSizes } from '../store/tickets.js';
+import { getAccount as getTelemetryAccount } from '../store/telemetry.js';
 
-export type GuardSizing = {
-  allowed?: number;
-  halfSizeSuggested?: boolean;
-  jumpExceeded?: boolean;
+const SUPPRESS_MIN_BEFORE = 5; // suppress tickets in final minutes before flat window
+
+export type GuardCandidate = {
+  symbol: string;
+  contract?: string;
+  direction: 'BUY' | 'SELL' | 'long' | 'short';
+  entry: number;
+  stop?: number;
+  target?: number;
+  qty?: number;
+  strategy?: string;
+  accountId?: string;
+  phase?: AccountPhase;
+  bufferCleared?: boolean;
+  recentSizes?: number[];
+  maxContracts?: number;
 };
 
-export type GuardDecision =
-  | { accepted: true; rr: number; reasons: string[]; sizing?: GuardSizing }
-  | { accepted: false; rr?: number; reasons: string[]; sizing?: GuardSizing };
+export type GuardDecisionDto = {
+  allowed: boolean;
+  codes: string[];
+  warnings: string[];
+  reason: string | null;
+  sizing: {
+    contracts: number;
+    rationale: string | null;
+  } | null;
+};
 
-const SUPPRESS_MIN_BEFORE = 5; // decision: suppress new entries for last 5 min pre-cutoff
-
-export function applyGuardrails(input: TicketInput, now = new Date()): GuardDecision {
-  const cfg = getConfig();
-  // 5-min pre-close suppression
-  if (withinSuppressionWindow(now, cfg.time.flatByUtc, SUPPRESS_MIN_BEFORE)) {
-    return { accepted: false, reasons: ['pre-close suppression window'] };
-  }
-  const res = evaluateTicket(input, {
-    minRR: cfg.guardrails.minRR,
-    maxRR: cfg.guardrails.maxRR,
-    flatByUtc: cfg.time.flatByUtc,
-    now,
-  });
-  if (res.decision === 'reject') return { accepted: false, rr: res.rr, reasons: res.reasons };
-  return { accepted: true, rr: res.rr, reasons: [] };
+function normalizeSide(direction: GuardCandidate['direction']): 'BUY' | 'SELL' {
+  if (direction === 'SELL' || direction === 'short') return 'SELL';
+  return 'BUY';
 }
 
-export async function applyGuardWithSizing(
-  input: TicketInput & { accountId?: string; qty?: number },
+function normalizeStrategy(strategy?: string): StrategyId {
+  // Canonical persisted strategy namespace:
+  // - APX-DDB-01
+  // - APX-OSB-01
+  // - APX-VWAP-FT
+  //
+  // Accept legacy variants, but always normalize to the canonical IDs.
+  if (!strategy) return 'APX-DDB-01' as StrategyId;
+
+  const key = String(strategy).trim().toUpperCase();
+
+  // VWAP variants
+  if (key.includes('VWAP')) return 'APX-VWAP-FT' as StrategyId;
+
+  // OSB variants
+  if (key.includes('OSB')) return 'APX-OSB-01' as StrategyId;
+
+  // ORR/DDB variants (default bucket)
+  return 'APX-DDB-01' as StrategyId;
+}
+
+function withinSuppressionWindow(now: Date, flatByUtc: string, minutes: number): boolean {
+  const [h, m] = flatByUtc.split(':').map((part) => Number(part));
+  if (!Number.isFinite(h) || !Number.isFinite(m)) return false;
+  const flat = Date.UTC(
+    now.getUTCFullYear(),
+    now.getUTCMonth(),
+    now.getUTCDate(),
+    h,
+    m,
+    0,
+    0,
+  );
+  const diffMs = flat - now.getTime();
+  return diffMs <= minutes * 60_000 && diffMs >= 0;
+}
+
+function blockedDecision(reason: string): GuardDecisionDto {
+  return {
+    allowed: false,
+    codes: [reason],
+    warnings: [],
+    reason,
+    sizing: null,
+  };
+}
+
+function toSuggestion(candidate: GuardCandidate): Suggestion {
+  return {
+    symbol: candidate.symbol,
+    side: normalizeSide(candidate.direction),
+    entry: candidate.entry,
+    stop: candidate.stop,
+    qty: candidate.qty ?? 1,
+    strategy: normalizeStrategy(candidate.strategy),
+    target: candidate.target,
+  };
+}
+
+function toContext(candidate: GuardCandidate, now: Date): GuardContext {
+  const defaultAccountId = candidate.accountId ?? 'SIM';
+  const account = candidate.accountId ? Accounts.get(candidate.accountId) : undefined;
+  const telemetry = candidate.accountId ? getTelemetryAccount(candidate.accountId) : undefined;
+  const phase: AccountPhase = candidate.phase ?? (account?.mode === 'funded' ? 'funded' : 'eval');
+  const maxContracts = Math.max(
+    candidate.maxContracts ?? account?.planMaxContracts ?? account?.baseSize ?? 1,
+    1,
+  );
+  const bufferCleared =
+    candidate.bufferCleared ?? telemetry?.bufferCleared ?? true;
+  const recentSizes =
+    candidate.recentSizes ?? (candidate.accountId ? getRecentTicketSizes(candidate.accountId) : []);
+  return {
+    phase,
+    account: { id: defaultAccountId, maxContracts },
+    bufferCleared,
+    recentSizes,
+    contract: candidate.contract ?? candidate.symbol,
+    now,
+  };
+}
+
+export async function evaluateCandidate(
+  candidate: GuardCandidate,
   now = new Date(),
-): Promise<GuardDecision> {
+): Promise<GuardDecisionDto> {
   const cfg = getConfig();
   if (withinSuppressionWindow(now, cfg.time.flatByUtc, SUPPRESS_MIN_BEFORE)) {
-    return { accepted: false, reasons: ['pre-close suppression window'] };
+    return blockedDecision('pre-close suppression window');
   }
-  const res = evaluateTicket(input, {
-    minRR: cfg.guardrails.minRR,
-    maxRR: cfg.guardrails.maxRR,
-    flatByUtc: cfg.time.flatByUtc,
-    now,
-  });
-
-  let sizing: GuardSizing | undefined;
-  if (input.accountId) {
-    const account = await Accounts.get(input.accountId);
-    if (account) {
-      const s = suggestPercent(
-        account.planMaxContracts, false,
-        cfg.sizing.percent.noBuffer,
-        cfg.sizing.percent.withBuffer,
-      );
-      sizing = {
-        allowed: s.contracts,
-        halfSizeSuggested: s.halfSizeSuggested,
-      };
-            if (
-        cfg.sizing.enforceSizeHints &&
-        typeof input.qty === 'number' &&
-        s.contracts !== undefined &&
-        input.qty > s.contracts
-      ) {
-        return {
-          accepted: false,
-          rr: res.rr,
-          reasons: ['qty exceeds allowed'],
-          sizing,
-        };
-      }
-      if (cfg.sizing.enforceSizeJumps && sizing.jumpExceeded) {
-        return {
-          accepted: false,
-          rr: res.rr,
-          reasons: ['size jump exceeded'],
-          sizing,
-        };
-      }
-      // best effort memory update
-      Accounts.upsert({ id: input.accountId });
-    }
+  if (!candidate.target) {
+    return blockedDecision('missing-target');
   }
 
-  if (res.decision === 'reject') {
-    return { accepted: false, rr: res.rr, reasons: res.reasons, sizing };
+  const suggestion = toSuggestion(candidate);
+  const context = toContext(candidate, now);
+  const result = applyGuardWithSizing(suggestion, context);
+
+  if (!result.accepted) {
+    const reasons = result.reasons ?? [];
+    return {
+      allowed: false,
+      codes: reasons,
+      warnings: [],
+      reason: reasons[0] ?? null,
+      sizing: null,
+    };
   }
-  return { accepted: true, rr: res.rr, reasons: [], sizing };
+
+  const guardrails = result.ticket?.meta?.guardrails ?? [];
+  const sizing = result.ticket
+    ? {
+        contracts: result.ticket.qty,
+        rationale: result.ticket.meta?.sizingHint ?? null,
+      }
+    : null;
+  const warnings = guardrails.filter((code) =>
+    code.includes('half-size') || code.includes('stop-optional') || code.includes('anti-windfall'),
+  );
+
+  return {
+    allowed: true,
+    codes: guardrails,
+    warnings,
+    reason: null,
+    sizing,
+  };
 }

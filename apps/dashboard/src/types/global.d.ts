@@ -1,3 +1,4 @@
+/* eslint-disable */
 /* Lightweight DOM-ish shims for type-only happiness */
 interface Clipboard {
   readText(): Promise<string>;

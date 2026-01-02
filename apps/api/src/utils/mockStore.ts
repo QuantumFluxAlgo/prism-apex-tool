@@ -29,6 +29,13 @@ export function appendTickets(tix: MockTicket[]): void {
   fs.appendFileSync(filePath(), lines, 'utf8');
 }
 
+export function clearTickets(): void {
+  const fp = filePath();
+  if (fs.existsSync(fp)) {
+    fs.unlinkSync(fp);
+  }
+}
+
 export function readTickets(limit = 500): MockTicket[] {
   const fp = filePath();
   if (!fs.existsSync(fp)) return [];

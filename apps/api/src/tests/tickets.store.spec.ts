@@ -100,7 +100,7 @@ describe('ticket store', () => {
     });
     const body = res.json();
     expect(body.tickets).toHaveLength(1);
-    expect(body.tickets[0].meta.strategy).toBe('OSB');
+    expect(body.tickets[0].meta.strategy).toBe('APX-OSB-01');
     expect(body.nextCursor).toBeNull();
     await app.close();
   });
@@ -124,7 +124,7 @@ describe('ticket store', () => {
     expect(res.headers['content-type']).toContain('text/csv');
     const [header, row] = res.body.split('\n');
     expect(header).toContain('meta.strategy');
-    expect(row).toContain('VWAP_FT');
+    expect(row).toContain('APX-VWAP-FT');
     await app.close();
   });
 });

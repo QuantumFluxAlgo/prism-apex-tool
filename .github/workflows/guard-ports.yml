@@ -1,0 +1,24 @@
+name: guard-ports
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+      - master
+      - develop
+      - "feat/**"
+      - "fix/**"
+      - "chore/**"
+
+jobs:
+  guard:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Guard local ports contract (5180-only)
+        shell: bash
+        run: |
+          set -euo pipefail
+          bash tools/codex/guard_ports_local.sh

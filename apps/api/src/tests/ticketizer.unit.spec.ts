@@ -31,7 +31,7 @@ describe('ticketizer guards', () => {
   });
 
   it('rr < 1.5 -> rejected', () => {
-    const s = { ...base, target: 101.4 };
+    const s = { ...base, target: 100.6 };
     const t = guardSuggestion(s, ctx);
     expect(t.accepted).toBe(false);
     expect(t.reasons).toContain('rr-too-low');

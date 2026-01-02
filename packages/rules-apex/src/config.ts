@@ -12,16 +12,16 @@ export function getPhasePolicy(phase: AccountPhase): PhasePolicy {
   if (phase === 'funded') {
     return {
       requireStop: true,
-      minRR: 1.5,
-      maxRR: 5.0,
+      minRR: 1.2,
+      maxRR: 4.5,
       halfSizeUntilBuffer: true,
       antiWindfall: true,
     };
   }
   return {
     requireStop: false,
-    minRR: 1.5,
-    maxRR: 5.0,
+    minRR: 1.2,
+    maxRR: 4.5,
     halfSizeUntilBuffer: true,
     antiWindfall: false,
   };

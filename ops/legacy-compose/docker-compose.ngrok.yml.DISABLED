@@ -1,0 +1,20 @@
+services:
+  reverse-proxy:
+    image: nginx:1.27-alpine
+    container_name: prism-apex-reverse-proxy
+    restart: unless-stopped
+    ports:
+      - "8090:80"
+    volumes:
+      - ./nginx.local.conf:/etc/nginx/conf.d/default.conf:ro
+
+  ngrok:
+    image: ngrok/ngrok:alpine
+    container_name: prism-apex-ngrok
+    restart: unless-stopped
+    # Use ngrok agent 'http' subcommand to tunnel to our proxy
+    command: ["http","reverse-proxy:80"]
+    environment:
+      NGROK_AUTHTOKEN: ${NGROK_AUTHTOKEN}
+    ports:
+      - "4040:4040"

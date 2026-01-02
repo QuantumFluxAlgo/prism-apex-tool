@@ -1,0 +1,22 @@
+{
+  "symbol": "ES",
+  "sessionDate": "2025-01-15",
+  "timezone": "America/Chicago",
+  "bars1m": [
+    {
+      "ts": "2025-01-15T14:30:00.000Z",
+      "open": 4800.0,
+      "high": 4801.0,
+      "low": 4799.5,
+      "close": 4800.5,
+      "volume": 1234
+    }
+  ],
+  "expectedSessionMetrics": {
+    "orHigh": 4810.0,
+    "orLow": 4790.0,
+    "orWidth": 20.0,
+    "orToAtrRatio": 1.2,
+    "vwapSlopeClassification": "UP"
+  }
+}

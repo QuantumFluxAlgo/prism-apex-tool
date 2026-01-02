@@ -23,7 +23,7 @@ WHERE strategy IN ('APX-DDB-01','apx-ddb-01','Open Range Retest','open-range-ret
 -- Rules (today):
 --   * LONG only
 --   * status OPEN
---   * rr between 2.0 and 4.5 inclusive
+--   * rr between 1.1 and 1.9 inclusive
 WITH base AS (
   SELECT id, direction, status, rr
   FROM tickets
@@ -31,7 +31,7 @@ WITH base AS (
 UPDATE tickets t
 SET actionable =
     CASE
-      WHEN direction='LONG' AND status='OPEN' AND rr IS NOT NULL AND rr BETWEEN 2.0 AND 4.5
+      WHEN direction='LONG' AND status='OPEN' AND rr IS NOT NULL AND rr BETWEEN 1.1 AND 1.9
            THEN TRUE
       ELSE FALSE
     END,
@@ -40,8 +40,8 @@ SET actionable =
       WHEN direction <> 'LONG' THEN 'SHORT is view-only'
       WHEN status <> 'OPEN' THEN 'Not OPEN'
       WHEN rr IS NULL THEN 'Missing R:R'
-      WHEN rr < 2.0 THEN 'R:R below 2.0'
-      WHEN rr > 4.5 THEN 'R:R above 4.5'
+      WHEN rr < 1.1 THEN 'R:R below 1.1'
+      WHEN rr > 1.9 THEN 'R:R above 1.9'
       ELSE NULL
     END
 WHERE t.id IN (SELECT id FROM base);

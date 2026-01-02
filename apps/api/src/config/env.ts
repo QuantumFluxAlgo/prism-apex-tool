@@ -78,8 +78,8 @@ const cfg: AppConfig = {
   },
 
   guardrails: {
-    minRR: num(process.env.GUARD_MIN_RR, 1),
-    maxRR: num(process.env.GUARD_MAX_RR, 5),
+    minRR: num(process.env.GUARD_MIN_RR, 1.2),
+    maxRR: num(process.env.GUARD_MAX_RR, 4.5),
   },
 
   sizing: {

@@ -33,16 +33,16 @@ SET actionable = CASE
       WHEN status <> 'OPEN' THEN FALSE
       WHEN direction <> 'LONG' THEN FALSE
       WHEN rr IS NULL THEN FALSE
-      WHEN rr < 2.0 THEN FALSE
-      WHEN rr > 4.5 THEN FALSE
+      WHEN rr < 1.1 THEN FALSE
+      WHEN rr > 1.9 THEN FALSE
       ELSE TRUE
     END,
     non_actionable_reason = CASE
       WHEN status <> 'OPEN' THEN 'Not OPEN'
       WHEN direction <> 'LONG' THEN 'SHORT is view-only'
       WHEN rr IS NULL THEN 'Missing R:R'
-      WHEN rr < 2.0 THEN 'RR below 2.0'
-      WHEN rr > 4.5 THEN 'RR above 4.5 cap'
+      WHEN rr < 1.1 THEN 'RR below 1.1'
+      WHEN rr > 1.9 THEN 'RR above 1.9 cap'
       ELSE NULL
     END
 WHERE strategy = 'ORR';

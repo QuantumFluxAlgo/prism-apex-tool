@@ -1,4 +1,70 @@
+import type { CanonicalTicket } from '@prism-apex/shared';
+import type { CanonicalApprovedTicketView } from './dto/canonicalTicketView';
 import { API_BASE, fetchJson } from './apiBase';
+
+/**
+ * Session flags & metrics
+ */
+
+export type SessionFlag = 'NEWS' | 'FOMC' | 'ROLL' | 'HOLIDAY' | 'OTHER';
+
+export type SessionFlagsSummary = {
+  flags: SessionFlag[];
+  hasNewsFlag: boolean;
+};
+
+/**
+ * UI-facing snapshot of session metrics used across Worklist, Tickets, Analytics.
+ * This is intentionally loose; it mirrors the main fields used in the UI.
+ */
+export type SessionMetricsDto = {
+  status?: string;
+  symbol?: string | null;
+  sessionDate?: string | null;
+
+  // Opening Range structure
+  orHigh?: number | null;
+  orLow?: number | null;
+  orWidthPoints?: number | null;
+
+  // Volatility / ATR structure
+  sessionAtrPoints?: number | null;
+  orWidthToAtrRatio?: number | null;
+
+  // Trend / VWAP / regime
+  vwapSlope?: string | null;
+  htfTrendBias?: string | null;
+  volRegime?: string | null;
+
+  // News / event labelling
+  hasMajorNewsToday?: boolean | null;
+  newsLabel?: string | null;
+
+  // Overall quality / skip reasons
+  sessionQualityFlag?: string | null;
+  sessionSkipReason?: string | null;
+
+  // Allow backend to add more without breaking the UI
+  [key: string]: unknown;
+};
+
+/**
+ * Ticket-level summary flavour of session metrics.
+ * Currently an alias of SessionMetricsDto for simplicity.
+ */
+export type TicketSessionMetricsSummary = SessionMetricsDto;
+
+/**
+ * Risk / compliance DTOs
+ */
+
+export type TicketRiskDecision = {
+  allowed: boolean;
+  reason: string;
+  codes: string[];
+  maxContractsAllowed: number | null;
+  warnings: string[];
+};
 
 export type ComplianceSnapshot = {
   eodState: string;
@@ -9,7 +75,10 @@ export type ComplianceSnapshot = {
   consistencyPolicy: { warnAt: number; failAt: number };
 };
 
-// TODO: replace with real API shapes when schema is finalized
+/**
+ * UI Ticket detail (non-canonical order detail used in the Tickets drilldown)
+ */
+
 export type Ticket = {
   symbol: string;
   contract: string;
@@ -24,46 +93,96 @@ export type Ticket = {
   reasons?: string[];
 };
 
-export type TicketRow = {
-  id?: string | number;
-  symbol: string;
+export type OperatorSizing = {
+  qty?: number | null;
+  contracts?: number | null;
+  stakeDollars?: number | null;
+};
+
+export type OperatorActionKind =
+  | 'ACTIONED'
+  | 'ACK'
+  | 'DISMISSED'
+  | 'SKIPPED'
+  | 'MONITORING'
+  | 'MONITORED';
+
+export type StrategyConfigKey = 'orr' | 'osb' | 'vwap_ft';
+
+export interface StrategyConfigResponse {
+  strategy: StrategyConfigKey;
+  config: {
+    version: number;
+    params: Record<string, unknown>;
+  };
+  warnings: string[];
+}
+
+/**
+ * TicketRow = server payload row from /api/tickets.
+ * It *extends* CanonicalTicket but should not be treated as canonical until
+ * passed through buildCanonicalTicketFromRow.
+ */
+export interface TicketRow extends CanonicalTicket, Record<string, unknown> {
+  /** Legacy strategy display (maps to CanonicalTicket.strategyId). */
   strategy: string;
-  direction: 'LONG' | 'SHORT' | string;
-  status?: 'OPEN' | 'CLOSED' | 'COMPLETE';
-  session_date_utc?: string | null;
-  opened_at_utc: string | null;
-  closed_at_utc: string | null;
-  entry_price: number | null;
-  exit_price: number | null;
-  pnl: number | null;
-  stop_price?: number | null;
-  target_price?: number | null;
+
+  /** Legacy direction field retained until Worklist migrates fully to CanonicalTicket.side. */
+  direction?: CanonicalTicket['side'] | string;
+
+  session_date_utc?: CanonicalTicket['sessionDateUtc'] | null;
+  opened_at_utc?: CanonicalTicket['createdAtUtc'] | null;
+  closed_at_utc?: CanonicalTicket['completedAtUtc'] | null;
+
+  entry_price?: CanonicalTicket['entryPrice'] | null;
+  exit_price?: CanonicalTicket['exitPrice'] | null;
+  stop_price?: CanonicalTicket['stopPrice'] | null;
+  target_price?: CanonicalTicket['targetPrice'] | null;
+
   meta?: Record<string, unknown>;
   rr?: number | null;
+
   actionable?: boolean | null;
   meets_strategy_params?: boolean | null;
   meets_apex_rules?: boolean | null;
   is_duplicate?: boolean | null;
+
   reasons?: string[] | null;
   reason?: string | null;
-  strategy_version?: string | null;
-  completed_at_utc?: string | null;
-  completed_by?: string | null;
+
+  strategy_version?: CanonicalTicket['strategyVersion'];
+
+  completed_at_utc?: CanonicalTicket['completedAtUtc'];
+  completed_by?: CanonicalTicket['completedBy'];
   completed_note?: string | null;
-};
+
+  sessionMetrics?: TicketSessionMetricsSummary | null;
+  sessionFlags?: SessionFlagsSummary | null;
+  riskDecision?: TicketRiskDecision | null;
+
+  operatorSizing?: OperatorSizing | null;
+
+  pnlAmount?: number | null;
+  pnlRatio?: number | null;
+  contracts?: number | null;
+  riskDollars?: number | null;
+  rewardDollars?: number | null;
+
+  canonicalCandidate?: CanonicalTicket | null;
+  canonicalApproved?: CanonicalApprovedTicketView | null;
+
+  // allow extra fields without breaking the UI
+  [key: string]: unknown;
+}
 
 export type TicketsResponse = {
   total?: number;
   rows?: TicketRow[];
 };
 
-export const Market: {
-  positions: () => Promise<Position[]>;
-  orders: () => Promise<Order[]>;
-} = {
-  positions: async () => [],
-  orders: async () => [],
-};
+/**
+ * Simple market position/order placeholders – currently unused by V2 pages.
+ */
 
 export type Position = {
   symbol: string;
@@ -83,39 +202,229 @@ export type Order = {
   ocoGroupId?: string | null;
 };
 
-export const api = {
-  get: (path: string) => fetchJson(`/api/compat${path}`),
-  tickets: (date: string, cursor?: string) =>
-    fetchJson(`/api/tickets?date=${date}&strategy=ORR${cursor ? `&cursor=${cursor}` : ''}`),
-  ready: () => fetchJson('/ready'),
+export const Market: {
+  positions: () => Promise<Position[]>;
+  orders: () => Promise<Order[]>;
+} = {
+  positions: async () => [],
+  orders: async () => [],
 };
 
-export async function fetchSymbols(): Promise<string[]> {
-  const fallback = [
-    'ES=F',
-    'MES=F',
-    'NQ=F',
-    'MNQ=F',
-    'YM=F',
-    'RTY=F',
-    'GC=F',
-    'CL=F',
-    '6E=F',
-    'EURUSD=X',
-    '^GDAXI',
-  ];
-  try {
-    const res = (await fetchJson('/api/symbols')) as { symbols?: unknown };
-    const symbols = (res as any).symbols;
-    if (Array.isArray(symbols) && symbols.length) {
-      return symbols as string[];
-    }
-  } catch {
-    // ignore and return fallback
-  }
-  return fallback;
+/**
+ * System health + telemetry helpers
+ */
+
+export type YahooHealthRow = {
+  symbol: string;
+  lag_seconds: number;
+  last_bar_timestamp: string;
+  status: 'GREEN' | 'AMBER' | 'RED';
+};
+
+export type YahooHealthResponse = {
+  status?: string;
+  rows?: YahooHealthRow[];
+  now_utc?: string;
+};
+
+export async function fetchYahooHealth(): Promise<YahooHealthResponse> {
+  return fetchJson<YahooHealthResponse>('/api/health/yahoo');
 }
 
+export type SystemJobStatus = {
+  name?: string;
+  everyMs?: number | null;
+  intervalMs?: number | null;
+  interval_ms?: number | null;
+  lastRunUtc?: string | null;
+  lastRunAtUtc?: string | null;
+  lastRunAt?: string | null;
+  last_run_utc?: string | null;
+  lastOk?: boolean | null;
+  ok?: boolean | null;
+  lastDurationMs?: number | null;
+  lastDuration?: number | null;
+  last_duration_ms?: number | null;
+};
+
+export async function fetchSystemJobs(): Promise<SystemJobStatus[]> {
+  const data = await fetchJson<SystemJobStatus[] | { jobs?: SystemJobStatus[] }>(
+    '/api/system/jobs',
+  );
+  if (Array.isArray(data)) return data;
+  if (data && Array.isArray(data.jobs)) return data.jobs;
+  return [];
+}
+
+export type SystemTelemetrySnapshot = {
+  jobName: string;
+  lastRunAt: string | null;
+  lastDurationMs: number | null;
+  avgDurationMs: number | null;
+  runCount: number;
+  errorCount: number;
+  ingestGaps: number;
+  metricsFailures: number;
+  lastOk?: boolean | null;
+};
+
+export async function fetchSystemTelemetry(): Promise<SystemTelemetrySnapshot[]> {
+  const payload = await fetchJson<{ jobs?: SystemTelemetrySnapshot[] }>(
+    '/api/system/telemetry',
+  );
+  if (payload && Array.isArray(payload.jobs)) return payload.jobs;
+  return [];
+}
+
+export async function fetchStrategyConfig(
+  strategy: StrategyConfigKey,
+): Promise<StrategyConfigResponse> {
+  return fetchJson<StrategyConfigResponse>(
+    `/api/strategy-config/${encodeURIComponent(strategy)}`,
+  );
+}
+
+export interface WorklistApiResponse {
+  total?: number;
+  tickets?: any[];
+  rows?: any[];
+}
+
+export type OperatorRiskSession = {
+  sessionDateUtc: string;
+  dailyRiskLimitUsd: number | null;
+  riskUsedUsd: number;
+  riskRemainingUsd: number;
+  locked: boolean;
+};
+
+export async function fetchOperatorRiskSession(): Promise<OperatorRiskSession> {
+  return fetchJson<OperatorRiskSession>('/api/operator-risk/session');
+}
+
+export async function updateOperatorRiskSession(
+  dailyRiskLimitUsd: number,
+): Promise<OperatorRiskSession> {
+  return fetchJson<OperatorRiskSession>('/api/operator-risk/session', {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ dailyRiskLimitUsd }),
+  });
+}
+
+export async function fetchWorklistFeed(): Promise<WorklistApiResponse | null> {
+  try {
+    const payload = await fetchJson<WorklistApiResponse>('/api/worklist');
+    if (!payload) return null;
+    if (Array.isArray(payload.tickets)) {
+      return { total: payload.total, tickets: payload.tickets };
+    }
+    if (Array.isArray(payload.rows)) {
+      return { total: payload.total, tickets: payload.rows };
+    }
+    return null;
+  } catch {
+    return null;
+  }
+}
+
+export async function fetchMarketSnapshotPayload(): Promise<any[]> {
+  try {
+    const payload = await fetchJson<any>('/api/markets');
+    if (Array.isArray(payload?.rows)) return payload.rows;
+    if (Array.isArray(payload?.markets)) return payload.markets;
+    if (Array.isArray(payload)) return payload;
+  } catch {
+    // fall through to mock/memory
+  }
+  return [];
+}
+
+export type MarketSessionDefinition = {
+  start: string;
+  end: string;
+  tz: string;
+};
+
+export async function fetchMarketSessions(): Promise<
+  Record<string, MarketSessionDefinition>
+> {
+  const paths = ['/api/market/sessions', '/market/sessions'];
+  for (const path of paths) {
+    try {
+      const data = await fetchJson<Record<string, MarketSessionDefinition>>(path);
+      if (data && typeof data === 'object') {
+        return data;
+      }
+    } catch {
+      // try next path
+    }
+  }
+  return {};
+}
+
+export async function fetchMarketSymbols(): Promise<string[]> {
+  const paths = ['/api/market/symbols', '/market/symbols'];
+  for (const path of paths) {
+    try {
+      const data = await fetchJson<{ symbols?: string[] }>(path);
+      if (data && Array.isArray(data.symbols)) {
+        return data.symbols;
+      }
+    } catch {
+      // try next path
+    }
+  }
+  return [];
+}
+
+/**
+ * Shared helpers
+ */
+
+// ST-006: Activity/compliance endpoints do not exist; keep stubs quarantined
+// so any accidental usage fails fast until FINAL epic cleanup.
+export async function fetchMarketActivity(): Promise<TicketRow[]> {
+  throw new Error(
+    'fetchMarketActivity is quarantined (ST-006). No /api/activity route exists.',
+  );
+}
+
+export async function fetchComplianceSnapshot(): Promise<ComplianceSnapshot> {
+  throw new Error(
+    'fetchComplianceSnapshot is quarantined (ST-006). No /api/compliance route exists.',
+  );
+}
+
+/**
+ * LEGACY: prefer fetchTickets(...) + canonical mapping.
+ * Kept for V1/legacy surfaces only.
+ */
+export async function fetchTicketDetail(id: string): Promise<Ticket | null> {
+  const res = (await fetchJson(`/api/tickets/${encodeURIComponent(id)}`)) as {
+    ticket?: Ticket;
+  };
+  return res.ticket ?? null;
+}
+
+/**
+ * Resolve a safe base URL for tickets API calls.
+ * Falls back to window.location.origin (browser) or http://localhost (tests).
+ */
+function getTicketsBase(): string {
+  const trimmed = API_BASE?.trim();
+  if (trimmed) {
+    return trimmed;
+  }
+  if (typeof window !== 'undefined' && window.location?.origin) {
+    return window.location.origin;
+  }
+  return 'http://localhost';
+}
+
+/**
+ * Canonical tickets API helper – base building block for all V2 surfaces.
+ */
 export async function fetchTickets(params: {
   from?: string;
   to?: string;
@@ -127,16 +436,22 @@ export async function fetchTickets(params: {
   limit?: number;
   offset?: number;
 }): Promise<TicketsResponse> {
-  const url = new URL('/api/tickets', API_BASE);
+  const url = new URL('/api/tickets', getTicketsBase());
   const search = url.searchParams;
 
   if (params.from) search.set('from', params.from);
   if (params.to) search.set('to', params.to);
   if (params.symbol && params.symbol !== 'ALL') search.set('symbol', params.symbol);
   if (params.strategy && params.strategy !== 'ALL') search.set('strategy', params.strategy);
-  if (params.status && params.status !== 'ANY' && params.status !== 'ALL') search.set('status', params.status);
-  if (params.scope && params.scope !== 'all' && params.scope !== 'ALL') search.set('scope', params.scope);
-  if (params.direction && params.direction !== 'ALL') search.set('direction', params.direction);
+  if (params.status && params.status !== 'ANY' && params.status !== 'ALL') {
+    search.set('status', params.status);
+  }
+  if (params.scope && params.scope !== 'all' && params.scope !== 'ALL') {
+    search.set('scope', params.scope);
+  }
+  if (params.direction && params.direction !== 'ALL') {
+    search.set('direction', params.direction);
+  }
 
   search.set('limit', String(params.limit ?? 25));
   search.set('offset', String(params.offset ?? 0));
@@ -148,27 +463,332 @@ export async function fetchTickets(params: {
   };
 }
 
-export async function completeTicket(id: string, body: { user?: string; note?: string }) {
-  const json = (await fetchJson(`/api/tickets/${encodeURIComponent(id)}/complete`, {
-    method: 'PATCH',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(body ?? {}),
-  })) as { row: TicketRow };
+/**
+ * Completes a ticket and returns the updated TicketRow from the API.
+ */
+export async function completeTicket(
+  id: string,
+  body: { user?: string; note?: string },
+) {
+  const json = (await fetchJson(
+    `/api/tickets/${encodeURIComponent(id)}/complete`,
+    {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body ?? {}),
+    },
+  )) as { row: TicketRow };
   return json.row;
 }
 
-// ---- symbols v2 (config-backed) ----
-export type SymbolSpecV2 = {
-  symbol: string;
-  description?: string;
-  tickSize: number | null;
-  tickValueUSD: number | null;
-  contractType: 'standard' | 'micro' | 'spot' | 'index';
-  feedAvailable: boolean;
-  tickSpecVerified: boolean;
-};
+/**
+ * Canonical mapping: TicketRow -> CanonicalTicket.
+ *
+ * This is the single place that understands how to turn the tickets
+ * table payload (with canonicalApproved and meta) into the canonical
+ * ticket contract consumed by Worklist, Tickets, Analytics.
+ */
+export function buildCanonicalTicketFromRow(row: TicketRow): CanonicalTicket | null {
+  if (row.canonicalApproved) {
+    const view = row.canonicalApproved as CanonicalApprovedTicketView;
 
-export async function getSymbolSpecsV2(): Promise<SymbolSpecV2[]> {
-  const data = (await fetchJson('/api/symbols/v2')) as { symbols?: unknown[] };
-  return Array.isArray((data as any).symbols) ? ((data as any).symbols as SymbolSpecV2[]) : [];
+    const exitPrice =
+      (row.exitPrice as number | null | undefined) ??
+      (row.exit_price as number | null | undefined) ??
+      null;
+
+    const pnl =
+      (view as any).pnl ??
+      (row.pnl as number | null | undefined) ??
+      (row.pnlAmount as number | null | undefined) ??
+      null;
+
+    const pnlRMultiple =
+      (view as any).pnlRMultiple ??
+      (row.pnlRatio as number | null | undefined) ??
+      null;
+
+    return {
+      id: view.ticketId,
+      symbol: view.symbol,
+      sessionDateUtc: view.sessionDateUtc,
+      side: view.side,
+      entryPrice: view.entryPrice,
+      stopPrice: view.stopPrice,
+      targetPrice: view.targetPrice,
+      exitPrice,
+      entryTicksFromRef: null,
+      stopTicks: view.stopTicks,
+      targetTicks: view.targetTicks,
+      quantity: view.quantity,
+      perContractRisk: view.perContractRisk,
+      totalRisk: view.totalRisk,
+      expectedReward: view.expectedReward,
+      rrMultiple: view.rrMultiple,
+      pnl,
+      pnlRMultiple,
+      strategyId: view.strategyId,
+      strategyVersion: view.strategyVersion ?? null,
+      contextRegime: view.contextRegime ?? null,
+      contextAtrBucket: view.contextAtrBucket ?? null,
+      contextOrType: view.contextOrType ?? null,
+      tags: view.tags ?? undefined,
+      status:
+        (view.status as CanonicalTicket['status']) ??
+        (row.status as CanonicalTicket['status']),
+      createdAtUtc: view.createdAtUtc,
+      updatedAtUtc:
+        (row.updatedAtUtc as string | null | undefined) ??
+        (view.finalizedAtUtc ?? view.createdAtUtc),
+      completedAtUtc:
+        (view.finalizedAtUtc as string | null | undefined) ??
+        (row.completedAtUtc as string | null | undefined) ??
+        (row.completed_at_utc as string | null | undefined) ??
+        null,
+      completedBy:
+        (row.completedBy as string | null | undefined) ??
+        (row.completed_by as string | null | undefined) ??
+        null,
+      accountId: (row as any).accountId ?? null,
+      notes: (row as any).notes ?? null,
+      source: (view as any).source ?? (row as any).source,
+    };
+  }
+
+  const entry =
+    (row.entryPrice as number | null | undefined) ??
+    (row.entry_price as number | null | undefined) ??
+    null;
+  const stop =
+    (row.stopPrice as number | null | undefined) ??
+    (row.stop_price as number | null | undefined) ??
+    null;
+  const target =
+    (row.targetPrice as number | null | undefined) ??
+    (row.target_price as number | null | undefined) ??
+    null;
+
+  if (entry === null || stop === null || target === null) {
+    return null;
+  }
+
+  const quantity =
+    (row.quantity as number | null | undefined) ?? (row.qty as number | null | undefined) ?? 0;
+
+  const perContractRisk = Math.abs(entry - stop);
+  const expectedReward = Math.abs(target - entry);
+  const rrMultiple =
+    (row.rrMultiple as number | null | undefined) ??
+    (row.rr as number | null | undefined) ??
+    null;
+
+  const pnl =
+    (row.pnl as number | null | undefined) ??
+    (row.pnlAmount as number | null | undefined) ??
+    null;
+
+  const pnlRMultiple =
+    (row.pnlRMultiple as number | null | undefined) ??
+    (row.pnlRatio as number | null | undefined) ??
+    null;
+
+  return {
+    id: String(row.id ?? ''),
+    symbol: row.symbol,
+    sessionDateUtc:
+      (row.sessionDateUtc as string | null | undefined) ??
+      (row.session_date_utc as string | null | undefined) ??
+      null,
+    side: row.side,
+    entryPrice: entry,
+    stopPrice: stop,
+    targetPrice: target,
+    exitPrice:
+      (row.exitPrice as number | null | undefined) ??
+      (row.exit_price as number | null | undefined) ??
+      null,
+    entryTicksFromRef: null,
+    stopTicks: (row.stopTicks as number | null | undefined) ?? null,
+    targetTicks: (row.targetTicks as number | null | undefined) ?? null,
+    quantity,
+    perContractRisk,
+    totalRisk: perContractRisk * quantity,
+    expectedReward,
+    rrMultiple,
+    pnl,
+    pnlRMultiple,
+    strategyId:
+      (row.strategyId as string | null | undefined) ??
+      (row.strategy as string | null | undefined) ??
+      null,
+    strategyVersion:
+      (row.strategyVersion as string | null | undefined) ??
+      (row.strategy_version as string | null | undefined) ??
+      null,
+    contextRegime:
+      (row.contextRegime as string | null | undefined) ??
+      (row.context_regime as string | null | undefined) ??
+      null,
+    contextAtrBucket:
+      (row.contextAtrBucket as string | null | undefined) ??
+      (row.context_atr_bucket as string | null | undefined) ??
+      null,
+    contextOrType:
+      (row.contextOrType as string | null | undefined) ??
+      (row.context_or_type as string | null | undefined) ??
+      null,
+    tags: (row.tags as string[] | null | undefined) ?? undefined,
+    status: row.status as CanonicalTicket['status'],
+    createdAtUtc:
+      (row.createdAtUtc as string | null | undefined) ??
+      (row.opened_at_utc as string | null | undefined) ??
+      null,
+    updatedAtUtc:
+      (row.updatedAtUtc as string | null | undefined) ??
+      (row.closed_at_utc as string | null | undefined) ??
+      (row.completed_at_utc as string | null | undefined) ??
+      null,
+    completedAtUtc:
+      (row.completedAtUtc as string | null | undefined) ??
+      (row.completed_at_utc as string | null | undefined) ??
+      null,
+    completedBy:
+      (row.completedBy as string | null | undefined) ??
+      (row.completed_by as string | null | undefined) ??
+      null,
+    accountId: (row as any).accountId ?? null,
+    notes: (row as any).notes ?? null,
+    source: (row as any).source,
+  };
+}
+
+/**
+ * Worklist V2 canonical feed:
+ * - status=OPEN
+ * - scope=actionable
+ * - constrained wrapper over fetchTickets
+ * - mapped via buildCanonicalTicketFromRow
+ */
+export async function fetchWorklistCanonicalTickets(params?: {
+  symbol?: string;
+  strategy?: string;
+  limit?: number;
+}): Promise<CanonicalTicket[]> {
+  const { symbol, strategy, limit = 50 } = params ?? {};
+
+  const { rows } = await fetchTickets({
+    symbol,
+    strategy,
+    status: 'OPEN',
+    scope: 'actionable',
+    direction: 'ALL',
+    limit,
+    offset: 0,
+  });
+
+  const canonical: CanonicalTicket[] = [];
+  for (const row of rows ?? []) {
+    const ticket = buildCanonicalTicketFromRow(row);
+    if (ticket) canonical.push(ticket);
+  }
+  return canonical;
+}
+
+/**
+ * Analytics canonical feed:
+ * - pulls historical tickets via /api/tickets
+ * - uses the same canonical mapping as Worklist/Tickets
+ */
+export async function fetchAnalyticsCanonicalTickets(params: {
+  from: string;
+  to: string;
+  symbol?: string;
+  strategy?: string;
+  limit?: number;
+}): Promise<CanonicalTicket[]> {
+  const { from, to, symbol, strategy, limit = 400 } = params;
+
+  const { rows } = await fetchTickets({
+    from,
+    to,
+    symbol,
+    strategy,
+    status: 'ALL',
+    scope: 'all',
+    direction: 'ALL',
+    limit,
+    offset: 0,
+  });
+
+  const canonical: CanonicalTicket[] = [];
+  for (const row of rows ?? []) {
+    const ticket = buildCanonicalTicketFromRow(row);
+    if (ticket) canonical.push(ticket);
+  }
+  return canonical;
+}
+
+/**
+ * Session metrics helpers – used by Worklist V2 & Analytics.
+ */
+
+export function makeSessionMetricsKey(
+  symbol?: string | null,
+  sessionDate?: string | null,
+): string {
+  return `${symbol ?? ''}__${sessionDate ?? ''}`;
+}
+
+export async function fetchSessionMetrics(args: {
+  symbol: string;
+  sessionDate: string;
+}): Promise<SessionMetricsDto> {
+  const params = new URLSearchParams();
+  params.set('symbol', args.symbol);
+  params.set('sessionDate', args.sessionDate);
+
+  const url = `/api/session-metrics?${params.toString()}`;
+  return (await fetchJson(url)) as SessionMetricsDto;
+}
+
+/**
+ * Simple client-side batch over /api/session-metrics.
+ * The backend has its own batch helpers; this stays deliberately dumb
+ * and resilient on the UI side.
+ */
+export async function fetchSessionMetricsBatch(
+  requests: Array<{ symbol?: string | null; sessionDate?: string | null }>,
+): Promise<Record<string, SessionMetricsDto | null>> {
+  const entries = requests
+    .map((r) => {
+      const symbol = (r.symbol ?? '').trim();
+      const sessionDate = (r.sessionDate ?? '').trim();
+      if (!symbol || !sessionDate) return null;
+      return {
+        key: makeSessionMetricsKey(symbol, sessionDate),
+        symbol,
+        sessionDate,
+      };
+    })
+    .filter(
+      (x): x is { key: string; symbol: string; sessionDate: string } => x !== null,
+    );
+
+  const result: Record<string, SessionMetricsDto | null> = {};
+
+  await Promise.all(
+    entries.map(async ({ key, symbol, sessionDate }) => {
+      if (Object.prototype.hasOwnProperty.call(result, key)) {
+        return;
+      }
+      try {
+        const metrics = await fetchSessionMetrics({ symbol, sessionDate });
+        result[key] = metrics;
+      } catch {
+        result[key] = null;
+      }
+    }),
+  );
+
+  return result;
 }

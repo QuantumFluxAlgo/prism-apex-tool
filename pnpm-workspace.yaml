@@ -3,3 +3,4 @@ packages:
   - 'packages/*'
   - apps/ingest
   - apps/tickets
+  - packages/ui-table

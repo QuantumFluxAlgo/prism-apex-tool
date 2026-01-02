@@ -1,0 +1,428 @@
+/* Prism Apex — Shared A3 cockpit visuals
+ *
+ * This stylesheet lifts the StrategyLab gradients, paddings and typography
+ * into generic utility classes so every dashboard page can share the same
+ * “A3” look without duplicating bespoke CSS per page.
+ */
+
+:root {
+  --a3-bg-deep: rgba(15, 23, 42, 0.96);
+  --a3-bg-surface: rgba(15, 23, 42, 0.92);
+  --a3-border-strong: rgba(148, 163, 184, 0.45);
+  --a3-border-soft: rgba(71, 85, 105, 0.45);
+  --a3-chip-bg: rgba(15, 23, 42, 0.92);
+  --a3-heading: #f1f5f9;
+  --a3-text: rgba(226, 232, 240, 0.95);
+  --a3-muted: rgba(148, 163, 184, 0.9);
+}
+
+.a3-page-root {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  min-height: 0;
+  animation: a3-page-fade-in 260ms ease-out;
+}
+
+@keyframes a3-page-fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.a3-page-header {
+  position: relative;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1.5rem;
+  padding: 1.5rem 1.75rem;
+  border-radius: 1.75rem;
+  border: 1px solid var(--a3-border-strong);
+  background:
+    radial-gradient(circle at 0% 0%, rgba(94, 234, 212, 0.28), transparent 55%),
+    radial-gradient(circle at 80% 0%, rgba(56, 189, 248, 0.2), transparent 55%),
+    linear-gradient(135deg, rgba(15, 23, 42, 0.98), rgba(15, 23, 42, 0.9));
+  box-shadow:
+    0 22px 55px rgba(15, 23, 42, 0.95),
+    0 0 0 1px rgba(15, 23, 42, 0.85),
+    0 0 30px rgba(59, 130, 246, 0.2);
+  color: var(--a3-text);
+}
+
+.a3-page-header h1 {
+  margin: 0;
+  font-size: 1.55rem;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  color: var(--a3-heading);
+}
+
+.a3-page-header p {
+  margin: 0.2rem 0 0;
+  font-size: 0.88rem;
+  color: rgba(203, 213, 225, 0.9);
+  max-width: 640px;
+}
+
+.a3-page-header-meta {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.35rem;
+  font-size: 0.65rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--a3-muted);
+}
+
+.a3-page-main-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  padding: 1.5rem;
+  border-radius: 1.5rem;
+  border: 1px solid rgba(51, 65, 85, 0.7);
+  background:
+    radial-gradient(circle at 0% 0%, rgba(59, 130, 246, 0.18), transparent 55%),
+    linear-gradient(135deg, rgba(15, 23, 42, 0.97), rgba(15, 23, 42, 0.9));
+  box-shadow:
+    0 18px 45px rgba(15, 23, 42, 0.9),
+    0 0 0 1px rgba(15, 23, 42, 0.85);
+  backdrop-filter: blur(18px);
+}
+
+.a3-page-section-label {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.2em;
+  color: var(--a3-muted);
+}
+
+.a3-page-kpi-strip {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 1rem;
+  padding: 1rem;
+  border-radius: 1.25rem;
+  border: 1px solid rgba(15, 23, 42, 0.7);
+  background:
+    radial-gradient(circle at 0% 0%, rgba(56, 189, 248, 0.12), transparent 55%),
+    rgba(15, 23, 42, 0.92);
+  box-shadow:
+    inset 0 0 0 1px rgba(15, 23, 42, 0.5),
+    0 12px 26px rgba(15, 23, 42, 0.8);
+}
+
+.a3-kpi {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  padding: 0.75rem 0.9rem;
+  border-radius: 1rem;
+  border: 1px solid rgba(148, 163, 184, 0.28);
+  background: rgba(2, 6, 23, 0.5);
+  min-height: 84px;
+  box-shadow: 0 8px 18px rgba(2, 6, 23, 0.75);
+}
+
+.a3-kpi--emerald {
+  border-color: rgba(16, 185, 129, 0.55);
+  background:
+    linear-gradient(135deg, rgba(16, 185, 129, 0.18), rgba(2, 6, 23, 0.5));
+  box-shadow: 0 14px 30px rgba(16, 185, 129, 0.18);
+}
+
+.a3-kpi--rose {
+  border-color: rgba(244, 63, 94, 0.55);
+  background:
+    linear-gradient(135deg, rgba(244, 63, 94, 0.18), rgba(2, 6, 23, 0.5));
+  box-shadow: 0 14px 30px rgba(244, 63, 94, 0.18);
+}
+
+.a3-kpi--amber {
+  border-color: rgba(251, 191, 36, 0.55);
+  background:
+    linear-gradient(135deg, rgba(251, 191, 36, 0.18), rgba(2, 6, 23, 0.5));
+  box-shadow: 0 14px 30px rgba(251, 191, 36, 0.2);
+}
+
+.a3-kpi--indigo {
+  border-color: rgba(99, 102, 241, 0.55);
+  background:
+    linear-gradient(135deg, rgba(99, 102, 241, 0.18), rgba(2, 6, 23, 0.5));
+  box-shadow: 0 14px 30px rgba(99, 102, 241, 0.18);
+}
+
+.a3-kpi--cyan {
+  border-color: rgba(34, 211, 238, 0.55);
+  background:
+    linear-gradient(135deg, rgba(34, 211, 238, 0.2), rgba(2, 6, 23, 0.5));
+  box-shadow: 0 14px 30px rgba(34, 211, 238, 0.18);
+}
+
+.a3-kpi--neutral {
+  border-color: rgba(148, 163, 184, 0.4);
+}
+
+.a3-kpi-label {
+  font-size: 0.65rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--a3-muted);
+}
+
+.a3-kpi-value {
+  font-family: "Geist Mono", ui-monospace, SFMono-Regular, Menlo, Monaco,
+    Consolas, "Liberation Mono", "Courier New", monospace;
+  font-size: 1.25rem;
+  font-weight: 500;
+  color: var(--a3-heading);
+}
+
+.a3-kpi-sublabel {
+  font-size: 0.7rem;
+  color: rgba(148, 163, 184, 0.75);
+}
+
+.a3-page-table-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  border-radius: 1.35rem;
+  border: 1px solid rgba(71, 85, 105, 0.9);
+  background:
+    radial-gradient(circle at 0% 0%, rgba(30, 64, 175, 0.22), transparent 55%),
+    linear-gradient(135deg, rgba(10, 15, 30, 0.98), rgba(6, 11, 22, 0.96));
+  box-shadow:
+    0 10px 28px rgba(5, 10, 20, 0.85),
+    0 0 0 1px rgba(8, 10, 18, 0.9);
+  overflow: hidden;
+}
+
+.a3-page-table-card .a3-page-table-scroll {
+  flex: 1;
+  min-height: 320px;
+  overflow: auto;
+}
+
+.a3-page-table-card table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.74rem;
+  color: rgba(226, 232, 240, 0.95);
+}
+
+.a3-page-table-card thead th {
+  padding: 0.65rem 0.85rem;
+  font-size: 0.58rem;
+  text-transform: uppercase;
+  letter-spacing: 0.16em;
+  color: rgba(148, 163, 184, 0.85);
+  border-bottom: 1px solid rgba(51, 65, 85, 0.65);
+}
+
+.a3-page-table-card tbody td {
+  padding: 0.65rem 0.85rem;
+  border-bottom: 1px solid rgba(30, 41, 59, 0.5);
+}
+
+.a3-page-table-card tbody tr:hover {
+  background: rgba(15, 23, 42, 0.75);
+}
+
+.a3-page-side-panel {
+  border-radius: 1.35rem;
+  border: 1px solid rgba(71, 85, 105, 0.7);
+  background:
+    radial-gradient(circle at 100% 0%, rgba(129, 140, 248, 0.18), transparent 55%),
+    rgba(5, 8, 20, 0.96);
+  box-shadow:
+    0 12px 28px rgba(5, 10, 20, 0.85),
+    0 0 0 1px rgba(71, 85, 105, 0.6);
+  padding: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.a3-chip,
+.a3-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.25rem 0.85rem;
+  border-radius: 999px;
+  border: 1px solid rgba(148, 163, 184, 0.5);
+  background: var(--a3-chip-bg);
+  font-size: 0.65rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgba(226, 232, 240, 0.95);
+  box-shadow:
+    0 0 0 1px rgba(2, 6, 23, 0.8),
+    0 8px 20px rgba(2, 6, 23, 0.8);
+}
+
+.a3-chip--muted {
+  color: rgba(148, 163, 184, 0.9);
+}
+
+.a3-chip--blue {
+  border-color: rgba(59, 130, 246, 0.65);
+  background: linear-gradient(
+    135deg,
+    rgba(59, 130, 246, 0.16),
+    rgba(15, 23, 42, 0.92)
+  );
+  color: rgba(191, 219, 254, 0.95);
+}
+
+.a3-chip--gray {
+  border-color: rgba(100, 116, 139, 0.6);
+  color: rgba(203, 213, 225, 0.9);
+}
+
+.a3-chip--emerald {
+  border-color: rgba(16, 185, 129, 0.6);
+  background: linear-gradient(
+    135deg,
+    rgba(16, 185, 129, 0.16),
+    rgba(15, 23, 42, 0.92)
+  );
+  color: rgba(209, 250, 229, 0.95);
+}
+
+.a3-chip--rose {
+  border-color: rgba(244, 63, 94, 0.6);
+  background: linear-gradient(
+    135deg,
+    rgba(244, 63, 94, 0.16),
+    rgba(15, 23, 42, 0.92)
+  );
+  color: rgba(255, 228, 230, 0.95);
+}
+
+.a3-chip--amber {
+  border-color: rgba(251, 191, 36, 0.6);
+  background: linear-gradient(
+    135deg,
+    rgba(251, 191, 36, 0.16),
+    rgba(15, 23, 42, 0.92)
+  );
+  color: rgba(254, 243, 199, 0.95);
+}
+
+.a3-chip--green {
+  border-color: rgba(34, 197, 94, 0.6);
+  color: rgba(220, 252, 231, 0.95);
+}
+
+.a3-chip--red {
+  border-color: rgba(248, 113, 113, 0.6);
+  color: rgba(255, 205, 210, 0.96);
+}
+
+.a3-chip--neutral {
+  border-color: rgba(148, 163, 184, 0.5);
+}
+
+.a3-chip--indigo {
+  border-color: rgba(99, 102, 241, 0.6);
+  color: rgba(199, 210, 254, 0.95);
+}
+
+.a3-chip--cyan {
+  border-color: rgba(34, 211, 238, 0.6);
+  color: rgba(224, 242, 254, 0.95);
+}
+
+.a3-filter-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem 1rem;
+  align-items: center;
+  padding: 0.9rem 1.25rem;
+  border-radius: 1.35rem;
+  border: 1px solid rgba(71, 85, 105, 0.65);
+  background:
+    radial-gradient(circle at 0% 0%, rgba(56, 189, 248, 0.12), transparent 60%),
+    rgba(15, 23, 42, 0.92);
+  box-shadow:
+    0 12px 26px rgba(15, 23, 42, 0.85),
+    0 0 0 1px rgba(15, 23, 42, 0.9);
+}
+
+.a3-filter-field {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  font-size: 0.72rem;
+  color: rgba(226, 232, 240, 0.9);
+}
+
+.a3-filter-field input[type="date"],
+.a3-filter-field input[type="search"],
+.a3-filter-field select {
+  border-radius: 999px;
+  border: 1px solid rgba(148, 163, 184, 0.45);
+  padding: 0.35rem 0.9rem;
+  font-size: 0.75rem;
+  background:
+    radial-gradient(circle at 0% 0%, rgba(94, 234, 212, 0.12), transparent 60%),
+    rgba(15, 23, 42, 0.94);
+  color: rgba(226, 232, 240, 0.95);
+  box-shadow: inset 0 0 0 1px rgba(2, 6, 23, 0.9);
+}
+
+.a3-filter-field input[type="checkbox"] {
+  accent-color: rgba(56, 189, 248, 0.9);
+}
+
+.a3-filter-field select:focus-visible,
+.a3-filter-field input:focus-visible {
+  outline: none;
+  border-color: rgba(56, 189, 248, 0.9);
+  box-shadow:
+    0 0 0 1px rgba(56, 189, 248, 0.7),
+    0 0 30px rgba(56, 189, 248, 0.3);
+}
+
+.a3-table-headline {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.5rem 0.25rem;
+}
+
+.a3-scroll-soft {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(56, 189, 248, 0.8) rgba(2, 6, 23, 0.8);
+}
+
+.a3-scroll-soft::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.a3-scroll-soft::-webkit-scrollbar-track {
+  background: rgba(2, 6, 23, 0.7);
+  border-radius: 999px;
+}
+
+.a3-scroll-soft::-webkit-scrollbar-thumb {
+  border-radius: 999px;
+  background: linear-gradient(
+    135deg,
+    rgba(56, 189, 248, 0.9),
+    rgba(129, 140, 248, 0.9)
+  );
+}

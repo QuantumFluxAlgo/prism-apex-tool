@@ -5,9 +5,23 @@ import { join } from 'node:path';
 import { exportTickets as exportFromStore } from '../store/tickets.js';
 import { isMockDbEnabled } from '../utils/testMode.js';
 import { readTickets, toCsv } from '../utils/mockStore.js';
+import { computeNextTradeSizingForDate } from '../services/operatorRisk.js';
 
 const FOURTEEN_DAYS_MS = 28 * 24 * 60 * 60 * 1000; // now 28-day window
 const DEFAULT_ROW_LIMIT = 50000;
+const DEFAULT_SIZING_MIN_CONTRACTS = parseEnvNumber(process.env.EXPORT_SIZING_MIN_CONTRACTS, 1);
+const DEFAULT_SIZING_MAX_CONTRACTS = parseEnvNumber(process.env.EXPORT_SIZING_MAX_CONTRACTS, 10);
+const DEFAULT_SIZING_RISK_FRACTION = parseEnvNumber(process.env.EXPORT_SIZING_RISK_FRACTION, 0.25);
+
+const SIZING_COLUMN_DEFS = [
+  { key: 'sizing_suggested_contracts', label: 'sizing_suggested_contracts' },
+  { key: 'sizing_min_contracts', label: 'sizing_min_contracts' },
+  { key: 'sizing_max_contracts', label: 'sizing_max_contracts' },
+  { key: 'sizing_per_contract_risk', label: 'sizing_per_contract_risk' },
+  { key: 'sizing_projected_daily_risk_pct', label: 'sizing_projected_daily_risk_pct' },
+  { key: 'sizing_remaining_drawdown_pct', label: 'sizing_remaining_drawdown_pct' },
+  { key: 'sizing_utilisation_pct', label: 'sizing_utilisation_pct' },
+];
 
 function asUtcIso(value?: string | null): string | undefined {
   if (!value) return undefined;
@@ -78,7 +92,68 @@ function buildCsv(rows: Record<string, unknown>[], columns: { key: string; label
   return [header, ...data].join('\n');
 }
 
+function parseEnvNumber(value: string | undefined, fallback: number): number {
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : fallback;
+}
+
+function toNumber(value: unknown): number | null {
+  if (typeof value === 'number' && Number.isFinite(value)) return value;
+  if (typeof value === 'string' && value.trim().length) {
+    const parsed = Number(value);
+    return Number.isFinite(parsed) ? parsed : null;
+  }
+  return null;
+}
+
+function toPercent(numerator: number | null, denominator: number | null): number | null {
+  if (numerator == null || denominator == null || denominator === 0) return null;
+  return (numerator / denominator) * 100;
+}
+
 export async function exportRoutes(app: FastifyInstance) {
+  const appendSizingData = async (rows: Record<string, unknown>[]) => {
+    const enriched: Record<string, unknown>[] = [];
+    for (const row of rows) {
+      const next = { ...row };
+      const entry = toNumber(row.entry_price);
+      const stop = toNumber(row.stop_price);
+      const openedAt = typeof row.opened_at_utc === 'string' ? row.opened_at_utc : null;
+      const dateUtc = openedAt ? openedAt.slice(0, 10) : undefined;
+      const perContractRisk = entry != null && stop != null ? Math.abs(entry - stop) : null;
+
+      if (perContractRisk && perContractRisk > 0 && dateUtc) {
+        try {
+          const result = await computeNextTradeSizingForDate({
+            dateUtc,
+            perContractRisk,
+            minContracts: DEFAULT_SIZING_MIN_CONTRACTS,
+            maxContractsCap: DEFAULT_SIZING_MAX_CONTRACTS,
+            riskFractionPerTrade: DEFAULT_SIZING_RISK_FRACTION,
+          });
+          const projectedPct = toPercent(result.sizing.suggestedRiskAmount ?? null, result.snapshot.maxDailyLossAmount);
+          const remainingPct = toPercent(result.snapshot.remainingRiskCapacity ?? null, result.snapshot.maxDailyLossAmount);
+          const utilisationPct = toPercent(result.sizing.suggestedRiskAmount ?? null, result.snapshot.remainingRiskCapacity ?? null);
+
+          next.sizing_suggested_contracts = result.sizing.suggestedContracts ?? null;
+          next.sizing_min_contracts = DEFAULT_SIZING_MIN_CONTRACTS;
+          next.sizing_max_contracts = DEFAULT_SIZING_MAX_CONTRACTS;
+          next.sizing_per_contract_risk = perContractRisk;
+          next.sizing_projected_daily_risk_pct = projectedPct != null ? Number(projectedPct.toFixed(2)) : null;
+          next.sizing_remaining_drawdown_pct = remainingPct != null ? Number(remainingPct.toFixed(2)) : null;
+          next.sizing_utilisation_pct = utilisationPct != null ? Number(utilisationPct.toFixed(2)) : null;
+        } catch (err) {
+          app.log.warn(
+            { err, symbol: row.symbol, openedAt },
+            'Failed to compute sizing fields for ticket export row',
+          );
+        }
+      }
+
+      enriched.push(next);
+    }
+    return enriched;
+  };
   app.get('/api/export/readme.md', async (_, reply) => {
     const readmePath = join(process.cwd(), 'README.md');
     if (!fs.existsSync(readmePath)) {
@@ -194,10 +269,14 @@ export async function exportRoutes(app: FastifyInstance) {
         direction: ticket.side,
         status: ticket.accepted ? 'ACCEPTED' : 'REJECTED',
         opened_at_utc: ticket.timestampUtc,
+        entry_price: ticket.entry,
+        stop_price: ticket.stop,
+        target_price: ticket.target,
         'meta.strategy': ticket.meta.strategy,
         'meta.rr': ticket.meta.rr ?? '',
       }));
-      const csv = buildCsv(rows, [
+      const rowsWithSizing = await appendSizingData(rows);
+      const csv = buildCsv(rowsWithSizing, [
         { key: 'symbol', label: 'symbol' },
         { key: 'strategy', label: 'strategy' },
         { key: 'direction', label: 'direction' },
@@ -205,6 +284,7 @@ export async function exportRoutes(app: FastifyInstance) {
         { key: 'opened_at_utc', label: 'opened_at_utc' },
         { key: 'meta.strategy', label: 'meta.strategy' },
         { key: 'meta.rr', label: 'meta.rr' },
+        ...SIZING_COLUMN_DEFS,
       ]);
       reply
         .header('Content-Type', 'text/csv; charset=utf-8')
@@ -251,8 +331,9 @@ export async function exportRoutes(app: FastifyInstance) {
          LIMIT ${rowLimit}
       `;
       const { rows } = await client.query(query, params);
+      const rowsWithSizing = await appendSizingData(rows);
 
-      const csv = buildCsv(rows, [
+      const csv = buildCsv(rowsWithSizing, [
         { key: 'opened_at_utc', label: 'opened_at_utc' },
         { key: 'symbol', label: 'symbol' },
         { key: 'strategy', label: 'strategy' },
@@ -265,6 +346,7 @@ export async function exportRoutes(app: FastifyInstance) {
         { key: 'rr', label: 'rr' },
         { key: 'actionable', label: 'actionable' },
         { key: 'non_actionable_reason', label: 'non_actionable_reason' },
+        ...SIZING_COLUMN_DEFS,
       ]);
 
       reply

@@ -1,13 +1,16 @@
 import React from 'react';
 
-export function Card({ children, className = '' }: { children: React.ReactNode; className?: string }) {
-  return <div className={`dashboard-card ${className}`.trim()}>{children}</div>;
+export function Card(props: React.HTMLAttributes<HTMLDivElement>) {
+  return <div data-testid="card" {...props} />;
 }
 
-export function CardHeader({ children, className = '' }: { children: React.ReactNode; className?: string }) {
-  return <div className={`dashboard-card__header ${className}`.trim()}>{children}</div>;
+export function CardHeader(props: React.HTMLAttributes<HTMLDivElement>) {
+  return <div data-testid="card-header" {...props} />;
 }
 
-export function CardBody({ children, className = '' }: { children: React.ReactNode; className?: string }) {
-  return <div className={`dashboard-card__body ${className}`.trim()}>{children}</div>;
+export function CardBody(props: React.HTMLAttributes<HTMLDivElement>) {
+  return <div data-testid="card-body" {...props} />;
 }
+
+export default Card;
+

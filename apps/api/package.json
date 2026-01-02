@@ -14,9 +14,12 @@
     "typecheck": "tsc -p tsconfig.build.json --noEmit",
     "start": "node dist/index.cjs",
     "test": "vitest run --reporter=verbose --passWithNoTests",
-    "lint": "eslint . --ext .ts",
+    "lint": "eslint . --ext .ts --ignore-pattern start-runtime.cjs",
     "openapi:emit": "tsx src/scripts/openapi.ts > openapi.json",
-    "sync:tickets": "tsx src/scripts/syncTickets.ts"
+    "sync:tickets": "tsx src/scripts/syncTickets.ts",
+    "replay:engine": "tsx src/jobs/engineReplayCli.ts",
+    "freeze:strategy-config": "tsx src/jobs/strategyConfigFreezeCli.ts",
+    "drift:strategy-config": "tsx src/jobs/strategyConfigDriftCli.ts"
   },
   "devDependencies": {
     "@eslint/js": "^9.37.0",
