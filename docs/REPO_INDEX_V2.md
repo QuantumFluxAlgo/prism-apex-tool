@@ -1600,7 +1600,7 @@ Notes:
 ### Manual-only: gapfill-once
 - `gapfill-once` is **manual** (not always-on). It is included behind the `manual` profile to prevent accidental replays.
 - Run it explicitly when you want a one-off backfill:
-  - `docker compose -f docker-compose.v2.local.yml --profile manual run --rm gapfill-once`
+  - `docker compose -f docker-compose.v2.local.yml — Canonical local container stack (API + dashboard + Postgres). Legacy manifests are quarantined under ops/legacy-compose/. 
 **Single entrypoint:** the only supported browser URL is **http://localhost:5180** (ingress).  
 **Canonical compose:** `docker-compose.v2.local.yml` only.
 
@@ -1619,7 +1619,7 @@ Operational commands:
 
 ```bash
 # Canonical start/rebuild (includes jobs + migrate)
-docker compose -f docker-compose.v2.local.yml up -d --build --force-recreate --remove-orphans
+docker compose -f docker-compose.v2.local.yml — Canonical local container stack (API + dashboard + Postgres). Legacy manifests are quarantined under ops/legacy-compose/. 
 
 # Guard contract (must stay green)
 bash tools/codex/guard_ports_local.sh

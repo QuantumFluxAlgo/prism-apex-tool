@@ -4249,97 +4249,30 @@ Canonical Docker build files:
 
 Right now, there is **no safe deletion** in the Dockerfile set.
 
-### 9.3 Local orchestration – docker-compose
+### 9.3 Local orchestration – docker-compose (SOT)
 
-### Local dev: jobs always-on + DB migrations automatic
-
-
-### Manual-only: gapfill-once
-- `gapfill-once` is **manual** (not always-on). It is included behind the `manual` profile to prevent accidental replays.
-- Run it explicitly when you want a one-off backfill:
-  - `docker compose -f docker-compose.v2.local.yml --profile manual run --rm gapfill-once`
-**Single entrypoint:** the only supported browser URL is **http://localhost:5180** (ingress).  
-**Canonical compose:** `docker-compose.v2.local.yml` only.
+Single entrypoint: the only supported browser URL is http://localhost:5180 (ingress). 
+Canonical compose: docker-compose.v2.local.yml only.
 
 What runs on every local deploy:
 
-- Core: `db` → `migrate` → `api` + `dashboard-full` + `ingress`
-- Jobs (always-on): `tickets-cron`, `gapfill-cron`, `ingress-yahoo`, `jobs-seed`
+- Core: db → migrate → api + dashboard-full + ingress
+- Jobs (always-on): tickets-cron, gapfill-cron, ingress-yahoo, jobs-seed, shadow-outcomes-cron
 
 Hard guarantees:
 
-- **Only** ingress publishes a host port (**5180:80**). API, DB, dashboard, and jobs remain internal.
-- `migrate` applies `deploy/sql/*.sql` in order on startup.
-- API and job services are gated on **db healthy** + **migrate completed successfully**.
+- Only ingress publishes a host port (5180:80). API, DB, dashboard, and jobs remain internal.
+- migrate applies deploy/sql/*.sql in order on startup.
+- API and job services are gated on db healthy + migrate completed successfully.
 
-Operational commands:
+Manual-only:
 
-```bash
-# Canonical start/rebuild (includes jobs + migrate)
-docker compose -f docker-compose.v2.local.yml up -d --build --force-recreate --remove-orphans
+- gapfill-once is manual (not always-on). It is included behind the manual profile to prevent accidental replays:
+ - docker compose -f docker-compose.v2.local.yml --profile manual run --rm gapfill-once
 
-# Guard contract (must stay green)
-bash tools/codex/guard_ports_local.sh
+Quarantine policy:
 
-# Health proofs (through ingress only)
-curl -fsS http://127.0.0.1:5180/ui-meta
-curl -fsS http://127.0.0.1:5180/health
-```
-
-Notes:
-
-gapfill-once is manual-only (run explicitly) unless we decide otherwise, because it can reprocess historical data.
-
-Local multi-container topology is defined by:
-
-*   docker-compose.yml (dev/prod profile aware)
-*   docker-compose.v2.local.yml (prod-like local stack: Postgres + API + dashboard)
-*   docker-compose.v2.server.yml (server-ready manifest; set PUBLIC_API_BASE/POSTGRES_PASSWORD)
-    
-
-From inspection, it defines at least:
-
-*   db – Postgres container (canonical local DB).
-    
-*   api – Prism Apex API container.
-    
-*   dashboard-full – Dashboard front-end container.
-    
-
-Key properties:
-
-*   Shared network between containers.
-    
-*   api depends\_on db.
-    
-*   dashboard-full depends\_on api.
-    
-*   Environment variables wired from:
-    
-    *   .env / .env.ci / system environment.
-        
-    *   Compose-level environment: blocks.
-        
-
-This file is the **single source of truth** for how containers talk to each other in local/docker environments.
-
-**Usage model (conceptual)**
-
-*   Start full stack:
-    
-    *   docker-compose up (or docker compose up) brings up DB + API + dashboard.
-        
-*   API container uses apps/api/Dockerfile.
-    
-*   Dashboard container uses apps/dashboard/Dockerfile.
-    
-
-**Safe deletion guidance**
-
-*   KEEP: docker-compose.yml and the v2 variants – all three are actively referenced by docs/runbooks.
-    
-*   Older override files may be retired only once the team agrees on a single manifest; the v2 files are now canonical examples and must remain.
-        
+- Any legacy compose manifests are quarantined under ops/legacy-compose/ and must not be referenced by runbooks.
 
 ### 9.4 Server deployment – systemd + Nginx
 
