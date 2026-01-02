@@ -79,6 +79,10 @@ services:
     depends_on:
       api:
         condition: service_healthy
+      db:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
     ports: []
     volumes:
     - api_data:/data:ro
@@ -91,8 +95,14 @@ services:
     volumes:
     - ./deploy/ingress/local/default.conf:/etc/nginx/conf.d/default.conf:ro
     depends_on:
-    - api
-    - dashboard-full
+      api:
+        condition: service_started
+      dashboard-full:
+        condition: service_started
+      db:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
   tickets-cron:
     build:
       context: .
@@ -252,6 +262,25 @@ services:
       migrate:
         condition: service_completed_successfully
     restart: 'no'
+  shadow-outcomes-cron:
+    image: prism-apex/api:latest
+    working_dir: /app
+    depends_on:
+      db:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+    environment:
+      DATABASE_URL: ${DATABASE_URL:-postgresql://apex:apex@db:5432/prismapex?schema=public}
+      SHADOW_BATCH_LIMIT: ${SHADOW_BATCH_LIMIT:-200}
+      SHADOW_RUN_EVERY_SECONDS: ${SHADOW_RUN_EVERY_SECONDS:-60}
+      SHADOW_FORCE_RECOMPUTE: ${SHADOW_FORCE_RECOMPUTE:-false}
+      SHADOW_HORIZONS_MINUTES: ${SHADOW_HORIZONS_MINUTES:-60,240}
+    command:
+    - node
+    - apps/api/dist/shadowOutcomesRunner.cjs
+    restart: unless-stopped
+    ports: []
 volumes:
   db_data: null
   api_data: null
