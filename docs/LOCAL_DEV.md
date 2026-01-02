@@ -3,6 +3,41 @@
 Run the local pipeline end-to-end without placing real orders: Yahoo → Postgres → strategy → tickets JSONL → dashboard/API.
 
 ## Prerequisites
+
+### Local dev: jobs always-on + DB migrations automatic
+
+**Single entrypoint:** the only supported browser URL is **http://localhost:5180** (ingress).  
+**Canonical compose:** `docker-compose.v2.local.yml` only.
+
+What runs on every local deploy:
+
+- Core: `db` → `migrate` → `api` + `dashboard-full` + `ingress`
+- Jobs (always-on): `tickets-cron`, `gapfill-cron`, `ingress-yahoo`, `jobs-seed`
+
+Hard guarantees:
+
+- **Only** ingress publishes a host port (**5180:80**). API, DB, dashboard, and jobs remain internal.
+- `migrate` applies `deploy/sql/*.sql` in order on startup.
+- API and job services are gated on **db healthy** + **migrate completed successfully**.
+
+Operational commands:
+
+```bash
+# Canonical start/rebuild (includes jobs + migrate)
+docker compose -f docker-compose.v2.local.yml up -d --build --force-recreate --remove-orphans
+
+# Guard contract (must stay green)
+bash tools/codex/guard_ports_local.sh
+
+# Health proofs (through ingress only)
+curl -fsS http://127.0.0.1:5180/ui-meta
+curl -fsS http://127.0.0.1:5180/health
+```
+
+Notes:
+
+gapfill-once is manual-only (run explicitly) unless we decide otherwise, because it can reprocess historical data.
+
 - Docker Desktop (or compatible) with Compose
 - Files in repo root: `docker-compose.yml`, `.env.example.local`
 - Node.js 20.x (`nvm use` will pick up `.nvmrc`)
@@ -133,3 +168,9 @@ Reports land in `docs/YAHOO_DATA_CLEANUP.md`.
 
 
 > Legacy OPERATIONS excerpt removed; refer to docs/OPERATIONS.md for latest commands.
+
+
+## 4. Canonical 5180-only ingress
+
+Use the single entrypoint: http://localhost:5180 (UI / /api/* / /ui-meta).
+Start with `bash tools/codex/dc_local.sh up -d --build --force-recreate --remove-orphans`, stop with `bash tools/codex/dc_local.sh down`, and keep Postgres/API internal (no host ports). Legacy proxies (8090, ngrok) are unsupported.

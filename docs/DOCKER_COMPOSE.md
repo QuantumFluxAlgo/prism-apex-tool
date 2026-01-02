@@ -8,6 +8,40 @@ To ensure deterministic, repeatable deployments, **always use the provided Codex
 
 ### Local Development (Mac / localhost)
 
+### Local dev: jobs always-on + DB migrations automatic
+
+**Single entrypoint:** the only supported browser URL is **http://localhost:5180** (ingress).  
+**Canonical compose:** `docker-compose.v2.local.yml` only.
+
+What runs on every local deploy:
+
+- Core: `db` → `migrate` → `api` + `dashboard-full` + `ingress`
+- Jobs (always-on): `tickets-cron`, `gapfill-cron`, `ingress-yahoo`, `jobs-seed`
+
+Hard guarantees:
+
+- **Only** ingress publishes a host port (**5180:80**). API, DB, dashboard, and jobs remain internal.
+- `migrate` applies `deploy/sql/*.sql` in order on startup.
+- API and job services are gated on **db healthy** + **migrate completed successfully**.
+
+Operational commands:
+
+```bash
+# Canonical start/rebuild (includes jobs + migrate)
+docker compose -f docker-compose.v2.local.yml up -d --build --force-recreate --remove-orphans
+
+# Guard contract (must stay green)
+bash tools/codex/guard_ports_local.sh
+
+# Health proofs (through ingress only)
+curl -fsS http://127.0.0.1:5180/ui-meta
+curl -fsS http://127.0.0.1:5180/health
+```
+
+Notes:
+
+gapfill-once is manual-only (run explicitly) unless we decide otherwise, because it can reprocess historical data.
+
 **Purpose**
 
 * Run the full Prism Apex V2 stack locally
@@ -89,3 +123,9 @@ If Docker does not start, verify:
 * You are using the correct script
 * Docker is running
 * The repo root is the current working directory
+
+
+
+## Canonical local 5180 ingress
+
+Local development uses one entrypoint: http://localhost:5180. UI, API, and metadata all run through that same host port (dashboard-full + ingress) and guard_ports_local.sh enforces it. Avoid any guidance that points people to 3000/8080/8090/55433 or manual reverse proxies.

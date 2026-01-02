@@ -4251,6 +4251,40 @@ Right now, there is **no safe deletion** in the Dockerfile set.
 
 ### 9.3 Local orchestration – docker-compose
 
+### Local dev: jobs always-on + DB migrations automatic
+
+**Single entrypoint:** the only supported browser URL is **http://localhost:5180** (ingress).  
+**Canonical compose:** `docker-compose.v2.local.yml` only.
+
+What runs on every local deploy:
+
+- Core: `db` → `migrate` → `api` + `dashboard-full` + `ingress`
+- Jobs (always-on): `tickets-cron`, `gapfill-cron`, `ingress-yahoo`, `jobs-seed`
+
+Hard guarantees:
+
+- **Only** ingress publishes a host port (**5180:80**). API, DB, dashboard, and jobs remain internal.
+- `migrate` applies `deploy/sql/*.sql` in order on startup.
+- API and job services are gated on **db healthy** + **migrate completed successfully**.
+
+Operational commands:
+
+```bash
+# Canonical start/rebuild (includes jobs + migrate)
+docker compose -f docker-compose.v2.local.yml up -d --build --force-recreate --remove-orphans
+
+# Guard contract (must stay green)
+bash tools/codex/guard_ports_local.sh
+
+# Health proofs (through ingress only)
+curl -fsS http://127.0.0.1:5180/ui-meta
+curl -fsS http://127.0.0.1:5180/health
+```
+
+Notes:
+
+gapfill-once is manual-only (run explicitly) unless we decide otherwise, because it can reprocess historical data.
+
 Local multi-container topology is defined by:
 
 *   docker-compose.yml (dev/prod profile aware)
