@@ -42,3 +42,4 @@ Initial stable release candidate with version pinning and release documentation.
 - Docs: align local development docs with the canonical 5180-only dashboard-full + guard workflow.
 ## 2026-01-02
 - Local dev: docker-compose.v2.local.yml now runs jobs always-on (tickets-cron, gapfill-cron, ingress-yahoo, jobs-seed) with migrate gating; only ingress publishes 5180.
+- 2026-01-02: local compose includes `gapfill-once` as manual-only via `--profile manual run --rm gapfill-once`.

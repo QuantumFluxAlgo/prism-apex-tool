@@ -4253,6 +4253,11 @@ Right now, there is **no safe deletion** in the Dockerfile set.
 
 ### Local dev: jobs always-on + DB migrations automatic
 
+
+### Manual-only: gapfill-once
+- `gapfill-once` is **manual** (not always-on). It is included behind the `manual` profile to prevent accidental replays.
+- Run it explicitly when you want a one-off backfill:
+  - `docker compose -f docker-compose.v2.local.yml --profile manual run --rm gapfill-once`
 **Single entrypoint:** the only supported browser URL is **http://localhost:5180** (ingress).  
 **Canonical compose:** `docker-compose.v2.local.yml` only.
 

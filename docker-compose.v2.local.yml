@@ -232,6 +232,26 @@ services:
 
       '
     restart: 'no'
+  gapfill-once:
+    build:
+      context: .
+      target: api
+    image: prism-apex/ingest:latest
+    profiles:
+    - manual
+    environment:
+      DATABASE_URL: ${DATABASE_URL:-postgresql://apex:apex@db:5432/prismapex?schema=public}
+      YAHOO_SYMBOLS: ${YAHOO_SYMBOLS:-ES=F,NQ=F,MES=F,MNQ=F,YM=F,RTY=F,GC=F,CL=F,6E=F,EURUSD=X,BTC-USD}
+      YAHOO_INTERVAL: ${YAHOO_INTERVAL:-1m}
+    command:
+    - node
+    - apps/ingest/dist/gapfill.js
+    depends_on:
+      db:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+    restart: 'no'
 volumes:
   db_data: null
   api_data: null
