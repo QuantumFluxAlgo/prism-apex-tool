@@ -1,4 +1,4 @@
-import type { YahooHealthRow } from './api';
+import type { YahooHealthResponse, YahooHealthRow } from './api';
 
 export type IngestState = 'LIVE' | 'DEGRADED' | 'NOT LIVE' | 'UNKNOWN';
 
@@ -55,4 +55,27 @@ export function formatLag(seconds: number | null | undefined): string {
     return '—';
   }
   return `${Math.round(seconds)}s`;
+}
+
+export function ingestStateFromHealth(
+  health: YahooHealthResponse | null | undefined,
+): IngestState {
+  const status = health?.status?.toUpperCase?.() ?? '';
+  if (status === 'GREEN') return 'LIVE';
+  if (status === 'AMBER') return 'DEGRADED';
+  if (status === 'RED') return 'NOT LIVE';
+  return deriveIngestState(health?.rows);
+}
+
+export function ingestStateLabel(state: IngestState): string {
+  switch (state) {
+    case 'LIVE':
+      return 'Live';
+    case 'DEGRADED':
+      return 'Degraded';
+    case 'NOT LIVE':
+      return 'Not live';
+    default:
+      return 'Unknown';
+  }
 }

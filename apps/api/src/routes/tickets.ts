@@ -6,7 +6,7 @@ import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
 import { Client } from 'pg';
 import type { CanonicalCandidateTicket } from '@prism-apex/shared';
 import { buildCanonicalApprovedTicketView } from './dto/canonicalTicketView.js';
-import { listTickets } from '../store/tickets.js';
+import { listTickets, countTickets } from '../store/tickets.js';
 import { isMockDbEnabled, isTestMode } from '../utils/testMode.js';
 import { TICKET_STRATEGIES, type TicketStrategy } from '../schemas/ticket.js';
 import { readTickets } from '../utils/mockStore.js';
@@ -153,7 +153,7 @@ export default async function ticketsRoute(app: FastifyInstance) {
     if (isTestMode() && !q.date && !q.from && !q.to) {
       const cursorIso = typeof q.cursor === 'string' && q.cursor ? q.cursor : undefined;
       const after = cursorIso ? Date.parse(cursorIso) : undefined;
-      const all = readTickets(limit + 1);
+      const all = readTickets();
       const filtered = after ? all.filter((t) => Date.parse(t.ts) > after) : all;
       const page = filtered.slice(0, limit);
       const nextCursor = filtered.length > page.length ? page[page.length - 1]?.ts ?? null : null;
@@ -217,8 +217,9 @@ export default async function ticketsRoute(app: FastifyInstance) {
       }
       const cursor = Math.max(0, Number(q.cursor ?? offset ?? 0));
       const { items, nextCursor } = listTickets(date, cursor, limit, strategy);
+      const total = countTickets(date, strategy);
       const payload = {
-        total: items.length,
+        total,
         rows: items,
         tickets: items,
         nextCursor: nextCursor ?? null,
@@ -236,7 +237,7 @@ export default async function ticketsRoute(app: FastifyInstance) {
       ]);
       const ticketsWithMetrics = await populateSessionMetricsForTickets(rowsResult.rows);
       const filteredTickets = applyQualityFilters(ticketsWithMetrics, qualityFilters);
-      const total = filteredTickets.length;
+      const total = Number(countResult?.rows?.[0]?.n ?? 0);
 
       emitTicketQualityTelemetry({
         route: 'tickets',
@@ -339,4 +340,3 @@ async function populateSessionMetricsForTickets(rows: any[]): Promise<TicketRowD
     return { ...t, score, scoreTrend: trend };
   });
 }
-

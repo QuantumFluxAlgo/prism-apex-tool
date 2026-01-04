@@ -20,6 +20,8 @@ import { accountsRoutes } from './routes/accounts.js';
 import yahooHealthRoutes from './routes/health.yahoo.js';
 import { exportRoutes } from './routes/export.js';
 import ticketsRoute from './routes/tickets.js';
+import ticketsLifecycleRoute from './routes/ticketsLifecycle.js';
+import ticketCandidatesRoute from './routes/ticketCandidates.js';
 import ticketsDebugRoute from './routes/tickets.debug.js';
 import ticketCompleteRoute from './routes/ticket.complete.js';
 import ticketEnteredRoute from './routes/ticket.entered.js';
@@ -136,6 +138,8 @@ export function buildServer() {
   app.register(strategyEngineRoutes);
   app.register(enginePreviewRoutes, { prefix: '/api/engine' });
   app.register(ticketsRoute);
+  app.register(ticketsLifecycleRoute);
+  app.register(ticketCandidatesRoute);
   app.register(ticketsDebugRoute);
   app.register(worklistRoute);
   app.register(operatorActionsRoute);
