@@ -104,6 +104,13 @@ export async function saveTicket(t: Ticket): Promise<void> {
   indexRecord(rec);
 }
 
+export function countTickets(date: string, strategy?: string): number {
+  const day = days.get(date) ?? [];
+  const strategyFilterRaw = strategy?.trim();
+  const strategyFilter = strategyFilterRaw ? normalizeTicketStrategy(strategyFilterRaw) : undefined;
+  return strategyFilter ? day.filter((ticket) => ticket.meta.strategy === strategyFilter).length : day.length;
+}
+
 export function listTickets(
   date: string,
   cursor = 0,

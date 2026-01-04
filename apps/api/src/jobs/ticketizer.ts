@@ -11,6 +11,7 @@ import { getConfig } from '../config/env.js';
 import { TICKET_STRATEGIES } from '../schemas/ticket.js';
 import type { Ticket, TicketStrategy } from '../schemas/ticket.js';
 import { saveTicket, getRecentTicketSizes } from '../store/tickets.js';
+import { upsertTicketCandidateFromTicketizer } from '../store/ticketCandidates.js';
 import { getAccount as getTelemetryAccount } from '../store/telemetry.js';
 import type { CanonicalCandidateTicket } from '@prism-apex/shared';
 import { buildCanonicalCandidateTicket } from '../services/strategy-engine/index.js';
@@ -615,6 +616,10 @@ async function handleSuggestion(s: Suggestion): Promise<void> {
         },
       }
     : processedTicket;
+  if (!processedTicket.accepted) {
+    void upsertTicketCandidateFromTicketizer(processedTicket);
+  }
+
   void saveTicket(enrichedTicket);
   publish('ticket', enrichedTicket);
 }
