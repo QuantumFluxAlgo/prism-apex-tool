@@ -180,6 +180,15 @@ export type TicketsResponse = {
   rows?: TicketRow[];
 };
 
+export type TicketsLifecycleRow = Record<string, unknown>;
+
+export type TicketsLifecycleResponse = {
+  total?: number;
+  rows?: TicketsLifecycleRow[];
+  tickets?: TicketsLifecycleRow[];
+  nextCursor?: number | null;
+};
+
 /**
  * Simple market position/order placeholders – currently unused by V2 pages.
  */
@@ -461,6 +470,34 @@ export async function fetchTickets(params: {
     total: typeof data.total === 'number' ? data.total : data.rows?.length ?? 0,
     rows: Array.isArray(data.rows) ? data.rows : [],
   };
+}
+
+export async function fetchTicketsLifecycle(params: {
+  from?: string;
+  to?: string;
+  symbol?: string;
+  strategy?: string;
+  direction?: 'LONG' | 'SHORT';
+  status?: string;
+  outcome?: 'ALL' | 'ACCEPTED' | 'REJECTED';
+  limit?: number;
+  cursor?: number;
+}): Promise<TicketsLifecycleResponse> {
+  const url = new URL('/api/tickets-lifecycle', getTicketsBase());
+  const search = url.searchParams;
+
+  if (params.from) search.set('from', params.from);
+  if (params.to) search.set('to', params.to);
+  if (params.symbol && params.symbol !== 'ALL') search.set('symbol', params.symbol);
+  if (params.strategy && params.strategy !== 'ALL') search.set('strategy', params.strategy);
+  if (params.direction && params.direction !== 'ALL') search.set('side', params.direction);
+  if (params.status && params.status !== 'ALL') search.set('status', params.status);
+  if (params.outcome && params.outcome !== 'ALL') search.set('outcome', params.outcome);
+
+  search.set('limit', String(params.limit ?? 200));
+  search.set('cursor', String(params.cursor ?? 0));
+
+  return (await fetchJson(url.toString())) as TicketsLifecycleResponse;
 }
 
 /**
