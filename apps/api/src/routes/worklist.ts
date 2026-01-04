@@ -28,6 +28,7 @@ import { createSessionFlagsService } from '../jobs/session-metrics/session-flags
 import type { TicketRiskDecisionDto } from './dto/riskDecisionDto.js';
 
 import { computePnL } from '@prism-apex/shared';
+import { getSessionInfo } from './status.js';
 import { getInstrumentSpec } from '../risk/contractMath.js';
 
 const DEFAULT_DATABASE_URL =
@@ -55,6 +56,7 @@ export interface WorklistTicketDto {
   targetPrice: number | null;
 
   createdAt: string;
+  ticketTimeUtc: string;
   sessionDate: string;
 
   // Engine scoring
@@ -144,10 +146,19 @@ function computePnlTicksFromCanonical(canonical: any, pnl: number | null): numbe
  * Pulls latest actionable OPEN tickets from `tickets` with a DISTINCT ON
  * to dedupe per (symbol, strategy, direction, opened_at_utc).
  */
-async function fetchRawTickets(client: Client, q: WorklistQuery) {
-  const filters: string[] = ["actionable IS TRUE", "status = 'OPEN'"];
+async function fetchRawTickets(
+  client: Client,
+  q: WorklistQuery,
+  sessionWindow: { openUtc: string; closeUtc: string },
+) {
+  const filters: string[] = ["actionable IS TRUE", "status = 'OPEN'", 'opened_at_utc IS NOT NULL'];
   const params: any[] = [];
-  filters.push("created_at_utc >= (now() - INTERVAL '30 minutes')");
+  filters.push("opened_at_utc >= ((now() AT TIME ZONE 'utc') - INTERVAL '30 minutes')");
+  filters.push("opened_at_utc <= (now() AT TIME ZONE 'utc')");
+  params.push(sessionWindow.openUtc);
+  filters.push(`opened_at_utc >= $${params.length}::timestamptz`);
+  params.push(sessionWindow.closeUtc);
+  filters.push(`opened_at_utc <= $${params.length}::timestamptz`);
 
   const addFilter = (sql: string, value?: any) => {
     if (value === undefined || value === null || value === '') return;
@@ -215,7 +226,10 @@ async function expireStaleTickets(client: Client): Promise<void> {
              non_actionable_reason = 'expired'
        WHERE status = 'OPEN'
          AND actionable IS TRUE
-         AND created_at_utc < (now() - INTERVAL '30 minutes')
+         AND (
+           opened_at_utc IS NULL
+           OR opened_at_utc < ((now() AT TIME ZONE 'utc') - INTERVAL '30 minutes')
+         )
     `,
   );
 }
@@ -245,8 +259,14 @@ export default async function worklistRoute(app: FastifyInstance) {
 
       await client.connect();
       try {
+        const sessionMeta = getSessionInfo();
+        const sessionWindow = {
+          openUtc: sessionMeta.session.open_utc,
+          closeUtc: sessionMeta.session.close_utc,
+        };
+
         await expireStaleTickets(client);
-        const rows = await fetchRawTickets(client, req.query ?? {});
+        const rows = await fetchRawTickets(client, req.query ?? {}, sessionWindow);
 
         // Build unique session keys for batch session metrics lookup
         const sessionKeys: SessionMetricsKey[] = [];
@@ -306,6 +326,16 @@ export default async function worklistRoute(app: FastifyInstance) {
           );
 
           const meta = (row.meta ?? {}) as Record<string, unknown>;
+
+          const openedRaw = row.opened_at_utc;
+          const ticketTimeUtc =
+            typeof openedRaw === 'string'
+              ? openedRaw
+              : openedRaw instanceof Date
+              ? openedRaw.toISOString()
+              : openedRaw
+              ? new Date(openedRaw as string).toISOString()
+              : new Date().toISOString();
           const entryPrice =
             typeof row.entry_price === 'number' ? (row.entry_price as number) : null;
           const stopPrice =
@@ -411,13 +441,15 @@ export default async function worklistRoute(app: FastifyInstance) {
             (row.rr as number | undefined) ??
             (canonical?.rrMultiple ?? null);
 
-          const createdRaw = row.created_at_utc ?? row.opened_at_utc;
+          const createdRaw = row.created_at_utc;
           const createdAt =
             typeof createdRaw === 'string'
               ? createdRaw
               : createdRaw instanceof Date
               ? createdRaw.toISOString()
-              : new Date(createdRaw ?? Date.now()).toISOString();
+              : createdRaw
+              ? new Date(createdRaw as string).toISOString()
+              : ticketTimeUtc;
 
           return {
             ticketId: String(row.id),
@@ -439,14 +471,15 @@ export default async function worklistRoute(app: FastifyInstance) {
             targetPrice: row.target_price,
 
             createdAt,
-            sessionDate: createdAt.slice(0, 10),
+            ticketTimeUtc,
+            sessionDate: ticketTimeUtc.slice(0, 10),
 
             score,
             scoreTrend: trend,
             scoreDelta: 'FLAT', // Filled in a second pass below
 
             pnlTicks,
-            ageMinutes: toMinutesAgo(createdAt),
+            ageMinutes: toMinutesAgo(ticketTimeUtc),
 
             riskDecision,
             sessionMetrics,

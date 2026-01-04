@@ -142,14 +142,14 @@ export const worklistV2Columns: WorklistV2Column[] = [
   },
   {
     key: "sessionDate",
-    header: "Session",
+    header: "Ticket time (UTC)",
     headerClassName: "text-left",
     cellClassName: "text-left text-slate-300",
     render: (row) => (
       <div className="flex flex-col leading-tight">
         <span className="font-mono text-slate-200">{row.sessionDate}</span>
         <span className="text-[0.65rem] text-slate-400">
-          {formatTime(row.createdAt)}
+          {formatTime(row.ticketTimeUtc)}
         </span>
         <span className="text-[0.6rem] uppercase status-muted">
           {row.sessionMetrics?.sessionQualityFlag ?? "—"}
