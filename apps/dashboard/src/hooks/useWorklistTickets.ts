@@ -57,6 +57,8 @@ export interface WorklistTicket {
   // Time / PnL
   ageMinutes: number;
   pnlTicks: number;
+  ticketTimeUtc: string | null;
+  createdAt: string | null;
 
   // Context
   sessionDate: string;
@@ -301,16 +303,22 @@ export function useWorklistTickets(): UseWorklistTicketsResult {
               ? canonical.targetTicks
               : null;
 
+          const ticketTimeUtc: string | null =
+            (row.ticketTimeUtc as string | undefined) ??
+            (row.opened_at_utc as string | undefined) ??
+            (row.openedAtUtc as string | undefined) ??
+            (canonical.openedAtUtc as string | undefined) ??
+            null;
+
           const createdAt: string | null =
             (row.createdAt as string | undefined) ??
-            (row.opened_at_utc as string | undefined) ??
             (canonical.createdAtUtc as string | undefined) ??
             null;
 
           const ageMinutes =
             typeof row.ageMinutes === "number" && Number.isFinite(row.ageMinutes)
               ? row.ageMinutes
-              : computeAgeMinutes(createdAt);
+              : computeAgeMinutes(ticketTimeUtc ?? createdAt);
 
           const pnlTicks =
             typeof row.pnlTicks === "number" && Number.isFinite(row.pnlTicks)
@@ -362,7 +370,7 @@ export function useWorklistTickets(): UseWorklistTicketsResult {
           const sessionDate: string =
             (row.sessionDate as string | undefined) ??
             (row.session_date_utc as string | undefined) ??
-            (createdAt ? createdAt.slice(0, 10) : "") ??
+            (ticketTimeUtc ? ticketTimeUtc.slice(0, 10) : "") ??
             "";
 
           const ticketId: string =
@@ -406,6 +414,8 @@ export function useWorklistTickets(): UseWorklistTicketsResult {
             tickValueUSD,
             ageMinutes,
             pnlTicks,
+            ticketTimeUtc,
+            createdAt,
             sessionDate,
             sessionMetrics,
             sessionFlags,
