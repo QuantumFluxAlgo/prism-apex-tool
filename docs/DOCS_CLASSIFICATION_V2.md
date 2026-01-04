@@ -66,3 +66,9 @@ _Source of truth for what each doc is, how “live” it is, and whether it’s 
 ### Epic delivery logs
 
 - `docs/UPGRADE_DASHBOARD.md` now carries the canonical record for Epic 1 (A3 Dashboard Contract Hardening). Supporting scan output lives under `reports/upgrade_dashboard/epic1_contract_alignment/OUTCOME_REPORT_FINAL.txt` (ignored by git but referenced from the doc). Keep both in sync when future dashboard epics ship.
+
+## 2026-01-04 — Tickets lifecycle + Ticketizer rejects ledger
+
+New docs:
+- docs/TICKETS_LIFECYCLE_AND_REJECTS_LEDGER.md
+- docs/RUNBOOK_INGRESS_DNS_HARDENING.md

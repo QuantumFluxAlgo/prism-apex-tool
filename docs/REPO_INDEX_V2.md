@@ -1669,3 +1669,30 @@ Local development uses one entrypoint: http://localhost:5180. UI, API, and metad
 **Operational note**
 Shadow outcomes are *hypothetical projections* over the bar stream. CLOSED tickets allow later comparison to realized outcomes; OPEN tickets allow historical analysis of “what would have happened next”.
 
+## 2026-01-04 — Tickets lifecycle + Ticketizer rejects ledger
+
+This release adds an operator-grade ticket history model:
+
+- Ticketizer rejects are now persisted forward into a dedicated ledger:
+  - Migration: deploy/sql/036_ticket_candidates.sql
+  - Store: apps/api/src/store/ticketCandidates.ts
+  - Route: apps/api/src/routes/ticketCandidates.ts
+  - Endpoint: /api/ticket-candidates
+
+- A merged lifecycle endpoint is now the canonical feed for ticket history UI:
+  - Route: apps/api/src/routes/ticketsLifecycle.ts
+  - Endpoint: /api/tickets-lifecycle
+  - Merges accepted lifecycle tickets (tickets table) + Ticketizer rejects (ticket_candidates)
+  - Supports outcome toggle (ACCEPTED vs REJECTED)
+
+- /api/tickets totals are now invariant across limit values:
+  - Route: apps/api/src/routes/tickets.ts
+  - Store support: apps/api/src/store/tickets.ts
+
+- Tickets dashboard page moved to the lifecycle feed:
+  - apps/dashboard/src/pages/Tickets.tsx
+  - Adds Rejected operator toggle and rejection drilldown
+
+- Ingress DNS hardening prevents SPA 502s after dashboard recreation:
+  - deploy/ingress/local/default.conf
+  - Adds Docker DNS resolver + variable upstream proxy_pass
