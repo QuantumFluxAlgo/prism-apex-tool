@@ -42,13 +42,14 @@ export async function recordPlannerRejectCountBestEffort(input: RecordPlannerRej
       delta: input.delta ?? 1,
     });
   } catch (err) {
-    // eslint-disable-next-line no-console
+    const message = err instanceof Error ? err.message : String(err);
     console.warn('[plannerRejectRecorder] best-effort drop', {
       stage: input.rejectStage,
       sessionDate: input.sessionDate,
       symbol: input.symbol,
       requestedPlannerRaw: input.requestedPlannerRaw,
       rejectingPlannerRaw: input.rejectingPlannerRaw,
+      error: message,
     });
   }
 }

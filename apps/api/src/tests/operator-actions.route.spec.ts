@@ -1,7 +1,7 @@
 import { beforeAll, afterAll, describe, expect, it, vi, beforeEach } from 'vitest';
 import type { FastifyInstance } from 'fastify';
 import { buildServer } from '@prism-apex/app-api/server.js';
-import type { OperatorActionKind, RecordOperatorActionInput } from '@prism-apex/app-api/services/tickets/operatorAction.js';
+import type { RecordOperatorActionInput } from '@prism-apex/app-api/services/tickets/operatorAction.js';
 
 const { mockedRecordOperatorAction, TicketNotFoundError } = vi.hoisted(() => {
   class TicketNotFoundError extends Error {}
