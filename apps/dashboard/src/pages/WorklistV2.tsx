@@ -43,6 +43,7 @@ import {
 import { logContractError, logPageLoad } from "../lib/contractTelemetry";
 import {
   fetchOperatorRiskSession,
+  markTicketEntered,
   updateOperatorRiskSession,
   type OperatorRiskSession,
 } from "../lib/api";
@@ -208,17 +209,7 @@ export default function WorklistV2() {
     setEnterLoading(true);
     setEnterError(null);
     try {
-      const resp = await fetch(
-        `/api/tickets/${encodeURIComponent(selected.ticketId)}/entered`,
-        {
-          method: "PATCH",
-          headers: { "content-type": "application/json" },
-        },
-      );
-      if (!resp.ok) {
-        const text = await resp.text();
-        throw new Error(text || "Failed to mark ticket as entered");
-      }
+      await markTicketEntered(selected.ticketId);
       const latestRisk = await fetchOperatorRiskSession();
       setOperatorRisk(latestRisk);
       setSelected(null);
