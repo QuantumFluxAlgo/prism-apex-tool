@@ -102,7 +102,7 @@ export function computePnlDollars(symbol: string, entryPrice: number, exitPrice:
     return 0;
   }
 
-  const spec = resolveContractSpec(symbol);
+  resolveContractSpec(symbol);
   const ticksMoved = specPriceDiffToTicks(symbol, entryPrice, exitPrice);
   const pnlPerContract = specTicksToDollars(symbol, ticksMoved);
   return pnlPerContract * contracts;

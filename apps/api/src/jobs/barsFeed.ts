@@ -152,9 +152,8 @@ async function poll(): Promise<void> {
   try {
     const client = await pool.connect();
     try {
-      let total = 0;
       for (const symbol of trackedSymbols) {
-        total += await drainSymbol(client, symbol);
+        await drainSymbol(client, symbol);
       }
       jobManager.beat(JOB_NAME);
     } finally {
