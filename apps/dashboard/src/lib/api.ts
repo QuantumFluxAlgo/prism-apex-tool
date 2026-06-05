@@ -321,6 +321,30 @@ export async function updateOperatorRiskSession(
   });
 }
 
+export type MarkTicketEnteredResponse = {
+  ok?: boolean;
+  ticketId?: string;
+  status?: string;
+  [key: string]: unknown;
+};
+
+export async function markTicketEntered(
+  ticketId: string,
+): Promise<MarkTicketEnteredResponse> {
+  const normalizedTicketId = ticketId.trim();
+  if (!normalizedTicketId) {
+    throw new Error('Ticket id is required');
+  }
+
+  return fetchJson<MarkTicketEnteredResponse>(
+    `/api/tickets/${encodeURIComponent(normalizedTicketId)}/entered`,
+    {
+      method: 'PATCH',
+      headers: { 'content-type': 'application/json' },
+    },
+  );
+}
+
 export async function fetchWorklistFeed(): Promise<WorklistApiResponse | null> {
   try {
     const payload = await fetchJson<WorklistApiResponse>('/api/worklist');
