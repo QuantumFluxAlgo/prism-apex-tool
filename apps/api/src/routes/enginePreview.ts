@@ -1,7 +1,6 @@
 import type { FastifyInstance, FastifyPluginOptions } from 'fastify';
 import {
   enginePreviewRequestSchema,
-  enginePreviewResponseSchema,
   type EnginePreviewRequest,
 } from '../dto/strategy-engine/index.js';
 import { runEnginePreview } from '../services/strategy-engine/index.js';
